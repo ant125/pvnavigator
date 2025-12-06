@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
@@ -9,17 +11,27 @@ export default function Home() {
           Ihr smarter Weg zur richtigen Photovoltaik-Anlage.
         </h1>
         <p className="text-sm sm:text-base text-slate-300">
-          Bald verfügbar: unabhängiger Photovoltaik-Rechner,
-          Wirtschaftlichkeitsbericht als PDF und geprüfte
+          Unabhängige Analyse statt Verkaufsversprechen: 
+          Wir berechnen Ertrag, Eigenverbrauch und Amortisation Ihrer PV-Anlage –
+          inklusive Szenarien mit Elektroauto, Warmwasser und Wärmepumpe.
         </p>
+
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button className="px-6 py-3 rounded-full bg-sky-500 hover:bg-sky-400 text-sm font-semibold">
-            PV-Rechner demnächst verfügbar
-          </button>
+          <Link
+            href="/analyse"
+            className="px-6 py-3 rounded-full bg-sky-500 hover:bg-sky-400 text-sm font-semibold"
+          >
+            Analyse anfordern
+          </Link>
           <button className="px-6 py-3 rounded-full border border-slate-600 text-sm text-slate-300 hover:border-slate-400">
-            Projekt: PV Navigator – im Aufbau
+            Musterbericht (bald verfügbar)
           </button>
         </div>
+
+        <p className="text-xs text-slate-500">
+          Keine Verkaufsberatung, keine versteckte Provision – 
+          wir zeigen Ihnen realistische Zahlen.
+        </p>
       </div>
     </main>
   );
