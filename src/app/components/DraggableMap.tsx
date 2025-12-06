@@ -9,7 +9,6 @@ interface DraggableMapProps {
 
 export default function DraggableMap({
   initialCenter,
-  addressString,
   onLocationSelect,
 }: DraggableMapProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
