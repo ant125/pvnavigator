@@ -9,8 +9,9 @@ export default function CreatePage() {
   return (
     <div className="p-4 space-y-4">
       <DraggableMap
-        onLocationSelect={(lat, lng) => setCoords({ lat, lng })}
-      />
+  initialCenter={{ lat: 48.13743, lng: 11.57549 }} // например, центр Мюнхена
+  onLocationSelect={(lat, lng) => setCoords({ lat, lng })}
+/>
 
       {coords && (
         <div className="p-3 bg-gray-100 rounded">
