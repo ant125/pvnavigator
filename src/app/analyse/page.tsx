@@ -122,14 +122,14 @@ export default function AnalysePage() {
             <div className="relative w-full rounded-xl border border-slate-700 bg-slate-900/60 h-64 overflow-hidden">
               {addressString ? (
                 <iframe
-                  title="Haus auf der Karte"
-                  className="w-full h-full"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  src={`https://www.google.com/maps?q=${encodeURIComponent(
-                    addressString
-                  )}&output=embed`}
-                />
+                title="Haus auf der Karte"
+                className="w-full h-full"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://www.google.com/maps?q=${encodeURIComponent(
+                  addressString
+                )}&t=k&z=19&output=embed`}
+              />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm px-4 text-center">
                   Bitte geben Sie zuerst Ihre vollständige Adresse ein,
