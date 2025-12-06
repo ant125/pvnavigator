@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 
 interface DraggableMapProps {
   initialCenter: { lat: number; lng: number };
-  
   onLocationSelect?: (lat: number, lng: number) => void;
 }
 
