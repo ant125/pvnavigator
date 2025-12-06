@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import DraggableMap from "../components/DraggableMap";
+import DraggableMap from "../components/DraggableMapComponent";
 
 export default function CreatePage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);

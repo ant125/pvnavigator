@@ -4,13 +4,11 @@ import { useEffect, useRef } from "react";
 
 interface DraggableMapProps {
   initialCenter: { lat: number; lng: number };
-  addressString?: string;
   onLocationSelect?: (lat: number, lng: number) => void;
 }
 
 export default function DraggableMap({
   initialCenter,
-  addressString,
   onLocationSelect,
 }: DraggableMapProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import DraggableMap from "../components/DraggableMap";
+import DraggableMap from "../components/DraggableMapComponent";
 
 /* -------------------------
    Типы данных адреса
