@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 interface DraggableMapProps {
   initialCenter: { lat: number; lng: number };
-  addressString?: string; // 🆕 адрес для геокодинга
+  
   onLocationSelect?: (lat: number, lng: number) => void;
 }
 
