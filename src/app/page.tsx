@@ -11,9 +11,8 @@ export default function Home() {
           Ihr smarter Weg zur richtigen Photovoltaik-Anlage.
         </h1>
         <p className="text-sm sm:text-base text-slate-300">
-          Unabhängige Analyse statt Verkaufsversprechen: 
-          Wir berechnen Ertrag, Eigenverbrauch und Amortisation Ihrer PV-Anlage –
-          inklusive Szenarien mit Elektroauto, Warmwasser und Wärmepumpe.
+          Unabhängige Analyse statt Verkaufsversprechen:
+          Wir berechnen Ertrag, Eigenverbrauch und Amortisation Ihrer PV-Anlage – inklusive realer Verschattungsverluste durch Nachbargebäude und Bäume, sowie Szenarien mit Stromspeicher, Elektroauto, Warmwasser und Wärmepumpe.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

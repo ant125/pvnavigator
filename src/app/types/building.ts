@@ -80,3 +80,4 @@ export function getBuildingTypeOption(type: BuildingType): BuildingTypeOption | 
   return BUILDING_TYPE_OPTIONS.find(option => option.type === type);
 }
 
+
