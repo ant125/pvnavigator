@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import DraggableMap from "../components/DraggableMapComponent";
-
-/* -------------------------
-   Типы данных адреса
-   Address form types
-------------------------- */
-type AddressForm = {
-  plz: string;
-  ort: string;
-  strasse: string;
-  hausnummer: string;
-};
+import {
+  AddressForm,
+  Coordinates,
+  ConfirmedLocation,
+  LocationSource,
+  createConfirmedLocation,
+  createGeocodedLocation,
+} from "../types/location";
 
 export default function AnalysePage() {
   /* -------------------------
@@ -30,15 +27,37 @@ export default function AnalysePage() {
      Координаты дома (после геокодинга или перетаскивания)
      House coordinates (after geocoding or dragging)
   ------------------------- */
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
-    null
-  );
+  const [coords, setCoords] = useState<Coordinates | null>(null);
+
+  /* -------------------------
+     Источник координат: "geocode" или "user_marker"
+     Source of coordinates: "geocode" or "user_marker"
+  ------------------------- */
+  const [locationSource, setLocationSource] = useState<LocationSource>("geocode");
+
+  /* -------------------------
+     Флаг: пользователь передвинул маркер
+     Flag: user has manually adjusted the marker
+  ------------------------- */
+  const [markerWasDragged, setMarkerWasDragged] = useState(false);
 
   /* -------------------------
      Подтверждение адреса пользователем
      User confirmation checkbox
   ------------------------- */
   const [isAddressConfirmed, setIsAddressConfirmed] = useState(false);
+
+  /* -------------------------
+     Финальная подтверждённая локация (source of truth)
+     Final confirmed location (source of truth for all downstream calculations)
+  ------------------------- */
+  const [confirmedLocation, setConfirmedLocation] = useState<ConfirmedLocation | null>(null);
+
+  /* -------------------------
+     Предыдущий адрес для предотвращения повторного геокодинга
+     Previous address to prevent redundant geocoding
+  ------------------------- */
+  const lastGeocodedAddress = useRef<string>("");
 
   /* -------------------------
      Обработка ввода текста
@@ -49,10 +68,25 @@ export default function AnalysePage() {
 
     setAddress((prev) => ({ ...prev, [name]: value }));
 
-    // Если пользователь меняет адрес — галочка снимается
-    // If user changes address — confirmation is reset
+    // Если пользователь меняет адрес — всё сбрасывается
+    // If user changes address — everything resets
     setIsAddressConfirmed(false);
+    setMarkerWasDragged(false);
+    setLocationSource("geocode");
+    setConfirmedLocation(null);
   };
+
+  /* -------------------------
+     Обработка перетаскивания маркера
+     Handle marker drag - CRITICAL: marker position becomes source of truth
+  ------------------------- */
+  const handleMarkerDrag = useCallback((lat: number, lng: number) => {
+    setCoords({ lat, lng });
+    setLocationSource("user_marker");
+    setMarkerWasDragged(true);
+    setIsAddressConfirmed(false); // требуется повторное подтверждение
+    setConfirmedLocation(null);
+  }, []);
 
   /* -------------------------
      Полный текстовый адрес
@@ -69,9 +103,28 @@ export default function AnalysePage() {
   /* -------------------------
      Геокодинг — превращаем текст в координаты
      Geocoding — convert address text into coordinates
+     
+     CRITICAL RULE:
+     - Do NOT geocode if marker was manually dragged (user_marker is source of truth)
+     - Do NOT re-geocode the same address
+     - Only geocode for initial address lookup
   ------------------------- */
   useEffect(() => {
+    // Не геокодим, если адрес пустой
+    // Skip if address is empty
     if (!fullAddress) return;
+
+    // CRITICAL: Не перезаписываем координаты, если маркер был перетянут
+    // CRITICAL: Do NOT override coordinates if marker was dragged
+    if (markerWasDragged) {
+      return;
+    }
+
+    // Не геокодим повторно один и тот же адрес
+    // Skip if this address was already geocoded
+    if (lastGeocodedAddress.current === fullAddress) {
+      return;
+    }
 
     async function geocode() {
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
@@ -84,18 +137,22 @@ export default function AnalysePage() {
       if (data.results?.[0]) {
         const loc = data.results[0].geometry.location;
 
-        // Устанавливаем координаты в state
-        // Set coordinates to state
-        setCoords({ lat: loc.lat, lng: loc.lng });
+        // Запоминаем, что этот адрес уже геокодирован
+        // Remember this address was geocoded
+        lastGeocodedAddress.current = fullAddress;
 
-        // Сбрасываем подтверждение — адрес изменился
-        // Reset confirmation — address has changed
-        setIsAddressConfirmed(false);
+        // Устанавливаем координаты в state (только если маркер не был перетянут)
+        // Set coordinates to state (only if marker wasn't dragged)
+        if (!markerWasDragged) {
+          setCoords({ lat: loc.lat, lng: loc.lng });
+          setLocationSource("geocode");
+          setIsAddressConfirmed(false);
+        }
       }
     }
 
     geocode();
-  }, [fullAddress]);
+  }, [fullAddress, markerWasDragged]);
 
   /* -------------------------
      Можно продолжать, если:
@@ -200,10 +257,8 @@ export default function AnalysePage() {
               {coords ? (
                 <DraggableMap
                   initialCenter={coords}
-                  onLocationSelect={(lat, lng) => {
-                    setCoords({ lat, lng });
-                    setIsAddressConfirmed(false); // любое движение маркера → нужно подтвердить снова
-                  }}
+                  onLocationSelect={handleMarkerDrag}
+                  lockMarkerPosition={markerWasDragged}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm text-center px-4">
@@ -211,6 +266,36 @@ export default function AnalysePage() {
                 </div>
               )}
             </div>
+
+            {/* LOCATION SOURCE INDICATOR */}
+            {coords && (
+              <div className="flex items-center gap-2 text-xs">
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded ${
+                  locationSource === "user_marker" 
+                    ? "bg-emerald-900/50 text-emerald-300" 
+                    : "bg-amber-900/50 text-amber-300"
+                }`}>
+                  {locationSource === "user_marker" ? (
+                    <>
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Marker manuell angepasst
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                      Automatisch aus Adresse
+                    </>
+                  )}
+                </span>
+                <span className="text-slate-500">
+                  {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
+                </span>
+              </div>
+            )}
 
             {/* CONFIRMATION CHECKBOX */}
             <div className="flex items-center gap-2">
@@ -247,9 +332,24 @@ export default function AnalysePage() {
                 : "bg-slate-700 text-slate-400 cursor-not-allowed"
             }`}
             onClick={() => {
-              if (canContinue) {
+              if (canContinue && coords) {
+                // CRITICAL: Create confirmed location from MARKER position only
+                // This marks the end of the address-selection phase
+                // From this point: no re-geocoding, no autocomplete overrides
+                const finalLocation = createConfirmedLocation(coords);
+                setConfirmedLocation(finalLocation);
+
+                console.log("[PVNavigator] Location confirmed:", {
+                  coordinates: finalLocation.coordinates,
+                  source: finalLocation.source, // Always "user_marker"
+                  confirmed: finalLocation.confirmed, // Always true
+                  confirmedAt: finalLocation.confirmedAt,
+                });
+
+                // TODO: Navigate to next step with confirmedLocation
+                // router.push(`/analyse/roof?lat=${coords.lat}&lng=${coords.lng}`)
                 alert(
-                  "Adresse bestätigt. Im nächsten Schritt erfassen wir Dach- und Verbrauchsdaten."
+                  `Standort bestätigt!\n\nKoordinaten: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}\nQuelle: ${finalLocation.source}\n\nIm nächsten Schritt erfassen wir Dach- und Verbrauchsdaten.`
                 );
               }
             }}

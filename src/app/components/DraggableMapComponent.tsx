@@ -6,17 +6,27 @@ interface DraggableMapProps {
   initialCenter: { lat: number; lng: number };
   addressString?: string;
   onLocationSelect?: (lat: number, lng: number) => void;
+  /** 
+   * If true, the map will not update marker position when initialCenter changes.
+   * Use this after the user has manually adjusted the marker.
+   * @default false
+   */
+  lockMarkerPosition?: boolean;
 }
 
 export default function DraggableMap({
   initialCenter,
   addressString,
   onLocationSelect,
+  lockMarkerPosition = false,
 }: DraggableMapProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
   const markerInstance = useRef<google.maps.Marker | null>(null);
   const geocoder = useRef<google.maps.Geocoder | null>(null);
+  
+  // Track if marker was dragged locally (additional safety measure)
+  const markerWasDraggedLocally = useRef<boolean>(false);
 
   // -----------------------------
   // 1. Инициализация карты (один раз)
@@ -49,17 +59,26 @@ export default function DraggableMap({
   // -----------------------------
   // 2. Обновляем центр карты, если изменился initialCenter
   // 2. Update map center when initialCenter changes
+  // CRITICAL: Do NOT update if marker was dragged (user position is source of truth)
   // -----------------------------
   useEffect(() => {
     if (!mapInstance.current || !markerInstance.current) return;
+    
+    // CRITICAL RULE: If marker was dragged or lockMarkerPosition is true,
+    // do NOT override the marker position - user's adjustment is the source of truth
+    if (lockMarkerPosition || markerWasDraggedLocally.current) {
+      // Only pan the map view, but keep marker at user's position
+      return;
+    }
 
     mapInstance.current.setCenter(initialCenter);
     markerInstance.current.setPosition(initialCenter);
-  }, [initialCenter]);
+  }, [initialCenter, lockMarkerPosition]);
 
   // -----------------------------
   // 3. Перетаскивание маркера
   // 3. Marker dragging handler
+  // CRITICAL: After drag, marker position becomes the source of truth
   // -----------------------------
   useEffect(() => {
     if (!markerInstance.current) return;
@@ -68,8 +87,14 @@ export default function DraggableMap({
 
     const listener = marker.addListener("dragend", () => {
       const pos = marker.getPosition();
-      if (pos && onLocationSelect) {
-        onLocationSelect(pos.lat(), pos.lng());
+      if (pos) {
+        // CRITICAL: Mark that marker was dragged - position is now source of truth
+        // This prevents any subsequent geocoding or center updates from overriding
+        markerWasDraggedLocally.current = true;
+        
+        if (onLocationSelect) {
+          onLocationSelect(pos.lat(), pos.lng());
+        }
       }
     });
 
@@ -79,14 +104,27 @@ export default function DraggableMap({
   // -----------------------------
   // 4. Геокодинг: центрируем карту по адресу
   // 4. Geocoding: center map by address
+  // NOTE: This is a fallback for when parent doesn't do geocoding.
+  // When using the component in analyse flow, geocoding is handled by the parent.
+  // CRITICAL: Never override marker position if it was dragged
   // -----------------------------
   useEffect(() => {
     if (!addressString || !geocoder.current || !mapInstance.current || !markerInstance.current)
       return;
+    
+    // CRITICAL: Do NOT geocode if marker was dragged - user position is source of truth
+    if (lockMarkerPosition || markerWasDraggedLocally.current) {
+      return;
+    }
 
     geocoder.current.geocode({ address: addressString }, (results, status) => {
       if (status === "OK" && results && results[0]) {
         const location = results[0].geometry.location;
+
+        // Double-check: still don't override if marker was dragged during geocoding
+        if (markerWasDraggedLocally.current) {
+          return;
+        }
 
         // Центрируем карту и перемещаем маркер
         // Center map + move marker
@@ -102,7 +140,7 @@ export default function DraggableMap({
         console.warn("Geocoding failed:", status);
       }
     });
-  }, [addressString]);
+  }, [addressString, lockMarkerPosition]);
 
   return <div ref={mapRef} className="w-full h-full" />;
 }
