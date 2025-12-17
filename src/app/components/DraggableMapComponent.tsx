@@ -29,6 +29,19 @@ export default function DraggableMap({
   const markerWasDraggedLocally = useRef<boolean>(false);
 
   // -----------------------------
+  // 0. Reset local drag state when parent signals new address
+  // When lockMarkerPosition becomes false, it means user entered a new address
+  // and we should allow geocoding to reposition the marker
+  // -----------------------------
+  useEffect(() => {
+    if (!lockMarkerPosition) {
+      // Parent signals that marker position should be unlocked (new address entered)
+      // Reset local drag tracking to allow marker repositioning
+      markerWasDraggedLocally.current = false;
+    }
+  }, [lockMarkerPosition]);
+
+  // -----------------------------
   // 1. Инициализация карты (один раз)
   // 1. Initialize map (run only once)
   // -----------------------------
