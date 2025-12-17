@@ -12,6 +12,21 @@ interface DraggableMapProps {
    * @default false
    */
   lockMarkerPosition?: boolean;
+  /**
+   * Map type to display.
+   * - "hybrid": Satellite imagery with labels (default, good for finding houses)
+   * - "roadmap": Standard road map (good for precise positioning)
+   * - "satellite": Pure satellite imagery
+   * - "terrain": Terrain map
+   * @default "hybrid"
+   */
+  mapTypeId?: google.maps.MapTypeId | "hybrid" | "roadmap" | "satellite" | "terrain";
+  /**
+   * If true, the marker cannot be dragged.
+   * Use this after final coordinate confirmation.
+   * @default false
+   */
+  disableDragging?: boolean;
 }
 
 export default function DraggableMap({
@@ -19,6 +34,8 @@ export default function DraggableMap({
   addressString,
   onLocationSelect,
   lockMarkerPosition = false,
+  mapTypeId = "hybrid",
+  disableDragging = false,
 }: DraggableMapProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
@@ -52,7 +69,7 @@ export default function DraggableMap({
       mapInstance.current = new google.maps.Map(mapRef.current, {
         center: initialCenter,
         zoom: 19,
-        mapTypeId: "hybrid",
+        mapTypeId: mapTypeId,
       });
     }
 
@@ -64,10 +81,28 @@ export default function DraggableMap({
       markerInstance.current = new google.maps.Marker({
         position: initialCenter,
         map: mapInstance.current!,
-        draggable: true,
+        draggable: !disableDragging,
       });
     }
   }, []);
+
+  // -----------------------------
+  // 1b. Update map type when mapTypeId prop changes
+  // -----------------------------
+  useEffect(() => {
+    if (mapInstance.current) {
+      mapInstance.current.setMapTypeId(mapTypeId);
+    }
+  }, [mapTypeId]);
+
+  // -----------------------------
+  // 1c. Update marker draggability when disableDragging prop changes
+  // -----------------------------
+  useEffect(() => {
+    if (markerInstance.current) {
+      markerInstance.current.setDraggable(!disableDragging);
+    }
+  }, [disableDragging]);
 
   // -----------------------------
   // 2. Обновляем центр карты, если изменился initialCenter

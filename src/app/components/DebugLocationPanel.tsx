@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Coordinates, LocationSource, ConfirmedLocation } from "../types/location";
@@ -12,6 +11,8 @@ interface DebugLocationPanelProps {
   confirmedLocation: ConfirmedLocation | null;
   buildingType?: BuildingType | null;
   currentStep?: string;
+  /** Result of Bavaria boundary check (null if no coords) */
+  bavariaCheckPassed?: boolean | null;
 }
 
 /**
@@ -23,8 +24,7 @@ interface DebugLocationPanelProps {
  * - It is strictly read-only and does not modify any state
  * - It reads from the same state used by the pipeline
  * 
- * Will be removed once coordinate validation (Part 2) and
- * Bavaria boundary checks (Part 3) are implemented and stable.
+ * Shows coordinate validation and Bavaria boundary check results.
  */
 export default function DebugLocationPanel({
   coords,
@@ -34,6 +34,7 @@ export default function DebugLocationPanel({
   confirmedLocation,
   buildingType,
   currentStep,
+  bavariaCheckPassed,
 }: DebugLocationPanelProps) {
   // CRITICAL: Only render in development mode
   if (process.env.NODE_ENV !== "development") {
@@ -73,6 +74,8 @@ export default function DebugLocationPanel({
                     ? "text-sky-400" 
                     : currentStep === "building_type"
                     ? "text-purple-400"
+                    : currentStep === "coordinate_validation"
+                    ? "text-amber-400"
                     : "text-slate-200"
                 }`}>
                   {currentStep}
@@ -164,6 +167,30 @@ export default function DebugLocationPanel({
             </div>
           </div>
 
+          {/* Bavaria Gate Section */}
+          <div className="space-y-1">
+            <div className="text-slate-500 text-[10px] uppercase tracking-wide">
+              Bavaria Gate
+            </div>
+            <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+              <span className="text-slate-400">Inside Bavaria:</span>
+              <span className={`font-semibold ${
+                bavariaCheckPassed === null
+                  ? "text-slate-500"
+                  : bavariaCheckPassed
+                  ? "text-emerald-400"
+                  : "text-rose-400"
+              }`}>
+                {bavariaCheckPassed === null 
+                  ? "—" 
+                  : bavariaCheckPassed 
+                  ? "true ✓" 
+                  : "false ✗"
+                }
+              </span>
+            </div>
+          </div>
+
           {/* Confirmation Details */}
           <div className="space-y-1">
             <div className="text-slate-500 text-[10px] uppercase tracking-wide">
@@ -204,8 +231,15 @@ export default function DebugLocationPanel({
             </div>
           )}
 
+          {/* Bavaria gate warning */}
+          {bavariaCheckPassed === false && (
+            <div className="mt-2 px-2 py-1.5 bg-rose-500/10 border border-rose-500/30 rounded text-rose-400 text-[10px]">
+              🚫 BLOCKED — Outside Bavaria (supported region)
+            </div>
+          )}
+
           {/* Ready for analysis indicator */}
-          {isLocked && buildingType && isBuildingSupported && (
+          {isLocked && buildingType && isBuildingSupported && bavariaCheckPassed && (
             <div className="mt-2 px-2 py-1.5 bg-sky-500/10 border border-sky-500/30 rounded text-sky-400 text-[10px]">
               ✅ READY — Can proceed to roof analysis
             </div>

@@ -12,24 +12,26 @@ import {
   createConfirmedLocation,
 } from "../types/location";
 import { BuildingType, isBuildingTypeSupported } from "../types/building";
+import { isInsideBavaria, getBavariaCheckResult } from "../utils/bavaria";
 
 /**
  * Debug panel visibility flag
  * 
- * Debug panel enabled for development — positioned bottom-left for better UX.
- * Set to false to disable during UX review if needed.
+ * Set to true to enable debug panel for development verification.
+ * Currently disabled for cleaner UX testing.
  */
-const SHOW_DEBUG_PANEL = true;
+const SHOW_DEBUG_PANEL = false;
 
 /**
  * Analysis flow steps
  * 
- * NEW ORDER (building type first):
+ * FLOW ORDER:
  * 1. building_type — User selects building type (hard gate for MVP)
- * 2. address — Address input + map marker confirmation (only for supported types)
- * 3. analysing — Automatic analysis
+ * 2. address — Address input + Satellite view (find the house)
+ * 3. coordinate_validation — Confirm marker on Map view (source of truth)
+ * 4. analysing — Automatic analysis (DOM, roof, PV)
  */
-type AnalysisStep = "building_type" | "address" | "analysing";
+type AnalysisStep = "building_type" | "address" | "coordinate_validation" | "analysing";
 
 export default function AnalysePage() {
   /* -------------------------
@@ -89,6 +91,12 @@ export default function AnalysePage() {
   const [buildingType, setBuildingType] = useState<BuildingType | null>(null);
 
   /* -------------------------
+     Ошибка валидации Bavaria
+     Bavaria validation error state
+  ------------------------- */
+  const [bavariaError, setBavariaError] = useState<boolean>(false);
+
+  /* -------------------------
      Предыдущий адрес для предотвращения повторного геокодинга
      Previous address to prevent redundant geocoding
   ------------------------- */
@@ -113,6 +121,7 @@ export default function AnalysePage() {
     setMarkerWasDragged(false);  // CRITICAL: Allow geocoding to run again
     setLocationSource("geocode");
     setConfirmedLocation(null);
+    setBavariaError(false);  // Clear Bavaria error when address changes
     
     // Clear geocoding cache to ensure new address triggers fresh geocoding
     // This prevents stale coordinates when user edits the address
@@ -134,6 +143,7 @@ export default function AnalysePage() {
     setMarkerWasDragged(true);
     setIsAddressConfirmed(false); // требуется повторное подтверждение
     setConfirmedLocation(null);
+    setBavariaError(false); // Clear Bavaria error when user adjusts marker
   }, []);
 
   /* -------------------------
@@ -241,29 +251,88 @@ export default function AnalysePage() {
   };
 
   /* -------------------------
-     Обработка подтверждения адреса и запуска анализа
-     Handle address confirmation and start analysis
+     Обработка подтверждения адреса и перехода к валидации координат
+     Handle address confirmation and transition to coordinate validation
      
-     CRITICAL RULE:
-     No roof geometry extraction may run unless:
-     - buildingType === "EINFAMILIENHAUS"
-     - Location is confirmed
+     CRITICAL: Bavaria Gate runs HERE, BEFORE coordinate_validation
+     Users outside Bavaria never see the coordinate validation step
   ------------------------- */
-  const handleAddressConfirmedAndStartAnalysis = () => {
+  const handleAddressConfirmedGoToValidation = () => {
     if (!canContinueFromAddress || !coords) return;
+
+    // CRITICAL: Bavaria Gate - validate coordinates are inside Bavaria
+    // This check runs BEFORE showing coordinate validation
+    const bavariaCheck = getBavariaCheckResult(coords);
+    
+    if (!bavariaCheck.isInside) {
+      console.warn("[PVNavigator] Bavaria Gate FAILED at address step:", bavariaCheck.message);
+      setBavariaError(true);
+      // Do NOT proceed to coordinate_validation
+      return;
+    }
+
+    console.log("[PVNavigator] Bavaria Gate PASSED, moving to coordinate validation:", {
+      coordinates: coords,
+      source: locationSource,
+      bavariaCheck: bavariaCheck.message,
+    });
+
+    // Clear any previous Bavaria error
+    setBavariaError(false);
+
+    // Move to coordinate validation step (Map view)
+    setCurrentStep("coordinate_validation");
+  };
+
+  /* -------------------------
+     Обработка возврата к шагу адреса
+     Handle going back to address step (from coordinate validation)
+  ------------------------- */
+  const handleBackToAddress = () => {
+    setCurrentStep("address");
+    // Note: Bavaria error already passed (users can only reach coordinate_validation if inside Bavaria)
+    // Keep coordinates but clear confirmed location
+    setConfirmedLocation(null);
+  };
+
+  /* -------------------------
+     Обработка перетаскивания маркера на шаге валидации
+     Handle marker drag on coordinate validation step
+     
+     Note: Bavaria Gate already passed at address step, so no need to clear Bavaria error here
+  ------------------------- */
+  const handleValidationMarkerDrag = useCallback((lat: number, lng: number) => {
+    setCoords({ lat, lng });
+    setLocationSource("user_marker");
+  }, []);
+
+  /* -------------------------
+     Обработка подтверждения координат и запуска анализа
+     Handle coordinate confirmation and start analysis
+     
+     CRITICAL RULES:
+     1. Bavaria Gate already passed (checked at address step)
+     2. After confirmation, coordinates are LOCKED (immutable)
+     3. No roof geometry extraction may run unless buildingType === "EINFAMILIENHAUS"
+  ------------------------- */
+  const handleCoordinateConfirmation = () => {
+    if (!coords) return;
 
     if (!buildingType || !isBuildingTypeSupported(buildingType)) {
       console.error("[PVNavigator] Cannot start analysis: unsupported building type");
       return;
     }
 
+    // Note: Bavaria Gate already passed at address step
+    // Users can only reach this step if coordinates are inside Bavaria
+
     // CRITICAL: Create confirmed location from MARKER position only
-    // This marks the end of the address-selection phase
-    // From this point: no re-geocoding, no autocomplete overrides
+    // This marks the end of coordinate selection
+    // From this point: coordinates are IMMUTABLE
     const finalLocation = createConfirmedLocation(coords);
     setConfirmedLocation(finalLocation);
 
-    console.log("[PVNavigator] Location confirmed & analysis starting:", {
+    console.log("[PVNavigator] Coordinates confirmed & analysis starting:", {
       buildingType,
       coordinates: finalLocation.coordinates,
       source: finalLocation.source,
@@ -301,15 +370,15 @@ export default function AnalysePage() {
             {/* HEADER */}
             <header className="space-y-2">
               <p className="text-xs uppercase tracking-[0.25em] text-sky-400">
-                Schritt 2 von 3
+                Schritt 2 von 4
               </p>
               <h1 className="text-2xl sm:text-3xl font-bold">
-                Adresse eingeben und Haus bestätigen
+                Adresse eingeben und Haus finden
               </h1>
               <p className="text-sm text-slate-300">
                 Bitte geben Sie die Adresse des Hauses ein, auf dem die
-                Photovoltaik-Anlage geplant ist. Rechts sehen Sie die Position
-                auf der Karte und bestätigen, ob es sich um Ihr Haus handelt.
+                Photovoltaik-Anlage geplant ist. Die Satellitenansicht hilft Ihnen,
+                Ihr Haus zu finden.
               </p>
             </header>
 
@@ -434,7 +503,11 @@ export default function AnalysePage() {
                     id="confirm-house"
                     type="checkbox"
                     checked={isAddressConfirmed}
-                    onChange={(e) => setIsAddressConfirmed(e.target.checked)}
+                    onChange={(e) => {
+                      setIsAddressConfirmed(e.target.checked);
+                      // Clear Bavaria error when user changes confirmation
+                      if (e.target.checked) setBavariaError(false);
+                    }}
                     disabled={!coords}
                     className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-500"
                   />
@@ -443,9 +516,33 @@ export default function AnalysePage() {
                   </label>
                 </div>
 
-                <p className="text-xs text-slate-500">
-                  Im nächsten Schritt analysieren wir Ihr Dach automatisch.
-                </p>
+                {/* BAVARIA ERROR MESSAGE */}
+                {bavariaError && (
+                  <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30">
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <svg className="w-5 h-5 text-rose-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold text-rose-100">
+                          Außerhalb des unterstützten Gebiets
+                        </p>
+                        <p className="text-sm text-rose-200/70">
+                          PVNavigator unterstützt derzeit nur Standorte in Bayern.
+                          Bitte überprüfen Sie die Adresse oder wählen Sie einen Standort innerhalb Bayerns.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!bavariaError && (
+                  <p className="text-xs text-slate-500">
+                    Im nächsten Schritt bestätigen Sie die exakte Position.
+                  </p>
+                )}
               </div>
             </section>
 
@@ -470,7 +567,7 @@ export default function AnalysePage() {
                       ? "bg-sky-500 hover:bg-sky-400"
                       : "bg-slate-700 text-slate-400 cursor-not-allowed"
                   }`}
-                  onClick={handleAddressConfirmedAndStartAnalysis}
+                  onClick={handleAddressConfirmedGoToValidation}
                 >
                   Weiter
                 </button>
@@ -479,7 +576,85 @@ export default function AnalysePage() {
           </>
         )}
 
-        {/* =========== STEP 3: ANALYSING =========== */}
+        {/* =========== STEP 3: COORDINATE VALIDATION =========== */}
+        {currentStep === "coordinate_validation" && (
+          <>
+            {/* HEADER */}
+            <header className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.25em] text-sky-400">
+                Schritt 3 von 4
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold">
+                Position auf der Karte bestätigen
+              </h1>
+              <p className="text-sm text-slate-300">
+                Bitte bestätigen Sie die exakte Position Ihres Hauses auf der Karte.
+                Satellitenbilder können leicht versetzt sein.
+              </p>
+            </header>
+
+            {/* MAP SECTION */}
+            <section className="space-y-4">
+              {/* MAP AREA - Road map view for precise positioning */}
+              <div className="relative w-full rounded-xl border border-slate-700 bg-slate-900/60 h-80 overflow-hidden">
+                {coords && (
+                  <DraggableMap
+                    initialCenter={coords}
+                    onLocationSelect={handleValidationMarkerDrag}
+                    lockMarkerPosition={false}
+                    mapTypeId="roadmap"
+                    disableDragging={false}
+                  />
+                )}
+              </div>
+
+              {/* HINT */}
+              <p className="text-xs text-slate-400">
+                💡 Falls nötig, können Sie den Marker noch leicht verschieben.
+              </p>
+
+              {/* COORDINATES DISPLAY */}
+              <div className="flex items-center gap-2 text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-800 text-slate-300">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  Position
+                </span>
+                <span className="text-slate-400 font-mono">
+                  {coords?.lat.toFixed(6)}, {coords?.lng.toFixed(6)}
+                </span>
+              </div>
+
+              {/* Note: Bavaria Gate already passed at address step */}
+              {/* Users can only reach this step if coordinates are inside Bavaria */}
+            </section>
+
+            {/* ----------- FOOTER BUTTON ----------- */}
+            <footer className="flex justify-between items-center pt-4 border-t border-slate-800">
+              <button
+                onClick={handleBackToAddress}
+                className="px-4 py-2 rounded-full text-sm font-medium text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+              >
+                ← Zurück
+              </button>
+
+              <button
+                disabled={!coords}
+                className={`px-6 py-2 rounded-full text-sm font-semibold ${
+                  coords
+                    ? "bg-sky-500 hover:bg-sky-400"
+                    : "bg-slate-700 text-slate-400 cursor-not-allowed"
+                }`}
+                onClick={handleCoordinateConfirmation}
+              >
+                Weiter
+              </button>
+            </footer>
+          </>
+        )}
+
+        {/* =========== STEP 4: ANALYSING =========== */}
         {currentStep === "analysing" && (
           <div className="flex flex-col items-center justify-center py-16 space-y-6">
             {/* Loading spinner */}
@@ -517,7 +692,7 @@ export default function AnalysePage() {
       </div>
 
       {/* ----------- DEBUG PANEL (Development Only) ----------- */}
-      {/* Debug panel temporarily disabled for UX review. Set SHOW_DEBUG_PANEL = true to re-enable. */}
+      {/* Debug panel enabled for development — positioned bottom-left for better UX. */}
       {SHOW_DEBUG_PANEL && (
         <DebugLocationPanel
           coords={coords}
@@ -527,6 +702,7 @@ export default function AnalysePage() {
           confirmedLocation={confirmedLocation}
           buildingType={buildingType}
           currentStep={currentStep}
+          bavariaCheckPassed={coords ? isInsideBavaria(coords) : null}
         />
       )}
     </main>

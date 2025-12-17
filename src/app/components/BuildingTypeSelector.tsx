@@ -39,7 +39,7 @@ export default function BuildingTypeSelector({
       {/* HEADER */}
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-[0.25em] text-sky-400">
-          Schritt 1 von 3
+          Schritt 1 von 4
         </p>
         <h1 className="text-2xl sm:text-3xl font-bold">
           Gebäudetyp
