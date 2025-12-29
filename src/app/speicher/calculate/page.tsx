@@ -375,10 +375,10 @@ export default function SpeicherCalculatePage() {
                 Neue Berechnung
               </button>
               <Link
-                href="/speicher"
+                href="/speicher/result"
                 className="flex-1 py-3 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-center transition-colors"
               >
-                Zurück zur Übersicht
+                Detaillierte Analyse ansehen
               </Link>
             </div>
           </>
