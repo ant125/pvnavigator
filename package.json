@@ -1,0 +1,24 @@
+{
+  "name": "pvnavigator",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/speicher-physik",
+    "dev:speicher-physik": "npm run dev --workspace=apps/speicher-physik",
+    "dev:speicher-wirtschaft": "npm run dev --workspace=apps/speicher-wirtschaft",
+    "dev:pvshadow": "npm run dev --workspace=apps/pvshadow",
+    "dev:pvnavigator-web": "npm run dev --workspace=apps/pvnavigator-web",
+    "build": "npm run build --workspace=apps/speicher-physik",
+    "build:speicher-physik": "npm run build --workspace=apps/speicher-physik",
+    "build:speicher-wirtschaft": "npm run build --workspace=apps/speicher-wirtschaft",
+    "build:pvshadow": "npm run build --workspace=apps/pvshadow",
+    "build:pvnavigator-web": "npm run build --workspace=apps/pvnavigator-web",
+    "lint": "eslint"
+  },
+  "devDependencies": {
+    "eslint": "^9",
+    "eslint-config-next": "16.0.7",
+    "typescript": "^5"
+  }
+}
