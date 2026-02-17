@@ -185,12 +185,17 @@ export default function AnalysePage() {
     }
 
     async function geocode() {
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        fullAddress
-      )}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
-
-      const res = await fetch(url);
+      const res = await fetch("/api/geocode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: fullAddress }),
+      });
       const data = await res.json();
+
+      if (data.status === "REQUEST_DENIED" || data.status === "OVER_QUERY_LIMIT") {
+        console.error("[PVNavigator] Geocoding API error:", data.status, data.error_message);
+        return;
+      }
 
       if (data.results?.[0]) {
         const loc = data.results[0].geometry.location;
