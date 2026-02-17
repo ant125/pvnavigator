@@ -440,7 +440,7 @@ function NextStepsSection() {
         </button>
 
         <Link
-          href="/speicher/calculate"
+          href="/calculate"
           className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-medium transition-colors"
         >
           <svg

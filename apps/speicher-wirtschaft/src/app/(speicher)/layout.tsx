@@ -40,7 +40,7 @@ export default function SpeicherLayout({
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Logo / Brand */}
-            <Link href="/speicher" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                 <svg
                   className="w-5 h-5 text-white"
@@ -65,13 +65,13 @@ export default function SpeicherLayout({
             {/* Navigation */}
             <nav className="hidden sm:flex items-center gap-6">
               <Link
-                href="/speicher"
+                href="/"
                 className="text-sm text-slate-400 hover:text-slate-100 transition-colors"
               >
                 Übersicht
               </Link>
               <Link
-                href="/speicher/calculate"
+                href="/calculate"
                 className="text-sm text-slate-400 hover:text-slate-100 transition-colors"
               >
                 Rechner
@@ -81,7 +81,7 @@ export default function SpeicherLayout({
 
             {/* CTA Button */}
             <Link
-              href="/speicher/calculate"
+              href="/calculate"
               className="px-4 py-2 rounded-full bg-amber-500 hover:bg-amber-400 text-sm font-semibold text-slate-900 transition-colors"
             >
               Speicher berechnen
@@ -108,7 +108,7 @@ export default function SpeicherLayout({
               <span>Unabhängige PV-Analyse</span>
               <span className="text-slate-700">•</span>
               <Link
-                href="/speicher/technische-details"
+                href="/technische-details"
                 className="hover:text-slate-300 transition-colors"
               >
                 Technische Details zur Berechnung

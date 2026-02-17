@@ -12,14 +12,14 @@ import { usePathname } from "next/navigation";
  */
 export function SpeicherHeader() {
   const pathname = usePathname();
-  const isResultPage = pathname === "/speicher/result";
+  const isResultPage = pathname === "/result";
 
   return (
     <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo / Brand */}
-          <Link href="/speicher" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
               <svg
                 className="w-5 h-5 text-white"
@@ -44,13 +44,13 @@ export function SpeicherHeader() {
           {/* Navigation */}
           <nav className="hidden sm:flex items-center gap-6">
             <Link
-              href="/speicher"
+              href="/"
               className="text-sm text-slate-400 hover:text-slate-100 transition-colors"
             >
               Übersicht
             </Link>
             <Link
-              href="/speicher/calculate"
+              href="/calculate"
               className="text-sm text-slate-400 hover:text-slate-100 transition-colors"
             >
               Rechner
@@ -60,7 +60,7 @@ export function SpeicherHeader() {
 
           {/* CTA Button - dynamic based on route */}
           <Link
-            href="/speicher/calculate"
+            href="/calculate"
             className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
               isResultPage
                 ? "bg-slate-700 hover:bg-slate-600 text-slate-100"

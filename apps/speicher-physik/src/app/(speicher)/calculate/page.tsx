@@ -31,7 +31,7 @@ export default function SpeicherCalculatePage() {
   const [verifiedResult, setVerifiedResult] = useState<VerifiedResult | null>(
     null
   );
-  const [calculationLink, setCalculationLink] = useState<string>("/speicher/result");
+  const [calculationLink, setCalculationLink] = useState<string>("/result");
 
   // Form state
   const [formData, setFormData] = useState<Partial<SpeicherInput>>({
@@ -73,7 +73,7 @@ export default function SpeicherCalculatePage() {
     });
 
     setVerifiedResult(response.verifiedResult);
-    setCalculationLink("/speicher/result");
+    setCalculationLink("/result");
     setStep("results");
   };
 
@@ -83,7 +83,7 @@ export default function SpeicherCalculatePage() {
   const handleReset = () => {
     setStep("input");
     setVerifiedResult(null);
-    setCalculationLink("/speicher/result");
+    setCalculationLink("/result");
     setErrors([]);
   };
 

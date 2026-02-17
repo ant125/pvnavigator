@@ -75,7 +75,7 @@ function HeroSection() {
 
         {/* Primary CTA */}
         <Link
-          href="/speicher/calculate"
+          href="/calculate"
           className="inline-flex px-8 py-4 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-lg transition-colors"
         >
           Speicher berechnen
@@ -487,7 +487,7 @@ function FinalCTASection() {
 
         {/* Final CTA */}
         <Link
-          href="/speicher/calculate"
+          href="/calculate"
           className="inline-flex px-10 py-4 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-lg transition-colors"
         >
           Speicher jetzt berechnen
