@@ -56,6 +56,11 @@ export function calculateBatterySimulation(
   let selfConsumptionWithStorage = 0;
 
   const eff = spec.roundtripEfficiency;
+  const etaChg = Math.sqrt(eff);
+  const etaDis = Math.sqrt(eff);
+  const maxSoc = spec.depthOfDischarge;
+  const chargePowerKw = usableCapacityKwh * 0.5;
+  const dischargePowerKw = usableCapacityKwh * 0.5;
 
   for (let h = 0; h < HOURS_PER_YEAR; h++) {
     const pv = pvKwh[h];
@@ -65,22 +70,35 @@ export function calculateBatterySimulation(
     const deficit = Math.max(0, load - pv);
 
     if (surplus > 0) {
-      const chargeRoom = (1 - soc) * usableCapacityKwh;
-      const toCharge = Math.min(surplus, chargeRoom);
-      soc += toCharge / usableCapacityKwh;
-      totalCharged += toCharge;
+      const chargeRoom = (maxSoc - soc) * usableCapacityKwh;
+      const toChargeRaw = Math.min(
+        surplus,
+        Math.max(0, chargeRoom),
+        chargePowerKw
+      );
+      const toChargeStored = toChargeRaw * etaChg;
+      soc += toChargeStored / usableCapacityKwh;
+      totalCharged += toChargeRaw;
     }
 
     let fromBattery = 0;
     if (deficit > 0 && soc > 0) {
-      const maxDischarge = soc * usableCapacityKwh;
-      fromBattery = Math.min(deficit, maxDischarge);
-      soc -= fromBattery / usableCapacityKwh;
+      const maxDischargeRaw = soc * usableCapacityKwh;
+      const maxDischargeAvailable = maxDischargeRaw * etaDis;
+      fromBattery = Math.min(
+        deficit,
+        maxDischargeAvailable,
+        dischargePowerKw
+      );
+      soc -= fromBattery / etaDis / usableCapacityKwh;
       totalDischarged += fromBattery;
     }
 
+    if (soc < 0) soc = 0;
+    if (soc > maxSoc) soc = maxSoc;
+
     selfConsumptionWithStorage += directUse + fromBattery;
-    socHourly.push(Math.max(0, Math.min(1, soc)));
+    socHourly.push(soc);
   }
 
   const cyclesPerYear =
