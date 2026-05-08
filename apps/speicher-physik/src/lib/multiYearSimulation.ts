@@ -34,6 +34,10 @@ export type SimulateMultiYearSpeicherGrenzResult = {
   average: Record<number, number>;
 };
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function assertHourlyArray(arr: number[], label: string): void {
   if (arr.length !== HOURS_PER_YEAR) {
     throw new Error(
@@ -82,7 +86,10 @@ export async function simulateMultiYearSpeicherGrenz(
 
   const yearly: Record<number, Record<number, number>> = {};
 
+  let first = true;
   for (const year of years) {
+    if (!first) await sleep(300);
+    first = false;
     const pvProfile = await loadPVGISHourlyProfile({
       latitude: params.latitude,
       longitude: params.longitude,

@@ -29,6 +29,68 @@ export type LoadPVGISHourlyProductionResult = {
   };
 };
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const RETRYABLE_ERROR_CODES = new Set([
+  "ECONNRESET",
+  "ETIMEDOUT",
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "EAI_AGAIN",
+  "UND_ERR_SOCKET",
+  "UND_ERR_CONNECT_TIMEOUT",
+]);
+
+function isRetryableNetworkError(err: unknown): boolean {
+  if (err instanceof TypeError && /fetch failed/i.test(err.message)) {
+    return true;
+  }
+  if (typeof err === "object" && err !== null) {
+    const e = err as {
+      code?: string;
+      name?: string;
+      cause?: { code?: string; name?: string };
+    };
+    if (e.code && RETRYABLE_ERROR_CODES.has(e.code)) return true;
+    if (e.cause?.code && RETRYABLE_ERROR_CODES.has(e.cause.code)) return true;
+    if (e.name === "AbortError" || e.cause?.name === "ConnectTimeoutError") {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function fetchWithRetry(
+  url: string,
+  init?: RequestInit,
+  attempts: number = 3,
+  timeoutMs: number = 10_000
+): Promise<Response> {
+  const delays = [500, 1000];
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (err) {
+      lastErr = err;
+      if (i === attempts - 1 || !isRetryableNetworkError(err)) throw err;
+      const wait = delays[i] ?? delays[delays.length - 1];
+      console.warn(
+        `[PVGIS] fetch failed (attempt ${i + 1}/${attempts}), retry in ${wait}ms:`,
+        err instanceof Error ? err.message : err
+      );
+      await sleep(wait);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastErr;
+}
+
 function realignPvToBerlinLocal8760(
   raw: ReadonlyArray<{ time?: string; P?: number }>,
   anchorYear: number = 2018
@@ -113,7 +175,7 @@ export async function loadPVGISHourlyProduction(
   url.searchParams.set("pvtechchoice", "crystSi");
   url.searchParams.set("raddatabase", "PVGIS-SARAH2");
 
-  const res = await fetch(url.toString());
+  const res = await fetchWithRetry(url.toString());
   if (!res.ok) {
     throw new Error(`PVGIS request failed: ${res.status}`);
   }
