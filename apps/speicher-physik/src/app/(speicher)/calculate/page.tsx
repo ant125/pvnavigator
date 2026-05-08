@@ -6,6 +6,7 @@ import { SpeicherInput } from "../types/speicher";
 import { validateInput } from "../utils/validateInput";
 import {
   calculateHouseholdConsumptionAction,
+  type SpeicherGrenzPayload,
   type VerifiedResult,
 } from "./actions";
 
@@ -31,6 +32,8 @@ export default function SpeicherCalculatePage() {
   const [verifiedResult, setVerifiedResult] = useState<VerifiedResult | null>(
     null
   );
+  const [speicherGrenz, setSpeicherGrenz] =
+    useState<SpeicherGrenzPayload | null>(null);
   const [calculationLink, setCalculationLink] = useState<string>("/result");
 
   // Form state
@@ -73,6 +76,7 @@ export default function SpeicherCalculatePage() {
     });
 
     setVerifiedResult(response.verifiedResult);
+    setSpeicherGrenz(response.speicherGrenz);
     setCalculationLink("/result");
     setStep("results");
   };
@@ -83,6 +87,7 @@ export default function SpeicherCalculatePage() {
   const handleReset = () => {
     setStep("input");
     setVerifiedResult(null);
+    setSpeicherGrenz(null);
     setCalculationLink("/result");
     setErrors([]);
   };
@@ -408,6 +413,29 @@ export default function SpeicherCalculatePage() {
                 </div>
               </div>
             </div>
+
+            {speicherGrenz && (
+              <div className="mb-8">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Speichergröße (kWh)</th>
+                      <th>Eigenverbrauch (kWh)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...speicherGrenz.batterySizes]
+                      .sort((a, b) => a - b)
+                      .map((size) => (
+                        <tr key={size}>
+                          <td>{size}</td>
+                          <td>{Math.round(speicherGrenz.average[size])}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Recommendation */}
             <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-8">

@@ -10,9 +10,16 @@ export type { VerifiedResult };
 import { createUserLoadProfile } from "@bdew-profile/loader";
 import { loadPVGISHourlyProfile } from "@pvgis-adapter/core";
 import { calculateEigenverbrauch } from "@pv-core/calculations";
+import { simulateMultiYearSpeicherGrenz } from "@/lib/multiYearSimulation";
+
+export type SpeicherGrenzPayload = {
+  batterySizes: number[];
+  average: Record<number, number>;
+};
 
 export type HouseholdCalculationPayload = {
   verifiedResult: VerifiedResult;
+  speicherGrenz: SpeicherGrenzPayload;
 };
 
 export async function calculateHouseholdConsumptionAction(params: {
@@ -45,7 +52,20 @@ export async function calculateHouseholdConsumptionAction(params: {
     },
   };
 
+  const multiYear = await simulateMultiYearSpeicherGrenz({
+    annualConsumptionKWh: params.annualConsumptionKWh,
+    pvSystemKwP: params.pvSystemKwP,
+    latitude: params.latitude,
+    longitude: params.longitude,
+    tiltDeg: params.tiltDeg,
+    azimuthDeg: params.azimuthDeg,
+  });
+
   return {
     verifiedResult: setVerifiedResult(verifiedResult),
+    speicherGrenz: {
+      batterySizes: multiYear.batterySizes,
+      average: multiYear.average,
+    },
   };
 }
