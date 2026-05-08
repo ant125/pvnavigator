@@ -1,4 +1,8 @@
-# PVNavigator – Technische Berechnungsgrundlagen
+# Technische Details der Berechnung
+
+Diese Seite beschreibt die technischen Grundlagen der Berechnung.
+
+---
 
 ## 1. Überblick
 
@@ -283,3 +287,21 @@ Die tatsächliche Genauigkeit hängt stark davon ab,
 wie gut das Lastprofil dem realen Verbrauch entspricht.
 
 ➡️ Diese erweiterte Analyse ist in der Premium-Version verfügbar.
+
+---
+
+## 🔍 Transparenz
+
+Diese Berechnung basiert auf einem physikalischen Modell,
+
+das nachvollziehbar und reproduzierbar ist.
+
+Wir verwenden:
+
+- PVGIS-Daten (EU JRC)
+
+- BDEW Standardlastprofile
+
+- ein deterministisches Batteriesimulationsmodell
+
+👉 Es werden keine Marketing-Annahmen oder "geschönten Werte" verwendet.
