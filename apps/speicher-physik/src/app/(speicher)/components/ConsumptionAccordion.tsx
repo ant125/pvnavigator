@@ -5,7 +5,7 @@ import {
   BDEW_H0_PROFILES,
   type BdewProfileKey,
   formatWeight,
-} from "@bdew-profile/loader/chart";
+} from "../../../../../../packages/bdew-profile/src/chartData";
 
 /**
  * BDEW H0 Profile Chart - Always visible
