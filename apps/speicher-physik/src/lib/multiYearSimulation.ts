@@ -1,5 +1,4 @@
 import "server-only";
-import { createUserLoadProfile } from "@bdew-profile/loader";
 import { loadPVGISHourlyProfile } from "@pvgis-adapter/core";
 import {
   calculateBatterySimulation,
@@ -17,7 +16,7 @@ export const DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH: ReadonlyArray<number> =
   Array.from({ length: 26 }, (_, i) => i + 5);
 
 export type SimulateMultiYearSpeicherGrenzParams = {
-  annualConsumptionKWh: number;
+  loadKwh: number[];
   pvSystemKwP: number;
   latitude: number;
   longitude: number;
@@ -58,9 +57,9 @@ function assertHourlyArray(arr: number[], label: string): void {
 /**
  * Multi-year orchestration: runs `calculateBatterySimulation` for every
  * (year, batterySize) pair and aggregates `selfConsumptionWithStorage` per
- * battery size as the mean across years. Uses a single load profile generated
- * once via `createUserLoadProfile`. PVGIS data is fetched per year via the
- * existing adapter (year passed through `startYear`/`endYear`).
+ * battery size as the mean across years. Caller supplies the hourly load
+ * profile (8760h). PVGIS data is fetched per year via the existing adapter
+ * (year passed through `startYear`/`endYear`).
  */
 export async function simulateMultiYearSpeicherGrenz(
   params: SimulateMultiYearSpeicherGrenzParams
@@ -81,8 +80,8 @@ export async function simulateMultiYearSpeicherGrenz(
     throw new Error("batterySizes must contain only positive finite numbers");
   }
 
-  const load = createUserLoadProfile(params.annualConsumptionKWh);
-  assertHourlyArray(load, "load");
+  const loadKwh = params.loadKwh;
+  assertHourlyArray(loadKwh, "load");
 
   const yearly: Record<number, Record<number, number>> = {};
 
@@ -107,7 +106,7 @@ export async function simulateMultiYearSpeicherGrenz(
 
     const sizeMap: Record<number, number> = {};
     for (const size of batterySizes) {
-      const result = calculateBatterySimulation(load, pvProfile, size, spec);
+      const result = calculateBatterySimulation(loadKwh, pvProfile, size, spec);
       sizeMap[size] = result.selfConsumptionWithStorage;
     }
     yearly[year] = sizeMap;

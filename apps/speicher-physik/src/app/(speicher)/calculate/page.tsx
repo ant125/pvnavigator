@@ -45,6 +45,8 @@ export default function SpeicherCalculatePage() {
     azimuth: 180, // Default: South
     tilt: 30, // Default: 30°
     annualConsumptionKwh: undefined,
+    heatPumpEnabled: false,
+    heatPumpConsumptionKwh: undefined,
     hasExistingQuote: false,
   });
 
@@ -75,6 +77,8 @@ export default function SpeicherCalculatePage() {
       longitude: 11.576124,
       tiltDeg: formData.tilt as number,
       azimuthDeg: formData.azimuth as number,
+      heatPumpEnabled: formData.heatPumpEnabled === true,
+      heatPumpConsumptionKWh: formData.heatPumpConsumptionKwh,
     });
 
     setVerifiedResult(response.verifiedResult);
@@ -125,6 +129,30 @@ export default function SpeicherCalculatePage() {
   const recommendedEV = chart.data.find(
     (p) => p.size === recommendedSize
   )?.eigenverbrauch;
+
+  const totalConsumption =
+    (formData.annualConsumptionKwh ?? 0) +
+    (formData.heatPumpEnabled === true
+      ? formData.heatPumpConsumptionKwh ?? 0
+      : 0);
+
+  const eigenverbrauchOhneSpeicher =
+    verifiedResult?.energy.year.selfConsumptionWithoutStorage;
+  const eigenverbrauchMitSpeicher = recommendedEV;
+
+  const autarkieOhnePct =
+    totalConsumption > 0 &&
+    typeof eigenverbrauchOhneSpeicher === "number" &&
+    Number.isFinite(eigenverbrauchOhneSpeicher)
+      ? Math.round((eigenverbrauchOhneSpeicher / totalConsumption) * 100)
+      : null;
+
+  const autarkieMitPct =
+    totalConsumption > 0 &&
+    typeof eigenverbrauchMitSpeicher === "number" &&
+    Number.isFinite(eigenverbrauchMitSpeicher)
+      ? Math.round((eigenverbrauchMitSpeicher / totalConsumption) * 100)
+      : null;
 
   return (
     <div className="py-12 px-4">
@@ -257,7 +285,7 @@ export default function SpeicherCalculatePage() {
               {/* Annual Consumption */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-200">
-                  Jahresverbrauch (kWh) *
+                  Hausverbrauch (ohne Wärmepumpe) *
                 </label>
                 <input
                   type="number"
@@ -275,7 +303,62 @@ export default function SpeicherCalculatePage() {
                   placeholder="z.B. 4500"
                 />
                 <p className="text-xs text-slate-500">
-                  Ihr Stromverbrauch laut Jahresabrechnung.
+                  Bitte geben Sie hier nur den Haushaltsstromverbrauch ein – ohne
+                  Wärmepumpe.
+                </p>
+              </div>
+
+              {/* Heat pump */}
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="heatPumpEnabled"
+                    checked={formData.heatPumpEnabled === true}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        heatPumpEnabled: e.target.checked,
+                        ...(e.target.checked
+                          ? {}
+                          : { heatPumpConsumptionKwh: undefined }),
+                      })
+                    }
+                    className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-500"
+                  />
+                  <span className="text-sm font-medium text-slate-200">
+                    Wärmepumpe vorhanden
+                  </span>
+                </label>
+                {formData.heatPumpEnabled && (
+                  <div className="space-y-2 pl-7">
+                    <label className="block text-sm font-medium text-slate-200">
+                      Stromverbrauch Wärmepumpe (kWh/Jahr)
+                    </label>
+                    <input
+                      type="number"
+                      name="heatPumpConsumptionKwh"
+                      min="1"
+                      value={formData.heatPumpConsumptionKwh ?? ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          heatPumpConsumptionKwh:
+                            parseInt(e.target.value, 10) || undefined,
+                        })
+                      }
+                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors"
+                      placeholder="z. B. 5000"
+                    />
+                    <p className="text-xs text-slate-500">
+                      Falls vorhanden: separater Stromverbrauch Ihrer Wärmepumpe.
+                    </p>
+                  </div>
+                )}
+                <p className="text-xs text-slate-500">
+                  Viele Haushalte haben mit Wärmepumpe einen deutlich höheren
+                  Stromverbrauch im Winter. Diese wird hier separat
+                  berücksichtigt.
                 </p>
               </div>
 
@@ -318,7 +401,15 @@ export default function SpeicherCalculatePage() {
 
         {/* ========== CALCULATING STEP ========== */}
         {step === "calculating" && (
-          <div className="flex flex-col items-center justify-center py-20">
+          <div
+            className="items-center py-20"
+            style={{
+              minHeight: "100vh",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
             {/* Spinner */}
             <div className="relative mb-6">
               <div className="w-16 h-16 border-4 border-slate-700 rounded-full" />
@@ -410,6 +501,26 @@ export default function SpeicherCalculatePage() {
                     {formatKwh(recommendedEV)}
                   </p>
                 </div>
+                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <p className="text-xs text-slate-400 mb-1">
+                    Autarkie ohne Speicher:
+                  </p>
+                  <p className="text-2xl font-bold text-slate-300">
+                    {autarkieOhnePct !== null
+                      ? `${autarkieOhnePct} %`
+                      : PLACEHOLDER}
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <p className="text-xs text-slate-400 mb-1">
+                    Autarkie mit Speicher:
+                  </p>
+                  <p className="text-2xl font-bold text-emerald-400">
+                    {autarkieMitPct !== null
+                      ? `${autarkieMitPct} %`
+                      : PLACEHOLDER}
+                  </p>
+                </div>
               </div>
 
             </div>
@@ -434,8 +545,36 @@ export default function SpeicherCalculatePage() {
                     <div>Ausrichtung:</div>
                     <div>{formData.azimuth}°</div>
 
-                    <div>Verbrauch:</div>
-                    <div>{formData.annualConsumptionKwh} kWh/Jahr</div>
+                    <div>Hausverbrauch (ohne Wärmepumpe):</div>
+                    <div>
+                      {formData.annualConsumptionKwh} kWh/Jahr
+                    </div>
+
+                    {formData.heatPumpEnabled === true && (
+                      <>
+                        <div>Wärmepumpe:</div>
+                        <div>
+                          {formData.heatPumpConsumptionKwh} kWh/Jahr
+                        </div>
+                      </>
+                    )}
+
+                    <div>Gesamtverbrauch:</div>
+                    <div>
+                      <div>
+                        {(formData.annualConsumptionKwh ?? 0) +
+                          (formData.heatPumpEnabled === true
+                            ? formData.heatPumpConsumptionKwh ?? 0
+                            : 0)}{" "}
+                        kWh/Jahr
+                      </div>
+                      {formData.heatPumpEnabled === true && (
+                        <div className="text-xs text-slate-500 mt-1">
+                          davon Wärmepumpe: {formData.heatPumpConsumptionKwh}{" "}
+                          kWh
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -445,7 +584,7 @@ export default function SpeicherCalculatePage() {
 
                 <SpeicherChart data={chart.data} recommendedSize={recommendedSize} />
 
-                <div className="mt-6 text-slate-400 text-sm">
+                <div className="mt-6 mb-8 text-slate-400 text-sm">
                   Der zusätzliche Eigenverbrauch nimmt mit wachsender
                   Speichergröße deutlich ab. Ab einem bestimmten Punkt bringt
                   mehr Speicher nur noch geringen Mehrwert.
@@ -454,7 +593,7 @@ export default function SpeicherCalculatePage() {
             )}
 
             {/* Recommendation */}
-            <div className="mt-10 p-6 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+            <div className="mt-10 p-6 rounded-2xl bg-amber-500/5 border border-[#1e293b]">
               <h3 className="font-semibold text-amber-200 mb-2">
                 Unsere Einschätzung
               </h3>
@@ -469,11 +608,32 @@ export default function SpeicherCalculatePage() {
                 Bis zu dieser Größe steigt der Eigenverbrauch deutlich. Danach
                 liegt der zusätzliche Gewinn pro kWh Speicher unter 1%, wodurch
                 größere Speicher wirtschaftlich kaum noch Mehrwert bieten.
+                {formData.heatPumpEnabled === true && (
+                  <>
+                    <br />
+                    <br />
+                    Mit einer Wärmepumpe steigt Ihr Stromverbrauch deutlich –
+                    vor allem in den Wintermonaten.
+                    <br />
+                    <br />
+                    Da Ihre PV-Anlage hauptsächlich im Sommer Strom produziert,
+                    entsteht eine zeitliche Verschiebung zwischen Erzeugung und
+                    Verbrauch.
+                    <br />
+                    <br />
+                    Dadurch sinkt der direkte Eigenverbrauch, und ein größerer
+                    Speicher hilft, überschüssige Energie besser zu nutzen.
+                    <br />
+                    <br />
+                    → Deshalb empfehlen wir in Ihrem Fall eine größere
+                    Speicherkapazität.
+                  </>
+                )}
               </p>
             </div>
 
             {/* Disclaimer */}
-            <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/30 mb-8">
+            <div className="mt-8 p-4 rounded-xl bg-slate-800/30 border border-slate-700/30 mb-8">
               <p className="text-xs text-slate-500">
                 <strong className="text-slate-400">Hinweis:</strong> Dies ist
                 eine vereinfachte Ersteinschätzung auf Basis Ihrer Angaben. Die

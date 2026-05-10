@@ -25,6 +25,12 @@ export interface SpeicherInput {
   
   /** Annual electricity consumption in kWh */
   annualConsumptionKwh: number;
+
+  /** Optional: heat pump present */
+  heatPumpEnabled?: boolean;
+
+  /** Optional: annual heat pump electricity consumption (kWh) */
+  heatPumpConsumptionKwh?: number;
   
   /** User knows battery prices (optional checkbox) */
   hasCustomPrices: boolean;

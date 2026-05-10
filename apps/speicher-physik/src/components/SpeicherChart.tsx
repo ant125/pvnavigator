@@ -21,6 +21,18 @@ type Props = {
 };
 
 export default function SpeicherChart({ data, recommendedSize }: Props) {
+  const minYRaw = Math.min(...data.map((d) => d.eigenverbrauch));
+  const maxY = Math.max(...data.map((d) => d.eigenverbrauch));
+
+  const minY = Math.floor(minYRaw / 500) * 500;
+  const maxYRounded = Math.ceil(maxY / 500) * 500;
+
+  console.log("Chart data:", data);
+  console.log(
+    "Max eigenverbrauch:",
+    Math.max(...data.map((d) => d.eigenverbrauch))
+  );
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       <div className="w-full h-[420px]">
@@ -38,7 +50,14 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
             />
 
             <YAxis
-              domain={[2000, 4200]}
+              domain={[minY, maxYRounded]}
+              ticks={[
+                minY,
+                minY + 500,
+                minY + 1000,
+                minY + 1500,
+                maxYRounded,
+              ]}
               tick={{ fill: "#94a3b8", fontSize: 12 }}
               tickMargin={8}
             />

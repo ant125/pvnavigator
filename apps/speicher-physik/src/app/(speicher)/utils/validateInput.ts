@@ -31,6 +31,19 @@ export function validateInput(input: Partial<SpeicherInput>): {
     errors.push("Bitte geben Sie Ihren Jahresverbrauch ein.");
   }
 
+  if (input.heatPumpEnabled) {
+    const hp = input.heatPumpConsumptionKwh;
+    if (
+      hp === undefined ||
+      !Number.isFinite(hp) ||
+      hp <= 0
+    ) {
+      errors.push(
+        "Bitte geben Sie den jährlichen Stromverbrauch der Wärmepumpe ein."
+      );
+    }
+  }
+
   return {
     isValid: errors.length === 0,
     errors,
