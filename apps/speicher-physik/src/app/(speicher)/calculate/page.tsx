@@ -9,6 +9,8 @@ import {
   type SpeicherGrenzPayload,
   type VerifiedResult,
 } from "./actions";
+import { buildSpeicherChartData } from "@/lib/speicherChartData";
+import SpeicherChart from "@/components/SpeicherChart";
 
 /**
  * Speicher Calculator Page
@@ -79,6 +81,16 @@ export default function SpeicherCalculatePage() {
     setSpeicherGrenz(response.speicherGrenz);
     setCalculationLink("/result");
     setStep("results");
+
+    const verifiedResult = response.verifiedResult;
+    const speicherGrenz = response.speicherGrenz;
+    const chart = buildSpeicherChartData({
+      selfConsumptionWithoutStorage:
+        verifiedResult.energy.year.selfConsumptionWithoutStorage,
+      batterySizes: speicherGrenz.batterySizes,
+      average: speicherGrenz.average,
+    });
+    console.log(chart.data);
   };
 
   /**
@@ -91,6 +103,28 @@ export default function SpeicherCalculatePage() {
     setCalculationLink("/result");
     setErrors([]);
   };
+
+  const chart = buildSpeicherChartData({
+    selfConsumptionWithoutStorage:
+      speicherGrenz && verifiedResult
+        ? verifiedResult.energy.year.selfConsumptionWithoutStorage
+        : 0,
+    batterySizes: speicherGrenz?.batterySizes ?? [],
+    average: speicherGrenz?.average ?? {},
+  });
+
+  const recommendedSize = (() => {
+    for (let i = 1; i < chart.data.length; i++) {
+      if (chart.data[i].deltaEigenverbrauch < 50) {
+        return chart.data[i - 1].size;
+      }
+    }
+    return chart.data[chart.data.length - 1]?.size ?? 0;
+  })();
+
+  const recommendedEV = chart.data.find(
+    (p) => p.size === recommendedSize
+  )?.eigenverbrauch;
 
   return (
     <div className="py-12 px-4">
@@ -335,7 +369,7 @@ export default function SpeicherCalculatePage() {
                       Empfohlene Speichergröße
                     </p>
                     <p className="text-3xl font-bold text-amber-400">
-                      {PLACEHOLDER}
+                      {recommendedSize} kWh
                     </p>
                   </div>
                   <div className="w-14 h-14 rounded-xl bg-amber-500/10 flex items-center justify-center">
@@ -373,76 +407,69 @@ export default function SpeicherCalculatePage() {
                     Eigenverbrauch mit Speicher
                   </p>
                   <p className="text-2xl font-bold text-emerald-400">
-                    {PLACEHOLDER}
+                    {formatKwh(recommendedEV)}
                   </p>
                 </div>
               </div>
 
-              {/* Financials */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                  <p className="text-xs text-slate-400 mb-1">
-                    Jährliche Ersparnis
-                  </p>
-                  <p className="text-2xl font-bold text-emerald-400">
-                    {PLACEHOLDER}
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                  <p className="text-xs text-slate-400 mb-1">
-                    Geschätzte Kosten
-                  </p>
-                  <p className="text-2xl font-bold text-slate-300">
-                    {PLACEHOLDER}
-                  </p>
-                </div>
-              </div>
-
-              {/* Payback */}
-              <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-400">Amortisationszeit</p>
-                    <p className="text-3xl font-bold text-amber-400">
-                      {PLACEHOLDER}
-                    </p>
-                  </div>
-                  <div className="px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                    {PLACEHOLDER}
-                  </div>
-                </div>
-              </div>
             </div>
 
             {speicherGrenz && (
-              <div className="mb-8">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Speichergröße (kWh)</th>
-                      <th>Eigenverbrauch (kWh)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...speicherGrenz.batterySizes]
-                      .sort((a, b) => a - b)
-                      .map((size) => (
-                        <tr key={size}>
-                          <td>{size}</td>
-                          <td>{Math.round(speicherGrenz.average[size])}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <div className="bg-slate-900 rounded-xl p-6 mb-8 border border-slate-700/50">
+                  <div className="text-sm text-slate-400 mb-4">
+                    Ausgangsdaten
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-y-3 text-sm text-slate-300">
+                    <div>Adresse:</div>
+                    <div>{formData.address ?? "—"}</div>
+
+                    <div>PV-Anlage:</div>
+                    <div>{formData.pvSizeKwp} kWp</div>
+
+                    <div>Neigung:</div>
+                    <div>{formData.tilt}°</div>
+
+                    <div>Ausrichtung:</div>
+                    <div>{formData.azimuth}°</div>
+
+                    <div>Verbrauch:</div>
+                    <div>{formData.annualConsumptionKwh} kWh/Jahr</div>
+                  </div>
+                </div>
+
+                <h2 className="text-xl font-semibold mb-4">
+                  Eigenverbrauch vs Speichergröße
+                </h2>
+
+                <SpeicherChart data={chart.data} recommendedSize={recommendedSize} />
+
+                <div className="mt-6 text-slate-400 text-sm">
+                  Der zusätzliche Eigenverbrauch nimmt mit wachsender
+                  Speichergröße deutlich ab. Ab einem bestimmten Punkt bringt
+                  mehr Speicher nur noch geringen Mehrwert.
+                </div>
+              </>
             )}
 
             {/* Recommendation */}
-            <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-8">
+            <div className="mt-10 p-6 rounded-2xl bg-amber-500/5 border border-amber-500/20">
               <h3 className="font-semibold text-amber-200 mb-2">
                 Unsere Einschätzung
               </h3>
-              <p className="text-sm text-amber-100/80">{PLACEHOLDER}</p>
+              <p className="text-sm leading-relaxed text-slate-300">
+                Basierend auf Ihrer Anlage empfehlen wir eine Speichergröße von{" "}
+                <span className="text-amber-400 font-semibold">
+                  {recommendedSize} kWh
+                </span>
+                .
+                <br />
+                <br />
+                Bis zu dieser Größe steigt der Eigenverbrauch deutlich. Danach
+                liegt der zusätzliche Gewinn pro kWh Speicher unter 1%, wodurch
+                größere Speicher wirtschaftlich kaum noch Mehrwert bieten.
+              </p>
             </div>
 
             {/* Disclaimer */}
