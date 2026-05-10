@@ -1,10 +1,10 @@
 import "server-only";
-import { loadPVGISHourlyProfile } from "../../../../packages/pvgis-adapter/src/index";
+import { loadPVGISHourlyProfile } from "../../../../packages/pvgis-adapter";
 import {
   calculateBatterySimulation,
   DEFAULT_BATTERY_SPEC,
   type BatterySpec,
-} from "../../../../packages/pv-core/src/index";
+} from "../../../../packages/pv-core";
 
 const HOURS_PER_YEAR = 8760;
 

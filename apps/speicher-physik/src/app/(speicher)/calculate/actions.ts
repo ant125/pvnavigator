@@ -7,9 +7,9 @@ import {
 } from "./verifiedResultStore.server";
 
 export type { VerifiedResult };
-import { createUserLoadProfile } from "../../../../../../packages/bdew-profile/src/index";
-import { loadPVGISHourlyProfile } from "../../../../../../packages/pvgis-adapter/src/index";
-import { calculateEigenverbrauch } from "../../../../../../packages/pv-core/src/index";
+import { createUserLoadProfile } from "../../../../../../packages/bdew-profile";
+import { loadPVGISHourlyProfile } from "../../../../../../packages/pvgis-adapter";
+import { calculateEigenverbrauch } from "../../../../../../packages/pv-core";
 import { simulateMultiYearSpeicherGrenz } from "@/lib/multiYearSimulation";
 import { createHeatPumpComponent } from "@/load/heatpump";
 import { mergeLoadProfiles } from "@/load/merge";
