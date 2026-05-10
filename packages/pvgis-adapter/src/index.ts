@@ -181,33 +181,6 @@ export async function loadPVGISHourlyProduction(
   }
   const data = await res.json();
 
-  console.log("[PVGIS DEBUG] keys present:", {
-    hourly: Array.isArray(data?.outputs?.hourly),
-    hourly_fixed: Array.isArray(data?.outputs?.hourly_fixed),
-    time_series: Array.isArray(data?.outputs?.time_series?.data),
-  });
-
-  const branch = Array.isArray(data?.outputs?.hourly)
-    ? "hourly"
-    : Array.isArray(data?.outputs?.hourly_fixed)
-      ? "hourly_fixed"
-      : Array.isArray(data?.outputs?.time_series?.data)
-        ? "time_series"
-        : "none";
-
-  const arr =
-    data?.outputs?.hourly ??
-    data?.outputs?.hourly_fixed ??
-    data?.outputs?.time_series?.data ??
-    [];
-
-  console.log("[PVGIS DEBUG] branch:", branch);
-  console.log("[PVGIS DEBUG] length:", arr.length);
-  console.log(
-    "[PVGIS DEBUG] first 5 time:",
-    arr.slice(0, 5).map((r: { time?: string }) => r?.time)
-  );
-
   let hourly = data?.outputs?.hourly ?? data?.outputs?.hourly_fixed;
 
   if (Array.isArray(hourly)) {

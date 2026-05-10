@@ -104,16 +104,6 @@ export default function SpeicherCalculatePage() {
     setSpeicherGrenz(response.speicherGrenz);
     setCalculationLink("/result");
     setStep("results");
-
-    const verifiedResult = response.verifiedResult;
-    const speicherGrenz = response.speicherGrenz;
-    const chart = buildSpeicherChartData({
-      selfConsumptionWithoutStorage:
-        verifiedResult.energy.year.selfConsumptionWithoutStorage,
-      batterySizes: speicherGrenz.batterySizes,
-      average: speicherGrenz.average,
-    });
-    console.log(chart.data);
   };
 
   /**

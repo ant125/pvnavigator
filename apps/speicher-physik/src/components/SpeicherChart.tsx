@@ -27,12 +27,6 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
   const minY = Math.floor(minYRaw / 500) * 500;
   const maxYRounded = Math.ceil(maxY / 500) * 500;
 
-  console.log("Chart data:", data);
-  console.log(
-    "Max eigenverbrauch:",
-    Math.max(...data.map((d) => d.eigenverbrauch))
-  );
-
   return (
     <div className="w-full max-w-4xl mx-auto">
       <div className="w-full h-[420px]">
