@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { SpeicherInput } from "../types/speicher";
 import { validateInput } from "../utils/validateInput";
@@ -28,8 +28,16 @@ import SpeicherChart from "@/components/SpeicherChart";
 
 type Step = "input" | "calculating" | "results";
 
+const LOADING_STEPS = [
+  "Standort wird analysiert",
+  "Lastprofil wird berechnet",
+  "PV-Daten werden geladen",
+  "Speicher wird optimiert",
+] as const;
+
 export default function SpeicherCalculatePage() {
   const [step, setStep] = useState<Step>("input");
+  const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
   const [verifiedResult, setVerifiedResult] = useState<VerifiedResult | null>(
     null
@@ -53,6 +61,17 @@ export default function SpeicherCalculatePage() {
   const PLACEHOLDER = "—";
   const formatKwh = (value: number | null | undefined) =>
     typeof value === "number" ? `${value.toFixed(0)} kWh` : PLACEHOLDER;
+
+  useEffect(() => {
+    if (step !== "calculating") return;
+    setLoadingStepIndex(0);
+    const timer = setInterval(() => {
+      setLoadingStepIndex((i) =>
+        i < LOADING_STEPS.length - 1 ? i + 1 : i
+      );
+    }, 800);
+    return () => clearInterval(timer);
+  }, [step]);
 
   /**
    * Handle form submission
@@ -152,6 +171,21 @@ export default function SpeicherCalculatePage() {
     typeof eigenverbrauchMitSpeicher === "number" &&
     Number.isFinite(eigenverbrauchMitSpeicher)
       ? Math.round((eigenverbrauchMitSpeicher / totalConsumption) * 100)
+      : null;
+
+  const deltaEigenverbrauch =
+    typeof eigenverbrauchMitSpeicher === "number" &&
+    Number.isFinite(eigenverbrauchMitSpeicher) &&
+    typeof eigenverbrauchOhneSpeicher === "number" &&
+    Number.isFinite(eigenverbrauchOhneSpeicher)
+      ? Math.round(
+          eigenverbrauchMitSpeicher - eigenverbrauchOhneSpeicher
+        )
+      : null;
+
+  const deltaAutarkie =
+    autarkieMitPct !== null && autarkieOhnePct !== null
+      ? Math.round(autarkieMitPct - autarkieOhnePct)
       : null;
 
   return (
@@ -418,9 +452,49 @@ export default function SpeicherCalculatePage() {
             <h2 className="text-xl font-semibold text-slate-100 mb-2">
               Berechnung läuft...
             </h2>
-            <p className="text-slate-400 text-sm">
-              Wir analysieren Ihre Daten.
+            <p className="text-slate-400 text-sm text-center max-w-md px-4 mb-6">
+              Wir analysieren Ihre Daten… Das dauert nur wenige Sekunden.
             </p>
+            <ul className="flex flex-col gap-2 w-full max-w-sm px-4">
+              {LOADING_STEPS.map((label, i) => {
+                if (i < loadingStepIndex) {
+                  return (
+                    <li
+                      key={label}
+                      className="text-sm flex items-center gap-2 justify-center"
+                      style={{ color: "#22c55e" }}
+                    >
+                      <span aria-hidden>✔</span>
+                      <span>{label}</span>
+                    </li>
+                  );
+                }
+                if (i === loadingStepIndex) {
+                  return (
+                    <li
+                      key={label}
+                      className="text-sm flex items-center gap-2 justify-center font-medium text-slate-100"
+                    >
+                      <span
+                        className="inline-block w-3.5 h-3.5 shrink-0 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"
+                        aria-hidden
+                      />
+                      <span>{label}</span>
+                    </li>
+                  );
+                }
+                return (
+                  <li
+                    key={label}
+                    className="text-sm flex items-center gap-2 justify-center"
+                    style={{ color: "#64748b" }}
+                  >
+                    <span className="w-3.5 shrink-0" aria-hidden />
+                    <span>{label}</span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         )}
 
@@ -500,6 +574,15 @@ export default function SpeicherCalculatePage() {
                   <p className="text-2xl font-bold text-emerald-400">
                     {formatKwh(recommendedEV)}
                   </p>
+                  {deltaEigenverbrauch !== null && (
+                    <p
+                      className="text-sm mt-1 font-medium"
+                      style={{ color: "#22c55e" }}
+                    >
+                      ({deltaEigenverbrauch >= 0 ? "+" : ""}
+                      {deltaEigenverbrauch} kWh)
+                    </p>
+                  )}
                 </div>
                 <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
                   <p className="text-xs text-slate-400 mb-1">
@@ -520,6 +603,15 @@ export default function SpeicherCalculatePage() {
                       ? `${autarkieMitPct} %`
                       : PLACEHOLDER}
                   </p>
+                  {deltaAutarkie !== null && (
+                    <p
+                      className="text-sm mt-1 font-medium"
+                      style={{ color: "#22c55e" }}
+                    >
+                      ({deltaAutarkie >= 0 ? "+" : ""}
+                      {deltaAutarkie}%)
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -598,35 +690,104 @@ export default function SpeicherCalculatePage() {
                 Unsere Einschätzung
               </h3>
               <p className="text-sm leading-relaxed text-slate-300">
-                Basierend auf Ihrer Anlage empfehlen wir eine Speichergröße von{" "}
-                <span className="text-amber-400 font-semibold">
-                  {recommendedSize} kWh
-                </span>
-                .
-                <br />
-                <br />
-                Bis zu dieser Größe steigt der Eigenverbrauch deutlich. Danach
-                liegt der zusätzliche Gewinn pro kWh Speicher unter 1%, wodurch
-                größere Speicher wirtschaftlich kaum noch Mehrwert bieten.
-                {formData.heatPumpEnabled === true && (
+                {formData.heatPumpEnabled === true ? (
                   <>
+                    Basierend auf Ihrer Anlage empfehlen wir eine
+                    Speichergröße von{" "}
+                    <span className="text-amber-400 font-semibold">
+                      {recommendedSize} kWh
+                    </span>
+                    .
                     <br />
                     <br />
-                    Mit einer Wärmepumpe steigt Ihr Stromverbrauch deutlich –
-                    vor allem in den Wintermonaten.
+                    {deltaEigenverbrauch !== null && (
+                      <>
+                        Mit diesem Speicher können Sie Ihren Eigenverbrauch um
+                        etwa {Math.round(deltaEigenverbrauch)} kWh pro Jahr
+                        erhöhen.
+                        <br />
+                        <br />
+                      </>
+                    )}
+                    Durch die Wärmepumpe steigt Ihr Stromverbrauch vor allem in
+                    den Wintermonaten, wenn Ihre PV-Anlage weniger Strom
+                    erzeugt.
                     <br />
                     <br />
-                    Da Ihre PV-Anlage hauptsächlich im Sommer Strom produziert,
-                    entsteht eine zeitliche Verschiebung zwischen Erzeugung und
-                    Verbrauch.
+                    Ein Speicher hilft, diesen Unterschied auszugleichen und
+                    mehr Solarstrom selbst zu nutzen.
                     <br />
                     <br />
-                    Dadurch sinkt der direkte Eigenverbrauch, und ein größerer
-                    Speicher hilft, überschüssige Energie besser zu nutzen.
+                    Ab einer bestimmten Größe bringt ein größerer Speicher nur
+                    noch wenig zusätzlichen Nutzen.
                     <br />
                     <br />
-                    → Deshalb empfehlen wir in Ihrem Fall eine größere
-                    Speicherkapazität.
+                    Dieser Bericht enthält keine wirtschaftliche Bewertung.
+                    <br />
+                    <br />
+                    Es werden weder Investitionskosten noch Strompreise
+                    berücksichtigt.
+                    <br />
+                    <br />
+                    Die Empfehlung basiert ausschließlich auf einer
+                    physikalischen Betrachtung des Eigenverbrauchs.
+                    <br />
+                    <br />
+                    Ab dieser Größe bringt jeder zusätzliche kWh Speicher
+                    weniger als 1 % zusätzlichen Eigenverbrauch.
+                    <br />
+                    <br />
+                    Ab einem bestimmten Punkt steigt der zusätzliche Nutzen pro
+                    weiterem kWh nur noch sehr gering (Plateau-Effekt).
+                  </>
+                ) : (
+                  <>
+                    Basierend auf Ihrer Anlage empfehlen wir eine
+                    Speichergröße von{" "}
+                    <span className="text-amber-400 font-semibold">
+                      {recommendedSize} kWh
+                    </span>
+                    .
+                    <br />
+                    <br />
+                    {deltaEigenverbrauch !== null && (
+                      <>
+                        Mit diesem Speicher können Sie Ihren Eigenverbrauch um
+                        etwa {Math.round(deltaEigenverbrauch)} kWh pro Jahr
+                        erhöhen.
+                        <br />
+                        <br />
+                      </>
+                    )}
+                    Ihre PV-Anlage erzeugt Strom vor allem tagsüber, während ein
+                    Teil Ihres Verbrauchs in den Abend fällt.
+                    <br />
+                    <br />
+                    Ein Speicher hilft, überschüssigen Solarstrom zu speichern
+                    und später im Haushalt zu nutzen.
+                    <br />
+                    <br />
+                    Ab einer bestimmten Größe bringt ein größerer Speicher nur
+                    noch wenig zusätzlichen Nutzen.
+                    <br />
+                    <br />
+                    Dieser Bericht enthält keine wirtschaftliche Bewertung.
+                    <br />
+                    <br />
+                    Es werden weder Investitionskosten noch Strompreise
+                    berücksichtigt.
+                    <br />
+                    <br />
+                    Die Empfehlung basiert ausschließlich auf einer
+                    physikalischen Betrachtung des Eigenverbrauchs.
+                    <br />
+                    <br />
+                    Ab dieser Größe bringt jeder zusätzliche kWh Speicher
+                    weniger als 1 % zusätzlichen Eigenverbrauch.
+                    <br />
+                    <br />
+                    Ab einem bestimmten Punkt steigt der zusätzliche Nutzen pro
+                    weiterem kWh nur noch sehr gering (Plateau-Effekt).
                   </>
                 )}
               </p>
