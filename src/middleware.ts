@@ -3,11 +3,12 @@ import type { NextRequest } from "next/server";
 
 /**
  * Middleware for subdomain-based routing
- * 
+ *
  * Routes requests based on hostname:
- * - speicher.pvnavigator.de → /speicher/*
+ * - speicher.pvnavigator.de → no rewrite (speicher-physik uses /, /calculate, …)
+ * - other "speicher" hosts (e.g. speicher.localhost) → /speicher/* for legacy monolith
  * - pvnavigator.de → /*(main app)
- * 
+ *
  * This allows the Speicher module to have its own subdomain
  * while sharing the same codebase and deployment.
  * 
@@ -46,8 +47,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Route speicher subdomain to /speicher/* routes
+  // Route speicher subdomain to /speicher/* routes (legacy monolith paths only)
   if (subdomain === "speicher") {
+    const hostWithoutPort = hostname.split(":")[0]?.toLowerCase() ?? "";
+    if (hostWithoutPort === "speicher.pvnavigator.de") {
+      return NextResponse.next();
+    }
+
     // Don't rewrite if already on a speicher path
     if (url.pathname.startsWith("/speicher")) {
       return NextResponse.next();
