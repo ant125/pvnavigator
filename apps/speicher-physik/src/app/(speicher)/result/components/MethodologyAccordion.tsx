@@ -15,7 +15,7 @@ export function MethodologyAccordion() {
   };
 
   return (
-    <section className="p-5 rounded-xl bg-slate-800/20 border border-slate-700/40">
+    <section className="p-5 rounded-xl bg-slate-800/20 border border-slate-700/40 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
       {/* Header */}
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-slate-200">

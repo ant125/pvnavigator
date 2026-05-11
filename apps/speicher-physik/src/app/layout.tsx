@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SpeicherShell } from "./(speicher)/components/SpeicherShell";
 
 export const metadata: Metadata = {
   title: "PV Speicher Rechner | PVNavigator",
@@ -14,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="de">
       <body className="antialiased">
-        {children}
+        <SpeicherShell>{children}</SpeicherShell>
       </body>
     </html>
   );

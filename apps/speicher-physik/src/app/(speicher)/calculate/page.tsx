@@ -55,7 +55,6 @@ export default function SpeicherCalculatePage() {
     annualConsumptionKwh: undefined,
     heatPumpEnabled: false,
     heatPumpConsumptionKwh: undefined,
-    hasExistingQuote: false,
   });
 
   const PLACEHOLDER = "—";
@@ -187,7 +186,7 @@ export default function SpeicherCalculatePage() {
             {/* Header */}
             <div className="text-center mb-8">
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-2">
-                Speicher-Rechner
+                SpeicherGrenze – Ihre Analyse
               </h1>
               <p className="text-slate-400">
                 Geben Sie Ihre Daten ein und erhalten Sie eine erste Einschätzung.
@@ -227,7 +226,7 @@ export default function SpeicherCalculatePage() {
                       pvSizeKwp: parseFloat(e.target.value) || undefined,
                     })
                   }
-                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
                   placeholder="z.B. 10"
                 />
                 <p className="text-xs text-slate-500">
@@ -246,7 +245,7 @@ export default function SpeicherCalculatePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, address: e.target.value })
                   }
-                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
                   placeholder="z.B. München oder 80331"
                 />
                 <p className="text-xs text-slate-500">
@@ -269,7 +268,7 @@ export default function SpeicherCalculatePage() {
                         azimuth: parseInt(e.target.value),
                       })
                     }
-                    className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors"
+                    className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
                   >
                     <option value={0}>Nord (0°)</option>
                     <option value={45}>Nordost (45°)</option>
@@ -292,7 +291,7 @@ export default function SpeicherCalculatePage() {
                     onChange={(e) =>
                       setFormData({ ...formData, tilt: parseInt(e.target.value) })
                     }
-                    className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors"
+                    className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
                   >
                     <option value={0}>Flachdach (0°)</option>
                     <option value={15}>15°</option>
@@ -323,7 +322,7 @@ export default function SpeicherCalculatePage() {
                         parseInt(e.target.value) || undefined,
                     })
                   }
-                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors"
+                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
                   placeholder="z.B. 4500"
                 />
                 <p className="text-xs text-slate-500">
@@ -348,7 +347,7 @@ export default function SpeicherCalculatePage() {
                           : { heatPumpConsumptionKwh: undefined }),
                       })
                     }
-                    className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-500"
+                    className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-green-500 focus:ring-green-500"
                   />
                   <span className="text-sm font-medium text-slate-200">
                     Wärmepumpe vorhanden
@@ -371,7 +370,7 @@ export default function SpeicherCalculatePage() {
                             parseInt(e.target.value, 10) || undefined,
                         })
                       }
-                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors"
+                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
                       placeholder="z. B. 5000"
                     />
                     <p className="text-xs text-slate-500">
@@ -386,30 +385,11 @@ export default function SpeicherCalculatePage() {
                 </p>
               </div>
 
-              {/* Has existing quote */}
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="hasQuote"
-                  checked={formData.hasExistingQuote}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      hasExistingQuote: e.target.checked,
-                    })
-                  }
-                  className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-500"
-                />
-                <label htmlFor="hasQuote" className="text-sm text-slate-300">
-                  Ich habe bereits ein Angebot für einen Stromspeicher
-                </label>
-              </div>
-
               {/* Submit */}
               <div className="pt-4">
                 <button
                   type="submit"
-                  className="w-full py-4 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold transition-colors"
+                  className="w-full py-4 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 active:scale-[0.98] transition-all duration-200 hover:scale-[1.03] shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_20px_rgba(34,197,94,0.25)] text-white font-semibold"
                 >
                   Berechnung starten
                 </button>
@@ -437,7 +417,7 @@ export default function SpeicherCalculatePage() {
             {/* Spinner */}
             <div className="relative mb-6">
               <div className="w-16 h-16 border-4 border-slate-700 rounded-full" />
-              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-amber-500 rounded-full border-t-transparent animate-spin" />
+              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-green-500 rounded-full border-t-transparent animate-spin" />
             </div>
             <h2 className="text-xl font-semibold text-slate-100 mb-2">
               Berechnung läuft...
@@ -451,8 +431,7 @@ export default function SpeicherCalculatePage() {
                   return (
                     <li
                       key={label}
-                      className="text-sm flex items-center gap-2 justify-center"
-                      style={{ color: "#22c55e" }}
+                      className="text-sm flex items-center gap-2 justify-center text-emerald-500"
                     >
                       <span aria-hidden>✔</span>
                       <span>{label}</span>
@@ -466,7 +445,7 @@ export default function SpeicherCalculatePage() {
                       className="text-sm flex items-center gap-2 justify-center font-medium text-slate-100"
                     >
                       <span
-                        className="inline-block w-3.5 h-3.5 shrink-0 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"
+                        className="inline-block w-3.5 h-3.5 shrink-0 border-2 border-green-500 border-t-transparent rounded-full animate-spin"
                         aria-hidden
                       />
                       <span>{label}</span>
@@ -493,9 +472,9 @@ export default function SpeicherCalculatePage() {
           <>
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/20 mb-4">
                 <svg
-                  className="w-4 h-4 text-emerald-400"
+                  className="w-4 h-4 text-emerald-400 opacity-90"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -505,7 +484,7 @@ export default function SpeicherCalculatePage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="text-xs text-emerald-300 font-medium">
+                <span className="text-xs text-emerald-400 opacity-90 font-medium">
                   Analyse abgeschlossen
                 </span>
               </div>
@@ -517,19 +496,19 @@ export default function SpeicherCalculatePage() {
             {/* Result Cards */}
             <div className="space-y-4 mb-8">
               {/* Recommended Size */}
-              <div className="p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50">
+              <div className="p-6 rounded-2xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-slate-400">
                       Empfohlene Speichergröße
                     </p>
-                    <p className="text-3xl font-bold text-amber-400">
+                    <p className="text-3xl font-bold text-emerald-400 opacity-90">
                       {recommendedSize} kWh
                     </p>
                   </div>
-                  <div className="w-14 h-14 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-xl bg-emerald-400/10 flex items-center justify-center">
                     <svg
-                      className="w-7 h-7 text-amber-400"
+                      className="w-7 h-7 text-emerald-400 opacity-90"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -547,7 +526,7 @@ export default function SpeicherCalculatePage() {
 
               {/* Self Consumption */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
                   <p className="text-xs text-slate-400 mb-1">
                     Eigenverbrauch ohne Speicher (jährlich)
                   </p>
@@ -557,24 +536,21 @@ export default function SpeicherCalculatePage() {
                     )}
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
                   <p className="text-xs text-slate-400 mb-1">
                     Eigenverbrauch mit Speicher
                   </p>
-                  <p className="text-2xl font-bold text-emerald-400">
+                  <p className="text-2xl font-bold text-emerald-400 opacity-90">
                     {formatKwh(recommendedEV)}
                   </p>
                   {deltaEigenverbrauch !== null && (
-                    <p
-                      className="text-sm mt-1 font-medium"
-                      style={{ color: "#22c55e" }}
-                    >
+                    <p className="text-sm mt-1 font-medium text-emerald-500">
                       ({deltaEigenverbrauch >= 0 ? "+" : ""}
                       {deltaEigenverbrauch} kWh)
                     </p>
                   )}
                 </div>
-                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
                   <p className="text-xs text-slate-400 mb-1">
                     Autarkie ohne Speicher:
                   </p>
@@ -584,20 +560,17 @@ export default function SpeicherCalculatePage() {
                       : PLACEHOLDER}
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
                   <p className="text-xs text-slate-400 mb-1">
                     Autarkie mit Speicher:
                   </p>
-                  <p className="text-2xl font-bold text-emerald-400">
+                  <p className="text-2xl font-bold text-emerald-400 opacity-90">
                     {autarkieMitPct !== null
                       ? `${autarkieMitPct} %`
                       : PLACEHOLDER}
                   </p>
                   {deltaAutarkie !== null && (
-                    <p
-                      className="text-sm mt-1 font-medium"
-                      style={{ color: "#22c55e" }}
-                    >
+                    <p className="text-sm mt-1 font-medium text-emerald-500">
                       ({deltaAutarkie >= 0 ? "+" : ""}
                       {deltaAutarkie}%)
                     </p>
@@ -609,7 +582,7 @@ export default function SpeicherCalculatePage() {
 
             {speicherGrenz && (
               <>
-                <div className="bg-slate-900 rounded-xl p-6 mb-8 border border-slate-700/50">
+                <div className="bg-[#0F1620] rounded-xl p-6 mb-8 border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
                   <div className="text-sm text-slate-400 mb-4">
                     Ausgangsdaten
                   </div>
@@ -675,20 +648,19 @@ export default function SpeicherCalculatePage() {
             )}
 
             {/* Recommendation */}
-            <div className="mt-10 p-6 rounded-2xl bg-amber-500/5 border border-[#1e293b]">
-              <h3 className="font-semibold text-amber-200 mb-2">
+            <div className="mt-10 p-6 rounded-2xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
+              <h3 className="font-semibold text-emerald-400 opacity-90 mb-2">
                 Unsere Einschätzung
               </h3>
-              <p className="text-sm leading-relaxed text-slate-300">
+              <p className="text-sm leading-6 text-slate-300 max-w-[680px]">
                 {formData.heatPumpEnabled === true ? (
                   <>
                     Basierend auf Ihrer Anlage empfehlen wir eine
                     Speichergröße von{" "}
-                    <span className="text-amber-400 font-semibold">
+                    <span className="text-emerald-400 opacity-90 font-semibold">
                       {recommendedSize} kWh
                     </span>
                     .
-                    <br />
                     <br />
                     {deltaEigenverbrauch !== null && (
                       <>
@@ -696,36 +668,28 @@ export default function SpeicherCalculatePage() {
                         etwa {Math.round(deltaEigenverbrauch)} kWh pro Jahr
                         erhöhen.
                         <br />
-                        <br />
                       </>
                     )}
                     Durch die Wärmepumpe steigt Ihr Stromverbrauch vor allem in
                     den Wintermonaten, wenn Ihre PV-Anlage weniger Strom
                     erzeugt.
                     <br />
-                    <br />
                     Ein Speicher hilft, diesen Unterschied auszugleichen und
                     mehr Solarstrom selbst zu nutzen.
-                    <br />
                     <br />
                     Ab einer bestimmten Größe bringt ein größerer Speicher nur
                     noch wenig zusätzlichen Nutzen.
                     <br />
-                    <br />
                     Dieser Bericht enthält keine wirtschaftliche Bewertung.
-                    <br />
                     <br />
                     Es werden weder Investitionskosten noch Strompreise
                     berücksichtigt.
                     <br />
-                    <br />
                     Die Empfehlung basiert ausschließlich auf einer
                     physikalischen Betrachtung des Eigenverbrauchs.
                     <br />
-                    <br />
                     Ab dieser Größe bringt jeder zusätzliche kWh Speicher
                     weniger als 1 % zusätzlichen Eigenverbrauch.
-                    <br />
                     <br />
                     Ab einem bestimmten Punkt steigt der zusätzliche Nutzen pro
                     weiterem kWh nur noch sehr gering (Plateau-Effekt).
@@ -734,11 +698,10 @@ export default function SpeicherCalculatePage() {
                   <>
                     Basierend auf Ihrer Anlage empfehlen wir eine
                     Speichergröße von{" "}
-                    <span className="text-amber-400 font-semibold">
+                    <span className="text-emerald-400 opacity-90 font-semibold">
                       {recommendedSize} kWh
                     </span>
                     .
-                    <br />
                     <br />
                     {deltaEigenverbrauch !== null && (
                       <>
@@ -746,35 +709,27 @@ export default function SpeicherCalculatePage() {
                         etwa {Math.round(deltaEigenverbrauch)} kWh pro Jahr
                         erhöhen.
                         <br />
-                        <br />
                       </>
                     )}
                     Ihre PV-Anlage erzeugt Strom vor allem tagsüber, während ein
                     Teil Ihres Verbrauchs in den Abend fällt.
                     <br />
-                    <br />
                     Ein Speicher hilft, überschüssigen Solarstrom zu speichern
                     und später im Haushalt zu nutzen.
-                    <br />
                     <br />
                     Ab einer bestimmten Größe bringt ein größerer Speicher nur
                     noch wenig zusätzlichen Nutzen.
                     <br />
-                    <br />
                     Dieser Bericht enthält keine wirtschaftliche Bewertung.
-                    <br />
                     <br />
                     Es werden weder Investitionskosten noch Strompreise
                     berücksichtigt.
                     <br />
-                    <br />
                     Die Empfehlung basiert ausschließlich auf einer
                     physikalischen Betrachtung des Eigenverbrauchs.
                     <br />
-                    <br />
                     Ab dieser Größe bringt jeder zusätzliche kWh Speicher
                     weniger als 1 % zusätzlichen Eigenverbrauch.
-                    <br />
                     <br />
                     Ab einem bestimmten Punkt steigt der zusätzliche Nutzen pro
                     weiterem kWh nur noch sehr gering (Plateau-Effekt).
@@ -784,7 +739,7 @@ export default function SpeicherCalculatePage() {
             </div>
 
             {/* Disclaimer */}
-            <div className="mt-8 p-4 rounded-xl bg-slate-800/30 border border-slate-700/30 mb-8">
+            <div className="mt-8 p-4 rounded-xl bg-[#0F1620] border border-white/5 mb-8 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
               <p className="text-xs text-slate-500">
                 <strong className="text-slate-400">Hinweis:</strong> Dies ist
                 eine vereinfachte Ersteinschätzung auf Basis Ihrer Angaben. Die
@@ -799,13 +754,13 @@ export default function SpeicherCalculatePage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleReset}
-                className="flex-1 py-3 rounded-full border border-slate-600 text-slate-300 hover:border-slate-400 font-medium transition-colors"
+                className="flex-1 py-3 rounded-full border border-white/10 bg-transparent text-white/80 hover:bg-white/5 hover:border-white/20 hover:text-white transition-all duration-200 hover:shadow-[0_0_12px_rgba(255,255,255,0.05)] font-medium"
               >
                 Neue Berechnung
               </button>
               <Link
                 href={calculationLink}
-                className="flex-1 py-3 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-center transition-colors"
+                className="flex-1 py-3 rounded-full text-center bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 active:scale-[0.98] transition-all duration-200 hover:scale-[1.03] shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_20px_rgba(34,197,94,0.25)] text-white font-semibold"
               >
                 Detaillierte Analyse ansehen
               </Link>

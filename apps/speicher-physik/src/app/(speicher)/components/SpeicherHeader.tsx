@@ -20,7 +20,7 @@ export function SpeicherHeader() {
         <div className="flex items-center justify-between">
           {/* Logo / Brand */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center">
               <svg
                 className="w-5 h-5 text-white"
                 fill="none"
@@ -61,10 +61,10 @@ export function SpeicherHeader() {
           {/* CTA Button - dynamic based on route */}
           <Link
             href="/calculate"
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
               isResultPage
                 ? "bg-slate-700 hover:bg-slate-600 text-slate-100"
-                : "bg-amber-500 hover:bg-amber-400 text-slate-900"
+                : "inline-flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 active:scale-[0.98] hover:scale-[1.03] shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_20px_rgba(34,197,94,0.25)] text-white transition-all duration-200"
             }`}
           >
             {isResultPage ? "Annahmen ändern" : "Speicher berechnen"}

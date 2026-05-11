@@ -1,0 +1,95 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
+
+const btnEnergy =
+  "inline-flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 active:scale-[0.98] transition-all duration-200 hover:scale-[1.03] shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_20px_rgba(34,197,94,0.25)] text-white font-semibold";
+
+export function SpeicherShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isSimplifiedNav =
+    pathname === "/" ||
+    pathname === "/calculate" ||
+    pathname?.startsWith("/calculate/");
+
+  return (
+    <div className="min-h-screen bg-[#0B0F14] text-slate-50">
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0B0F14]/80 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <span className="font-semibold text-white">
+                  {isSimplifiedNav ? "SpeicherGrenze" : "PV Speicher"}
+                </span>
+                <span className="text-xs text-white/50 ml-2">by PVNavigator</span>
+              </div>
+            </Link>
+
+            {!isSimplifiedNav ? (
+              <nav className="hidden sm:flex items-center gap-6">
+                <Link
+                  href="/"
+                  className="text-sm text-white/50 hover:text-white transition-colors"
+                >
+                  Übersicht
+                </Link>
+                <Link
+                  href="/calculate"
+                  className="text-sm text-white/50 hover:text-white transition-colors"
+                >
+                  Rechner
+                </Link>
+              </nav>
+            ) : null}
+
+            <Link href="/calculate" className={`${btnEnergy} px-4 py-2 rounded-full text-sm`}>
+              Speicher berechnen
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <main>{children}</main>
+
+      <footer className="border-t border-white/5 py-6 mt-auto bg-[#0B0F14]">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <Link
+              href="/"
+              className="text-xs text-white/40 hover:text-white/60 transition-colors"
+            >
+              PVNavigator.de
+            </Link>
+            <Link
+              href="/technische-details"
+              className="text-xs text-white/40 hover:text-white/60 transition-colors sm:text-right"
+            >
+              Technische Details zur Berechnung
+            </Link>
+          </div>
+          <p className="mt-4 text-xs text-white/40 text-center sm:text-left">
+            8760h Simulation • Physics-based model • No sales logic
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+}

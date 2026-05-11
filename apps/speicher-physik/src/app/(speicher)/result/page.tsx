@@ -4,6 +4,9 @@ import { MethodologyAccordion } from "./components/MethodologyAccordion";
 
 const PLACEHOLDER = "—";
 
+const cardLift =
+  "transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg";
+
 export default function SpeicherResultPage() {
   const verifiedResult = getVerifiedResult();
   const selfConsumption =
@@ -37,7 +40,9 @@ function SummarySection({
         Ergebnis für Ihr Haus – auf einen Blick
       </h1>
 
-      <div className="p-8 rounded-2xl bg-slate-800/50 border border-slate-700/50 mb-6">
+      <div
+        className={`p-8 rounded-2xl bg-slate-800/50 border border-slate-700/50 mb-6 ${cardLift}`}
+      >
         <div className="space-y-3">
           <p className="text-lg text-slate-200 leading-relaxed">
             Ein Stromspeicher ist für Ihr Haus grundsätzlich sinnvoll.
@@ -45,13 +50,15 @@ function SummarySection({
           <p className="text-xl sm:text-2xl font-semibold text-slate-100">
             Die beste Balance aus Nutzen und Wirtschaftlichkeit bietet ein
             Speicher mit ca.{" "}
-            <span className="text-amber-400">{PLACEHOLDER}</span>.
+            <span className="text-green-400">{PLACEHOLDER}</span>.
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+        <div
+          className={`p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 ${cardLift}`}
+        >
           <p className="text-xs text-slate-400 mb-1">
             Eigenverbrauch ohne Speicher (jährlich)
           </p>
@@ -61,7 +68,9 @@ function SummarySection({
               : PLACEHOLDER}
           </p>
         </div>
-        <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+        <div
+          className={`p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 ${cardLift}`}
+        >
           <p className="text-xs text-slate-400 mb-1">
             Eigenverbrauch mit Speicher
           </p>
@@ -69,7 +78,9 @@ function SummarySection({
         </div>
       </div>
 
-      <div className="p-5 rounded-xl bg-slate-900/50 border border-slate-800">
+      <div
+        className={`p-5 rounded-xl bg-slate-900/50 border border-slate-800 ${cardLift}`}
+      >
         <p className="text-sm text-slate-400 leading-relaxed">
           Unsere Empfehlung basiert auf Zahlen – nicht auf Verkaufsinteressen.
           Alle Annahmen und Berechnungen sind transparent dargestellt und können
@@ -101,7 +112,9 @@ function CalculationBasisSection() {
       </h2>
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/50">
+        <div
+          className={`p-5 rounded-xl bg-slate-800/40 border border-slate-700/50 ${cardLift}`}
+        >
           <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4">
             Ihre Eingaben
           </h3>
@@ -117,7 +130,9 @@ function CalculationBasisSection() {
           </dl>
         </div>
 
-        <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/50">
+        <div
+          className={`p-5 rounded-xl bg-slate-800/40 border border-slate-700/50 ${cardLift}`}
+        >
           <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4">
             PV-Erzeugung (Modell)
           </h3>
@@ -157,7 +172,9 @@ function BatteryAssumptionsSection() {
         Annahmen zum Stromspeicher
       </h2>
 
-      <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/50 mb-6">
+      <div
+        className={`p-5 rounded-xl bg-slate-800/40 border border-slate-700/50 mb-6 ${cardLift}`}
+      >
         <dl className="grid sm:grid-cols-2 gap-4">
           {assumptions.map((item, i) => (
             <div key={i} className="flex flex-col">
@@ -251,7 +268,9 @@ function LifetimeEconomicsSection() {
         Betrachtungszeitraum: {PLACEHOLDER}
       </p>
 
-      <div className="p-6 rounded-xl bg-slate-800/40 border border-slate-700/50 mb-6">
+      <div
+        className={`p-6 rounded-xl bg-slate-800/40 border border-slate-700/50 mb-6 ${cardLift}`}
+      >
         <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4">
           Vergleich: zwei Speichergrößen
         </h3>
@@ -319,7 +338,9 @@ function LifetimeEconomicsSection() {
         </div>
       </div>
 
-      <div className="p-6 rounded-xl bg-slate-900/70 border border-slate-700/50">
+      <div
+        className={`p-6 rounded-xl bg-slate-900/70 border border-slate-700/50 ${cardLift}`}
+      >
         <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-3">
           Wirtschaftliche Bewertung
         </h3>
@@ -348,11 +369,11 @@ function RecommendationSection() {
         Unsere ehrliche Empfehlung
       </h2>
 
-      <div className="p-6 rounded-xl bg-amber-500/5 border border-amber-500/20">
+      <div className="p-6 rounded-xl bg-green-500/5 border border-green-500/20 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
         <div className="space-y-4 text-slate-200 leading-relaxed">
           <p>
             Für Ihr Haus ist ein Speicher mit ca.{" "}
-            <span className="text-amber-400 font-semibold">{PLACEHOLDER}</span>{" "}
+            <span className="text-green-400 font-semibold">{PLACEHOLDER}</span>{" "}
             sinnvoll, da er den größten Teil des abendlichen Verbrauchs abdeckt,
             ohne unverhältnismäßige Mehrkosten zu verursachen.
           </p>
@@ -360,7 +381,7 @@ function RecommendationSection() {
             Größere Speicher erhöhen den Eigenverbrauch nur noch geringfügig und
             sind aus wirtschaftlicher Sicht nicht effizient.
           </p>
-          <div className="pt-2 border-t border-amber-500/10">
+          <div className="pt-2 border-t border-green-500/10">
             <p className="text-sm text-slate-400">
               Diese Empfehlung basiert auf den Berechnungen in den obigen
               Abschnitten. Bei anderen Annahmen kann sich das Ergebnis ändern.
@@ -389,9 +410,9 @@ function FAQSection() {
         {questions.map((question, i) => (
           <div
             key={i}
-            className="flex items-center gap-3 p-4 rounded-xl bg-slate-800/40 border border-slate-700/50"
+            className={`flex items-center gap-3 p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 ${cardLift}`}
           >
-            <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400">
+            <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-400">
               <span className="text-lg">?</span>
             </div>
             <span className="text-slate-200">{question}</span>
@@ -399,7 +420,9 @@ function FAQSection() {
         ))}
       </div>
 
-      <div className="p-5 rounded-xl bg-slate-900/50 border border-slate-800">
+      <div
+        className={`p-5 rounded-xl bg-slate-900/50 border border-slate-800 ${cardLift}`}
+      >
         <p className="text-sm text-slate-400 leading-relaxed">
           Die Antworten basieren ausschließlich auf den oben dargestellten
           Berechnungsergebnissen. Es werden keine Annahmen ergänzt, die nicht
@@ -441,7 +464,7 @@ function NextStepsSection() {
 
         <Link
           href="/calculate"
-          className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-medium transition-colors"
+          className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 active:scale-[0.98] transition-all duration-200 hover:scale-[1.03] shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_20px_rgba(34,197,94,0.25)] text-white font-medium"
         >
           <svg
             className="w-5 h-5"

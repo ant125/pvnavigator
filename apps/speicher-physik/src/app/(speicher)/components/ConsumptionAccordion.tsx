@@ -33,7 +33,7 @@ export function BdewH0ProfileChart() {
               onClick={() => setActiveProfile(key)}
               className={`px-3 py-2 text-xs rounded-lg transition-colors ${
                 activeProfile === key
-                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                  ? "bg-emerald-500/20 text-green-400 border border-emerald-500/30"
                   : "bg-slate-700/50 text-slate-400 border border-slate-600/50 hover:bg-slate-700 hover:text-slate-300"
               }`}
             >
@@ -61,11 +61,11 @@ export function BdewH0ProfileChart() {
                 key={hour}
                 className={`flex-1 rounded-t transition-all cursor-pointer ${
                   isHovered
-                    ? "bg-amber-400"
+                    ? "bg-emerald-400"
                     : isEvening
-                    ? "bg-amber-500/70"
+                    ? "bg-emerald-500/70"
                     : isMorning
-                    ? "bg-amber-500/50"
+                    ? "bg-emerald-500/50"
                     : "bg-slate-500/60"
                 }`}
                 style={{ height: `${height}%` }}
@@ -96,7 +96,7 @@ export function BdewH0ProfileChart() {
             >
               <div className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 shadow-xl text-xs">
                 <p className="text-slate-100 font-medium whitespace-nowrap">{hoveredBar}:00 Uhr</p>
-                <p className="text-amber-400 font-mono mt-1 whitespace-nowrap">
+                <p className="text-green-400 font-mono mt-1 whitespace-nowrap">
                   w<sub>h</sub> = {formatWeight(currentProfile.data[hoveredBar])}
                 </p>
                 <p className="text-slate-500 text-[10px] mt-1 leading-tight">
@@ -228,7 +228,7 @@ export function ConsumptionAccordion() {
             sondern:
           </p>
 
-          <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
             <p className="text-slate-200 font-medium">
               „Wie groß ist die zeitliche Überlappung zwischen Ihrer PV-Erzeugung
               und Ihrem Verbrauch?"

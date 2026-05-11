@@ -35,7 +35,7 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
             data={data}
             margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
           >
-            <CartesianGrid vertical={false} stroke="#1e293b" />
+            <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
 
             <XAxis
               dataKey="size"
@@ -58,13 +58,13 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
 
             <ReferenceLine
               x={recommendedSize}
-              stroke="#f59e0b"
+              stroke="#10b981"
               strokeWidth={2}
               strokeDasharray="4 4"
               label={{
                 value: "Empfohlen",
                 position: "top",
-                fill: "#fbbf24",
+                fill: "#34d399",
                 fontSize: 12,
               }}
             />
@@ -99,7 +99,7 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
               type="monotone"
               dataKey="eigenverbrauch"
               name="Eigenverbrauch"
-              stroke="#22c55e"
+              stroke="#34d399"
               strokeWidth={3}
               dot={(props) => {
                 const { cx, cy, payload } = props;
@@ -110,7 +110,7 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
                     cx={cx}
                     cy={cy}
                     r={isRecommended ? 6 : 3}
-                    fill={isRecommended ? "#f59e0b" : "#22c55e"}
+                    fill={isRecommended ? "#10b981" : "#34d399"}
                     stroke={isRecommended ? "#fff" : "none"}
                     strokeWidth={isRecommended ? 2 : 0}
                   />
@@ -118,7 +118,7 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
               }}
               activeDot={{
                 r: 6,
-                stroke: "#f59e0b",
+                stroke: "#34d399",
                 strokeWidth: 2,
                 fill: "#020617",
               }}
