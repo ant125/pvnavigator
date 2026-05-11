@@ -38,15 +38,6 @@ export default function RootLayout({
                   </div>
                   <span className="font-semibold text-slate-100">PVNavigator</span>
                 </Link>
-
-                <nav className="hidden sm:flex items-center gap-6">
-                  <Link
-                    href="/"
-                    className="text-sm text-slate-400 hover:text-slate-100 transition-colors"
-                  >
-                    Home
-                  </Link>
-                </nav>
               </div>
             </div>
           </header>
@@ -69,8 +60,6 @@ export default function RootLayout({
                   <Link href="/datenschutz" className="hover:text-slate-300 transition-colors">
                     Datenschutz
                   </Link>
-                  <span className="text-slate-700">•</span>
-                  <span>Unabhängige PV-Analyse</span>
                 </div>
               </div>
             </div>
