@@ -6,6 +6,8 @@ export type VerifiedResult = {
       selfConsumptionWithoutStorage: number;
     };
   };
+  /** Set when the last run used a Notstromreserve greater than 0 (kWh). */
+  backupReserveKwh?: number;
 };
 
 let lastVerifiedResult: VerifiedResult | null = null;

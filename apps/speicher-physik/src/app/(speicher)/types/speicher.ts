@@ -31,6 +31,9 @@ export interface SpeicherInput {
 
   /** Optional: annual heat pump electricity consumption (kWh) */
   heatPumpConsumptionKwh?: number;
+
+  /** Optional: energy held as backup reserve (Notstrom), not used in daily cycling (kWh) */
+  backupReserveKwh?: number;
   
   /** User knows battery prices (optional checkbox) */
   hasCustomPrices: boolean;

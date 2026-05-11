@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { ANALYTICS_CARD_TEXT_HOVER } from "../analyticsCardHoverClasses";
 import { SpeicherInput } from "../types/speicher";
 import { validateInput } from "../utils/validateInput";
 import {
@@ -35,6 +36,16 @@ const LOADING_STEPS = [
   "Speicher wird optimiert",
 ] as const;
 
+const BACKUP_RESERVE_RADIO_OPTIONS: ReadonlyArray<{
+  kwh: number;
+  label: string;
+  recommended?: boolean;
+}> = [
+  { kwh: 1.5, label: "1.5 kWh" },
+  { kwh: 2.0, label: "2.0 kWh", recommended: true },
+  { kwh: 3.0, label: "3.0 kWh" },
+];
+
 export default function SpeicherCalculatePage() {
   const [step, setStep] = useState<Step>("input");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
@@ -55,6 +66,7 @@ export default function SpeicherCalculatePage() {
     annualConsumptionKwh: undefined,
     heatPumpEnabled: false,
     heatPumpConsumptionKwh: undefined,
+    backupReserveKwh: 0,
   });
 
   const PLACEHOLDER = "—";
@@ -97,6 +109,7 @@ export default function SpeicherCalculatePage() {
       azimuthDeg: formData.azimuth as number,
       heatPumpEnabled: formData.heatPumpEnabled === true,
       heatPumpConsumptionKWh: formData.heatPumpConsumptionKwh,
+      backupReserveKwh: formData.backupReserveKwh,
     });
 
     setVerifiedResult(response.verifiedResult);
@@ -176,6 +189,13 @@ export default function SpeicherCalculatePage() {
     autarkieMitPct !== null && autarkieOhnePct !== null
       ? Math.round(autarkieMitPct - autarkieOhnePct)
       : null;
+
+  const resolvedBackupReserveKwh =
+    verifiedResult?.backupReserveKwh ?? formData.backupReserveKwh ?? 0;
+  const hasActiveBackupReserve =
+    typeof resolvedBackupReserveKwh === "number" &&
+    Number.isFinite(resolvedBackupReserveKwh) &&
+    resolvedBackupReserveKwh > 0;
 
   return (
     <div className="py-12 px-4">
@@ -385,6 +405,69 @@ export default function SpeicherCalculatePage() {
                 </p>
               </div>
 
+              {/* Notstromreserve */}
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="backupReserveEnabled"
+                    checked={(formData.backupReserveKwh ?? 0) > 0}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        backupReserveKwh: e.target.checked ? 2 : 0,
+                      })
+                    }
+                    className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-green-500 focus:ring-green-500"
+                  />
+                  <span className="text-sm font-medium text-slate-200">
+                    Notstromreserve aktivieren
+                  </span>
+                </label>
+                {(formData.backupReserveKwh ?? 0) > 0 && (
+                  <div className="space-y-2 pl-7 mt-3">
+                    <span className="block text-sm font-medium text-slate-200">
+                      Reservierte Kapazität
+                    </span>
+                    <div className="flex flex-col gap-2">
+                      {BACKUP_RESERVE_RADIO_OPTIONS.map((opt) => (
+                        <label
+                          key={opt.kwh}
+                          className="flex items-center gap-2 cursor-pointer text-sm text-slate-100"
+                        >
+                          <input
+                            type="radio"
+                            name="backupReserveKwhOption"
+                            checked={formData.backupReserveKwh === opt.kwh}
+                            onChange={() =>
+                              setFormData({
+                                ...formData,
+                                backupReserveKwh: opt.kwh,
+                              })
+                            }
+                            className="h-4 w-4 border-slate-600 bg-slate-900 text-green-500 focus:ring-green-500"
+                          />
+                          <span className="inline-flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
+                            <span>{opt.label}</span>
+                            {opt.recommended && (
+                              <span className="text-xs text-emerald-400/70 font-normal">
+                                (empfohlen)
+                              </span>
+                            )}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <p className="text-xs text-slate-500">
+                  Ein Teil des Speichers wird für Notfälle reserviert und im
+                  Alltag nicht genutzt.
+                  <br />
+                  Dies reduziert leicht Eigenverbrauch und Autarkie.
+                </p>
+              </div>
+
               {/* Submit */}
               <div className="pt-4">
                 <button
@@ -496,8 +579,10 @@ export default function SpeicherCalculatePage() {
             {/* Result Cards */}
             <div className="space-y-4 mb-8">
               {/* Recommended Size */}
-              <div className="p-6 rounded-2xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
-                <div className="flex items-center justify-between">
+              <div className="p-6 rounded-2xl bg-[#0F1620] border border-white/5 group">
+                <div
+                  className={`flex items-center justify-between ${ANALYTICS_CARD_TEXT_HOVER}`}
+                >
                   <div>
                     <p className="text-sm text-slate-400">
                       Empfohlene Speichergröße
@@ -526,68 +611,76 @@ export default function SpeicherCalculatePage() {
 
               {/* Self Consumption */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
-                  <p className="text-xs text-slate-400 mb-1">
-                    Eigenverbrauch ohne Speicher (jährlich)
-                  </p>
-                  <p className="text-2xl font-bold text-slate-300">
-                    {formatKwh(
-                      verifiedResult?.energy.year.selfConsumptionWithoutStorage
+                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 group">
+                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
+                    <p className="text-xs text-slate-400 mb-1">
+                      Eigenverbrauch ohne Speicher (jährlich)
+                    </p>
+                    <p className="text-2xl font-bold text-slate-300">
+                      {formatKwh(
+                        verifiedResult?.energy.year.selfConsumptionWithoutStorage
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 group">
+                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
+                    <p className="text-xs text-slate-400 mb-1">
+                      Eigenverbrauch mit Speicher
+                    </p>
+                    <p className="text-2xl font-bold text-emerald-400 opacity-90">
+                      {formatKwh(recommendedEV)}
+                    </p>
+                    {deltaEigenverbrauch !== null && (
+                      <p className="text-sm mt-1 font-medium text-emerald-500">
+                        ({deltaEigenverbrauch >= 0 ? "+" : ""}
+                        {deltaEigenverbrauch} kWh)
+                      </p>
                     )}
-                  </p>
+                  </div>
                 </div>
-                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
-                  <p className="text-xs text-slate-400 mb-1">
-                    Eigenverbrauch mit Speicher
-                  </p>
-                  <p className="text-2xl font-bold text-emerald-400 opacity-90">
-                    {formatKwh(recommendedEV)}
-                  </p>
-                  {deltaEigenverbrauch !== null && (
-                    <p className="text-sm mt-1 font-medium text-emerald-500">
-                      ({deltaEigenverbrauch >= 0 ? "+" : ""}
-                      {deltaEigenverbrauch} kWh)
+                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 group">
+                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
+                    <p className="text-xs text-slate-400 mb-1">
+                      Autarkie ohne Speicher:
                     </p>
-                  )}
-                </div>
-                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
-                  <p className="text-xs text-slate-400 mb-1">
-                    Autarkie ohne Speicher:
-                  </p>
-                  <p className="text-2xl font-bold text-slate-300">
-                    {autarkieOhnePct !== null
-                      ? `${autarkieOhnePct} %`
-                      : PLACEHOLDER}
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
-                  <p className="text-xs text-slate-400 mb-1">
-                    Autarkie mit Speicher:
-                  </p>
-                  <p className="text-2xl font-bold text-emerald-400 opacity-90">
-                    {autarkieMitPct !== null
-                      ? `${autarkieMitPct} %`
-                      : PLACEHOLDER}
-                  </p>
-                  {deltaAutarkie !== null && (
-                    <p className="text-sm mt-1 font-medium text-emerald-500">
-                      ({deltaAutarkie >= 0 ? "+" : ""}
-                      {deltaAutarkie}%)
+                    <p className="text-2xl font-bold text-slate-300">
+                      {autarkieOhnePct !== null
+                        ? `${autarkieOhnePct} %`
+                        : PLACEHOLDER}
                     </p>
-                  )}
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 group">
+                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
+                    <p className="text-xs text-slate-400 mb-1">
+                      Autarkie mit Speicher:
+                    </p>
+                    <p className="text-2xl font-bold text-emerald-400 opacity-90">
+                      {autarkieMitPct !== null
+                        ? `${autarkieMitPct} %`
+                        : PLACEHOLDER}
+                    </p>
+                    {deltaAutarkie !== null && (
+                      <p className="text-sm mt-1 font-medium text-emerald-500">
+                        ({deltaAutarkie >= 0 ? "+" : ""}
+                        {deltaAutarkie}%)
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-
             </div>
 
             {speicherGrenz && (
               <>
-                <div className="bg-[#0F1620] rounded-xl p-6 mb-8 border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
-                  <div className="text-sm text-slate-400 mb-4">
-                    Ausgangsdaten
-                  </div>
+                <div className="bg-[#0F1620] rounded-xl p-6 mb-8 border border-white/5 group">
+                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
+                    <div className="text-sm text-slate-400 mb-4">
+                      Ausgangsdaten
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-y-3 text-sm text-slate-300">
+                    <div className="grid grid-cols-2 gap-y-3 text-sm text-slate-300">
                     <div>Adresse:</div>
                     <div>{formData.address ?? "—"}</div>
 
@@ -599,6 +692,13 @@ export default function SpeicherCalculatePage() {
 
                     <div>Ausrichtung:</div>
                     <div>{formData.azimuth}°</div>
+
+                    {hasActiveBackupReserve && (
+                      <>
+                        <div>Notstromreserve:</div>
+                        <div>{resolvedBackupReserveKwh} kWh</div>
+                      </>
+                    )}
 
                     <div>Hausverbrauch (ohne Wärmepumpe):</div>
                     <div>
@@ -631,6 +731,7 @@ export default function SpeicherCalculatePage() {
                       )}
                     </div>
                   </div>
+                  </div>
                 </div>
 
                 <h2 className="text-xl font-semibold mb-4">
@@ -648,98 +749,91 @@ export default function SpeicherCalculatePage() {
             )}
 
             {/* Recommendation */}
-            <div className="mt-10 p-6 rounded-2xl bg-[#0F1620] border border-white/5 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
-              <h3 className="font-semibold text-emerald-400 opacity-90 mb-2">
-                Unsere Einschätzung
-              </h3>
-              <p className="text-sm leading-6 text-slate-300 max-w-[680px]">
-                {formData.heatPumpEnabled === true ? (
-                  <>
-                    Basierend auf Ihrer Anlage empfehlen wir eine
-                    Speichergröße von{" "}
+            <div className="mt-10 w-full min-w-0 p-6 rounded-2xl bg-[#0F1620] border border-white/5 group">
+              <div className={`w-full min-w-0 ${ANALYTICS_CARD_TEXT_HOVER}`}>
+                <h3 className="font-semibold text-emerald-400 opacity-90 mb-2">
+                  Unsere Einschätzung
+                </h3>
+                <>
+                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300">
+                    Wir empfehlen eine Speichergröße von{" "}
                     <span className="text-emerald-400 opacity-90 font-semibold">
                       {recommendedSize} kWh
                     </span>
                     .
-                    <br />
-                    {deltaEigenverbrauch !== null && (
-                      <>
-                        Mit diesem Speicher können Sie Ihren Eigenverbrauch um
-                        etwa {Math.round(deltaEigenverbrauch)} kWh pro Jahr
-                        erhöhen.
-                        <br />
-                      </>
-                    )}
-                    Durch die Wärmepumpe steigt Ihr Stromverbrauch vor allem in
-                    den Wintermonaten, wenn Ihre PV-Anlage weniger Strom
+                  </p>
+                  {hasActiveBackupReserve && (
+                    <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                      Die Berechnung berücksichtigt eine Notstromreserve von{" "}
+                      {resolvedBackupReserveKwh} kWh.
+                    </p>
+                  )}
+                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                    Diese Größe passt zu Ihrem Verbrauchsprofil:
+                  </p>
+                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                    Ein Teil Ihres Stromverbrauchs fällt in die Abendstunden,
+                    während Ihre PV-Anlage hauptsächlich tagsüber Energie
                     erzeugt.
-                    <br />
-                    Ein Speicher hilft, diesen Unterschied auszugleichen und
-                    mehr Solarstrom selbst zu nutzen.
-                    <br />
-                    Ab einer bestimmten Größe bringt ein größerer Speicher nur
-                    noch wenig zusätzlichen Nutzen.
-                    <br />
-                    Dieser Bericht enthält keine wirtschaftliche Bewertung.
-                    <br />
-                    Es werden weder Investitionskosten noch Strompreise
-                    berücksichtigt.
-                    <br />
-                    Die Empfehlung basiert ausschließlich auf einer
-                    physikalischen Betrachtung des Eigenverbrauchs.
-                    <br />
-                    Ab dieser Größe bringt jeder zusätzliche kWh Speicher
-                    weniger als 1 % zusätzlichen Eigenverbrauch.
-                    <br />
-                    Ab einem bestimmten Punkt steigt der zusätzliche Nutzen pro
-                    weiterem kWh nur noch sehr gering (Plateau-Effekt).
-                  </>
-                ) : (
-                  <>
-                    Basierend auf Ihrer Anlage empfehlen wir eine
-                    Speichergröße von{" "}
-                    <span className="text-emerald-400 opacity-90 font-semibold">
-                      {recommendedSize} kWh
-                    </span>
-                    .
-                    <br />
-                    {deltaEigenverbrauch !== null && (
-                      <>
-                        Mit diesem Speicher können Sie Ihren Eigenverbrauch um
-                        etwa {Math.round(deltaEigenverbrauch)} kWh pro Jahr
-                        erhöhen.
-                        <br />
-                      </>
-                    )}
-                    Ihre PV-Anlage erzeugt Strom vor allem tagsüber, während ein
-                    Teil Ihres Verbrauchs in den Abend fällt.
-                    <br />
-                    Ein Speicher hilft, überschüssigen Solarstrom zu speichern
-                    und später im Haushalt zu nutzen.
-                    <br />
-                    Ab einer bestimmten Größe bringt ein größerer Speicher nur
-                    noch wenig zusätzlichen Nutzen.
-                    <br />
-                    Dieser Bericht enthält keine wirtschaftliche Bewertung.
-                    <br />
-                    Es werden weder Investitionskosten noch Strompreise
-                    berücksichtigt.
-                    <br />
-                    Die Empfehlung basiert ausschließlich auf einer
-                    physikalischen Betrachtung des Eigenverbrauchs.
-                    <br />
-                    Ab dieser Größe bringt jeder zusätzliche kWh Speicher
-                    weniger als 1 % zusätzlichen Eigenverbrauch.
-                    <br />
-                    Ab einem bestimmten Punkt steigt der zusätzliche Nutzen pro
-                    weiterem kWh nur noch sehr gering (Plateau-Effekt).
-                  </>
-                )}
-              </p>
+                  </p>
+                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                    Der Speicher gleicht genau diese zeitliche Lücke aus und
+                    erhöht so Ihren Eigenverbrauch deutlich.
+                  </p>
+                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                    Gleichzeitig zeigt die Simulation:
+                  </p>
+                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                    Ab etwa {recommendedSize} kWh nimmt der zusätzliche Nutzen
+                    deutlich ab.
+                  </p>
+                  <div className="mt-3 w-full min-w-0 border-l border-emerald-500/30 pl-3">
+                    <p className="text-emerald-300 font-medium">
+                      Plateau erreicht
+                    </p>
+                    <p className="text-sm leading-6 text-slate-300 mt-1">
+                      Ab diesem Punkt bringt zusätzlicher Speicher nur noch sehr
+                      geringen Mehrwert.
+                    </p>
+                    <p className="text-sm leading-6 text-slate-300 mt-3">
+                      Jede weitere kWh erhöht den Eigenverbrauch nur minimal
+                      (unter ~1 % pro kWh).
+                    </p>
+                  </div>
+                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-4">
+                    👉 Das bedeutet:
+                  </p>
+                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                    Ein größerer Speicher wäre technisch möglich, würde aber kaum
+                    zusätzlichen Nutzen bringen.
+                  </p>
+                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                    Diese Empfehlung basiert ausschließlich auf physikalischen
+                    Zusammenhängen zwischen Erzeugung, Verbrauch und
+                    Speicherverhalten.
+                  </p>
+                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                    Die Berechnung erfolgt auf Basis einer stündlichen Simulation
+                    (8760 Stunden pro Jahr).
+                  </p>
+                  {hasActiveBackupReserve && (
+                    <>
+                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                        Durch die aktivierte Notstromreserve steht ein Teil des
+                        Speichers im Alltag nicht zur Verfügung.
+                      </p>
+                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                        Dadurch sinken Eigenverbrauch und Autarkie leicht.
+                      </p>
+                    </>
+                  )}
+                </>
+              </div>
             </div>
 
             {/* Disclaimer */}
-            <div className="mt-8 p-4 rounded-xl bg-[#0F1620] border border-white/5 mb-8 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
+            <div className="mt-8 p-4 rounded-xl bg-[#0F1620] border border-white/5 mb-8 group">
+              <div className={ANALYTICS_CARD_TEXT_HOVER}>
               <p className="text-xs text-slate-500">
                 <strong className="text-slate-400">Hinweis:</strong> Dies ist
                 eine vereinfachte Ersteinschätzung auf Basis Ihrer Angaben. Die
@@ -748,6 +842,7 @@ export default function SpeicherCalculatePage() {
                 eine detaillierte Analyse empfehlen wir eine individuelle
                 Beratung.
               </p>
+              </div>
             </div>
 
             {/* Actions */}

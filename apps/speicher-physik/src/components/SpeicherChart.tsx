@@ -9,7 +9,41 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   ReferenceLine,
+  Label,
+  type LabelProps,
 } from "recharts";
+
+function RecommendedPlateauReferenceLabel(props: LabelProps) {
+  const { offset = 5, viewBox } = props;
+  if (
+    !viewBox ||
+    typeof viewBox !== "object" ||
+    !("width" in viewBox) ||
+    typeof viewBox.x !== "number" ||
+    !Number.isFinite(viewBox.x)
+  ) {
+    return null;
+  }
+
+  const { x: vx, y: vy, width: vw, height: vh } = viewBox;
+  const cx = vx + vw / 2;
+  const verticalSign = vh >= 0 ? 1 : -1;
+  const labelY = vy - verticalSign * offset;
+
+  return (
+    <text
+      x={cx}
+      y={labelY}
+      textAnchor="middle"
+      className="recharts-text recharts-label"
+      fill="#34d399"
+      fontSize={12}
+    >
+      <tspan>Empfohlen </tspan>
+      <tspan className="fill-emerald-400/70">(Plateau)</tspan>
+    </text>
+  );
+}
 
 type Props = {
   data: {
@@ -61,12 +95,15 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
               stroke="#10b981"
               strokeWidth={2}
               strokeDasharray="4 4"
-              label={{
-                value: "Empfohlen",
-                position: "top",
-                fill: "#34d399",
-                fontSize: 12,
-              }}
+              label={
+                <Label
+                  position="top"
+                  fill="#34d399"
+                  fontSize={12}
+                  offset={5}
+                  content={RecommendedPlateauReferenceLabel}
+                />
+              }
             />
 
             <Tooltip

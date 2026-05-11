@@ -39,7 +39,8 @@ export function calculateBatterySimulation(
   loadKwh: number[],
   pvKwh: number[],
   usableCapacityKwh: number,
-  spec: BatterySpec = DEFAULT_BATTERY_SPEC
+  spec: BatterySpec = DEFAULT_BATTERY_SPEC,
+  backupReserveKwh?: number
 ): BatterySimulationResult {
   if (
     loadKwh.length !== HOURS_PER_YEAR ||
@@ -48,6 +49,10 @@ export function calculateBatterySimulation(
   ) {
     throw new Error("Invalid inputs for battery simulation");
   }
+
+  const reserveKwh = backupReserveKwh ?? 0;
+  const minSoc =
+    reserveKwh > 0 ? reserveKwh / usableCapacityKwh : 0;
 
   const socHourly: number[] = [];
   let soc = 0;
@@ -82,8 +87,8 @@ export function calculateBatterySimulation(
     }
 
     let fromBattery = 0;
-    if (deficit > 0 && soc > 0) {
-      const maxDischargeRaw = soc * usableCapacityKwh;
+    if (deficit > 0 && soc > minSoc) {
+      const maxDischargeRaw = (soc - minSoc) * usableCapacityKwh;
       const maxDischargeAvailable = maxDischargeRaw * etaDis;
       fromBattery = Math.min(
         deficit,
@@ -94,7 +99,7 @@ export function calculateBatterySimulation(
       totalDischarged += fromBattery;
     }
 
-    if (soc < 0) soc = 0;
+    soc = Math.max(soc, minSoc);
     if (soc > maxSoc) soc = maxSoc;
 
     selfConsumptionWithStorage += directUse + fromBattery;

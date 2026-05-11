@@ -90,6 +90,38 @@ wie gut das Standardlastprofil dem tatsächlichen Verbrauchsverhalten entspricht
 
 ---
 
+### 2.3 Wärmepumpe
+
+Falls eine Wärmepumpe aktiviert ist, wird der zusätzliche Stromverbrauch
+
+separat modelliert und dem Haushaltsverbrauch hinzugefügt.
+
+Annahmen:
+
+Der zusätzliche Verbrauch wird gleichmäßig über typische Heizperioden verteilt
+
+Erhöhter Strombedarf tritt vor allem in den Wintermonaten auf
+
+👉 Wichtig:
+
+Die Wärmepumpe verändert das Lastprofil deutlich, insbesondere durch:
+
+höheren Verbrauch in Zeiten geringer PV-Erzeugung
+
+Dadurch steigt der Bedarf an gespeicherter Energie.
+
+👉 Einschränkungen:
+
+Kein dynamisches Temperaturmodell
+
+Keine Abbildung von realen Steuerstrategien
+
+Keine Unterscheidung zwischen verschiedenen Wärmepumpentypen
+
+👉 Die Modellierung stellt eine vereinfachte, aber realistische Näherung dar.
+
+---
+
 ## 3. Simulationslogik
 
 Für jede Stunde gilt:
@@ -117,6 +149,50 @@ Beispiel:
 10 kWh Batterie → max. 5 kW Lade-/Entladeleistung
 
 👉 Das Modell bildet das reale Verhalten eines Heimspeichers vereinfacht, aber praxisnah ab.
+
+---
+
+### 4.1 Notstromreserve
+
+Optional kann eine Notstromreserve berücksichtigt werden.
+
+Dabei wird ein Teil der Batteriekapazität für Notfälle reserviert
+
+und im normalen Betrieb nicht genutzt.
+
+👉 Modellierung:
+
+Die Batterie entlädt nur bis zu einem definierten Mindestladestand
+
+(State of Charge, SoC).
+
+Beispiel:
+
+Bei 2 kWh Notstromreserve bleibt diese Energiemenge jederzeit im Speicher erhalten
+
+und steht im Alltag nicht zur Verfügung.
+
+👉 Auswirkungen:
+
+Reduktion des nutzbaren Speicherbereichs
+
+Leicht geringerer Eigenverbrauch
+
+Leicht geringere Autarkie
+
+👉 Ziel:
+
+Sicherstellung einer minimalen Energieverfügbarkeit bei Stromausfällen.
+
+👉 Einschränkungen:
+
+Keine Simulation realer Notstromsysteme
+
+Keine Umschaltlogik bei Netzausfall
+
+Keine Priorisierung einzelner Verbraucher
+
+👉 Die Notstromreserve wird als statischer Mindestladestand modelliert.
 
 ---
 
@@ -202,7 +278,41 @@ Wichtige Hinweise:
 
 - Große Speicher erhöhen den Eigenverbrauch, sind aber oft wirtschaftlich nicht sinnvoll  
 
-- Die optimale Speichergröße liegt meist in dem Bereich, in dem zusätzliche Kapazität nur noch geringe Mehrwerte bringt  
+- Die optimale Speichergröße liegt meist in dem Bereich, in dem zusätzliche Kapazität nur noch geringe Mehrwerte bringt
+
+👉 Einfluss der Eingaben:
+
+Die Ergebnisse der Simulation hängen direkt von den eingegebenen Parametern ab.
+
+Wichtige Einflussfaktoren:
+
+PV-Anlage (kWp)
+
+Eine größere PV-Anlage erhöht die verfügbare Energie und damit den potenziellen Eigenverbrauch.
+
+Haushaltsverbrauch
+
+Ein höherer Verbrauch erhöht den Bedarf an gespeicherter Energie.
+
+Dadurch kann ein größerer Speicher sinnvoll sein.
+
+Wärmepumpe
+
+Eine Wärmepumpe verschiebt den Verbrauch in Zeiten mit geringerer PV-Erzeugung.
+
+Dadurch steigt die Bedeutung des Speichers.
+
+Notstromreserve
+
+Eine aktivierte Notstromreserve reduziert den nutzbaren Speicherbereich.
+
+Dies führt zu einem leicht geringeren Eigenverbrauch und geringerer Autarkie.
+
+👉 Wichtig:
+
+Die optimale Speichergröße ergibt sich immer aus dem Zusammenspiel aller Faktoren.
+
+Es gibt keine universell „richtige“ Speichergröße ohne Berücksichtigung des individuellen Systems.
 
 ---
 

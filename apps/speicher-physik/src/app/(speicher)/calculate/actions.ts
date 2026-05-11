@@ -33,6 +33,7 @@ export async function calculateHouseholdConsumptionAction(params: {
   azimuthDeg: number;
   heatPumpEnabled?: boolean;
   heatPumpConsumptionKWh?: number;
+  backupReserveKwh?: number;
 }): Promise<HouseholdCalculationPayload> {
   const houseLoad = createUserLoadProfile(params.annualConsumptionKWh);
 
@@ -66,12 +67,14 @@ export async function calculateHouseholdConsumptionAction(params: {
     pvKwh
   );
 
+  const reserveKwh = params.backupReserveKwh ?? 0;
   const verifiedResult: VerifiedResult = {
     energy: {
       year: {
         selfConsumptionWithoutStorage,
       },
     },
+    ...(reserveKwh > 0 ? { backupReserveKwh: reserveKwh } : {}),
   };
 
   const multiYear = await simulateMultiYearSpeicherGrenz({
@@ -81,6 +84,7 @@ export async function calculateHouseholdConsumptionAction(params: {
     longitude: params.longitude,
     tiltDeg: params.tiltDeg,
     azimuthDeg: params.azimuthDeg,
+    backupReserveKwh: reserveKwh,
   });
 
   return {

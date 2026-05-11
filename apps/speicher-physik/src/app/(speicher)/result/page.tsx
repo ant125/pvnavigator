@@ -1,23 +1,22 @@
 import Link from "next/link";
+import { ANALYTICS_CARD_TEXT_HOVER } from "../analyticsCardHoverClasses";
 import { getVerifiedResult } from "../calculate/verifiedResultStore.server";
 import { MethodologyAccordion } from "./components/MethodologyAccordion";
 
 const PLACEHOLDER = "—";
 
-const cardLift =
-  "transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg";
-
 export default function SpeicherResultPage() {
   const verifiedResult = getVerifiedResult();
   const selfConsumption =
     verifiedResult?.energy.year.selfConsumptionWithoutStorage;
+  const backupReserveKwh = verifiedResult?.backupReserveKwh;
 
   return (
     <div className="py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-16">
         <SummarySection selfConsumption={selfConsumption} />
-        <CalculationBasisSection />
-        <MethodologyAccordion />
+        <CalculationBasisSection backupReserveKwh={backupReserveKwh} />
+        <MethodologyAccordion backupReserveKwh={backupReserveKwh} />
         <BatteryAssumptionsSection />
         <AnnualComparisonSection />
         <LifetimeEconomicsSection />
@@ -40,10 +39,8 @@ function SummarySection({
         Ergebnis für Ihr Haus – auf einen Blick
       </h1>
 
-      <div
-        className={`p-8 rounded-2xl bg-slate-800/50 border border-slate-700/50 mb-6 ${cardLift}`}
-      >
-        <div className="space-y-3">
+      <div className="p-8 rounded-2xl bg-slate-800/50 border border-slate-700/50 mb-6 group">
+        <div className={`space-y-3 ${ANALYTICS_CARD_TEXT_HOVER}`}>
           <p className="text-lg text-slate-200 leading-relaxed">
             Ein Stromspeicher ist für Ihr Haus grundsätzlich sinnvoll.
           </p>
@@ -56,42 +53,46 @@ function SummarySection({
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div
-          className={`p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 ${cardLift}`}
-        >
-          <p className="text-xs text-slate-400 mb-1">
-            Eigenverbrauch ohne Speicher (jährlich)
-          </p>
-          <p className="text-2xl font-bold text-slate-300">
-            {typeof selfConsumption === "number"
-              ? `${selfConsumption.toFixed(0)} kWh`
-              : PLACEHOLDER}
-          </p>
+        <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 group">
+          <div className={ANALYTICS_CARD_TEXT_HOVER}>
+            <p className="text-xs text-slate-400 mb-1">
+              Eigenverbrauch ohne Speicher (jährlich)
+            </p>
+            <p className="text-2xl font-bold text-slate-300">
+              {typeof selfConsumption === "number"
+                ? `${selfConsumption.toFixed(0)} kWh`
+                : PLACEHOLDER}
+            </p>
+          </div>
         </div>
-        <div
-          className={`p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 ${cardLift}`}
-        >
-          <p className="text-xs text-slate-400 mb-1">
-            Eigenverbrauch mit Speicher
-          </p>
-          <p className="text-2xl font-bold text-emerald-400">{PLACEHOLDER}</p>
+        <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 group">
+          <div className={ANALYTICS_CARD_TEXT_HOVER}>
+            <p className="text-xs text-slate-400 mb-1">
+              Eigenverbrauch mit Speicher
+            </p>
+            <p className="text-2xl font-bold text-emerald-400">{PLACEHOLDER}</p>
+          </div>
         </div>
       </div>
 
-      <div
-        className={`p-5 rounded-xl bg-slate-900/50 border border-slate-800 ${cardLift}`}
-      >
-        <p className="text-sm text-slate-400 leading-relaxed">
-          Unsere Empfehlung basiert auf Zahlen – nicht auf Verkaufsinteressen.
-          Alle Annahmen und Berechnungen sind transparent dargestellt und können
-          jederzeit angepasst werden.
-        </p>
+      <div className="p-5 rounded-xl bg-slate-900/50 border border-slate-800 group">
+        <div className={ANALYTICS_CARD_TEXT_HOVER}>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            Unsere Empfehlung basiert auf Zahlen – nicht auf Verkaufsinteressen.
+            Alle Annahmen und Berechnungen sind transparent dargestellt und können
+            jederzeit angepasst werden.
+          </p>
+        </div>
       </div>
     </section>
   );
 }
 
-function CalculationBasisSection() {
+function CalculationBasisSection({
+  backupReserveKwh,
+}: {
+  backupReserveKwh?: number;
+}) {
   const inputData = [
     { label: "PV-Anlage", value: PLACEHOLDER },
     { label: "Standort", value: PLACEHOLDER },
@@ -112,31 +113,48 @@ function CalculationBasisSection() {
       </h2>
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        <div
-          className={`p-5 rounded-xl bg-slate-800/40 border border-slate-700/50 ${cardLift}`}
-        >
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4">
-            Ihre Eingaben
-          </h3>
-          <dl className="space-y-3">
-            {inputData.map((item, i) => (
-              <div key={i} className="flex justify-between">
+        <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/50 group">
+          <div className={ANALYTICS_CARD_TEXT_HOVER}>
+            <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4">
+              Ihre Eingaben
+            </h3>
+            <dl className="space-y-3">
+            {inputData.slice(0, 3).map((item) => (
+              <div key={item.label} className="flex justify-between">
                 <dt className="text-slate-400 text-sm">{item.label}</dt>
                 <dd className="text-slate-100 text-sm font-medium">
                   {item.value}
                 </dd>
               </div>
             ))}
-          </dl>
+            {typeof backupReserveKwh === "number" &&
+              Number.isFinite(backupReserveKwh) &&
+              backupReserveKwh > 0 && (
+                <div className="flex justify-between">
+                  <dt className="text-slate-400 text-sm">Notstromreserve:</dt>
+                  <dd className="text-slate-100 text-sm font-medium">
+                    {backupReserveKwh} kWh
+                  </dd>
+                </div>
+              )}
+            {inputData[3] && (
+              <div key={inputData[3].label} className="flex justify-between">
+                <dt className="text-slate-400 text-sm">{inputData[3].label}</dt>
+                <dd className="text-slate-100 text-sm font-medium">
+                  {inputData[3].value}
+                </dd>
+              </div>
+            )}
+            </dl>
+          </div>
         </div>
 
-        <div
-          className={`p-5 rounded-xl bg-slate-800/40 border border-slate-700/50 ${cardLift}`}
-        >
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4">
-            PV-Erzeugung (Modell)
-          </h3>
-          <dl className="space-y-3">
+        <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/50 group">
+          <div className={ANALYTICS_CARD_TEXT_HOVER}>
+            <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4">
+              PV-Erzeugung (Modell)
+            </h3>
+            <dl className="space-y-3">
             {pvModelData.map((item, i) => (
               <div key={i} className="flex justify-between gap-4">
                 <dt className="text-slate-400 text-sm">{item.label}</dt>
@@ -145,7 +163,8 @@ function CalculationBasisSection() {
                 </dd>
               </div>
             ))}
-          </dl>
+            </dl>
+          </div>
         </div>
       </div>
 
@@ -172,10 +191,8 @@ function BatteryAssumptionsSection() {
         Annahmen zum Stromspeicher
       </h2>
 
-      <div
-        className={`p-5 rounded-xl bg-slate-800/40 border border-slate-700/50 mb-6 ${cardLift}`}
-      >
-        <dl className="grid sm:grid-cols-2 gap-4">
+      <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/50 mb-6 group">
+        <dl className={`grid sm:grid-cols-2 gap-4 ${ANALYTICS_CARD_TEXT_HOVER}`}>
           {assumptions.map((item, i) => (
             <div key={i} className="flex flex-col">
               <dt className="text-slate-400 text-sm mb-1">{item.label}</dt>
@@ -268,13 +285,12 @@ function LifetimeEconomicsSection() {
         Betrachtungszeitraum: {PLACEHOLDER}
       </p>
 
-      <div
-        className={`p-6 rounded-xl bg-slate-800/40 border border-slate-700/50 mb-6 ${cardLift}`}
-      >
-        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4">
-          Vergleich: zwei Speichergrößen
-        </h3>
-        <div className="overflow-x-auto">
+      <div className="p-6 rounded-xl bg-slate-800/40 border border-slate-700/50 mb-6 group">
+        <div className={ANALYTICS_CARD_TEXT_HOVER}>
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4">
+            Vergleich: zwei Speichergrößen
+          </h3>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-700">
@@ -335,16 +351,16 @@ function LifetimeEconomicsSection() {
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
-      <div
-        className={`p-6 rounded-xl bg-slate-900/70 border border-slate-700/50 ${cardLift}`}
-      >
-        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-3">
-          Wirtschaftliche Bewertung
-        </h3>
-        <div className="space-y-3 text-slate-300 leading-relaxed">
+      <div className="p-6 rounded-xl bg-slate-900/70 border border-slate-700/50 group">
+        <div className={ANALYTICS_CARD_TEXT_HOVER}>
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-3">
+            Wirtschaftliche Bewertung
+          </h3>
+          <div className="space-y-3 text-slate-300 leading-relaxed">
           <p>
             Der größere Speicher erfordert eine Mehrinvestition von{" "}
             <span className="text-slate-100 font-medium">{PLACEHOLDER}</span>,
@@ -356,6 +372,7 @@ function LifetimeEconomicsSection() {
             Aus wirtschaftlicher Sicht ist der kleinere Speicher die sinnvollere
             Wahl.
           </p>
+          </div>
         </div>
       </div>
     </section>
@@ -369,8 +386,10 @@ function RecommendationSection() {
         Unsere ehrliche Empfehlung
       </h2>
 
-      <div className="p-6 rounded-xl bg-green-500/5 border border-green-500/20 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
-        <div className="space-y-4 text-slate-200 leading-relaxed">
+      <div className="p-6 rounded-xl bg-green-500/5 border border-green-500/20 group">
+        <div
+          className={`space-y-4 text-slate-200 leading-relaxed ${ANALYTICS_CARD_TEXT_HOVER}`}
+        >
           <p>
             Für Ihr Haus ist ein Speicher mit ca.{" "}
             <span className="text-green-400 font-semibold">{PLACEHOLDER}</span>{" "}
@@ -410,24 +429,26 @@ function FAQSection() {
         {questions.map((question, i) => (
           <div
             key={i}
-            className={`flex items-center gap-3 p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 ${cardLift}`}
+            className="flex items-center gap-3 p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 group"
           >
             <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-400">
               <span className="text-lg">?</span>
             </div>
-            <span className="text-slate-200">{question}</span>
+            <div className={`min-w-0 flex-1 ${ANALYTICS_CARD_TEXT_HOVER}`}>
+              <span className="text-slate-200">{question}</span>
+            </div>
           </div>
         ))}
       </div>
 
-      <div
-        className={`p-5 rounded-xl bg-slate-900/50 border border-slate-800 ${cardLift}`}
-      >
-        <p className="text-sm text-slate-400 leading-relaxed">
-          Die Antworten basieren ausschließlich auf den oben dargestellten
-          Berechnungsergebnissen. Es werden keine Annahmen ergänzt, die nicht
-          explizit dokumentiert sind.
-        </p>
+      <div className="p-5 rounded-xl bg-slate-900/50 border border-slate-800 group">
+        <div className={ANALYTICS_CARD_TEXT_HOVER}>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            Die Antworten basieren ausschließlich auf den oben dargestellten
+            Berechnungsergebnissen. Es werden keine Annahmen ergänzt, die nicht
+            explizit dokumentiert sind.
+          </p>
+        </div>
       </div>
     </section>
   );

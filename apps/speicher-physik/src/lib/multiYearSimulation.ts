@@ -25,6 +25,7 @@ export type SimulateMultiYearSpeicherGrenzParams = {
   years?: ReadonlyArray<number>;
   batterySizes?: ReadonlyArray<number>;
   batterySpec?: BatterySpec;
+  backupReserveKwh?: number;
 };
 
 export type SimulateMultiYearSpeicherGrenzResult = {
@@ -106,7 +107,13 @@ export async function simulateMultiYearSpeicherGrenz(
 
     const sizeMap: Record<number, number> = {};
     for (const size of batterySizes) {
-      const result = calculateBatterySimulation(loadKwh, pvProfile, size, spec);
+      const result = calculateBatterySimulation(
+        loadKwh,
+        pvProfile,
+        size,
+        spec,
+        params.backupReserveKwh ?? 0
+      );
       sizeMap[size] = result.selfConsumptionWithStorage;
     }
     yearly[year] = sizeMap;

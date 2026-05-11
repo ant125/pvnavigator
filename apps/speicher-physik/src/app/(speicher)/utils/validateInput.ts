@@ -44,6 +44,13 @@ export function validateInput(input: Partial<SpeicherInput>): {
     }
   }
 
+  const reserve = input.backupReserveKwh ?? 0;
+  if (!Number.isFinite(reserve)) {
+    errors.push("Bitte geben Sie eine gültige Notstromreserve ein.");
+  } else if (reserve < 0 || reserve > 5) {
+    errors.push("Notstromreserve muss zwischen 0 und 5 kWh liegen.");
+  }
+
   return {
     isValid: errors.length === 0,
     errors,

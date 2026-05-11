@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { ANALYTICS_CARD_TEXT_HOVER } from "../../analyticsCardHoverClasses";
 
 /**
  * Compact methodology accordion for the Result Page.
  * Provides on-demand methodological context without cluttering results.
  * Single-open pattern, all items collapsed by default.
  */
-export function MethodologyAccordion() {
+export function MethodologyAccordion({
+  backupReserveKwh,
+}: {
+  backupReserveKwh?: number;
+}) {
   const [openItem, setOpenItem] = useState<string | null>(null);
 
   const toggleItem = (id: string) => {
@@ -15,15 +20,23 @@ export function MethodologyAccordion() {
   };
 
   return (
-    <section className="p-5 rounded-xl bg-slate-800/20 border border-slate-700/40 transition-all duration-200 hover:bg-[#131A23] hover:border-white/10 hover:-translate-y-1 hover:shadow-lg">
+    <section className="p-5 rounded-xl bg-slate-800/20 border border-slate-700/40 group">
       {/* Header */}
-      <div className="mb-4">
+      <div className={`mb-4 ${ANALYTICS_CARD_TEXT_HOVER}`}>
         <h3 className="text-sm font-semibold text-slate-200">
           Methodik & Annahmen (kurz erklärt)
         </h3>
         <p className="text-xs text-slate-500 mt-1">
           Details zur Berechnung – optional einsehbar
         </p>
+        {typeof backupReserveKwh === "number" &&
+          Number.isFinite(backupReserveKwh) &&
+          backupReserveKwh > 0 && (
+            <p className="text-xs text-slate-500/70 mt-3 leading-relaxed">
+              Die Berechnung erfolgt unter Berücksichtigung einer Notstromreserve
+              von {backupReserveKwh} kWh.
+            </p>
+          )}
       </div>
 
       {/* Accordion */}
@@ -122,9 +135,11 @@ export function MethodologyAccordion() {
       </div>
 
       {/* Footer */}
-      <p className="mt-3 text-xs text-slate-600 text-center">
-        Ziel: Transparente Entscheidungsgrundlage – keine exakte Verbrauchsmessung.
-      </p>
+      <div className={`mt-3 ${ANALYTICS_CARD_TEXT_HOVER}`}>
+        <p className="text-xs text-slate-600 text-center">
+          Ziel: Transparente Entscheidungsgrundlage – keine exakte Verbrauchsmessung.
+        </p>
+      </div>
     </section>
   );
 }
