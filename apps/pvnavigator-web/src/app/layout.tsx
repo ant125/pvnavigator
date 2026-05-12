@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Inter } from "next/font/google";
+import { SiteHeader } from "../components/SiteHeader";
 import "./globals.css";
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "PVNavigator – Unabhängige PV-Tools",
-  description: "Unabhängige Tools rund um Photovoltaik – Physik, Wirtschaft, Planung.",
+  title: "PVNavigator – Intelligente Photovoltaik-Analyse",
+  description:
+    "Speicheroptimierung, Wirtschaftlichkeitsanalyse und Dachbewertung — verständlich, unabhängig und datenbasiert.",
 };
 
 export default function RootLayout({
@@ -14,52 +23,34 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body className="antialiased">
-        <div className="min-h-screen bg-slate-950 text-slate-50">
-          {/* ========== HEADER ========== */}
-          <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
-            <div className="max-w-6xl mx-auto px-4 py-4">
-              <div className="flex items-center justify-between">
-                <Link href="/" className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  </div>
-                  <span className="font-semibold text-slate-100">PVNavigator</span>
-                </Link>
-              </div>
-            </div>
-          </header>
-
-          {/* ========== MAIN CONTENT ========== */}
-          <main>{children}</main>
-
-          {/* ========== FOOTER ========== */}
-          <footer className="border-t border-slate-800 py-8 mt-auto">
-            <div className="max-w-6xl mx-auto px-4">
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div className="text-sm text-slate-500">
-                  © {new Date().getFullYear()} PVNavigator. Alle Rechte vorbehalten.
-                </div>
-                <div className="flex items-center gap-4 text-sm text-slate-500">
-                  <Link href="/impressum" className="hover:text-slate-300 transition-colors">
+      <body className={`${inter.variable} antialiased bg-[#FAFBFC] text-[#0F172A]`}>
+        <div className="flex min-h-screen flex-col">
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <footer className="border-t border-[#E2E8F0] bg-white">
+            <div className="mx-auto max-w-6xl px-4 py-5">
+              <p className="text-center text-[13px] text-[#64748B] sm:text-left">
+                Ein unabhängiges PV-Projekt.
+              </p>
+              <div className="mt-4 flex flex-col gap-3 sm:mt-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-center text-xs text-[#94a3b8] sm:text-left">
+                  © {new Date().getFullYear()} PVNavigator
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-[#64748B] sm:justify-end">
+                  <Link href="/impressum" className="transition-colors hover:text-[#0F172A]">
                     Impressum
                   </Link>
-                  <span className="text-slate-700">•</span>
-                  <Link href="/datenschutz" className="hover:text-slate-300 transition-colors">
+                  <Link href="/datenschutz" className="transition-colors hover:text-[#0F172A]">
                     Datenschutz
                   </Link>
+                  <a
+                    href="https://www.youtube.com/@YOUR_CHANNEL"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="transition-colors hover:text-[#0F172A]"
+                  >
+                    YouTube
+                  </a>
                 </div>
               </div>
             </div>

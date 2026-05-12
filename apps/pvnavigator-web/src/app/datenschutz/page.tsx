@@ -4,11 +4,11 @@ export default function DatenschutzPage() {
   return (
     <div className="py-20 px-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-6">Datenschutz</h1>
-        <p className="text-slate-400 mb-8">Datenschutz folgt.</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#0F172A] mb-6">Datenschutz</h1>
+        <p className="text-[#64748B] mb-8">Datenschutz folgt.</p>
         <Link
           href="/"
-          className="inline-flex px-4 py-2 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-sm transition-colors"
+          className="inline-flex px-4 py-2 rounded-full bg-[#F59E0B] hover:bg-[#d97706] text-white font-semibold text-sm transition-colors"
         >
           ← Zurück
         </Link>
