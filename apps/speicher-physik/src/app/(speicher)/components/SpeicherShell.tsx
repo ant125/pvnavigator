@@ -18,9 +18,9 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-[#0B0F14] text-slate-50">
       <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0B0F14]/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center">
+          <div className="flex items-center justify-between gap-2 sm:gap-6">
+            <Link href="/" className="flex min-w-0 flex-1 items-center gap-2 sm:flex-initial sm:min-w-0">
+              <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center">
                 <svg
                   className="w-5 h-5 text-white"
                   fill="none"
@@ -35,11 +35,13 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
                   />
                 </svg>
               </div>
-              <div>
-                <span className="font-semibold text-white">
+              <div className="flex min-w-0 flex-col gap-0.5 leading-snug sm:flex-row sm:items-baseline sm:gap-x-2 sm:gap-y-0 sm:leading-normal">
+                <span className="font-semibold leading-tight text-white sm:leading-normal">
                   {isSimplifiedNav ? "SpeicherGrenze" : "PV Speicher"}
                 </span>
-                <span className="text-xs text-white/50 ml-2">by PVNavigator</span>
+                <span className="text-xs leading-none text-white/50 whitespace-nowrap sm:leading-normal">
+                  by PVNavigator
+                </span>
               </div>
             </Link>
 
@@ -60,7 +62,10 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
               </nav>
             ) : null}
 
-            <Link href="/calculate" className={`${btnEnergy} px-4 py-2 rounded-full text-sm`}>
+            <Link
+              href="/calculate"
+              className={`${btnEnergy} shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-center text-sm leading-none sm:py-2 sm:leading-normal`}
+            >
               Speicher berechnen
             </Link>
           </div>
