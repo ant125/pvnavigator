@@ -61,29 +61,27 @@ function HeroSection() {
       </div>
       <div className="relative z-10 max-w-4xl mx-auto text-center w-full space-y-6">
         <div className="text-xs font-mono text-green-400/70 mb-2 tracking-wider">
-          ● 8760H Simulation aktiv
+          ● Ganzjahres-Simulation
         </div>
 
         {/* Main headline */}
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
-          Wie viel Speicher nutzt Ihr Haus wirklich?
+          Wie groß sollte Ihr Stromspeicher wirklich sein?
         </h1>
 
         {/* Subheadline */}
         <p className="text-lg sm:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
-          Wir simulieren 8760 Stunden Ihres Haushalts – basierend auf realistischen
-          Verbrauchsprofilen und PV-Erzeugung.
+          Wir simulieren ein ganzes Jahr Ihres Haushalts – mit realistischen Verbrauchsprofilen und
+          PV-Erzeugung.
         </p>
 
         {/* Key statement – emphasized */}
-        <div
-          className={`p-4 rounded-xl max-w-2xl mx-auto ${cardSurface} ${cardInteractive}`}
-        >
+        <div className={`p-4 rounded-xl max-w-2xl mx-auto ${cardSurface}`}>
           <p className="text-xl sm:text-2xl font-semibold text-white mb-3">
-            „Ein Stromspeicher verschiebt Energie in der Zeit."
+            „Ein Stromspeicher verschiebt Solarstrom vom Tag in den Abend.“
           </p>
           <p className="text-base text-white/50">
-            Ergebnisgrößen leiten sich aus Bilanz und zeitlicher Verschiebung ab — nicht aus Vertriebsannahmen.
+            Unsere Ergebnisse basieren auf physikalischer Simulation – nicht auf Verkaufsannahmen.
           </p>
         </div>
 
