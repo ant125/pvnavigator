@@ -90,9 +90,10 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
               Technische Details zur Berechnung
             </Link>
           </div>
-          <p className="mt-4 text-xs text-white/40 text-center sm:text-left">
-            8760h Simulation • Physics-based model • No sales logic
-          </p>
+          <div className="text-xs text-slate-500 text-center mt-4 space-y-1">
+            <p>Basierend auf 8760h Simulation</p>
+            <p>Physikalisches Modell ohne Verkaufslogik</p>
+          </div>
         </div>
       </footer>
     </div>

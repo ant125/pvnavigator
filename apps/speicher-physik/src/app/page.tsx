@@ -61,7 +61,7 @@ function HeroSection() {
       </div>
       <div className="relative z-10 max-w-4xl mx-auto text-center w-full space-y-6">
         <div className="text-xs font-mono text-green-400/70 mb-2 tracking-wider">
-          ● 8760H SIMULATION ACTIVE
+          ● 8760H Simulation aktiv
         </div>
 
         {/* Main headline */}
@@ -137,7 +137,7 @@ function CalculationExplanationSection() {
     <section className="py-16 px-4 bg-[#0E131A]">
       <div className="max-w-5xl mx-auto">
         <div className="text-xs font-mono text-green-400/70 text-center mb-2 tracking-wider">
-          ● ENERGY FLOW MODEL
+          ● Energiefluss-Modell
         </div>
         {/* Section title */}
         <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-12">
@@ -228,7 +228,7 @@ function WhatWeActuallyCalculateSection() {
     <section className="py-16 px-4 bg-[#0B0F14]">
       <div className="max-w-5xl mx-auto">
         <div className="font-mono text-xs text-green-400/70 text-center mb-2 tracking-wider">
-          ● SIMULATION KERNEL
+          ● Simulationsmodell
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
           Was wir tatsächlich berechnen
@@ -290,7 +290,7 @@ function TransparencySection() {
     <section className="py-16 px-4 bg-[#0E131A]">
       <div className="max-w-5xl mx-auto">
         <div className="text-xs font-mono text-green-400/70 text-center mb-2 tracking-wider">
-          ● DATA PIPELINE
+          ● Datenbasis
         </div>
         {/* Section title */}
         <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-10">
@@ -394,20 +394,25 @@ function ConsumptionPatternsSection() {
     <section className="py-16 px-4 bg-[#0B0F14]">
       <div className="max-w-5xl mx-auto">
         <div className="font-mono text-xs text-green-400/70 text-center mb-2 tracking-wider">
-          ● CONSUMPTION PROFILE
+          ● Verbrauchsprofil
         </div>
-        {/* Section title */}
-        <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">
-          Wir berücksichtigen Ihren Tagesrhythmus
-        </h2>
+        <div className="mx-auto max-w-md pb-6">
+          {/* Section title */}
+          <h2 className="text-center text-2xl font-bold leading-tight text-white sm:text-3xl">
+            Ihr Tagesrhythmus entscheidet
+          </h2>
 
-        {/* Intro text */}
-        <p className="text-white/60 text-center mb-8 max-w-2xl mx-auto text-sm leading-relaxed">
-          Speicherwirkung skaliert mit zeitlicher Dekorrelation von PV-Einspeisung und Last — der Lastgang wird über Profile abgebildet.
-        </p>
+          {/* Intro text */}
+          <div className="mt-4 space-y-2 text-center text-sm leading-relaxed text-white/60">
+            <p>
+              Ein Speicher wirkt am besten, wenn Erzeugung und Verbrauch zeitlich auseinanderliegen.
+            </p>
+            <p>Der Lastgang wird über reale Profile modelliert.</p>
+          </div>
+        </div>
 
         {/* Pattern options */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {patterns.map((pattern, i) => (
             <div
               key={i}
@@ -461,7 +466,7 @@ function RecommendationSection() {
         </div>
         {/* Section title */}
         <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-6">
-          SYSTEM BEHAVIOR
+          Systemverhalten
         </h2>
 
         {/* Declarative statements */}
@@ -504,7 +509,7 @@ function FinalCTASection() {
     <section className="py-14 px-4 bg-[#0B0F14]">
       <div className="max-w-2xl mx-auto text-center">
         <div className="text-xs font-mono text-green-400/70 mb-2 tracking-wider">
-          ● RUN BATCH
+          ● Simulation starten
         </div>
         {/* Section title */}
         <h2 className="text-xl sm:text-2xl font-bold text-white mb-3">
