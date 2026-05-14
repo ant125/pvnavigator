@@ -245,10 +245,10 @@ function WhatWeActuallyCalculateSection() {
               >
                 {item.icon}
               </div>
-              <h3 className="mt-2 text-white font-medium text-lg mb-1">
+              <h3 className="mt-2 text-lg text-white font-medium mb-1">
                 {item.title}
               </h3>
-              <p className="text-white/50 text-sm leading-snug min-h-[1.25rem] max-w-2xl mx-auto">
+              <p className="text-white/60 text-sm leading-snug min-h-[1.25rem] max-w-2xl mx-auto">
                 {item.text}
               </p>
             </div>
