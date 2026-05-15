@@ -2,7 +2,11 @@
 
 import { redirect } from "next/navigation";
 
-import { sanitizeNextPath, mapSupabaseAuthErrorToUserMessage } from "@/lib/auth";
+import {
+  getEmailConfirmationRedirectUrl,
+  mapSupabaseAuthErrorToUserMessage,
+  sanitizeNextPath,
+} from "@/lib/auth";
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export type SignUpFormState = {
@@ -38,7 +42,13 @@ export async function signUpAction(
   }
 
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: getEmailConfirmationRedirectUrl(),
+    },
+  });
 
   if (error) {
     return { ...initialSignUpState, error: mapSupabaseAuthErrorToUserMessage(error) };

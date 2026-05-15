@@ -2,6 +2,28 @@ import type { User } from "@supabase/supabase-js";
 
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
+const DEFAULT_AUTH_SITE_ORIGIN = "https://pvnavigator.de";
+
+/**
+ * Public site origin for auth redirects (`emailRedirectTo`, etc.).
+ * Prefer `NEXT_PUBLIC_SITE_URL`; production-safe default is pvnavigator.de (not localhost).
+ */
+export function getAuthSiteOrigin(): string {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (raw) {
+    try {
+      return new URL(raw).origin;
+    } catch {
+      // ignore invalid URLs
+    }
+  }
+  return DEFAULT_AUTH_SITE_ORIGIN;
+}
+
+export function getEmailConfirmationRedirectUrl(): string {
+  return `${getAuthSiteOrigin()}/auth/bestaetigt`;
+}
+
 /**
  * Same-origin relative paths only; blocks protocol-relative and absolute URLs.
  */

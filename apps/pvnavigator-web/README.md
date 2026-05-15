@@ -15,7 +15,13 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-Ohne diese Werte zeigen die Auth-Seiten (`/anmelden`, `/konto-erstellen`) einen Hinweis statt Credentials an.
+Optional — für korrekte Links in Bestätigungs-E-Mails bei lokaler Entwicklung oder Staging (ohne diese Variable wird `https://pvnavigator.de` für `emailRedirectTo` verwendet):
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://pvnavigator.de
+```
+
+Ohne Supabase-URL und Anon-Key zeigen die Auth-Seiten (`/anmelden`, `/konto-erstellen`) einen Hinweis statt Credentials an.
 
 **Routen:** `/konto-erstellen` (Registrierung), `/anmelden` (Login), `/konto` (geschützte Übersicht).
 
