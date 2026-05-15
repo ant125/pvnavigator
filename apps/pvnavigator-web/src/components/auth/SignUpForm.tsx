@@ -1,0 +1,95 @@
+"use client";
+
+import { useActionState } from "react";
+import Link from "next/link";
+
+import {
+  signUpAction,
+  type SignUpFormState,
+} from "@/app/actions/auth";
+
+const signUpInitial: SignUpFormState = {
+  error: "",
+  success: false,
+  needsConfirmation: false,
+};
+
+export function SignUpForm() {
+  const [state, formAction, pending] = useActionState(signUpAction, signUpInitial);
+
+  if (state.success && state.needsConfirmation) {
+    return (
+      <div className="space-y-4">
+        <div
+          role="status"
+          className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
+        >
+          <p className="font-medium">Konto erstellt</p>
+          <p className="mt-2 leading-relaxed text-emerald-900/90">
+            Bitte bestätigen Sie Ihre E-Mail-Adresse.
+          </p>
+        </div>
+        <p className="text-sm text-[#64748B]">
+          Danach können Sie sich{" "}
+          <Link href="/anmelden" className="font-semibold text-[#b45309] hover:underline">
+            anmelden
+          </Link>
+          .
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <form action={formAction} className="space-y-4">
+      <div>
+        <label htmlFor="signup-email" className="block text-sm font-medium text-[#0F172A]">
+          E-Mail
+        </label>
+        <input
+          id="signup-email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          disabled={pending}
+          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2 disabled:opacity-60"
+        />
+      </div>
+      <div>
+        <label htmlFor="signup-password" className="block text-sm font-medium text-[#0F172A]">
+          Passwort
+        </label>
+        <input
+          id="signup-password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          required
+          minLength={6}
+          disabled={pending}
+          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2 disabled:opacity-60"
+        />
+        <p className="mt-1.5 text-xs text-[#94a3b8]">Mindestens 6 Zeichen.</p>
+      </div>
+      {state.error ? (
+        <p role="alert" className="text-sm font-medium text-red-600">
+          {state.error}
+        </p>
+      ) : null}
+      <button
+        type="submit"
+        disabled={pending}
+        className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-[1.03] active:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {pending ? "Wird erstellt…" : "Konto erstellen"}
+      </button>
+      <p className="text-center text-sm text-[#64748B]">
+        Bereits registriert?{" "}
+        <Link href="/anmelden" className="font-semibold text-[#b45309] hover:underline">
+          Anmelden
+        </Link>
+      </p>
+    </form>
+  );
+}

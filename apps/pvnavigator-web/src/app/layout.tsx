@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Inter } from "next/font/google";
-import { SiteHeader } from "../components/SiteHeader";
+
+import { logoutAction } from "@/app/actions/auth";
+import { SiteHeader } from "@/components/SiteHeader";
+import { getServerUser } from "@/lib/auth";
+
 import "./globals.css";
 
 const inter = Inter({
@@ -16,16 +20,21 @@ export const metadata: Metadata = {
     "Speicheroptimierung, Wirtschaftlichkeitsanalyse und Dachbewertung — verständlich, unabhängig und datenbasiert.",
 };
 
-export default function RootLayout({
+/** Header reads Supabase session via cookies — avoid static caching for wrong auth UI. */
+export const dynamic = "force-dynamic";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getServerUser();
+
   return (
     <html lang="de">
       <body className={`${inter.variable} antialiased bg-[#FAFBFC] text-[#0F172A]`}>
         <div className="flex min-h-screen flex-col">
-          <SiteHeader />
+          <SiteHeader userEmail={user?.email ?? null} logoutAction={logoutAction} />
           <main className="flex-1">{children}</main>
           <footer className="border-t border-[#E2E8F0] bg-white">
             <div className="mx-auto max-w-6xl px-4 py-5">
