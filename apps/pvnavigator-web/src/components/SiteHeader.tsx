@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
+import { PVNavigatorLogo } from "@/components/branding/PVNavigatorLogo";
+
 const navItems = [
   { href: "/#werkzeuge", label: "Tools" },
   { href: "/#warum-pvnavigator", label: "Über das Projekt" },
@@ -30,23 +32,7 @@ export function SiteHeader({ userEmail, logoutAction }: SiteHeaderProps) {
     <header className="sticky top-0 z-50 border-b border-[#E2E8F0] bg-white/90 shadow-sm backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
         <Link href="/" className="flex shrink-0 items-center gap-2" onClick={() => setMenuOpen(false)}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 shadow-sm">
-            <svg
-              className="h-5 w-5 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-              aria-hidden
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-          </div>
-          <span className="font-semibold tracking-tight text-[#0F172A]">PVNavigator</span>
+          <PVNavigatorLogo />
         </Link>
 
         <nav className="hidden flex-1 justify-center md:flex" aria-label="Hauptnavigation">

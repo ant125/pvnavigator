@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BatteryMedium } from "lucide-react";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -21,19 +22,7 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
           <div className="flex items-center justify-between gap-2 sm:gap-6">
             <Link href="/" className="flex min-w-0 flex-1 items-center gap-2 sm:flex-initial sm:min-w-0">
               <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
+                <BatteryMedium className="h-6 w-6 text-white" strokeWidth={2} aria-hidden />
               </div>
               <div className="flex min-w-0 flex-col gap-0.5 leading-snug sm:flex-row sm:items-baseline sm:gap-x-2 sm:gap-y-0 sm:leading-normal">
                 <span className="font-semibold leading-tight text-white sm:leading-normal">
@@ -78,7 +67,7 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <Link
-              href="/"
+              href="https://pvnavigator.de"
               className="text-slate-300 hover:text-white transition-colors"
             >
               PVNavigator.de

@@ -1,13 +1,6 @@
-import {
-  ArrowRight,
-  Battery,
-  BookOpen,
-  Cpu,
-  Home,
-  Shield,
-  Sprout,
-  TrendingUp,
-} from "lucide-react";
+import { ArrowRight, BookOpen, Cpu, Shield, Sprout } from "lucide-react";
+
+import { ProductIcon } from "@/components/branding/ProductIcon";
 
 const badgeBase = "inline-flex w-fit rounded-md px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ring-1";
 
@@ -66,9 +59,10 @@ export default function HomePage() {
               href="https://speicher.pvnavigator.de/"
               className={productCardInteractive}
             >
-              <div className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 transition-colors group-hover:bg-[#F59E0B] group-hover:text-white group-hover:ring-[#F59E0B]">
-                <Battery className="h-5 w-5" strokeWidth={2} aria-hidden />
-              </div>
+              <ProductIcon
+                variant="speicher-grenze"
+                tileClassName="bg-emerald-50 text-emerald-600 ring-emerald-100 transition-colors group-hover:bg-emerald-100 group-hover:text-emerald-700 group-hover:ring-emerald-200"
+              />
               <span className={`${badgeBase} bg-emerald-50 text-emerald-800 ring-emerald-100/90`}>Live</span>
               <h3 className="mt-4 pr-12 text-lg font-semibold text-[#0F172A] transition-colors group-hover:text-[#b45309]">
                 SpeicherGrenze
@@ -88,9 +82,10 @@ export default function HomePage() {
             </a>
 
             <div className={productCardStatic}>
-              <div className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 ring-1 ring-[#E2E8F0]">
-                <TrendingUp className="h-5 w-5" strokeWidth={2} aria-hidden />
-              </div>
+              <ProductIcon
+                variant="wirtschaftlichkeit"
+                tileClassName="bg-slate-100 text-blue-600 ring-[#E2E8F0]"
+              />
               <span className={`${badgeBase} bg-slate-50 text-slate-600 ring-slate-200/90`}>
                 In Entwicklung
               </span>
@@ -107,9 +102,10 @@ export default function HomePage() {
             </div>
 
             <div className={`${productCardStatic} md:col-span-2 lg:col-span-1`}>
-              <div className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 ring-1 ring-[#E2E8F0]">
-                <Home className="h-5 w-5" strokeWidth={2} aria-hidden />
-              </div>
+              <ProductIcon
+                variant="pvshadow"
+                tileClassName="bg-slate-100 text-violet-600 ring-[#E2E8F0]"
+              />
               <span className={`${badgeBase} bg-amber-50/90 text-amber-900/80 ring-amber-100`}>Geplant</span>
               <h3 className="mt-4 pr-12 text-lg font-semibold text-[#0F172A]">PVShadow</h3>
               <p className="mt-3 flex-1 text-sm leading-relaxed text-[#64748B]">

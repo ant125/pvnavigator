@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { SpeicherGrenzeLogo } from "@/components/branding/SpeicherGrenzeLogo";
+
 /**
- * Speicher Module Header
- * 
+ * SpeicherGrenze module header.
+ *
  * Client component that adapts the CTA button based on current route:
  * - On /speicher/result: "Annahmen ändern" → /speicher/calculate
  * - Elsewhere: "Speicher berechnen" → /speicher/calculate
@@ -20,25 +22,7 @@ export function SpeicherHeader() {
         <div className="flex items-center justify-between">
           {/* Logo / Brand */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            </div>
-            <div>
-              <span className="font-semibold text-slate-100">PV Speicher</span>
-              <span className="text-xs text-slate-500 ml-2">by PVNavigator</span>
-            </div>
+            <SpeicherGrenzeLogo />
           </Link>
 
           {/* Navigation */}
