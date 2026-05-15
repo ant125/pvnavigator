@@ -6,10 +6,7 @@ import { Menu, X } from "lucide-react";
 
 import { PVNavigatorLogo } from "@/components/branding/PVNavigatorLogo";
 
-const navItems = [
-  { href: "/#werkzeuge", label: "Tools" },
-  { href: "/#warum-pvnavigator", label: "Über das Projekt" },
-] as const;
+const navItems: ReadonlyArray<{ href: string; label: string }> = [];
 
 const primaryBtn =
   "inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-[1.03] active:brightness-[0.98]";
@@ -27,6 +24,7 @@ type SiteHeaderProps = {
 export function SiteHeader({ userEmail, logoutAction }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const authenticated = Boolean(userEmail);
+  const hasSectionNav = navItems.length > 0;
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#E2E8F0] bg-white/90 shadow-sm backdrop-blur-md">
@@ -35,15 +33,17 @@ export function SiteHeader({ userEmail, logoutAction }: SiteHeaderProps) {
           <PVNavigatorLogo />
         </Link>
 
-        <nav className="hidden flex-1 justify-center md:flex" aria-label="Hauptnavigation">
-          <div className="flex items-center gap-8">
-            {navItems.map((item) => (
-              <Link key={item.href} href={item.href} className={navMuted}>
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </nav>
+        {hasSectionNav ? (
+          <nav className="hidden flex-1 justify-center md:flex" aria-label="Hauptnavigation">
+            <div className="flex items-center gap-8">
+              {navItems.map((item) => (
+                <Link key={item.href} href={item.href} className={navMuted}>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        ) : null}
 
         <div className="hidden shrink-0 items-center gap-3 md:flex">
           {authenticated ? (
@@ -95,20 +95,22 @@ export function SiteHeader({ userEmail, logoutAction }: SiteHeaderProps) {
           className="border-t border-[#E2E8F0] bg-white px-4 py-4 md:hidden"
           aria-label="Mobile Navigation"
         >
-          <ul className="flex flex-col gap-1">
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="block rounded-lg px-3 py-3 text-sm font-medium text-[#0F172A] hover:bg-[#FAFBFC]"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-3 border-t border-[#E2E8F0] pt-3">
+          {hasSectionNav ? (
+            <ul className="flex flex-col gap-1">
+              {navItems.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="block rounded-lg px-3 py-3 text-sm font-medium text-[#0F172A] hover:bg-[#FAFBFC]"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div className={hasSectionNav ? "mt-3 border-t border-[#E2E8F0] pt-3" : ""}>
             {authenticated ? (
               <div className="flex flex-col gap-2">
                 {userEmail ? (

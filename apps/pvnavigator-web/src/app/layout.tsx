@@ -52,14 +52,9 @@ export default async function RootLayout({
                   <Link href="/datenschutz" className="transition-colors hover:text-[#0F172A]">
                     Datenschutz
                   </Link>
-                  <a
-                    href="https://www.youtube.com/@YOUR_CHANNEL"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="transition-colors hover:text-[#0F172A]"
-                  >
-                    YouTube
-                  </a>
+                  <Link href="/kontakt" className="transition-colors hover:text-[#0F172A]">
+                    Kontakt
+                  </Link>
                 </div>
               </div>
             </div>
