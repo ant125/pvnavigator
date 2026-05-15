@@ -16,7 +16,7 @@ type SearchParams = Promise<{ next?: string | string[] }>;
 export default async function AnmeldenPage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
   const rawNext = Array.isArray(sp.next) ? sp.next[0] : sp.next;
-  const nextPath = sanitizeNextPath(rawNext, "/konto");
+  const nextPath = sanitizeNextPath(rawNext, "/");
   const configured = isSupabaseConfigured();
 
   return (

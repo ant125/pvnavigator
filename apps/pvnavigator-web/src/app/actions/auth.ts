@@ -67,7 +67,7 @@ export async function signInAction(_prev: SignInFormState, formData: FormData): 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const nextRaw = formData.get("next");
-  const next = sanitizeNextPath(nextRaw, "/konto");
+  const next = sanitizeNextPath(nextRaw, "/");
 
   if (!email || !password) {
     return { error: "Bitte E-Mail und Passwort eingeben." };
