@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 
 import { signInAction, type SignInFormState } from "@/app/actions/auth";
+import { AuthFormErrorAlert } from "@/components/auth/AuthFormErrorAlert";
 
 const signInInitial: SignInFormState = { error: "" };
 
@@ -41,11 +42,7 @@ export function SignInForm({ nextPath }: { nextPath: string }) {
           className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2 disabled:opacity-60"
         />
       </div>
-      {state.error ? (
-        <p role="alert" className="text-sm font-medium text-red-600">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <AuthFormErrorAlert message={state.error} /> : null}
       <button
         type="submit"
         disabled={pending}

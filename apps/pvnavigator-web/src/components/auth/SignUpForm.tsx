@@ -7,6 +7,7 @@ import {
   signUpAction,
   type SignUpFormState,
 } from "@/app/actions/auth";
+import { AuthFormErrorAlert } from "@/components/auth/AuthFormErrorAlert";
 
 const signUpInitial: SignUpFormState = {
   error: "",
@@ -111,11 +112,7 @@ export function SignUpForm() {
           onChange={() => setPasswordMismatch(false)}
         />
       </div>
-      {validationError ? (
-        <p role="alert" className="text-sm font-medium text-red-600">
-          {validationError}
-        </p>
-      ) : null}
+      {validationError ? <AuthFormErrorAlert message={validationError} /> : null}
       <button
         type="submit"
         disabled={pending}
