@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -14,8 +14,11 @@ const signUpInitial: SignUpFormState = {
   needsConfirmation: false,
 };
 
+const passwordMismatchGerman = "Die Passwörter stimmen nicht überein.";
+
 export function SignUpForm() {
   const [state, formAction, pending] = useActionState(signUpAction, signUpInitial);
+  const [passwordMismatch, setPasswordMismatch] = useState(false);
 
   if (state.success && state.needsConfirmation) {
     return (
@@ -40,8 +43,26 @@ export function SignUpForm() {
     );
   }
 
+  const validationError =
+    passwordMismatch ? passwordMismatchGerman : state.error.length > 0 ? state.error : null;
+
   return (
-    <form action={formAction} className="space-y-4">
+    <form
+      action={formAction}
+      className="space-y-4"
+      onSubmit={(e) => {
+        const form = e.currentTarget;
+        const fd = new FormData(form);
+        const p = String(fd.get("password") ?? "");
+        const c = String(fd.get("password_confirm") ?? "");
+        if (p !== c) {
+          e.preventDefault();
+          setPasswordMismatch(true);
+        } else {
+          setPasswordMismatch(false);
+        }
+      }}
+    >
       <div>
         <label htmlFor="signup-email" className="block text-sm font-medium text-[#0F172A]">
           E-Mail
@@ -69,12 +90,30 @@ export function SignUpForm() {
           minLength={6}
           disabled={pending}
           className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2 disabled:opacity-60"
+          onChange={() => setPasswordMismatch(false)}
         />
         <p className="mt-1.5 text-xs text-[#94a3b8]">Mindestens 6 Zeichen.</p>
       </div>
-      {state.error ? (
+      <div>
+        <label htmlFor="signup-password-confirm" className="block text-sm font-medium text-[#0F172A]">
+          Passwort wiederholen
+        </label>
+        <input
+          id="signup-password-confirm"
+          name="password_confirm"
+          type="password"
+          autoComplete="new-password"
+          required
+          minLength={6}
+          disabled={pending}
+          aria-invalid={passwordMismatch ? true : undefined}
+          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2 disabled:opacity-60"
+          onChange={() => setPasswordMismatch(false)}
+        />
+      </div>
+      {validationError ? (
         <p role="alert" className="text-sm font-medium text-red-600">
-          {state.error}
+          {validationError}
         </p>
       ) : null}
       <button

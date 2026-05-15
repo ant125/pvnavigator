@@ -35,9 +35,14 @@ export async function signUpAction(
 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const passwordConfirm = String(formData.get("password_confirm") ?? "");
 
   if (!email || !password) {
     return { ...initialSignUpState, error: "Bitte E-Mail und Passwort eingeben." };
+  }
+
+  if (password !== passwordConfirm) {
+    return { ...initialSignUpState, error: "Die Passwörter stimmen nicht überein." };
   }
 
   const supabase = await createServerSupabaseClient();
