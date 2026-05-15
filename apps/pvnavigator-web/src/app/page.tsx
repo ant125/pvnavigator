@@ -29,11 +29,11 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-3xl text-center">
           <p className="text-sm font-medium text-[#b45309]">PVNavigator</p>
           <h1 className="mt-3 text-[1.65rem] font-semibold leading-snug tracking-tight text-[#0F172A] sm:text-3xl md:text-[2rem]">
-            Unabhängige Werkzeuge für bessere Photovoltaik-Entscheidungen.
+            Unabhängige Werkzeuge für fundierte Photovoltaik-Entscheidungen.
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-[#64748B] md:text-[1.05rem]">
-            Technisch fundierte Analysen für Speicher, Wirtschaftlichkeit und PV-Planung — transparent
-            erklärt und unabhängig entwickelt.
+            Technisch fundierte Analysen für Speicher, Wirtschaftlichkeit und PV-Planung.
+            Transparent erklärt. Unabhängig entwickelt.
           </p>
 
           <p className="mx-auto mt-5 max-w-lg text-xs leading-relaxed text-[#64748B] sm:text-[13px]">
@@ -91,8 +91,7 @@ export default function HomePage() {
               </span>
               <h3 className="mt-4 pr-12 text-lg font-semibold text-[#0F172A]">Wirtschaftlichkeitsanalyse</h3>
               <p className="mt-3 flex-1 text-sm leading-relaxed text-[#64748B]">
-                Bewertet Wirtschaftlichkeit, Amortisation und Szenarien für PV, Speicher, Wärmepumpe und
-                E-Mobilität.
+                Analysiert Wirtschaftlichkeit, Amortisation und Energieszenarien für PV und Speicher.
               </p>
               <div className="mt-6 border-t border-[#E2E8F0] pt-4">
                 <span className="inline-flex rounded-full bg-slate-50 px-3.5 py-2 text-sm font-semibold text-[#94a3b8] ring-1 ring-[#E2E8F0]">
@@ -182,7 +181,7 @@ export default function HomePage() {
             So funktioniert es
           </h2>
           <p className="mx-auto mt-2 max-w-lg text-center text-sm text-[#64748B]">
-            Drei Schritte — ohne Schnörkel.
+            In drei einfachen Schritten.
           </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3 lg:mt-9">
