@@ -79,13 +79,13 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <Link
               href="/"
-              className="text-xs text-white/40 hover:text-white/60 transition-colors"
+              className="text-slate-300 hover:text-white transition-colors"
             >
               PVNavigator.de
             </Link>
             <Link
               href="/technische-details"
-              className="text-xs text-white/40 hover:text-white/60 transition-colors sm:text-right"
+              className="text-slate-300 hover:text-white transition-colors sm:text-right"
             >
               Technische Details zur Berechnung
             </Link>
