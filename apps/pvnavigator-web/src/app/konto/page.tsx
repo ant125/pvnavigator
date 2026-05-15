@@ -42,41 +42,28 @@ export default async function KontoPage() {
             Sie sind mit{" "}
             <span className="font-medium text-[#0F172A]">{user.email}</span> angemeldet.
           </p>
-          <form action={logoutAction} className="mt-6">
-            <button
-              type="submit"
-              className="inline-flex w-full items-center justify-center rounded-lg border border-[#E2E8F0] bg-[#FAFBFC] px-4 py-2.5 text-sm font-semibold text-[#0F172A] shadow-sm transition hover:bg-[#f1f5f9] sm:w-auto"
-            >
-              Abmelden
-            </button>
-          </form>
 
-          <section className="mt-10 border-t border-[#E2E8F0] pt-8">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-[#94a3b8]">
-              Verfügbare Werkzeuge
-            </h2>
-            <a
-              href="https://speicher.pvnavigator.de/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 flex flex-col rounded-xl border border-[#E2E8F0] bg-[#FAFBFC] p-4 transition hover:border-[#F59E0B]/35 hover:bg-white hover:shadow-[0_8px_24px_-16px_rgba(15,23,42,0.12)] sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+          <div className="mt-6 rounded-lg border border-[#E2E8F0] bg-[#FAFBFC] px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#94a3b8]">E-Mail-Adresse</p>
+            <p className="mt-1.5 break-all text-sm font-medium text-[#0F172A]">{user.email}</p>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link
+              href="/"
+              className="inline-flex w-full items-center justify-center rounded-lg border border-[#E2E8F0] bg-white px-4 py-2.5 text-center text-sm font-semibold text-[#0F172A] shadow-sm transition hover:bg-[#FAFBFC] sm:w-auto sm:min-w-[10rem]"
             >
-              <div>
-                <p className="font-semibold text-[#0F172A]">SpeicherGrenze</p>
-                <p className="mt-1 text-sm text-[#64748B]">Speicherbeitrag und Nutzungsgrenzen simulieren.</p>
-              </div>
-              <span className="mt-3 inline-flex shrink-0 items-center text-sm font-semibold text-[#F59E0B] sm:mt-0">
-                SpeicherGrenze öffnen →
-              </span>
-            </a>
-            <p className="mt-4 text-xs text-[#94a3b8]">
-              Weitere Tools finden Sie auf der{" "}
-              <Link href="/" className="font-medium text-[#b45309] hover:underline">
-                Startseite
-              </Link>
-              .
-            </p>
-          </section>
+              Zur Startseite
+            </Link>
+            <form action={logoutAction} className="w-full sm:w-auto">
+              <button
+                type="submit"
+                className="inline-flex w-full items-center justify-center rounded-lg border border-[#E2E8F0] bg-[#FAFBFC] px-4 py-2.5 text-sm font-semibold text-[#0F172A] shadow-sm transition hover:bg-[#f1f5f9] sm:w-auto sm:min-w-[10rem]"
+              >
+                Abmelden
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
