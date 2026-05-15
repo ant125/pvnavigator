@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { sanitizeNextPath } from "@/lib/auth";
+import { sanitizeNextPath, mapSupabaseAuthErrorToUserMessage } from "@/lib/auth";
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export type SignUpFormState = {
@@ -16,14 +16,6 @@ const initialSignUpState: SignUpFormState = {
   success: false,
   needsConfirmation: false,
 };
-
-function germanAuthMessage(message: string): string {
-  const m = message.toLowerCase();
-  if (m.includes("invalid login credentials")) return "E-Mail-Adresse oder Passwort ist ungültig.";
-  if (m.includes("email not confirmed")) return "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.";
-  if (m.includes("user already registered")) return "Es existiert bereits ein Konto mit dieser E-Mail-Adresse.";
-  return message;
-}
 
 export async function signUpAction(
   _prev: SignUpFormState,
@@ -49,7 +41,7 @@ export async function signUpAction(
   const { data, error } = await supabase.auth.signUp({ email, password });
 
   if (error) {
-    return { ...initialSignUpState, error: germanAuthMessage(error.message) };
+    return { ...initialSignUpState, error: mapSupabaseAuthErrorToUserMessage(error) };
   }
 
   if (data.session) {
@@ -85,7 +77,7 @@ export async function signInAction(_prev: SignInFormState, formData: FormData): 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: germanAuthMessage(error.message) };
+    return { error: mapSupabaseAuthErrorToUserMessage(error) };
   }
 
   redirect(next);
