@@ -206,6 +206,40 @@ export default function SpeicherCalculatePage() {
     Number.isFinite(resolvedBackupReserveKwh) &&
     resolvedBackupReserveKwh > 0;
 
+  const pvYieldKwhAnnual = verifiedResult?.energy.year.pvYieldKwhAnnual;
+
+  const specificYieldKwhPerKwp =
+    typeof pvYieldKwhAnnual === "number" &&
+    Number.isFinite(pvYieldKwhAnnual) &&
+    typeof formData.pvSizeKwp === "number" &&
+    formData.pvSizeKwp > 0 &&
+    Number.isFinite(formData.pvSizeKwp)
+      ? pvYieldKwhAnnual / formData.pvSizeKwp
+      : null;
+
+  const netzbezugMitSpeicherKwhYear =
+    typeof eigenverbrauchMitSpeicher === "number" &&
+    Number.isFinite(eigenverbrauchMitSpeicher) &&
+    Number.isFinite(totalConsumption)
+      ? totalConsumption - eigenverbrauchMitSpeicher
+      : null;
+
+  const einspeisungRechnerischKwhYear =
+    typeof pvYieldKwhAnnual === "number" &&
+    Number.isFinite(pvYieldKwhAnnual) &&
+    typeof eigenverbrauchMitSpeicher === "number" &&
+    Number.isFinite(eigenverbrauchMitSpeicher)
+      ? pvYieldKwhAnnual - eigenverbrauchMitSpeicher
+      : null;
+
+  const eigenverbrauchsquoteMitSpeicherPct =
+    typeof pvYieldKwhAnnual === "number" &&
+    pvYieldKwhAnnual > 0 &&
+    typeof eigenverbrauchMitSpeicher === "number" &&
+    Number.isFinite(eigenverbrauchMitSpeicher)
+      ? Math.round((eigenverbrauchMitSpeicher / pvYieldKwhAnnual) * 100)
+      : null;
+
   return (
     <div className="py-12 px-4">
       <div className="max-w-2xl mx-auto">
@@ -740,6 +774,87 @@ export default function SpeicherCalculatePage() {
                       )}
                     </div>
                   </div>
+                  </div>
+                </div>
+
+                <div className="bg-[#0F1620] rounded-xl p-6 mb-8 border border-white/5 group">
+                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
+                    <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-1">
+                      Technische Kennzahlen
+                    </h3>
+                    <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+                      Bezogen auf die PV-Erzeugung aus dem ersten Simulationsprofil und
+                      Ihre empfohlene Speichergröße (Mehrjahresmittel beim
+                      Eigenverbrauch mit Speicher).
+                    </p>
+
+                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm text-slate-300">
+                      <div className="text-slate-400">Jahresertrag PV</div>
+                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
+                        {typeof pvYieldKwhAnnual === "number" &&
+                        Number.isFinite(pvYieldKwhAnnual)
+                          ? `${pvYieldKwhAnnual.toFixed(0)} kWh/Jahr`
+                          : PLACEHOLDER}
+                      </div>
+
+                      <div className="text-slate-400">Spezifischer Ertrag</div>
+                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
+                        {specificYieldKwhPerKwp !== null
+                          ? `${specificYieldKwhPerKwp.toFixed(1)} kWh/kWp`
+                          : PLACEHOLDER}
+                      </div>
+
+                      <div className="text-slate-400">
+                        Direktverbrauch ohne Speicher
+                      </div>
+                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
+                        {formatKwh(
+                          verifiedResult?.energy.year.selfConsumptionWithoutStorage
+                        )}
+                      </div>
+
+                      <div className="text-slate-400">
+                        Eigenverbrauch mit Speicher
+                      </div>
+                      <div className="font-medium tabular-nums text-emerald-400/90 text-right sm:text-left">
+                        {formatKwh(eigenverbrauchMitSpeicher)}
+                      </div>
+
+                      <div className="text-slate-400">Netzbezug mit Speicher</div>
+                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
+                        {typeof netzbezugMitSpeicherKwhYear === "number" &&
+                        Number.isFinite(netzbezugMitSpeicherKwhYear)
+                          ? `${netzbezugMitSpeicherKwhYear.toFixed(0)} kWh/Jahr`
+                          : PLACEHOLDER}
+                      </div>
+
+                      <div className="text-slate-400 sm:col-span-1">
+                        <span className="block">Einspeisung (rechnerisch)</span>
+                        <span className="block text-[11px] text-slate-500 font-normal mt-0.5 normal-case">
+                          Grobe Größenordnung, nicht gleich EEG-Einspeisemenge
+                        </span>
+                      </div>
+                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left sm:self-center">
+                        {typeof einspeisungRechnerischKwhYear === "number" &&
+                        Number.isFinite(einspeisungRechnerischKwhYear)
+                          ? `${einspeisungRechnerischKwhYear.toFixed(0)} kWh/Jahr`
+                          : PLACEHOLDER}
+                      </div>
+
+                      <div className="text-slate-400">Autarkiegrad mit Speicher</div>
+                      <div className="font-medium tabular-nums text-emerald-400/90 text-right sm:text-left">
+                        {autarkieMitPct !== null
+                          ? `${autarkieMitPct} %`
+                          : PLACEHOLDER}
+                      </div>
+
+                      <div className="text-slate-400">Eigenverbrauchsquote</div>
+                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
+                        {eigenverbrauchsquoteMitSpeicherPct !== null
+                          ? `${eigenverbrauchsquoteMitSpeicherPct} %`
+                          : PLACEHOLDER}
+                      </div>
+                    </dl>
                   </div>
                 </div>
 

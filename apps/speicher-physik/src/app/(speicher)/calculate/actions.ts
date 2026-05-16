@@ -64,6 +64,8 @@ export async function calculateHouseholdConsumptionAction(params: {
     azimuthDeg: pvgisAspectDeg,
   });
 
+  const pvYieldKwhAnnual = pvKwh.reduce((sum, hour) => sum + hour, 0);
+
   const selfConsumptionWithoutStorage = calculateEigenverbrauch(
     loadKwh,
     pvKwh
@@ -74,6 +76,7 @@ export async function calculateHouseholdConsumptionAction(params: {
     energy: {
       year: {
         selfConsumptionWithoutStorage,
+        pvYieldKwhAnnual,
       },
     },
     ...(reserveKwh > 0 ? { backupReserveKwh: reserveKwh } : {}),
