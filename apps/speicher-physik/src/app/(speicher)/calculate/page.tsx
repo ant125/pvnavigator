@@ -160,6 +160,22 @@ export default function SpeicherCalculatePage() {
     (p) => p.size === recommendedSize
   )?.eigenverbrauch;
 
+  const batteryGeladenAvgKwh =
+    speicherGrenz && recommendedSize > 0
+      ? speicherGrenz.averageBatteryChargedKwh[recommendedSize]
+      : undefined;
+  const batteryAnVerbrauchAvgKwh =
+    speicherGrenz && recommendedSize > 0
+      ? speicherGrenz.averageBatteryDischargedKwh[recommendedSize]
+      : undefined;
+  const differenzBatterieflussKwh =
+    typeof batteryGeladenAvgKwh === "number" &&
+    Number.isFinite(batteryGeladenAvgKwh) &&
+    typeof batteryAnVerbrauchAvgKwh === "number" &&
+    Number.isFinite(batteryAnVerbrauchAvgKwh)
+      ? Math.round(batteryGeladenAvgKwh - batteryAnVerbrauchAvgKwh)
+      : null;
+
   const totalConsumption =
     (formData.annualConsumptionKwh ?? 0) +
     (formData.heatPumpEnabled === true
@@ -818,6 +834,37 @@ export default function SpeicherCalculatePage() {
                       </div>
                       <div className="font-medium tabular-nums text-emerald-400/90 text-right sm:text-left">
                         {formatKwh(eigenverbrauchMitSpeicher)}
+                      </div>
+
+                      <div className="text-slate-400">Batterie geladen</div>
+                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
+                        {typeof batteryGeladenAvgKwh === "number" &&
+                        Number.isFinite(batteryGeladenAvgKwh)
+                          ? `${Math.round(batteryGeladenAvgKwh)} kWh/Jahr`
+                          : PLACEHOLDER}
+                      </div>
+
+                      <div className="text-slate-400">
+                        Batterie an Verbrauch
+                      </div>
+                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
+                        {typeof batteryAnVerbrauchAvgKwh === "number" &&
+                        Number.isFinite(batteryAnVerbrauchAvgKwh)
+                          ? `${Math.round(batteryAnVerbrauchAvgKwh)} kWh/Jahr`
+                          : PLACEHOLDER}
+                      </div>
+
+                      <div className="text-slate-400 sm:col-span-1">
+                        <span className="block">Batterieverluste</span>
+                        <span className="block text-[11px] text-slate-500 font-normal mt-0.5 normal-case">
+                          Beinhaltet Lade-/Entladeverluste sowie geringe
+                          systembedingte Abweichungen.
+                        </span>
+                      </div>
+                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left sm:self-center">
+                        {differenzBatterieflussKwh !== null
+                          ? `${differenzBatterieflussKwh} kWh/Jahr`
+                          : PLACEHOLDER}
                       </div>
 
                       <div className="text-slate-400">Netzbezug mit Speicher</div>

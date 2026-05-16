@@ -32,6 +32,8 @@ export type SimulateMultiYearSpeicherGrenzResult = {
   batterySizes: number[];
   yearly: Record<number, Record<number, number>>;
   average: Record<number, number>;
+  averageBatteryChargedKwh: Record<number, number>;
+  averageBatteryDischargedKwh: Record<number, number>;
 };
 
 function sleep(ms: number): Promise<void> {
@@ -58,7 +60,8 @@ function assertHourlyArray(arr: number[], label: string): void {
 /**
  * Multi-year orchestration: runs `calculateBatterySimulation` for every
  * (year, batterySize) pair and aggregates `selfConsumptionWithStorage` per
- * battery size as the mean across years. Caller supplies the hourly load
+ * battery size as the mean across years. Also averages `totalChargedKwh` and
+ * `totalDischargedKwh` from the same runs. Caller supplies the hourly load
  * profile (8760h). PVGIS data is fetched per year via the existing adapter
  * (year passed through `startYear`/`endYear`).
  */
@@ -85,6 +88,9 @@ export async function simulateMultiYearSpeicherGrenz(
   assertHourlyArray(loadKwh, "load");
 
   const yearly: Record<number, Record<number, number>> = {};
+  const yearlyBatteryChargedKwh: Record<number, Record<number, number>> = {};
+  const yearlyBatteryDischargedKwh: Record<number, Record<number, number>> =
+    {};
 
   let first = true;
   for (const year of years) {
@@ -106,6 +112,8 @@ export async function simulateMultiYearSpeicherGrenz(
     }
 
     const sizeMap: Record<number, number> = {};
+    const chargedMap: Record<number, number> = {};
+    const dischargedMap: Record<number, number> = {};
     for (const size of batterySizes) {
       const result = calculateBatterySimulation(
         loadKwh,
@@ -115,11 +123,17 @@ export async function simulateMultiYearSpeicherGrenz(
         params.backupReserveKwh ?? 0
       );
       sizeMap[size] = result.selfConsumptionWithStorage;
+      chargedMap[size] = result.totalChargedKwh;
+      dischargedMap[size] = result.totalDischargedKwh;
     }
     yearly[year] = sizeMap;
+    yearlyBatteryChargedKwh[year] = chargedMap;
+    yearlyBatteryDischargedKwh[year] = dischargedMap;
   }
 
   const average: Record<number, number> = {};
+  const averageBatteryChargedKwh: Record<number, number> = {};
+  const averageBatteryDischargedKwh: Record<number, number> = {};
   for (const size of batterySizes) {
     let sum = 0;
     let count = 0;
@@ -131,11 +145,37 @@ export async function simulateMultiYearSpeicherGrenz(
       }
     }
     average[size] = count > 0 ? sum / count : 0;
+
+    let sumCharged = 0;
+    let countCharged = 0;
+    for (const year of years) {
+      const v = yearlyBatteryChargedKwh[year]?.[size];
+      if (typeof v === "number" && Number.isFinite(v)) {
+        sumCharged += v;
+        countCharged += 1;
+      }
+    }
+    averageBatteryChargedKwh[size] =
+      countCharged > 0 ? sumCharged / countCharged : 0;
+
+    let sumDischarged = 0;
+    let countDischarged = 0;
+    for (const year of years) {
+      const v = yearlyBatteryDischargedKwh[year]?.[size];
+      if (typeof v === "number" && Number.isFinite(v)) {
+        sumDischarged += v;
+        countDischarged += 1;
+      }
+    }
+    averageBatteryDischargedKwh[size] =
+      countDischarged > 0 ? sumDischarged / countDischarged : 0;
   }
 
   return {
     batterySizes,
     yearly,
     average,
+    averageBatteryChargedKwh,
+    averageBatteryDischargedKwh,
   };
 }

@@ -18,6 +18,8 @@ import { mergeLoadProfiles } from "@/load/merge";
 export type SpeicherGrenzPayload = {
   batterySizes: number[];
   average: Record<number, number>;
+  averageBatteryChargedKwh: Record<number, number>;
+  averageBatteryDischargedKwh: Record<number, number>;
 };
 
 export type HouseholdCalculationPayload = {
@@ -97,6 +99,8 @@ export async function calculateHouseholdConsumptionAction(params: {
     speicherGrenz: {
       batterySizes: multiYear.batterySizes,
       average: multiYear.average,
+      averageBatteryChargedKwh: multiYear.averageBatteryChargedKwh,
+      averageBatteryDischargedKwh: multiYear.averageBatteryDischargedKwh,
     },
   };
 }
