@@ -11,6 +11,7 @@ import { createUserLoadProfile } from "../../../../../../packages/bdew-profile";
 import { loadPVGISHourlyProfile } from "../../../../../../packages/pvgis-adapter";
 import { calculateEigenverbrauch } from "../../../../../../packages/pv-core";
 import { simulateMultiYearSpeicherGrenz } from "@/lib/multiYearSimulation";
+import { toPVGISAspect } from "@/lib/toPVGISAspect";
 import { createHeatPumpComponent } from "@/load/heatpump";
 import { mergeLoadProfiles } from "@/load/merge";
 
@@ -54,12 +55,13 @@ export async function calculateHouseholdConsumptionAction(params: {
   }
 
   const loadKwh = mergeLoadProfiles(components);
+  const pvgisAspectDeg = toPVGISAspect(params.azimuthDeg);
   const pvKwh = await loadPVGISHourlyProfile({
     latitude: params.latitude,
     longitude: params.longitude,
     systemSizeKwP: params.pvSystemKwP,
     tiltDeg: params.tiltDeg,
-    azimuthDeg: params.azimuthDeg,
+    azimuthDeg: pvgisAspectDeg,
   });
 
   const selfConsumptionWithoutStorage = calculateEigenverbrauch(
@@ -83,7 +85,7 @@ export async function calculateHouseholdConsumptionAction(params: {
     latitude: params.latitude,
     longitude: params.longitude,
     tiltDeg: params.tiltDeg,
-    azimuthDeg: params.azimuthDeg,
+    azimuthDeg: pvgisAspectDeg,
     backupReserveKwh: reserveKwh,
   });
 

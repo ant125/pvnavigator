@@ -100,22 +100,31 @@ export default function SpeicherCalculatePage() {
     setErrors([]);
     setStep("calculating");
 
-    const response = await calculateHouseholdConsumptionAction({
-      annualConsumptionKWh: formData.annualConsumptionKwh as number,
-      pvSystemKwP: formData.pvSizeKwp as number,
-      latitude: 48.137154,
-      longitude: 11.576124,
-      tiltDeg: formData.tilt as number,
-      azimuthDeg: formData.azimuth as number,
-      heatPumpEnabled: formData.heatPumpEnabled === true,
-      heatPumpConsumptionKWh: formData.heatPumpConsumptionKwh,
-      backupReserveKwh: formData.backupReserveKwh,
-    });
+    try {
+      const response = await calculateHouseholdConsumptionAction({
+        annualConsumptionKWh: formData.annualConsumptionKwh as number,
+        pvSystemKwP: formData.pvSizeKwp as number,
+        latitude: 48.137154,
+        longitude: 11.576124,
+        tiltDeg: formData.tilt as number,
+        azimuthDeg: formData.azimuth as number,
+        heatPumpEnabled: formData.heatPumpEnabled === true,
+        heatPumpConsumptionKWh: formData.heatPumpConsumptionKwh,
+        backupReserveKwh: formData.backupReserveKwh,
+      });
 
-    setVerifiedResult(response.verifiedResult);
-    setSpeicherGrenz(response.speicherGrenz);
-    setCalculationLink("/result");
-    setStep("results");
+      setVerifiedResult(response.verifiedResult);
+      setSpeicherGrenz(response.speicherGrenz);
+      setCalculationLink("/result");
+      setStep("results");
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Die Berechnung ist fehlgeschlagen. Bitte versuchen Sie es erneut.";
+      setErrors([message]);
+      setStep("input");
+    }
   };
 
   /**
