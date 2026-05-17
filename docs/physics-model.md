@@ -144,7 +144,7 @@ Für jede Stunde wird ein AC-Bus-Modell verwendet:
 
 - verbleibender Bedarf wird aus dem Netz bezogen
 
-Der technische Systemverbrauch wird separat geführt und erhöht nicht den ausgewiesenen Haushaltsverbrauch.
+Der technische Systemverbrauch wird separat erfasst. Er erhöht weder den ausgewiesenen Haushaltsverbrauch noch den Eigenverbrauch oder den Autarkiegrad.
 
 ---
 
@@ -152,7 +152,9 @@ Der technische Systemverbrauch wird separat geführt und erhöht nicht den ausge
 
 Berücksichtigte Effekte:
 
-- Modernes LiFePO4-Heimspeichermodell mit Roundtrip-Wirkungsgrad (~94%)
+- Modernes LiFePO4-Heimspeichersystem mit Hybridwechselrichter und DC-gekoppeltem Ladepfad (PV-Überschuss zuerst in den Speicher; Entladung über den Wechselrichter auf den AC-Haushaltsbus)
+
+- modellierte Verlustpfade mit getrennter Bilanz: **PV → Speicher**, **Zellverluste beim Laden**, **Zellverluste beim Entladen**, **Speicher → AC-Bus** — der effektive Gesamt-Roundtrip liegt weiterhin in der Größenordnung von etwa 94 %, wird aber aus mehreren Einzelwirkungsgraden abgeleitet
 
 - Depth of Discharge (~90%)
 
@@ -163,6 +165,10 @@ Berücksichtigte Effekte:
 - technischer Systemverbrauch des Speichersystems (z. B. Elektronik, BMS, Betriebsbereitschaft)
 
 - getrennte Bilanzierung von Haushaltsverbrauch und Systemverbrauch
+
+Die Selbstentladung reduziert den Ladezustand der Batterie über die Zeit und wird als Batterieverlust berücksichtigt.
+
+Der technische Systemverbrauch des Speichersystems (z. B. Elektronik, BMS, Kommunikation und Betriebsbereitschaft) wird separat bilanziert. Er kann durch PV, Batterie oder Netz gedeckt werden, erhöht aber nicht den ausgewiesenen Haushaltsverbrauch, Eigenverbrauch oder Autarkiegrad.
 
 Beispiel:  
 
@@ -230,8 +236,6 @@ Die Batteriesimulation basiert auf folgenden Annahmen:
 
 Der Eigenverbrauch und der Autarkiegrad beziehen sich auf den Haushaltsverbrauch. Der technische Systemverbrauch des Speichersystems wird separat bilanziert und erhöht diese Kennzahlen nicht künstlich.
 
-Die Selbstentladung reduziert den Ladezustand der Batterie über die Zeit und wird als Batterieverlust berücksichtigt.
-
 👉 Wichtige Einschränkungen:
 
 - Keine temperaturabhängigen Effekte
@@ -267,6 +271,8 @@ Nicht explizit separat modelliert:
 - Netzrestriktionen
 
 - detaillierte herstellerspezifische Wirkungsgradkennlinien von Batterie- und Hybridwechselrichtern
+
+- Sub-Stunden-Inverterverhalten und dynamische Wirkungsgradkurven
 
 ---
 

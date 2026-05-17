@@ -56,6 +56,19 @@ const SPEICHER_REPORT_KPI_ROW =
 const SPEICHER_REPORT_HELPER_TEXT =
   "text-[10px] sm:text-[11px] leading-snug text-slate-500 font-normal normal-case";
 
+/** Grouped hybrid breakdown under „Batterieverluste gesamt“ (own value column, not main KPI) */
+const SPEICHER_BATTERY_LOSS_BREAKDOWN_GROUP =
+  "mt-2 max-w-[min(100%,430px)] border-l border-slate-700/60 pl-4 space-y-1";
+
+const SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW =
+  "grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-[11px] sm:text-xs text-slate-400";
+
+const SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL =
+  "min-w-0 leading-snug text-slate-400";
+
+const SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE =
+  "shrink-0 tabular-nums text-right text-slate-300 text-[11px] sm:text-xs";
+
 /** Cardinal presets for Dachausrichtung (clockwise from Nord). */
 const AZIMUTH_PRESET_DEGREES = [
   0, 45, 90, 135, 180, 225, 270, 315,
@@ -199,6 +212,43 @@ export default function SpeicherCalculatePage() {
     Number.isFinite(batteryAnVerbrauchAvgKwh)
       ? Math.round(batteryGeladenAvgKwh - batteryAnVerbrauchAvgKwh)
       : null;
+
+  const avgChargeLossKwh =
+    speicherGrenz && recommendedSize > 0
+      ? speicherGrenz.averageChargeLossKwh[recommendedSize]
+      : undefined;
+  const avgDischargeLossKwh =
+    speicherGrenz && recommendedSize > 0
+      ? speicherGrenz.averageDischargeLossKwh[recommendedSize]
+      : undefined;
+  const batterieverlusteModellGesamtKwh =
+    typeof avgChargeLossKwh === "number" &&
+    Number.isFinite(avgChargeLossKwh) &&
+    typeof avgDischargeLossKwh === "number" &&
+    Number.isFinite(avgDischargeLossKwh)
+      ? Math.round(avgChargeLossKwh + avgDischargeLossKwh)
+      : null;
+
+  const hybridChargeBreakdownAvgKwh =
+    speicherGrenz && recommendedSize > 0
+      ? (speicherGrenz.averageChargeLossPvToBatteryKwh[recommendedSize] ??
+          0) +
+        (speicherGrenz.averageChargeLossChemicalKwh[recommendedSize] ?? 0)
+      : 0;
+  const showBatterieverlusteHybridBreakdown =
+    speicherGrenz != null &&
+    recommendedSize > 0 &&
+    batterieverlusteModellGesamtKwh !== null &&
+    hybridChargeBreakdownAvgKwh > 1e-3;
+
+  const avgSelfDischargeLossDisplayKwh =
+    speicherGrenz && recommendedSize > 0
+      ? speicherGrenz.averageSelfDischargeLossKwh[recommendedSize]
+      : undefined;
+  const avgAuxiliaryConsumptionDisplayKwh =
+    speicherGrenz && recommendedSize > 0
+      ? speicherGrenz.averageAuxiliaryConsumptionKwh[recommendedSize]
+      : undefined;
 
   const totalConsumption =
     (formData.annualConsumptionKwh ?? 0) +
@@ -1001,19 +1051,131 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
+                      {speicherGrenz && showBatterieverlusteHybridBreakdown ? (
+                        <>
+                          <div className={SPEICHER_REPORT_KPI_ROW}>
+                            <div className="min-w-0 leading-snug text-slate-400">
+                              <span className="block leading-snug">
+                                Batterieverluste gesamt
+                              </span>
+                              <span
+                                className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
+                              >
+                                Modell: Lade- + Entladeverluste
+                                (Mehrjahresmittel).
+                              </span>
+                            </div>
+                            <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
+                              {batterieverlusteModellGesamtKwh !== null
+                                ? `${batterieverlusteModellGesamtKwh} kWh/Jahr`
+                                : PLACEHOLDER}
+                            </div>
+                          </div>
+                          <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_GROUP}>
+                            <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW}>
+                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL}>
+                                PV → Speicher
+                              </span>
+                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
+                                {Math.round(
+                                  speicherGrenz.averageChargeLossPvToBatteryKwh[
+                                    recommendedSize
+                                  ] ?? 0
+                                )}{" "}
+                                kWh/Jahr
+                              </span>
+                            </div>
+                            <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW}>
+                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL}>
+                                Zellverluste beim Laden
+                              </span>
+                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
+                                {Math.round(
+                                  speicherGrenz.averageChargeLossChemicalKwh[
+                                    recommendedSize
+                                  ] ?? 0
+                                )}{" "}
+                                kWh/Jahr
+                              </span>
+                            </div>
+                            <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW}>
+                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL}>
+                                Zellverluste beim Entladen
+                              </span>
+                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
+                                {Math.round(
+                                  speicherGrenz.averageDischargeLossChemicalKwh[
+                                    recommendedSize
+                                  ] ?? 0
+                                )}{" "}
+                                kWh/Jahr
+                              </span>
+                            </div>
+                            <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW}>
+                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL}>
+                                Speicher → AC-Bus
+                              </span>
+                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
+                                {Math.round(
+                                  speicherGrenz.averageDischargeLossBatteryToAcKwh[
+                                    recommendedSize
+                                  ] ?? 0
+                                )}{" "}
+                                kWh/Jahr
+                              </span>
+                            </div>
+                            <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW}>
+                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL}>
+                                Selbstentladung
+                              </span>
+                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
+                                {typeof avgSelfDischargeLossDisplayKwh ===
+                                  "number" &&
+                                Number.isFinite(avgSelfDischargeLossDisplayKwh)
+                                  ? `${Math.round(avgSelfDischargeLossDisplayKwh)} kWh/Jahr`
+                                  : PLACEHOLDER}
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className={SPEICHER_REPORT_KPI_ROW}>
+                          <div className="min-w-0 leading-snug text-slate-400">
+                            <span className="block leading-snug">
+                              Batterieverluste
+                            </span>
+                            <span
+                              className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
+                            >
+                              Beinhaltet Lade-/Entladeverluste sowie geringe
+                              systembedingte Abweichungen.
+                            </span>
+                          </div>
+                          <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
+                            {differenzBatterieflussKwh !== null
+                              ? `${differenzBatterieflussKwh} kWh/Jahr`
+                              : PLACEHOLDER}
+                          </div>
+                        </div>
+                      )}
+
                       <div className={SPEICHER_REPORT_KPI_ROW}>
                         <div className="min-w-0 leading-snug text-slate-400">
                           <span className="block leading-snug">
-                            Batterieverluste
+                            Systemverbrauch Standby
                           </span>
-                          <span className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}>
-                            Beinhaltet Lade-/Entladeverluste sowie geringe
-                            systembedingte Abweichungen.
+                          <span
+                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
+                          >
+                            Nicht im Haushaltsverbrauch, Eigenverbrauch oder
+                            Autarkiegrad enthalten.
                           </span>
                         </div>
                         <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
-                          {differenzBatterieflussKwh !== null
-                            ? `${differenzBatterieflussKwh} kWh/Jahr`
+                          {typeof avgAuxiliaryConsumptionDisplayKwh ===
+                            "number" &&
+                          Number.isFinite(avgAuxiliaryConsumptionDisplayKwh)
+                            ? `${Math.round(avgAuxiliaryConsumptionDisplayKwh)} kWh/Jahr`
                             : PLACEHOLDER}
                         </div>
                       </div>

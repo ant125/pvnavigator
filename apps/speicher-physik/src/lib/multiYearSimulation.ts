@@ -22,6 +22,10 @@ export type BatteryLedgerAnnual = Pick<
   | "auxiliaryConsumptionKwh"
   | "chargeLossKwh"
   | "dischargeLossKwh"
+  | "chargeLossPvToBatteryKwh"
+  | "chargeLossChemicalKwh"
+  | "dischargeLossChemicalKwh"
+  | "dischargeLossBatteryToAcKwh"
   | "socStartKwh"
   | "socEndKwh"
   | "socEndPct"
@@ -41,6 +45,10 @@ function pickBatteryLedger(result: BatterySimulationResult): BatteryLedgerAnnual
     auxiliaryConsumptionKwh: result.auxiliaryConsumptionKwh,
     chargeLossKwh: result.chargeLossKwh,
     dischargeLossKwh: result.dischargeLossKwh,
+    chargeLossPvToBatteryKwh: result.chargeLossPvToBatteryKwh,
+    chargeLossChemicalKwh: result.chargeLossChemicalKwh,
+    dischargeLossChemicalKwh: result.dischargeLossChemicalKwh,
+    dischargeLossBatteryToAcKwh: result.dischargeLossBatteryToAcKwh,
     socStartKwh: result.socStartKwh,
     socEndKwh: result.socEndKwh,
     socEndPct: result.socEndPct,
@@ -108,6 +116,10 @@ export type SimulateMultiYearSpeicherGrenzResult = {
   averageAuxiliaryConsumptionKwh: Record<number, number>;
   averageChargeLossKwh: Record<number, number>;
   averageDischargeLossKwh: Record<number, number>;
+  averageChargeLossPvToBatteryKwh: Record<number, number>;
+  averageChargeLossChemicalKwh: Record<number, number>;
+  averageDischargeLossChemicalKwh: Record<number, number>;
+  averageDischargeLossBatteryToAcKwh: Record<number, number>;
   averageSocStartKwh: Record<number, number>;
   averageSocEndKwh: Record<number, number>;
   averageSocEndPct: Record<number, number>;
@@ -317,6 +329,30 @@ export async function simulateMultiYearSpeicherGrenz(
     yearlyBatteryLedger,
     "dischargeLossKwh"
   );
+  const averageChargeLossPvToBatteryKwh = averageLedgerField(
+    years,
+    batterySizes,
+    yearlyBatteryLedger,
+    "chargeLossPvToBatteryKwh"
+  );
+  const averageChargeLossChemicalKwh = averageLedgerField(
+    years,
+    batterySizes,
+    yearlyBatteryLedger,
+    "chargeLossChemicalKwh"
+  );
+  const averageDischargeLossChemicalKwh = averageLedgerField(
+    years,
+    batterySizes,
+    yearlyBatteryLedger,
+    "dischargeLossChemicalKwh"
+  );
+  const averageDischargeLossBatteryToAcKwh = averageLedgerField(
+    years,
+    batterySizes,
+    yearlyBatteryLedger,
+    "dischargeLossBatteryToAcKwh"
+  );
   const averageSocStartKwh = averageLedgerField(
     years,
     batterySizes,
@@ -364,6 +400,10 @@ export async function simulateMultiYearSpeicherGrenz(
     averageAuxiliaryConsumptionKwh,
     averageChargeLossKwh,
     averageDischargeLossKwh,
+    averageChargeLossPvToBatteryKwh,
+    averageChargeLossChemicalKwh,
+    averageDischargeLossChemicalKwh,
+    averageDischargeLossBatteryToAcKwh,
     averageSocStartKwh,
     averageSocEndKwh,
     averageSocEndPct,

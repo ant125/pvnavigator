@@ -62,6 +62,10 @@ export type SpeicherGrenzPayload = {
   averageAuxiliaryConsumptionKwh: Record<number, number>;
   averageChargeLossKwh: Record<number, number>;
   averageDischargeLossKwh: Record<number, number>;
+  averageChargeLossPvToBatteryKwh: Record<number, number>;
+  averageChargeLossChemicalKwh: Record<number, number>;
+  averageDischargeLossChemicalKwh: Record<number, number>;
+  averageDischargeLossBatteryToAcKwh: Record<number, number>;
   averageSocStartKwh: Record<number, number>;
   averageSocEndKwh: Record<number, number>;
   averageSocEndPct: Record<number, number>;
@@ -154,6 +158,10 @@ export async function calculateHouseholdConsumptionAction(params: {
       averageAuxiliaryConsumptionKwh: multiYear.averageAuxiliaryConsumptionKwh,
       averageChargeLossKwh: multiYear.averageChargeLossKwh,
       averageDischargeLossKwh: multiYear.averageDischargeLossKwh,
+      averageChargeLossPvToBatteryKwh: multiYear.averageChargeLossPvToBatteryKwh,
+      averageChargeLossChemicalKwh: multiYear.averageChargeLossChemicalKwh,
+      averageDischargeLossChemicalKwh: multiYear.averageDischargeLossChemicalKwh,
+      averageDischargeLossBatteryToAcKwh: multiYear.averageDischargeLossBatteryToAcKwh,
       averageSocStartKwh: multiYear.averageSocStartKwh,
       averageSocEndKwh: multiYear.averageSocEndKwh,
       averageSocEndPct: multiYear.averageSocEndPct,
