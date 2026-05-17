@@ -6,6 +6,7 @@
  */
 
 import { BDEW_H0 } from "./bdew_h0";
+import { buildBdewH0WeightsForYear } from "./bdewH0YearProfile";
 
 export type HourlyRow = {
   kWh: number;
@@ -54,3 +55,25 @@ export function createUserLoadProfile(annualConsumptionKWh: number): number[] {
   const weights = loadBDEWProfileHourlies("H0");
   return scaleToAnnualKWh(weights, annualConsumptionKWh);
 }
+
+/**
+ * BDEW H0 hourly load (8760h) scaled to `annualKWh`, using the same (month × day-type)
+ * templates as the static profile but with weekday/Sat/Sun layout for `year`
+ * (`Europe/Berlin`). Leap years omit Feb 29 to match PVGIS 8760h series.
+ */
+export function createUserLoadProfileForYear(
+  annualKWh: number,
+  year: number
+): number[] {
+  if (!Number.isFinite(annualKWh) || annualKWh <= 0) {
+    throw new Error("annualKWh must be a positive finite number");
+  }
+  const weights = buildBdewH0WeightsForYear(year);
+  return scaleToAnnualKWh(weights, annualKWh);
+}
+
+export {
+  BDEW_H0_REFERENCE_CALENDAR_YEAR,
+  iterateBdewProfileDays,
+} from "./bdewH0YearProfile";
+export type { BdewDayType } from "./bdewH0YearProfile";

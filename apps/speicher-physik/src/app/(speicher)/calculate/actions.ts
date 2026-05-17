@@ -7,13 +7,45 @@ import {
 } from "./verifiedResultStore.server";
 
 export type { VerifiedResult };
-import { createUserLoadProfile } from "../../../../../../packages/bdew-profile";
+import {
+  createUserLoadProfileForYear,
+} from "../../../../../../packages/bdew-profile";
 import { loadPVGISHourlyProfile } from "../../../../../../packages/pvgis-adapter";
 import { calculateEigenverbrauch } from "../../../../../../packages/pv-core";
 import { simulateMultiYearSpeicherGrenz } from "@/lib/multiYearSimulation";
 import { toPVGISAspect } from "@/lib/toPVGISAspect";
 import { createHeatPumpComponent } from "@/load/heatpump";
-import { mergeLoadProfiles } from "@/load/merge";
+import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
+
+/** PVGIS + BDEW weekday calendar alignment for verified metrics and charts. */
+const SPEICHER_VERIFIED_REFERENCE_YEAR = 2018;
+
+function buildMergedLoadForYear(
+  year: number,
+  annualConsumptionKWh: number,
+  heatPumpEnabled: boolean | undefined,
+  heatPumpConsumptionKWh: number | undefined
+): number[] {
+  const houseLoad = createUserLoadProfileForYear(annualConsumptionKWh, year);
+
+  const components: LoadComponent[] = [
+    {
+      name: "house",
+      yearlyConsumption: annualConsumptionKWh,
+      profile: houseLoad,
+    },
+  ];
+
+  if (
+    heatPumpEnabled === true &&
+    typeof heatPumpConsumptionKWh === "number" &&
+    heatPumpConsumptionKWh > 0
+  ) {
+    components.push(createHeatPumpComponent(heatPumpConsumptionKWh));
+  }
+
+  return mergeLoadProfiles(components);
+}
 
 export type SpeicherGrenzPayload = {
   batterySizes: number[];
@@ -38,25 +70,13 @@ export async function calculateHouseholdConsumptionAction(params: {
   heatPumpConsumptionKWh?: number;
   backupReserveKwh?: number;
 }): Promise<HouseholdCalculationPayload> {
-  const houseLoad = createUserLoadProfile(params.annualConsumptionKWh);
-
-  const components = [
-    {
-      name: "house",
-      yearlyConsumption: params.annualConsumptionKWh,
-      profile: houseLoad,
-    },
-  ];
-
-  if (
-    params.heatPumpEnabled &&
-    typeof params.heatPumpConsumptionKWh === "number" &&
-    params.heatPumpConsumptionKWh > 0
-  ) {
-    components.push(createHeatPumpComponent(params.heatPumpConsumptionKWh));
-  }
-
-  const loadKwh = mergeLoadProfiles(components);
+  const refYear = SPEICHER_VERIFIED_REFERENCE_YEAR;
+  const loadKwh = buildMergedLoadForYear(
+    refYear,
+    params.annualConsumptionKWh,
+    params.heatPumpEnabled,
+    params.heatPumpConsumptionKWh
+  );
   const pvgisAspectDeg = toPVGISAspect(params.azimuthDeg);
   const pvKwh = await loadPVGISHourlyProfile({
     latitude: params.latitude,
@@ -64,6 +84,8 @@ export async function calculateHouseholdConsumptionAction(params: {
     systemSizeKwP: params.pvSystemKwP,
     tiltDeg: params.tiltDeg,
     azimuthDeg: pvgisAspectDeg,
+    startYear: refYear,
+    endYear: refYear,
   });
 
   const pvYieldKwhAnnual = pvKwh.reduce((sum, hour) => sum + hour, 0);
@@ -85,7 +107,13 @@ export async function calculateHouseholdConsumptionAction(params: {
   };
 
   const multiYear = await simulateMultiYearSpeicherGrenz({
-    loadKwh,
+    getLoadForYear: (year) =>
+      buildMergedLoadForYear(
+        year,
+        params.annualConsumptionKWh,
+        params.heatPumpEnabled,
+        params.heatPumpConsumptionKWh
+      ),
     pvSystemKwP: params.pvSystemKwP,
     latitude: params.latitude,
     longitude: params.longitude,

@@ -16,7 +16,8 @@ export const DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH: ReadonlyArray<number> =
   Array.from({ length: 26 }, (_, i) => i + 5);
 
 export type SimulateMultiYearSpeicherGrenzParams = {
-  loadKwh: number[];
+  /** Hourly load (8760h) for each simulated PV year — must match `years` rows. */
+  getLoadForYear: (year: number) => number[];
   pvSystemKwP: number;
   latitude: number;
   longitude: number;
@@ -61,9 +62,9 @@ function assertHourlyArray(arr: number[], label: string): void {
  * Multi-year orchestration: runs `calculateBatterySimulation` for every
  * (year, batterySize) pair and aggregates `selfConsumptionWithStorage` per
  * battery size as the mean across years. Also averages `totalChargedKwh` and
- * `totalDischargedKwh` from the same runs. Caller supplies the hourly load
- * profile (8760h). PVGIS data is fetched per year via the existing adapter
- * (year passed through `startYear`/`endYear`).
+ * `totalDischargedKwh` from the same runs. Caller supplies `getLoadForYear`
+ * so the load calendar matches each PVGIS `year`. PVGIS data is fetched per
+ * year via the existing adapter (year passed through `startYear`/`endYear`).
  */
 export async function simulateMultiYearSpeicherGrenz(
   params: SimulateMultiYearSpeicherGrenzParams
@@ -83,9 +84,6 @@ export async function simulateMultiYearSpeicherGrenz(
   if (batterySizes.some((s) => !Number.isFinite(s) || s <= 0)) {
     throw new Error("batterySizes must contain only positive finite numbers");
   }
-
-  const loadKwh = params.loadKwh;
-  assertHourlyArray(loadKwh, "load");
 
   const yearly: Record<number, Record<number, number>> = {};
   const yearlyBatteryChargedKwh: Record<number, Record<number, number>> = {};
@@ -111,12 +109,15 @@ export async function simulateMultiYearSpeicherGrenz(
       );
     }
 
+    const loadKwhYear = params.getLoadForYear(year);
+    assertHourlyArray(loadKwhYear, `load year ${year}`);
+
     const sizeMap: Record<number, number> = {};
     const chargedMap: Record<number, number> = {};
     const dischargedMap: Record<number, number> = {};
     for (const size of batterySizes) {
       const result = calculateBatterySimulation(
-        loadKwh,
+        loadKwhYear,
         pvProfile,
         size,
         spec,
