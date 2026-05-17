@@ -46,6 +46,16 @@ const BACKUP_RESERVE_RADIO_OPTIONS: ReadonlyArray<{
   { kwh: 3.0, label: "3.0 kWh" },
 ];
 
+/** Shared label/value rows: Ausgangsdaten + Technische Kennzahlen */
+const SPEICHER_REPORT_ROWS =
+  "flex flex-col gap-y-3 text-sm text-slate-300";
+
+const SPEICHER_REPORT_KPI_ROW =
+  "grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-1 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline";
+
+const SPEICHER_REPORT_HELPER_TEXT =
+  "text-[10px] sm:text-[11px] leading-snug text-slate-500 font-normal normal-case";
+
 export default function SpeicherCalculatePage() {
   const [step, setStep] = useState<Step>("input");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
@@ -733,63 +743,101 @@ export default function SpeicherCalculatePage() {
 
             {speicherGrenz && (
               <>
-                <div className="bg-[#0F1620] rounded-xl p-6 mb-8 border border-white/5 group">
+                <div className="bg-[#0F1620] rounded-xl p-4 sm:p-6 mb-8 border border-white/5 group">
                   <div className={ANALYTICS_CARD_TEXT_HOVER}>
-                    <div className="text-sm text-slate-400 mb-4">
+                    <div className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-300 sm:mb-4">
                       Ausgangsdaten
                     </div>
 
-                    <div className="grid grid-cols-2 gap-y-3 text-sm text-slate-300">
-                    <div>Adresse:</div>
-                    <div>{formData.address ?? "—"}</div>
-
-                    <div>PV-Anlage:</div>
-                    <div>{formData.pvSizeKwp} kWp</div>
-
-                    <div>Neigung:</div>
-                    <div>{formData.tilt}°</div>
-
-                    <div>Ausrichtung:</div>
-                    <div>{formData.azimuth}°</div>
-
-                    {hasActiveBackupReserve && (
-                      <>
-                        <div>Notstromreserve:</div>
-                        <div>{resolvedBackupReserveKwh} kWh</div>
-                      </>
-                    )}
-
-                    <div>Hausverbrauch (ohne Wärmepumpe):</div>
-                    <div>
-                      {formData.annualConsumptionKwh} kWh/Jahr
-                    </div>
-
-                    {formData.heatPumpEnabled === true && (
-                      <>
-                        <div>Wärmepumpe:</div>
-                        <div>
-                          {formData.heatPumpConsumptionKwh} kWh/Jahr
+                    <div className={SPEICHER_REPORT_ROWS}>
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
+                          Adresse:
                         </div>
-                      </>
-                    )}
-
-                    <div>Gesamtverbrauch:</div>
-                    <div>
-                      <div>
-                        {(formData.annualConsumptionKwh ?? 0) +
-                          (formData.heatPumpEnabled === true
-                            ? formData.heatPumpConsumptionKwh ?? 0
-                            : 0)}{" "}
-                        kWh/Jahr
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                          {formData.address ?? "—"}
+                        </div>
                       </div>
-                      {formData.heatPumpEnabled === true && (
-                        <div className="text-xs text-slate-500 mt-1">
-                          davon Wärmepumpe: {formData.heatPumpConsumptionKwh}{" "}
-                          kWh
+
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
+                          PV-Anlage:
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                          {formData.pvSizeKwp} kWp
+                        </div>
+                      </div>
+
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
+                          Neigung:
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                          {formData.tilt}°
+                        </div>
+                      </div>
+
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
+                          Ausrichtung:
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                          {formData.azimuth}°
+                        </div>
+                      </div>
+
+                      {hasActiveBackupReserve && (
+                        <div className={SPEICHER_REPORT_KPI_ROW}>
+                          <div className="min-w-0 leading-snug text-slate-400">
+                            Notstromreserve:
+                          </div>
+                          <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                            {resolvedBackupReserveKwh} kWh
+                          </div>
                         </div>
                       )}
+
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
+                          Hausverbrauch (ohne Wärmepumpe):
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                          {formData.annualConsumptionKwh} kWh/Jahr
+                        </div>
+                      </div>
+
+                      {formData.heatPumpEnabled === true && (
+                        <div className={SPEICHER_REPORT_KPI_ROW}>
+                          <div className="min-w-0 leading-snug text-slate-400">
+                            Wärmepumpe:
+                          </div>
+                          <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                            {formData.heatPumpConsumptionKwh} kWh/Jahr
+                          </div>
+                        </div>
+                      )}
+
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
+                          Gesamtverbrauch:
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                          <div>
+                            {(formData.annualConsumptionKwh ?? 0) +
+                              (formData.heatPumpEnabled === true
+                                ? formData.heatPumpConsumptionKwh ?? 0
+                                : 0)}{" "}
+                            kWh/Jahr
+                          </div>
+                          {formData.heatPumpEnabled === true && (
+                            <div className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-1`}>
+                              davon Wärmepumpe: {formData.heatPumpConsumptionKwh}{" "}
+                              kWh
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
                   </div>
                 </div>
 
@@ -798,15 +846,15 @@ export default function SpeicherCalculatePage() {
                     <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-1">
                       Technische Kennzahlen
                     </h3>
-                    <p className="text-xs text-slate-500 mb-3 sm:mb-5 leading-relaxed">
+                    <p className="mb-3 text-xs leading-relaxed text-slate-500 sm:mb-4">
                       Bezogen auf die PV-Erzeugung aus dem ersten Simulationsprofil und
                       Ihre empfohlene Speichergröße (Mehrjahresmittel beim
                       Eigenverbrauch mit Speicher).
                     </p>
 
-                    <dl className="flex flex-col gap-y-1.5 sm:gap-y-3 text-sm text-slate-300">
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
-                        <div className="min-w-0 text-slate-400">
+                    <dl className={SPEICHER_REPORT_ROWS}>
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           Jahresertrag PV
                         </div>
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
@@ -817,8 +865,8 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
-                        <div className="min-w-0 text-slate-400">
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           Spezifischer Ertrag
                         </div>
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
@@ -828,8 +876,8 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
-                        <div className="min-w-0 text-slate-400">
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           Direktverbrauch ohne Speicher
                         </div>
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
@@ -839,8 +887,8 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
-                        <div className="min-w-0 text-slate-400">
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           Eigenverbrauch mit Speicher
                         </div>
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-emerald-400/90 sm:text-left">
@@ -848,8 +896,8 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
-                        <div className="min-w-0 text-slate-400">
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           Batterie geladen
                         </div>
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
@@ -860,8 +908,8 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
-                        <div className="min-w-0 text-slate-400">
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           Batterie an Verbrauch
                         </div>
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
@@ -872,12 +920,12 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6">
-                        <div className="min-w-0 text-slate-400">
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           <span className="block leading-snug">
                             Batterieverluste
                           </span>
-                          <span className="block text-[10px] sm:text-[11px] leading-snug text-slate-500 font-normal normal-case mt-0 sm:mt-0.5">
+                          <span className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}>
                             Beinhaltet Lade-/Entladeverluste sowie geringe
                             systembedingte Abweichungen.
                           </span>
@@ -889,8 +937,8 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
-                        <div className="min-w-0 text-slate-400">
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           Netzbezug mit Speicher
                         </div>
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
@@ -901,12 +949,12 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6">
-                        <div className="min-w-0 text-slate-400">
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           <span className="block leading-snug">
                             Einspeisung (rechnerisch)
                           </span>
-                          <span className="block text-[10px] sm:text-[11px] leading-snug text-slate-500 font-normal normal-case mt-0 sm:mt-0.5">
+                          <span className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}>
                             Grobe Größenordnung, nicht gleich EEG-Einspeisemenge
                           </span>
                         </div>
@@ -918,8 +966,8 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
-                        <div className="min-w-0 text-slate-400">
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           Autarkiegrad mit Speicher
                         </div>
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-emerald-400/90 sm:text-left">
@@ -929,8 +977,8 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
-                        <div className="min-w-0 text-slate-400">
+                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                        <div className="min-w-0 leading-snug text-slate-400">
                           Eigenverbrauchsquote
                         </div>
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
