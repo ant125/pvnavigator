@@ -793,113 +793,151 @@ export default function SpeicherCalculatePage() {
                   </div>
                 </div>
 
-                <div className="bg-[#0F1620] rounded-xl p-6 mb-8 border border-white/5 group">
+                <div className="bg-[#0F1620] rounded-xl p-4 sm:p-6 mb-8 border border-white/5 group">
                   <div className={ANALYTICS_CARD_TEXT_HOVER}>
                     <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-1">
                       Technische Kennzahlen
                     </h3>
-                    <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+                    <p className="text-xs text-slate-500 mb-3 sm:mb-5 leading-relaxed">
                       Bezogen auf die PV-Erzeugung aus dem ersten Simulationsprofil und
                       Ihre empfohlene Speichergröße (Mehrjahresmittel beim
                       Eigenverbrauch mit Speicher).
                     </p>
 
-                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm text-slate-300">
-                      <div className="text-slate-400">Jahresertrag PV</div>
-                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
-                        {typeof pvYieldKwhAnnual === "number" &&
-                        Number.isFinite(pvYieldKwhAnnual)
-                          ? `${pvYieldKwhAnnual.toFixed(0)} kWh/Jahr`
-                          : PLACEHOLDER}
+                    <dl className="flex flex-col gap-y-1.5 sm:gap-y-3 text-sm text-slate-300">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
+                        <div className="min-w-0 text-slate-400">
+                          Jahresertrag PV
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                          {typeof pvYieldKwhAnnual === "number" &&
+                          Number.isFinite(pvYieldKwhAnnual)
+                            ? `${pvYieldKwhAnnual.toFixed(0)} kWh/Jahr`
+                            : PLACEHOLDER}
+                        </div>
                       </div>
 
-                      <div className="text-slate-400">Spezifischer Ertrag</div>
-                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
-                        {specificYieldKwhPerKwp !== null
-                          ? `${specificYieldKwhPerKwp.toFixed(1)} kWh/kWp`
-                          : PLACEHOLDER}
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
+                        <div className="min-w-0 text-slate-400">
+                          Spezifischer Ertrag
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                          {specificYieldKwhPerKwp !== null
+                            ? `${specificYieldKwhPerKwp.toFixed(1)} kWh/kWp`
+                            : PLACEHOLDER}
+                        </div>
                       </div>
 
-                      <div className="text-slate-400">
-                        Direktverbrauch ohne Speicher
-                      </div>
-                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
-                        {formatKwh(
-                          verifiedResult?.energy.year.selfConsumptionWithoutStorage
-                        )}
-                      </div>
-
-                      <div className="text-slate-400">
-                        Eigenverbrauch mit Speicher
-                      </div>
-                      <div className="font-medium tabular-nums text-emerald-400/90 text-right sm:text-left">
-                        {formatKwh(eigenverbrauchMitSpeicher)}
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
+                        <div className="min-w-0 text-slate-400">
+                          Direktverbrauch ohne Speicher
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                          {formatKwh(
+                            verifiedResult?.energy.year.selfConsumptionWithoutStorage
+                          )}
+                        </div>
                       </div>
 
-                      <div className="text-slate-400">Batterie geladen</div>
-                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
-                        {typeof batteryGeladenAvgKwh === "number" &&
-                        Number.isFinite(batteryGeladenAvgKwh)
-                          ? `${Math.round(batteryGeladenAvgKwh)} kWh/Jahr`
-                          : PLACEHOLDER}
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
+                        <div className="min-w-0 text-slate-400">
+                          Eigenverbrauch mit Speicher
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-emerald-400/90 sm:text-left">
+                          {formatKwh(eigenverbrauchMitSpeicher)}
+                        </div>
                       </div>
 
-                      <div className="text-slate-400">
-                        Batterie an Verbrauch
-                      </div>
-                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
-                        {typeof batteryAnVerbrauchAvgKwh === "number" &&
-                        Number.isFinite(batteryAnVerbrauchAvgKwh)
-                          ? `${Math.round(batteryAnVerbrauchAvgKwh)} kWh/Jahr`
-                          : PLACEHOLDER}
-                      </div>
-
-                      <div className="text-slate-400 sm:col-span-1">
-                        <span className="block">Batterieverluste</span>
-                        <span className="block text-[11px] text-slate-500 font-normal mt-0.5 normal-case">
-                          Beinhaltet Lade-/Entladeverluste sowie geringe
-                          systembedingte Abweichungen.
-                        </span>
-                      </div>
-                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left sm:self-center">
-                        {differenzBatterieflussKwh !== null
-                          ? `${differenzBatterieflussKwh} kWh/Jahr`
-                          : PLACEHOLDER}
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
+                        <div className="min-w-0 text-slate-400">
+                          Batterie geladen
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                          {typeof batteryGeladenAvgKwh === "number" &&
+                          Number.isFinite(batteryGeladenAvgKwh)
+                            ? `${Math.round(batteryGeladenAvgKwh)} kWh/Jahr`
+                            : PLACEHOLDER}
+                        </div>
                       </div>
 
-                      <div className="text-slate-400">Netzbezug mit Speicher</div>
-                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
-                        {typeof netzbezugMitSpeicherKwhYear === "number" &&
-                        Number.isFinite(netzbezugMitSpeicherKwhYear)
-                          ? `${netzbezugMitSpeicherKwhYear.toFixed(0)} kWh/Jahr`
-                          : PLACEHOLDER}
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
+                        <div className="min-w-0 text-slate-400">
+                          Batterie an Verbrauch
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                          {typeof batteryAnVerbrauchAvgKwh === "number" &&
+                          Number.isFinite(batteryAnVerbrauchAvgKwh)
+                            ? `${Math.round(batteryAnVerbrauchAvgKwh)} kWh/Jahr`
+                            : PLACEHOLDER}
+                        </div>
                       </div>
 
-                      <div className="text-slate-400 sm:col-span-1">
-                        <span className="block">Einspeisung (rechnerisch)</span>
-                        <span className="block text-[11px] text-slate-500 font-normal mt-0.5 normal-case">
-                          Grobe Größenordnung, nicht gleich EEG-Einspeisemenge
-                        </span>
-                      </div>
-                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left sm:self-center">
-                        {typeof einspeisungRechnerischKwhYear === "number" &&
-                        Number.isFinite(einspeisungRechnerischKwhYear)
-                          ? `${einspeisungRechnerischKwhYear.toFixed(0)} kWh/Jahr`
-                          : PLACEHOLDER}
-                      </div>
-
-                      <div className="text-slate-400">Autarkiegrad mit Speicher</div>
-                      <div className="font-medium tabular-nums text-emerald-400/90 text-right sm:text-left">
-                        {autarkieMitPct !== null
-                          ? `${autarkieMitPct} %`
-                          : PLACEHOLDER}
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6">
+                        <div className="min-w-0 text-slate-400">
+                          <span className="block leading-snug">
+                            Batterieverluste
+                          </span>
+                          <span className="block text-[10px] sm:text-[11px] leading-snug text-slate-500 font-normal normal-case mt-0 sm:mt-0.5">
+                            Beinhaltet Lade-/Entladeverluste sowie geringe
+                            systembedingte Abweichungen.
+                          </span>
+                        </div>
+                        <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
+                          {differenzBatterieflussKwh !== null
+                            ? `${differenzBatterieflussKwh} kWh/Jahr`
+                            : PLACEHOLDER}
+                        </div>
                       </div>
 
-                      <div className="text-slate-400">Eigenverbrauchsquote</div>
-                      <div className="font-medium tabular-nums text-slate-100 text-right sm:text-left">
-                        {eigenverbrauchsquoteMitSpeicherPct !== null
-                          ? `${eigenverbrauchsquoteMitSpeicherPct} %`
-                          : PLACEHOLDER}
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
+                        <div className="min-w-0 text-slate-400">
+                          Netzbezug mit Speicher
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                          {typeof netzbezugMitSpeicherKwhYear === "number" &&
+                          Number.isFinite(netzbezugMitSpeicherKwhYear)
+                            ? `${netzbezugMitSpeicherKwhYear.toFixed(0)} kWh/Jahr`
+                            : PLACEHOLDER}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6">
+                        <div className="min-w-0 text-slate-400">
+                          <span className="block leading-snug">
+                            Einspeisung (rechnerisch)
+                          </span>
+                          <span className="block text-[10px] sm:text-[11px] leading-snug text-slate-500 font-normal normal-case mt-0 sm:mt-0.5">
+                            Grobe Größenordnung, nicht gleich EEG-Einspeisemenge
+                          </span>
+                        </div>
+                        <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
+                          {typeof einspeisungRechnerischKwhYear === "number" &&
+                          Number.isFinite(einspeisungRechnerischKwhYear)
+                            ? `${einspeisungRechnerischKwhYear.toFixed(0)} kWh/Jahr`
+                            : PLACEHOLDER}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
+                        <div className="min-w-0 text-slate-400">
+                          Autarkiegrad mit Speicher
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-emerald-400/90 sm:text-left">
+                          {autarkieMitPct !== null
+                            ? `${autarkieMitPct} %`
+                            : PLACEHOLDER}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
+                        <div className="min-w-0 text-slate-400">
+                          Eigenverbrauchsquote
+                        </div>
+                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                          {eigenverbrauchsquoteMitSpeicherPct !== null
+                            ? `${eigenverbrauchsquoteMitSpeicherPct} %`
+                            : PLACEHOLDER}
+                        </div>
                       </div>
                     </dl>
                   </div>
