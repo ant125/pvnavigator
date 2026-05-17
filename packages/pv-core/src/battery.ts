@@ -7,6 +7,14 @@ const HOURS_PER_YEAR = 8760;
 /** Average hours per calendar month for hourly self-discharge compounding */
 const HOURS_PER_MONTH_AVG = (365 * 24) / 12;
 
+/** Default stage efficiencies when `efficiencyModel === "hybrid"` and fields are omitted. */
+const HYBRID_EFFICIENCY_DEFAULTS = {
+  pvToBatteryEfficiency: 0.98,
+  batteryChargeEfficiency: 0.99,
+  batteryDischargeEfficiency: 0.99,
+  batteryToAcEfficiency: 0.98,
+} as const;
+
 export interface BatterySpec {
   manufacturer: string;
   chemistry: string;
@@ -18,6 +26,19 @@ export interface BatterySpec {
   auxiliaryPowerW?: number;
   /** Fraction (0–1) of stored energy lost per month via self-discharge; compounded hourly. */
   selfDischargePerMonth?: number;
+  /**
+   * `"roundtrip"` (default): η_chg = η_dis = √roundtripEfficiency — legacy symmetric model.
+   * `"hybrid"`: η_chg and η_dis from DC path + cell + inverter chain (see optional efficiency fields).
+   */
+  efficiencyModel?: "roundtrip" | "hybrid";
+  /** PV surplus (kWh) → battery DC path efficiency; used only in hybrid mode. */
+  pvToBatteryEfficiency?: number;
+  /** Pack charge (coulombic / stored fraction); hybrid mode. */
+  batteryChargeEfficiency?: number;
+  /** Stored chemical energy → DC bus at pack; hybrid mode. */
+  batteryDischargeEfficiency?: number;
+  /** DC at pack → delivered AC to household/aux bus; hybrid mode. */
+  batteryToAcEfficiency?: number;
 }
 
 export const DEFAULT_BATTERY_SPEC: BatterySpec = {
@@ -29,6 +50,8 @@ export const DEFAULT_BATTERY_SPEC: BatterySpec = {
   depthOfDischarge: 0.9,
   auxiliaryPowerW: 15,
   selfDischargePerMonth: 0.01,
+  efficiencyModel: "hybrid",
+  ...HYBRID_EFFICIENCY_DEFAULTS,
 };
 
 export interface BatterySimulationResult {
@@ -61,6 +84,14 @@ export interface BatterySimulationResult {
   chargeLossKwh: number;
   /** Σ(fromBattery/η_dis − fromBattery) — discharge-path inefficiency (house + aux). */
   dischargeLossKwh: number;
+  /**
+   * Hybrid loss breakdown (omitted when `efficiencyModel` is missing or `"roundtrip"`).
+   * When present, partial sums equal `chargeLossKwh` and `dischargeLossKwh` respectively.
+   */
+  chargeLossPvToBatteryKwh?: number;
+  chargeLossChemicalKwh?: number;
+  dischargeLossChemicalKwh?: number;
+  dischargeLossBatteryToAcKwh?: number;
   /** SOC × nominal usable envelope at hour 0 (always 0 with current initializer) */
   socStartKwh: number;
   /** SOC × nominal usable envelope after hour 8759 */
@@ -117,6 +148,10 @@ export function calculateBatterySimulation(
   let gridExportKwh = 0;
   let chargeLossKwh = 0;
   let dischargeLossKwh = 0;
+  let chargeLossPvToBatteryKwh = 0;
+  let chargeLossChemicalKwh = 0;
+  let dischargeLossChemicalKwh = 0;
+  let dischargeLossBatteryToAcKwh = 0;
   let sumChargeStoredKwh = 0;
   let sumDischargeFromSocKwh = 0;
   let totalSelfDischargeLossKwh = 0;
@@ -133,9 +168,27 @@ export function calculateBatterySimulation(
     retentionPerHour = 0;
   }
 
+  const useHybrid = spec.efficiencyModel === "hybrid";
   const eff = spec.roundtripEfficiency;
-  const etaChg = Math.sqrt(eff);
-  const etaDis = Math.sqrt(eff);
+  const etaChg = useHybrid
+    ? (spec.pvToBatteryEfficiency ?? HYBRID_EFFICIENCY_DEFAULTS.pvToBatteryEfficiency) *
+      (spec.batteryChargeEfficiency ?? HYBRID_EFFICIENCY_DEFAULTS.batteryChargeEfficiency)
+    : Math.sqrt(eff);
+  const etaDis = useHybrid
+    ? (spec.batteryDischargeEfficiency ??
+        HYBRID_EFFICIENCY_DEFAULTS.batteryDischargeEfficiency) *
+      (spec.batteryToAcEfficiency ?? HYBRID_EFFICIENCY_DEFAULTS.batteryToAcEfficiency)
+    : Math.sqrt(eff);
+  const etaBattDis = useHybrid
+    ? spec.batteryDischargeEfficiency ??
+      HYBRID_EFFICIENCY_DEFAULTS.batteryDischargeEfficiency
+    : 0;
+  const etaPvToBatt = useHybrid
+    ? spec.pvToBatteryEfficiency ?? HYBRID_EFFICIENCY_DEFAULTS.pvToBatteryEfficiency
+    : 0;
+  const etaChemChg = useHybrid
+    ? spec.batteryChargeEfficiency ?? HYBRID_EFFICIENCY_DEFAULTS.batteryChargeEfficiency
+    : 0;
   const maxSoc = spec.depthOfDischarge;
   const chargePowerKw = usableCapacityKwh * 0.5;
   const dischargePowerKw = usableCapacityKwh * 0.5;
@@ -177,7 +230,15 @@ export function calculateBatterySimulation(
         Math.max(0, chargeRoom),
         chargePowerKw
       );
-      const toChargeStored = toChargeRaw * etaChg;
+      let toChargeStored: number;
+      if (useHybrid) {
+        const afterPvPath = toChargeRaw * etaPvToBatt;
+        toChargeStored = afterPvPath * etaChemChg;
+        chargeLossPvToBatteryKwh += toChargeRaw - afterPvPath;
+        chargeLossChemicalKwh += afterPvPath - toChargeStored;
+      } else {
+        toChargeStored = toChargeRaw * etaChg;
+      }
       soc += toChargeStored / usableCapacityKwh;
       totalCharged += toChargeRaw;
       sumChargeStoredKwh += toChargeStored;
@@ -200,6 +261,11 @@ export function calculateBatterySimulation(
         remainingBattPower
       );
       const fromSocKwh = fromBattH / etaDis;
+      if (useHybrid) {
+        const afterChemical = fromSocKwh * etaBattDis;
+        dischargeLossChemicalKwh += fromSocKwh - afterChemical;
+        dischargeLossBatteryToAcKwh += afterChemical - fromBattH;
+      }
       soc -= fromSocKwh / usableCapacityKwh;
       totalDischarged += fromBattH;
       sumDischargeFromSocKwh += fromSocKwh;
@@ -219,6 +285,11 @@ export function calculateBatterySimulation(
         remainingBattPower
       );
       const fromSocKwh = fromBattA / etaDis;
+      if (useHybrid) {
+        const afterChemical = fromSocKwh * etaBattDis;
+        dischargeLossChemicalKwh += fromSocKwh - afterChemical;
+        dischargeLossBatteryToAcKwh += afterChemical - fromBattA;
+      }
       soc -= fromSocKwh / usableCapacityKwh;
       totalDischarged += fromBattA;
       sumDischargeFromSocKwh += fromSocKwh;
@@ -251,7 +322,7 @@ export function calculateBatterySimulation(
       sumDischargeFromSocKwh -
       totalSelfDischargeLossKwh);
 
-  return {
+  const result: BatterySimulationResult = {
     socHourly,
     totalChargedKwh: totalCharged,
     totalDischargedKwh: totalDischarged,
@@ -273,6 +344,15 @@ export function calculateBatterySimulation(
     energyBalanceErrorKwh,
     totalSelfDischargeLossKwh,
   };
+
+  if (useHybrid) {
+    result.chargeLossPvToBatteryKwh = chargeLossPvToBatteryKwh;
+    result.chargeLossChemicalKwh = chargeLossChemicalKwh;
+    result.dischargeLossChemicalKwh = dischargeLossChemicalKwh;
+    result.dischargeLossBatteryToAcKwh = dischargeLossBatteryToAcKwh;
+  }
+
+  return result;
 }
 
 export interface LifecycleResult {
