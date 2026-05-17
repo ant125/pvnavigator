@@ -89,6 +89,35 @@ const DEFAULT_SURFACE: PvSurfaceInput = {
   azimuthDeg: 180,
 };
 
+/**
+ * Parse PV kWp text field: accepts German decimal comma or dot.
+ * No thousands separators; multiple commas/dots or mixed separators → NaN.
+ */
+function parseKwpDecimalInput(raw: string): number {
+  let s = raw.trim().replace(/ /g, "");
+  if (s === "") return NaN;
+
+  const commaCount = (s.match(/,/g) ?? []).length;
+  const dotCount = (s.match(/\./g) ?? []).length;
+  if (commaCount > 1 || dotCount > 1) return NaN;
+  if (commaCount >= 1 && dotCount >= 1) return NaN;
+
+  if (commaCount === 1) {
+    s = s.replace(",", ".");
+  }
+
+  if (!/^(\d+(\.\d*)?|\.\d+)$/.test(s)) return NaN;
+
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+/** Ausgangsdaten: up to 2 fractional digits, strip trailing zeros (12.54 → "12.54", 12.5 → "12.5", 12 → "12"). */
+function formatKwpDisplay(n: number): string {
+  if (!Number.isFinite(n)) return "";
+  return parseFloat((Math.round(n * 100) / 100).toFixed(2)).toString();
+}
+
 function surfacesOrDefault(form: Partial<SpeicherInput>): PvSurfaceInput[] {
   const s = form.pvSurfaces;
   if (s && s.length > 0) return s.map((row) => ({ ...row }));
@@ -125,6 +154,9 @@ export default function SpeicherCalculatePage() {
     backupReserveKwh: 0,
   });
 
+  /** Raw kWp strings per Dachfläche so comma decimals stay typable (controlled text input). */
+  const [kwpInputStrings, setKwpInputStrings] = useState<string[]>([""]);
+
   const surfaces = surfacesOrDefault(formData);
 
   const updateSurface = (
@@ -142,6 +174,7 @@ export default function SpeicherCalculatePage() {
   };
 
   const addSurface = () => {
+    setKwpInputStrings((prev) => [...prev, ""]);
     setFormData((prev) => ({
       ...prev,
       pvSurfaces: [
@@ -157,6 +190,7 @@ export default function SpeicherCalculatePage() {
 
   const removeSurface = (planeIndex: number) => {
     if (planeIndex <= 0) return;
+    setKwpInputStrings((prev) => prev.filter((_, i) => i !== planeIndex));
     setFormData((prev) => {
       const list = surfacesOrDefault(prev).filter((_, i) => i !== planeIndex);
       return { ...prev, pvSurfaces: list.length > 0 ? list : [{ ...DEFAULT_SURFACE }] };
@@ -443,7 +477,7 @@ export default function SpeicherCalculatePage() {
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               {/* PV: one or multiple roof surfaces */}
               <div className="space-y-6">
                 {surfaces.map((surface, planeIndex) => (
@@ -468,23 +502,21 @@ export default function SpeicherCalculatePage() {
                         PV-Leistung (kWp) *
                       </label>
                       <input
-                        type="number"
-                        step="0.1"
-                        min="1"
-                        max="100"
-                        value={
-                          Number.isFinite(surface.systemSizeKwP)
-                            ? surface.systemSizeKwP
-                            : ""
-                        }
-                        onChange={(e) =>
+                        type="text"
+                        inputMode="decimal"
+                        autoComplete="off"
+                        value={kwpInputStrings[planeIndex] ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setKwpInputStrings((prev) => {
+                            const next = [...prev];
+                            next[planeIndex] = v;
+                            return next;
+                          });
                           updateSurface(planeIndex, {
-                            systemSizeKwP:
-                              e.target.value.trim() === ""
-                                ? NaN
-                                : parseFloat(e.target.value),
-                          })
-                        }
+                            systemSizeKwP: parseKwpDecimalInput(v),
+                          });
+                        }}
                         className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
                         placeholder="z.B. 10"
                       />
@@ -981,9 +1013,7 @@ export default function SpeicherCalculatePage() {
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
                           <span>
                             {Number.isFinite(totalKwPConfigured)
-                              ? Number.isInteger(totalKwPConfigured)
-                                ? `${totalKwPConfigured}`
-                                : `${totalKwPConfigured.toFixed(1)}`
+                              ? formatKwpDisplay(totalKwPConfigured)
                               : PLACEHOLDER}{" "}
                             kWp
                           </span>
@@ -994,7 +1024,7 @@ export default function SpeicherCalculatePage() {
                             <div className={`mt-2 ${SPEICHER_REPORT_HELPER_TEXT} space-y-1`}>
                               {surfaces.map((s, i) => (
                                 <div key={i}>
-                                  Dachfläche {i + 1}: {Number.isFinite(s.systemSizeKwP) ? `${s.systemSizeKwP}` : PLACEHOLDER} kWp,
+                                  Dachfläche {i + 1}: {Number.isFinite(s.systemSizeKwP) ? formatKwpDisplay(s.systemSizeKwP) : PLACEHOLDER} kWp,
                                   {" "}{s.tiltDeg}°, {s.azimuthDeg}°
                                 </div>
                               ))}
