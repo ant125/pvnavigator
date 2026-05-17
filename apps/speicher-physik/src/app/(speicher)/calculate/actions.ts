@@ -10,12 +10,14 @@ export type { VerifiedResult };
 import {
   createUserLoadProfileForYear,
 } from "../../../../../../packages/bdew-profile";
-import { loadPVGISHourlyProfile } from "../../../../../../packages/pvgis-adapter";
 import { calculateEigenverbrauch } from "../../../../../../packages/pv-core";
-import { simulateMultiYearSpeicherGrenz } from "@/lib/multiYearSimulation";
-import { toPVGISAspect } from "@/lib/toPVGISAspect";
+import {
+  loadCombinedHourlyPvForYear,
+  simulateMultiYearSpeicherGrenz,
+} from "@/lib/multiYearSimulation";
 import { createHeatPumpComponent } from "@/load/heatpump";
 import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
+import type { PvSurfaceInput } from "../types/speicher";
 
 /** PVGIS + BDEW weekday calendar alignment for verified metrics and charts. */
 const SPEICHER_VERIFIED_REFERENCE_YEAR = 2018;
@@ -45,6 +47,33 @@ function buildMergedLoadForYear(
   }
 
   return mergeLoadProfiles(components);
+}
+
+function normalizePvSurfacesForSpeicherAction(params: {
+  pvSurfaces?: readonly PvSurfaceInput[] | undefined;
+  pvSystemKwP: number;
+  tiltDeg: number;
+  /** UI rooftop azimuth 0–359 */
+  azimuthDeg: number;
+}): PvSurfaceInput[] {
+  if (
+    params.pvSurfaces &&
+    Array.isArray(params.pvSurfaces) &&
+    params.pvSurfaces.length > 0
+  ) {
+    return params.pvSurfaces.map((s) => ({
+      systemSizeKwP: s.systemSizeKwP,
+      tiltDeg: s.tiltDeg,
+      azimuthDeg: s.azimuthDeg,
+    }));
+  }
+  return [
+    {
+      systemSizeKwP: params.pvSystemKwP,
+      tiltDeg: params.tiltDeg,
+      azimuthDeg: params.azimuthDeg,
+    },
+  ];
 }
 
 export type SpeicherGrenzPayload = {
@@ -84,28 +113,33 @@ export async function calculateHouseholdConsumptionAction(params: {
   latitude: number;
   longitude: number;
   tiltDeg: number;
+  /** UI rooftop azimuth 0–359 (used when pvSurfaces absent/empty). */
   azimuthDeg: number;
+  /** When non-empty: source of truth for PV; ignores scalars apart from totals kept in payload. */
+  pvSurfaces?: readonly PvSurfaceInput[] | undefined;
   heatPumpEnabled?: boolean;
   heatPumpConsumptionKWh?: number;
   backupReserveKwh?: number;
 }): Promise<HouseholdCalculationPayload> {
   const refYear = SPEICHER_VERIFIED_REFERENCE_YEAR;
+  const pvSurfaces = normalizePvSurfacesForSpeicherAction({
+    pvSurfaces: params.pvSurfaces,
+    pvSystemKwP: params.pvSystemKwP,
+    tiltDeg: params.tiltDeg,
+    azimuthDeg: params.azimuthDeg,
+  });
   const loadKwh = buildMergedLoadForYear(
     refYear,
     params.annualConsumptionKWh,
     params.heatPumpEnabled,
     params.heatPumpConsumptionKWh
   );
-  const pvgisAspectDeg = toPVGISAspect(params.azimuthDeg);
-  const pvKwh = await loadPVGISHourlyProfile({
-    latitude: params.latitude,
-    longitude: params.longitude,
-    systemSizeKwP: params.pvSystemKwP,
-    tiltDeg: params.tiltDeg,
-    azimuthDeg: pvgisAspectDeg,
-    startYear: refYear,
-    endYear: refYear,
-  });
+  const pvKwh = await loadCombinedHourlyPvForYear(
+    params.latitude,
+    params.longitude,
+    refYear,
+    pvSurfaces
+  );
 
   const pvYieldKwhAnnual = pvKwh.reduce((sum, hour) => sum + hour, 0);
 
@@ -133,11 +167,9 @@ export async function calculateHouseholdConsumptionAction(params: {
         params.heatPumpEnabled,
         params.heatPumpConsumptionKWh
       ),
-    pvSystemKwP: params.pvSystemKwP,
     latitude: params.latitude,
     longitude: params.longitude,
-    tiltDeg: params.tiltDeg,
-    azimuthDeg: pvgisAspectDeg,
+    pvSurfaces: pvSurfaces,
     backupReserveKwh: reserveKwh,
   });
 

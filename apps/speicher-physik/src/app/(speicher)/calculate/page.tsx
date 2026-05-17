@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ANALYTICS_CARD_TEXT_HOVER } from "../analyticsCardHoverClasses";
-import { SpeicherInput } from "../types/speicher";
+import { SpeicherInput, type PvSurfaceInput } from "../types/speicher";
 import { validateInput } from "../utils/validateInput";
 import {
   calculateHouseholdConsumptionAction,
@@ -83,6 +83,27 @@ function isPresetAzimuth(deg: number | undefined): deg is AzimuthPreset {
   );
 }
 
+const DEFAULT_SURFACE: PvSurfaceInput = {
+  systemSizeKwP: NaN,
+  tiltDeg: 30,
+  azimuthDeg: 180,
+};
+
+function surfacesOrDefault(form: Partial<SpeicherInput>): PvSurfaceInput[] {
+  const s = form.pvSurfaces;
+  if (s && s.length > 0) return s.map((row) => ({ ...row }));
+  return [{ ...DEFAULT_SURFACE }];
+}
+
+/** Sum kWp across surfaces — after validation inputs are finite. */
+function sumSurfaceKwP(surfaces: PvSurfaceInput[]): number {
+  return surfaces.reduce(
+    (acc, x) =>
+      Number.isFinite(x.systemSizeKwP) ? acc + x.systemSizeKwP : acc,
+    0
+  );
+}
+
 export default function SpeicherCalculatePage() {
   const [step, setStep] = useState<Step>("input");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
@@ -96,15 +117,51 @@ export default function SpeicherCalculatePage() {
 
   // Form state
   const [formData, setFormData] = useState<Partial<SpeicherInput>>({
-    pvSizeKwp: undefined,
+    pvSurfaces: [{ ...DEFAULT_SURFACE }],
     address: "",
-    azimuth: 180, // Default: South
-    tilt: 30, // Default: 30°
     annualConsumptionKwh: undefined,
     heatPumpEnabled: false,
     heatPumpConsumptionKwh: undefined,
     backupReserveKwh: 0,
   });
+
+  const surfaces = surfacesOrDefault(formData);
+
+  const updateSurface = (
+    planeIndex: number,
+    patch: Partial<PvSurfaceInput>
+  ) => {
+    setFormData((prev) => {
+      const list = [...surfacesOrDefault(prev)];
+      list[planeIndex] = { ...list[planeIndex], ...patch };
+      return {
+        ...prev,
+        pvSurfaces: list,
+      };
+    });
+  };
+
+  const addSurface = () => {
+    setFormData((prev) => ({
+      ...prev,
+      pvSurfaces: [
+        ...surfacesOrDefault(prev),
+        {
+          systemSizeKwP: NaN,
+          tiltDeg: 30,
+          azimuthDeg: 180,
+        },
+      ],
+    }));
+  };
+
+  const removeSurface = (planeIndex: number) => {
+    if (planeIndex <= 0) return;
+    setFormData((prev) => {
+      const list = surfacesOrDefault(prev).filter((_, i) => i !== planeIndex);
+      return { ...prev, pvSurfaces: list.length > 0 ? list : [{ ...DEFAULT_SURFACE }] };
+    });
+  };
 
   const PLACEHOLDER = "—";
   const formatKwh = (value: number | null | undefined) =>
@@ -138,13 +195,21 @@ export default function SpeicherCalculatePage() {
     setStep("calculating");
 
     try {
+      const pvSurfaces = surfacesOrDefault(formData).map((s) => ({
+        systemSizeKwP: s.systemSizeKwP,
+        tiltDeg: s.tiltDeg,
+        azimuthDeg: s.azimuthDeg,
+      }));
+      const totalKwP = sumSurfaceKwP(pvSurfaces);
+
       const response = await calculateHouseholdConsumptionAction({
         annualConsumptionKWh: formData.annualConsumptionKwh as number,
-        pvSystemKwP: formData.pvSizeKwp as number,
+        pvSystemKwP: totalKwP,
         latitude: 48.137154,
         longitude: 11.576124,
-        tiltDeg: formData.tilt as number,
-        azimuthDeg: formData.azimuth as number,
+        tiltDeg: pvSurfaces[0].tiltDeg,
+        azimuthDeg: pvSurfaces[0].azimuthDeg,
+        pvSurfaces,
         heatPumpEnabled: formData.heatPumpEnabled === true,
         heatPumpConsumptionKWh: formData.heatPumpConsumptionKwh,
         backupReserveKwh: formData.backupReserveKwh,
@@ -298,13 +363,14 @@ export default function SpeicherCalculatePage() {
 
   const pvYieldKwhAnnual = verifiedResult?.energy.year.pvYieldKwhAnnual;
 
+  const totalKwPConfigured = sumSurfaceKwP(surfaces);
+
   const specificYieldKwhPerKwp =
     typeof pvYieldKwhAnnual === "number" &&
     Number.isFinite(pvYieldKwhAnnual) &&
-    typeof formData.pvSizeKwp === "number" &&
-    formData.pvSizeKwp > 0 &&
-    Number.isFinite(formData.pvSizeKwp)
-      ? pvYieldKwhAnnual / formData.pvSizeKwp
+    totalKwPConfigured > 0 &&
+    Number.isFinite(totalKwPConfigured)
+      ? pvYieldKwhAnnual / totalKwPConfigured
       : null;
 
   const ledgerGridImportAvgKwh =
@@ -378,29 +444,150 @@ export default function SpeicherCalculatePage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* PV Size */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200">
-                  PV-Anlagengröße (kWp) *
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="1"
-                  max="100"
-                  value={formData.pvSizeKwp || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      pvSizeKwp: parseFloat(e.target.value) || undefined,
-                    })
-                  }
-                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
-                  placeholder="z.B. 10"
-                />
-                <p className="text-xs text-slate-500">
-                  Die Größe Ihrer bestehenden oder geplanten PV-Anlage.
-                </p>
+              {/* PV: one or multiple roof surfaces */}
+              <div className="space-y-6">
+                {surfaces.map((surface, planeIndex) => (
+                  <div key={planeIndex} className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h2 className="text-sm font-semibold text-slate-200">
+                        Dachfläche {planeIndex + 1}
+                      </h2>
+                      {planeIndex > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => removeSurface(planeIndex)}
+                          className="text-xs rounded-lg border border-slate-600 px-3 py-1.5 text-slate-400 hover:bg-slate-800/80 hover:text-slate-200 transition-colors"
+                        >
+                          Diese Fläche entfernen
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-slate-200">
+                        PV-Leistung (kWp) *
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        max="100"
+                        value={
+                          Number.isFinite(surface.systemSizeKwP)
+                            ? surface.systemSizeKwP
+                            : ""
+                        }
+                        onChange={(e) =>
+                          updateSurface(planeIndex, {
+                            systemSizeKwP:
+                              e.target.value.trim() === ""
+                                ? NaN
+                                : parseFloat(e.target.value),
+                          })
+                        }
+                        className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                        placeholder="z.B. 10"
+                      />
+                      {planeIndex === 0 && (
+                        <p className="text-xs text-slate-500">
+                          Die Größe Ihrer bestehenden oder geplanten PV-Anlage
+                          auf dieser Dachfläche.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-slate-200">
+                            Dachausrichtung (°) *
+                          </label>
+                          <select
+                            value={surface.azimuthDeg}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              const n = parseInt(raw, 10);
+                              if (!Number.isFinite(n)) return;
+                              updateSurface(planeIndex, { azimuthDeg: n });
+                            }}
+                            className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                          >
+                            {!isPresetAzimuth(surface.azimuthDeg) && (
+                              <option value={surface.azimuthDeg}>
+                                Individuell ({surface.azimuthDeg}°)
+                              </option>
+                            )}
+                            <option value={0}>Nord (0°)</option>
+                            <option value={45}>Nordost (45°)</option>
+                            <option value={90}>Ost (90°)</option>
+                            <option value={135}>Südost (135°)</option>
+                            <option value={180}>Süd (180°)</option>
+                            <option value={225}>Südwest (225°)</option>
+                            <option value={270}>West (270°)</option>
+                            <option value={315}>Nordwest (315°)</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-slate-200">
+                            Exakter Azimut (°)
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={359}
+                            step={1}
+                            value={surface.azimuthDeg}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              if (raw === "") return;
+                              const n = parseInt(raw, 10);
+                              if (!Number.isFinite(n)) return;
+                              updateSurface(planeIndex, {
+                                azimuthDeg: Math.min(359, Math.max(0, n)),
+                              });
+                            }}
+                            className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                          />
+                          <p className="text-xs text-slate-500">
+                            0° = Nord, 90° = Ost, 180° = Süd, 270° = West.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-slate-200">
+                          Dachneigung (°) *
+                        </label>
+                        <select
+                          value={surface.tiltDeg}
+                          onChange={(e) =>
+                            updateSurface(planeIndex, {
+                              tiltDeg: parseInt(e.target.value, 10),
+                            })
+                          }
+                          className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                        >
+                          <option value={0}>Flachdach (0°)</option>
+                          <option value={15}>15°</option>
+                          <option value={25}>25°</option>
+                          <option value={30}>30°</option>
+                          <option value={35}>35°</option>
+                          <option value={40}>40°</option>
+                          <option value={45}>45°</option>
+                          <option value={60}>60° (steil)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addSurface}
+                  className="text-sm rounded-full border border-slate-600 px-4 py-2 text-slate-300 hover:bg-slate-800/80 hover:text-slate-100 transition-colors"
+                >
+                  Weitere Dachfläche hinzufügen
+                </button>
               </div>
 
               {/* Address */}
@@ -420,109 +607,6 @@ export default function SpeicherCalculatePage() {
                 <p className="text-xs text-slate-500">
                   Für die Berechnung der lokalen Sonneneinstrahlung.
                 </p>
-              </div>
-
-              {/* Roof orientation - Azimuth & Tilt */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* Azimuth: preset + exact */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-200">
-                      Dachausrichtung (°) *
-                    </label>
-                    <select
-                      value={
-                        formData.azimuth === undefined ? "" : formData.azimuth
-                      }
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (raw === "") {
-                          setFormData({ ...formData, azimuth: undefined });
-                          return;
-                        }
-                        const n = parseInt(raw, 10);
-                        if (!Number.isFinite(n)) return;
-                        setFormData({ ...formData, azimuth: n });
-                      }}
-                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
-                    >
-                      {formData.azimuth === undefined && (
-                        <option value="">Ausrichtung wählen …</option>
-                      )}
-                      {formData.azimuth !== undefined &&
-                        !isPresetAzimuth(formData.azimuth) && (
-                          <option value={formData.azimuth}>
-                            Individuell ({formData.azimuth}°)
-                          </option>
-                        )}
-                      <option value={0}>Nord (0°)</option>
-                      <option value={45}>Nordost (45°)</option>
-                      <option value={90}>Ost (90°)</option>
-                      <option value={135}>Südost (135°)</option>
-                      <option value={180}>Süd (180°)</option>
-                      <option value={225}>Südwest (225°)</option>
-                      <option value={270}>West (270°)</option>
-                      <option value={315}>Nordwest (315°)</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-200">
-                      Exakter Azimut (°)
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={359}
-                      step={1}
-                      value={
-                        formData.azimuth === undefined ? "" : formData.azimuth
-                      }
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (raw === "") {
-                          setFormData({
-                            ...formData,
-                            azimuth: undefined,
-                          });
-                          return;
-                        }
-                        const n = parseInt(raw, 10);
-                        if (!Number.isFinite(n)) return;
-                        setFormData({
-                          ...formData,
-                          azimuth: n,
-                        });
-                      }}
-                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
-                    />
-                    <p className="text-xs text-slate-500">
-                      0° = Nord, 90° = Ost, 180° = Süd, 270° = West.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Tilt */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-200">
-                    Dachneigung (°) *
-                  </label>
-                  <select
-                    value={formData.tilt}
-                    onChange={(e) =>
-                      setFormData({ ...formData, tilt: parseInt(e.target.value) })
-                    }
-                    className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
-                  >
-                    <option value={0}>Flachdach (0°)</option>
-                    <option value={15}>15°</option>
-                    <option value={25}>25°</option>
-                    <option value={30}>30°</option>
-                    <option value={35}>35°</option>
-                    <option value={40}>40°</option>
-                    <option value={45}>45°</option>
-                    <option value={60}>60° (steil)</option>
-                  </select>
-                </div>
               </div>
 
               {/* Annual Consumption */}
@@ -895,27 +979,51 @@ export default function SpeicherCalculatePage() {
                           PV-Anlage:
                         </div>
                         <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
-                          {formData.pvSizeKwp} kWp
+                          <span>
+                            {Number.isFinite(totalKwPConfigured)
+                              ? Number.isInteger(totalKwPConfigured)
+                                ? `${totalKwPConfigured}`
+                                : `${totalKwPConfigured.toFixed(1)}`
+                              : PLACEHOLDER}{" "}
+                            kWp
+                          </span>
+                          {surfaces.length > 1 && (
+                            <span className="text-slate-400 font-normal">{` auf ${surfaces.length} Dachflächen`}</span>
+                          )}
+                          {surfaces.length > 1 && (
+                            <div className={`mt-2 ${SPEICHER_REPORT_HELPER_TEXT} space-y-1`}>
+                              {surfaces.map((s, i) => (
+                                <div key={i}>
+                                  Dachfläche {i + 1}: {Number.isFinite(s.systemSizeKwP) ? `${s.systemSizeKwP}` : PLACEHOLDER} kWp,
+                                  {" "}{s.tiltDeg}°, {s.azimuthDeg}°
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
-                          Neigung:
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
-                          {formData.tilt}°
-                        </div>
-                      </div>
+                      {surfaces.length === 1 && (
+                        <>
+                          <div className={SPEICHER_REPORT_KPI_ROW}>
+                            <div className="min-w-0 leading-snug text-slate-400">
+                              Neigung:
+                            </div>
+                            <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                              {surfaces[0]?.tiltDeg}°
+                            </div>
+                          </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
-                          Ausrichtung:
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
-                          {formData.azimuth}°
-                        </div>
-                      </div>
+                          <div className={SPEICHER_REPORT_KPI_ROW}>
+                            <div className="min-w-0 leading-snug text-slate-400">
+                              Ausrichtung:
+                            </div>
+                            <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                              {surfaces[0]?.azimuthDeg}°
+                            </div>
+                          </div>
+                        </>
+                      )}
 
                       {hasActiveBackupReserve && (
                         <div className={SPEICHER_REPORT_KPI_ROW}>

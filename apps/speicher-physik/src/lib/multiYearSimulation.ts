@@ -6,8 +6,16 @@ import {
   type BatterySpec,
   type BatterySimulationResult,
 } from "../../../../packages/pv-core";
+import { toPVGISAspect } from "@/lib/toPVGISAspect";
 
 const HOURS_PER_YEAR = 8760;
+
+/** One roof PV plane for multi-roof (UI rooftop azimuth; converted internally for PVGIS). */
+export type SpeicherPvSurfaceUi = {
+  systemSizeKwP: number;
+  tiltDeg: number;
+  azimuthDeg: number;
+};
 
 /** Annual sums from `calculateBatterySimulation` used for multi-year averaging */
 export type BatteryLedgerAnnual = Pick<
@@ -89,11 +97,19 @@ export const DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH: ReadonlyArray<number> =
 export type SimulateMultiYearSpeicherGrenzParams = {
   /** Hourly load (8760h) for each simulated PV year — must match `years` rows. */
   getLoadForYear: (year: number) => number[];
-  pvSystemKwP: number;
   latitude: number;
   longitude: number;
-  tiltDeg: number;
-  azimuthDeg: number;
+  /**
+   * When non-empty: one PVGIS call per roof surface per simulated year,
+   * hourly PV summed before battery simulation (UI rooftop azimuth in `azimuthDeg`).
+   * When omitted/empty (legacy single-roof): use `pvSystemKwP`, `tiltDeg`, `azimuthDeg`
+   * where `azimuthDeg` must be the PVGIS `aspect`, not UI azimuth.
+   */
+  pvSurfaces?: readonly SpeicherPvSurfaceUi[];
+  /** Legacy single-roof kWp — required when `pvSurfaces` is missing or empty */
+  pvSystemKwP?: number;
+  tiltDeg?: number;
+  azimuthDeg?: number;
   years?: ReadonlyArray<number>;
   batterySizes?: ReadonlyArray<number>;
   batterySpec?: BatterySpec;
@@ -149,6 +165,87 @@ function assertHourlyArray(arr: number[], label: string): void {
 }
 
 /**
+ * Hour-by-hour sum of several 8760h PVGIS profiles (must all be same length).
+ */
+export function sumHourlyProfiles(
+  profiles: readonly (readonly number[])[]
+): number[] {
+  if (profiles.length === 0) {
+    throw new Error("sumHourlyProfiles: at least one profile is required");
+  }
+  const n = profiles[0].length;
+  for (let p = 1; p < profiles.length; p++) {
+    if (profiles[p].length !== n) {
+      throw new Error(
+        `sumHourlyProfiles: hourly length mismatch (index 0 has ${n}h, index ${p} has ${profiles[p].length}h)`
+      );
+    }
+  }
+  const out = new Array<number>(n);
+  for (let i = 0; i < n; i++) {
+    let sum = 0;
+    for (let p = 0; p < profiles.length; p++) {
+      sum += profiles[p][i];
+    }
+    out[i] = sum;
+  }
+  return out;
+}
+
+/** Fetch + combine hourly PV (8760 h) from PVGIS for one calendar year across roof surfaces (UI azimuth each). */
+export async function loadCombinedHourlyPvForYear(
+  latitude: number,
+  longitude: number,
+  year: number,
+  surfaces: readonly SpeicherPvSurfaceUi[]
+): Promise<number[]> {
+  const profiles = await Promise.all(
+    surfaces.map((s) =>
+      loadPVGISHourlyProfile({
+        latitude,
+        longitude,
+        systemSizeKwP: s.systemSizeKwP,
+        tiltDeg: s.tiltDeg,
+        azimuthDeg: toPVGISAspect(s.azimuthDeg),
+        startYear: year,
+        endYear: year,
+      })
+    )
+  );
+  return sumHourlyProfiles(profiles);
+}
+
+function legacySinglePvParams(params: SimulateMultiYearSpeicherGrenzParams): {
+  pvSystemKwP: number;
+  tiltDeg: number;
+  azimuthPvAspectDeg: number;
+} {
+  const kw = params.pvSystemKwP;
+  const tilt = params.tiltDeg;
+  const aspect = params.azimuthDeg;
+  if (typeof kw !== "number" || !Number.isFinite(kw)) {
+    throw new Error(
+      "simulateMultiYearSpeicherGrenz: pvSystemKwP is required when pvSurfaces is empty"
+    );
+  }
+  if (typeof tilt !== "number" || !Number.isFinite(tilt)) {
+    throw new Error(
+      "simulateMultiYearSpeicherGrenz: tiltDeg is required when pvSurfaces is empty"
+    );
+  }
+  if (typeof aspect !== "number" || !Number.isFinite(aspect)) {
+    throw new Error(
+      "simulateMultiYearSpeicherGrenz: azimuthDeg (PVGIS aspect) is required when pvSurfaces is empty"
+    );
+  }
+  return {
+    pvSystemKwP: kw,
+    tiltDeg: tilt,
+    azimuthPvAspectDeg: aspect,
+  };
+}
+
+/**
  * Multi-year orchestration: runs `calculateBatterySimulation` for every
  * (year, batterySize) pair and aggregates `selfConsumptionWithStorage` per
  * battery size as the mean across years. Also averages `totalChargedKwh` and
@@ -175,6 +272,11 @@ export async function simulateMultiYearSpeicherGrenz(
     throw new Error("batterySizes must contain only positive finite numbers");
   }
 
+  const multiSurfaces =
+    params.pvSurfaces && params.pvSurfaces.length > 0
+      ? params.pvSurfaces.slice()
+      : null;
+
   const yearly: Record<number, Record<number, number>> = {};
   const yearlyBatteryChargedKwh: Record<number, Record<number, number>> = {};
   const yearlyBatteryDischargedKwh: Record<number, Record<number, number>> =
@@ -188,15 +290,28 @@ export async function simulateMultiYearSpeicherGrenz(
   for (const year of years) {
     if (!first) await sleep(300);
     first = false;
-    const pvProfile = await loadPVGISHourlyProfile({
-      latitude: params.latitude,
-      longitude: params.longitude,
-      systemSizeKwP: params.pvSystemKwP,
-      tiltDeg: params.tiltDeg,
-      azimuthDeg: params.azimuthDeg,
-      startYear: year,
-      endYear: year,
-    });
+
+    let pvProfile: number[];
+    if (multiSurfaces !== null && multiSurfaces.length > 0) {
+      pvProfile = await loadCombinedHourlyPvForYear(
+        params.latitude,
+        params.longitude,
+        year,
+        multiSurfaces
+      );
+    } else {
+      const { pvSystemKwP, tiltDeg, azimuthPvAspectDeg } =
+        legacySinglePvParams(params);
+      pvProfile = await loadPVGISHourlyProfile({
+        latitude: params.latitude,
+        longitude: params.longitude,
+        systemSizeKwP: pvSystemKwP,
+        tiltDeg: tiltDeg,
+        azimuthDeg: azimuthPvAspectDeg,
+        startYear: year,
+        endYear: year,
+      });
+    }
     if (pvProfile.length !== 8760) {
       throw new Error(
         `PV profile invalid after normalization: ${pvProfile.length}`

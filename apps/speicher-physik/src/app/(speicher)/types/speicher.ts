@@ -7,10 +7,23 @@
  * - Designed for future: subscription checks, paywall, PDF export
  */
 
+/** One roof PV plane: kWp + tilt + UI azimuth (0° Nord … 359° clockwise). */
+export type PvSurfaceInput = {
+  systemSizeKwP: number;
+  tiltDeg: number;
+  azimuthDeg: number;
+};
+
 /**
  * Input data for Speicher calculation
  */
 export interface SpeicherInput {
+  /**
+   * Optional multi-roof planes. When present and non-empty, these are source of truth
+   * for PV. Otherwise use pvSizeKwp + tilt + azimuth (legacy single-roof form).
+   */
+  pvSurfaces?: PvSurfaceInput[];
+
   /** PV system size in kWp */
   pvSizeKwp: number;
   
