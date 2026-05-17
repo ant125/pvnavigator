@@ -34,6 +34,10 @@ Berücksichtigte Effekte:
 
 - Systemverluste (Standardwert)
 
+PVGIS berücksichtigt standardmäßig pauschale PV-Systemverluste von 14 %. Dazu gehören typischerweise Wechselrichterverluste, Kabelverluste, Modul-Mismatch, Verschmutzung (Soiling) und weitere typische Anlagenverluste.
+
+Diese Verluste betreffen ausschließlich die PV-Anlage. Speicherverluste sind darin nicht enthalten und werden separat im Batteriemodell berücksichtigt.
+
 👉 PVGIS gilt als Industriestandard für die Ertragsabschätzung von PV-Anlagen in Europa.
 
 ---
@@ -138,7 +142,7 @@ Für jede Stunde gilt:
 
 Berücksichtigte Effekte:
 
-- Wirkungsgrad (Roundtrip ~94%)
+- Modernes LiFePO4-Heimspeichermodell mit Roundtrip-Wirkungsgrad (~94%)
 
 - Depth of Discharge (~90%)
 
@@ -230,15 +234,17 @@ einen spürbaren Einfluss auf die Ergebnisse haben.
 
 ## 5. Vereinfachungen
 
-Nicht berücksichtigt:
+Nicht explizit separat modelliert:
 
-- Temperatur
+- temperaturabhängige Batterieeffekte
 
-- Alterung (Degradation)
+- Batteriealterung innerhalb eines Jahres
 
-- Wechselrichterverluste
+- dynamische Speichersteuerung (z. B. Prognosen oder variable Stromtarife)
 
-- Netzbeschränkungen
+- herstellerspezifische Systemlogik
+
+- Netzrestriktionen
 
 ---
 
@@ -414,4 +420,4 @@ Wir verwenden:
 
 - ein deterministisches Batteriesimulationsmodell
 
-👉 Es werden keine Marketing-Annahmen oder "geschönten Werte" verwendet.
+👉 Die Berechnung basiert auf transparenten technischen Annahmen und nachvollziehbaren Modellen.
