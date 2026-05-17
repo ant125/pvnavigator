@@ -20,6 +20,12 @@ export {
 } from "./battery";
 
 export {
+  resolveHybridBatteryPowerLimitKw,
+  resolveBatteryPowerLimitsKw,
+  type BatteryPowerLimitFields,
+} from "./batteryPowerLimit";
+
+export {
   calculateMultiYearAggregation,
   type MultiYearAggregationResult,
   type MultiYearScenario,

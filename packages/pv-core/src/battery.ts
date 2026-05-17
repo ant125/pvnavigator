@@ -3,6 +3,11 @@
  * Pure math, no I/O, no React.
  */
 
+import {
+  resolveBatteryPowerLimitsKw,
+  type BatteryPowerLimitFields,
+} from "./batteryPowerLimit";
+
 const HOURS_PER_YEAR = 8760;
 /** Average hours per calendar month for hourly self-discharge compounding */
 const HOURS_PER_MONTH_AVG = (365 * 24) / 12;
@@ -15,7 +20,7 @@ const HYBRID_EFFICIENCY_DEFAULTS = {
   batteryToAcEfficiency: 0.98,
 } as const;
 
-export interface BatterySpec {
+export interface BatterySpec extends BatteryPowerLimitFields {
   manufacturer: string;
   chemistry: string;
   roundtripEfficiency: number;
@@ -190,8 +195,8 @@ export function calculateBatterySimulation(
     ? spec.batteryChargeEfficiency ?? HYBRID_EFFICIENCY_DEFAULTS.batteryChargeEfficiency
     : 0;
   const maxSoc = spec.depthOfDischarge;
-  const chargePowerKw = usableCapacityKwh * 0.5;
-  const dischargePowerKw = usableCapacityKwh * 0.5;
+  const { chargePowerKw, dischargePowerKw } =
+    resolveBatteryPowerLimitsKw(usableCapacityKwh, spec);
 
   for (let h = 0; h < HOURS_PER_YEAR; h++) {
     const pv = pvKwh[h];

@@ -130,21 +130,21 @@ Keine Unterscheidung zwischen verschiedenen Wärmepumpentypen
 
 Für jede Stunde wird ein AC-Bus-Modell verwendet:
 
-- PV-Erzeugung deckt zuerst den Haushaltsverbrauch
+- PV-Erzeugung deckt zuerst den Haushaltsverbrauch.
 
-- verbleibende PV-Erzeugung deckt den technischen Systemverbrauch des Speichersystems
+- Verbleibende PV-Erzeugung deckt den Systemverbrauch des Speichersystems.
 
-- weiterer PV-Überschuss lädt die Batterie
+- Weiterer PV-Überschuss lädt die Batterie.
 
-- verbleibender Überschuss wird ins Netz eingespeist
+- Verbleibender Überschuss wird ins Netz eingespeist.
 
-- bei einem Defizit entlädt die Batterie zuerst zur Deckung des Haushaltsverbrauchs
+- Bei einem Defizit entlädt die Batterie zuerst zur Deckung des Haushaltsverbrauchs.
 
-- anschließend kann die Batterie den technischen Systemverbrauch decken
+- Anschließend kann die Batterie den Systemverbrauch des Speichersystems decken.
 
-- verbleibender Bedarf wird aus dem Netz bezogen
+- Verbleibender Bedarf wird aus dem Netz bezogen.
 
-Der technische Systemverbrauch wird separat erfasst. Er erhöht weder den ausgewiesenen Haushaltsverbrauch noch den Eigenverbrauch oder den Autarkiegrad.
+Der Systemverbrauch des Speichersystems wird separat erfasst. Er erhöht weder den ausgewiesenen Haushaltsverbrauch noch den Eigenverbrauch oder den Autarkiegrad.
 
 ---
 
@@ -154,25 +154,27 @@ Berücksichtigte Effekte:
 
 - Modernes LiFePO4-Heimspeichersystem mit Hybridwechselrichter und DC-gekoppeltem Ladepfad (PV-Überschuss zuerst in den Speicher; Entladung über den Wechselrichter auf den AC-Haushaltsbus)
 
-- modellierte Verlustpfade mit getrennter Bilanz: **PV → Speicher**, **Zellverluste beim Laden**, **Zellverluste beim Entladen**, **Speicher → AC-Bus** — der effektive Gesamt-Roundtrip liegt weiterhin in der Größenordnung von etwa 94 %, wird aber aus mehreren Einzelwirkungsgraden abgeleitet
+- Modellierte Verlustpfade mit getrennter Bilanz:
+  - PV → Speicher
+  - Zellverluste beim Laden
+  - Zellverluste beim Entladen
+  - Speicher → AC-Bus
+  - Selbstentladung der Batterie
+  - Systemverbrauch Standby
+
+  Der effektive Gesamt-Roundtrip liegt weiterhin in der Größenordnung von etwa 94 %, wird aber aus mehreren modellierten Stufen abgeleitet.
 
 - Depth of Discharge (~90%)
 
-- Leistungsbegrenzung (0.5C Regel)
+- Realistische größenabhängige Lade- und Entladeleistungsbegrenzung moderner Hybrid-Heimspeichersysteme
 
-- Selbstentladung der Batterie
+Die Lade- und Entladeleistung wird über realistische, größenabhängige Leistungsgrenzen moderner Hybrid-Heimspeicher modelliert. Dadurch werden unrealistische Lade- und Entladeleistungen großer Speicher vermieden.
 
-- technischer Systemverbrauch des Speichersystems (z. B. Elektronik, BMS, Betriebsbereitschaft)
-
-- getrennte Bilanzierung von Haushaltsverbrauch und Systemverbrauch
+- Getrennte Bilanzierung von Haushaltsverbrauch und Systemverbrauch
 
 Die Selbstentladung reduziert den Ladezustand der Batterie über die Zeit und wird als Batterieverlust berücksichtigt.
 
-Der technische Systemverbrauch des Speichersystems (z. B. Elektronik, BMS, Kommunikation und Betriebsbereitschaft) wird separat bilanziert. Er kann durch PV, Batterie oder Netz gedeckt werden, erhöht aber nicht den ausgewiesenen Haushaltsverbrauch, Eigenverbrauch oder Autarkiegrad.
-
-Beispiel:  
-
-10 kWh Batterie → max. 5 kW Lade-/Entladeleistung
+Der Systemverbrauch des Speichersystems (z. B. Elektronik, BMS, Kommunikation und Betriebsbereitschaft) wird separat bilanziert. Er kann durch PV, Batterie oder Netz gedeckt werden, erhöht aber nicht den ausgewiesenen Haushaltsverbrauch, Eigenverbrauch oder Autarkiegrad.
 
 👉 Das Modell bildet das reale Verhalten eines Heimspeichers vereinfacht, aber praxisnah ab.
 
@@ -228,13 +230,13 @@ Die Batteriesimulation basiert auf folgenden Annahmen:
 
 - Ladung und Entladung erfolgen stündlich (8760 Stunden pro Jahr)
 
-- Begrenzte Lade- und Entladeleistung (0.5C Regel)
+- Realistische größenabhängige Lade- und Entladeleistungsbegrenzung moderner Hybrid-Heimspeichersysteme (siehe Abschnitt 4)
 
 - Wirkungsgrad wird berücksichtigt
 
 - Nutzbare Kapazität ist durch Depth of Discharge begrenzt
 
-Der Eigenverbrauch und der Autarkiegrad beziehen sich auf den Haushaltsverbrauch. Der technische Systemverbrauch des Speichersystems wird separat bilanziert und erhöht diese Kennzahlen nicht künstlich.
+Der Eigenverbrauch und der Autarkiegrad beziehen sich auf den Haushaltsverbrauch. Der Systemverbrauch des Speichersystems wird separat bilanziert und erhöht diese Kennzahlen nicht künstlich.
 
 👉 Wichtige Einschränkungen:
 
@@ -447,5 +449,17 @@ Wir verwenden:
 - BDEW Standardlastprofile
 
 - ein deterministisches Batteriesimulationsmodell
+
+Das Batteriemodell bilanziert separat:
+
+- PV-Ladeverluste
+
+- Zellverluste
+
+- Wechselrichterverluste
+
+- Selbstentladung
+
+- Systemverbrauch Standby
 
 👉 Die Berechnung basiert auf transparenten technischen Annahmen und nachvollziehbaren Modellen.
