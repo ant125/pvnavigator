@@ -17,7 +17,7 @@ export interface SpeicherInput {
   /** Location address (for irradiance estimation) */
   address: string;
   
-  /** Roof azimuth angle in degrees (0° = North, 90° = East, 180° = South, 270° = West) */
+  /** Roof azimuth in whole degrees clockwise from North, 0–359 (0° = N, 90° = E, 180° = S, 270° = W). */
   azimuth: number;
   
   /** Roof tilt angle in degrees (0° = flat, 90° = vertical) */

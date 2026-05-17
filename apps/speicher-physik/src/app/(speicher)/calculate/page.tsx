@@ -56,6 +56,20 @@ const SPEICHER_REPORT_KPI_ROW =
 const SPEICHER_REPORT_HELPER_TEXT =
   "text-[10px] sm:text-[11px] leading-snug text-slate-500 font-normal normal-case";
 
+/** Cardinal presets for Dachausrichtung (clockwise from Nord). */
+const AZIMUTH_PRESET_DEGREES = [
+  0, 45, 90, 135, 180, 225, 270, 315,
+] as const;
+
+type AzimuthPreset = (typeof AZIMUTH_PRESET_DEGREES)[number];
+
+function isPresetAzimuth(deg: number | undefined): deg is AzimuthPreset {
+  return (
+    deg !== undefined &&
+    (AZIMUTH_PRESET_DEGREES as readonly number[]).includes(deg)
+  );
+}
+
 export default function SpeicherCalculatePage() {
   const [step, setStep] = useState<Step>("input");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
@@ -344,30 +358,81 @@ export default function SpeicherCalculatePage() {
 
               {/* Roof orientation - Azimuth & Tilt */}
               <div className="grid grid-cols-2 gap-4">
-                {/* Azimuth */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-200">
-                    Dachausrichtung (°) *
-                  </label>
-                  <select
-                    value={formData.azimuth}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        azimuth: parseInt(e.target.value),
-                      })
-                    }
-                    className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
-                  >
-                    <option value={0}>Nord (0°)</option>
-                    <option value={45}>Nordost (45°)</option>
-                    <option value={90}>Ost (90°)</option>
-                    <option value={135}>Südost (135°)</option>
-                    <option value={180}>Süd (180°)</option>
-                    <option value={225}>Südwest (225°)</option>
-                    <option value={270}>West (270°)</option>
-                    <option value={315}>Nordwest (315°)</option>
-                  </select>
+                {/* Azimuth: preset + exact */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-200">
+                      Dachausrichtung (°) *
+                    </label>
+                    <select
+                      value={
+                        formData.azimuth === undefined ? "" : formData.azimuth
+                      }
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          setFormData({ ...formData, azimuth: undefined });
+                          return;
+                        }
+                        const n = parseInt(raw, 10);
+                        if (!Number.isFinite(n)) return;
+                        setFormData({ ...formData, azimuth: n });
+                      }}
+                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                    >
+                      {formData.azimuth === undefined && (
+                        <option value="">Ausrichtung wählen …</option>
+                      )}
+                      {formData.azimuth !== undefined &&
+                        !isPresetAzimuth(formData.azimuth) && (
+                          <option value={formData.azimuth}>
+                            Individuell ({formData.azimuth}°)
+                          </option>
+                        )}
+                      <option value={0}>Nord (0°)</option>
+                      <option value={45}>Nordost (45°)</option>
+                      <option value={90}>Ost (90°)</option>
+                      <option value={135}>Südost (135°)</option>
+                      <option value={180}>Süd (180°)</option>
+                      <option value={225}>Südwest (225°)</option>
+                      <option value={270}>West (270°)</option>
+                      <option value={315}>Nordwest (315°)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-200">
+                      Exakter Azimut (°)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={359}
+                      step={1}
+                      value={
+                        formData.azimuth === undefined ? "" : formData.azimuth
+                      }
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          setFormData({
+                            ...formData,
+                            azimuth: undefined,
+                          });
+                          return;
+                        }
+                        const n = parseInt(raw, 10);
+                        if (!Number.isFinite(n)) return;
+                        setFormData({
+                          ...formData,
+                          azimuth: n,
+                        });
+                      }}
+                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                    />
+                    <p className="text-xs text-slate-500">
+                      0° = Nord, 90° = Ost, 180° = Süd, 270° = West.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Tilt */}

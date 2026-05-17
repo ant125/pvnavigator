@@ -19,8 +19,15 @@ export function validateInput(input: Partial<SpeicherInput>): {
     errors.push("Bitte geben Sie eine gültige Adresse ein.");
   }
 
-  if (input.azimuth === undefined || input.azimuth < 0 || input.azimuth > 360) {
-    errors.push("Bitte geben Sie eine gültige Ausrichtung ein (0-360°).");
+  const az = input.azimuth;
+  if (
+    az === undefined ||
+    !Number.isFinite(az) ||
+    !Number.isInteger(az) ||
+    az < 0 ||
+    az > 359
+  ) {
+    errors.push("Bitte geben Sie eine gültige Ausrichtung ein (0–359°).");
   }
 
   if (input.tilt === undefined || input.tilt < 0 || input.tilt > 90) {
