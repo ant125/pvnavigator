@@ -52,6 +52,21 @@ export type SpeicherGrenzPayload = {
   average: Record<number, number>;
   averageBatteryChargedKwh: Record<number, number>;
   averageBatteryDischargedKwh: Record<number, number>;
+  averageDirectPvToHouseholdKwh: Record<number, number>;
+  averageDirectPvToAuxiliaryKwh: Record<number, number>;
+  averageBatteryToHouseholdKwh: Record<number, number>;
+  averageBatteryToAuxiliaryKwh: Record<number, number>;
+  averageGridToHouseholdKwh: Record<number, number>;
+  averageGridToAuxiliaryKwh: Record<number, number>;
+  averageGridExportKwh: Record<number, number>;
+  averageAuxiliaryConsumptionKwh: Record<number, number>;
+  averageChargeLossKwh: Record<number, number>;
+  averageDischargeLossKwh: Record<number, number>;
+  averageSocStartKwh: Record<number, number>;
+  averageSocEndKwh: Record<number, number>;
+  averageSocEndPct: Record<number, number>;
+  averageEnergyBalanceErrorKwh: Record<number, number>;
+  averageSelfDischargeLossKwh: Record<number, number>;
 };
 
 export type HouseholdCalculationPayload = {
@@ -129,6 +144,21 @@ export async function calculateHouseholdConsumptionAction(params: {
       average: multiYear.average,
       averageBatteryChargedKwh: multiYear.averageBatteryChargedKwh,
       averageBatteryDischargedKwh: multiYear.averageBatteryDischargedKwh,
+      averageDirectPvToHouseholdKwh: multiYear.averageDirectPvToHouseholdKwh,
+      averageDirectPvToAuxiliaryKwh: multiYear.averageDirectPvToAuxiliaryKwh,
+      averageBatteryToHouseholdKwh: multiYear.averageBatteryToHouseholdKwh,
+      averageBatteryToAuxiliaryKwh: multiYear.averageBatteryToAuxiliaryKwh,
+      averageGridToHouseholdKwh: multiYear.averageGridToHouseholdKwh,
+      averageGridToAuxiliaryKwh: multiYear.averageGridToAuxiliaryKwh,
+      averageGridExportKwh: multiYear.averageGridExportKwh,
+      averageAuxiliaryConsumptionKwh: multiYear.averageAuxiliaryConsumptionKwh,
+      averageChargeLossKwh: multiYear.averageChargeLossKwh,
+      averageDischargeLossKwh: multiYear.averageDischargeLossKwh,
+      averageSocStartKwh: multiYear.averageSocStartKwh,
+      averageSocEndKwh: multiYear.averageSocEndKwh,
+      averageSocEndPct: multiYear.averageSocEndPct,
+      averageEnergyBalanceErrorKwh: multiYear.averageEnergyBalanceErrorKwh,
+      averageSelfDischargeLossKwh: multiYear.averageSelfDischargeLossKwh,
     },
   };
 }

@@ -257,20 +257,36 @@ export default function SpeicherCalculatePage() {
       ? pvYieldKwhAnnual / formData.pvSizeKwp
       : null;
 
+  const ledgerGridImportAvgKwh =
+    speicherGrenz && recommendedSize > 0
+      ? speicherGrenz.averageGridToHouseholdKwh[recommendedSize] +
+        speicherGrenz.averageGridToAuxiliaryKwh[recommendedSize]
+      : undefined;
+  const ledgerGridExportAvgKwh =
+    speicherGrenz && recommendedSize > 0
+      ? speicherGrenz.averageGridExportKwh[recommendedSize]
+      : undefined;
+
   const netzbezugMitSpeicherKwhYear =
-    typeof eigenverbrauchMitSpeicher === "number" &&
-    Number.isFinite(eigenverbrauchMitSpeicher) &&
-    Number.isFinite(totalConsumption)
-      ? totalConsumption - eigenverbrauchMitSpeicher
-      : null;
+    typeof ledgerGridImportAvgKwh === "number" &&
+    Number.isFinite(ledgerGridImportAvgKwh)
+      ? ledgerGridImportAvgKwh
+      : typeof eigenverbrauchMitSpeicher === "number" &&
+          Number.isFinite(eigenverbrauchMitSpeicher) &&
+          Number.isFinite(totalConsumption)
+        ? totalConsumption - eigenverbrauchMitSpeicher
+        : null;
 
   const einspeisungRechnerischKwhYear =
-    typeof pvYieldKwhAnnual === "number" &&
-    Number.isFinite(pvYieldKwhAnnual) &&
-    typeof eigenverbrauchMitSpeicher === "number" &&
-    Number.isFinite(eigenverbrauchMitSpeicher)
-      ? pvYieldKwhAnnual - eigenverbrauchMitSpeicher
-      : null;
+    typeof ledgerGridExportAvgKwh === "number" &&
+    Number.isFinite(ledgerGridExportAvgKwh)
+      ? ledgerGridExportAvgKwh
+      : typeof pvYieldKwhAnnual === "number" &&
+          Number.isFinite(pvYieldKwhAnnual) &&
+          typeof eigenverbrauchMitSpeicher === "number" &&
+          Number.isFinite(eigenverbrauchMitSpeicher)
+        ? pvYieldKwhAnnual - eigenverbrauchMitSpeicher
+        : null;
 
   const eigenverbrauchsquoteMitSpeicherPct =
     typeof pvYieldKwhAnnual === "number" &&
