@@ -128,13 +128,23 @@ Keine Unterscheidung zwischen verschiedenen Wärmepumpentypen
 
 ## 3. Simulationslogik
 
-Für jede Stunde gilt:
+Für jede Stunde wird ein AC-Bus-Modell verwendet:
 
-1. PV deckt zuerst die Last  
+- PV-Erzeugung deckt zuerst den Haushaltsverbrauch
 
-2. Überschuss → Batterie  
+- verbleibende PV-Erzeugung deckt den technischen Systemverbrauch des Speichersystems
 
-3. Defizit → Batterie entlädt  
+- weiterer PV-Überschuss lädt die Batterie
+
+- verbleibender Überschuss wird ins Netz eingespeist
+
+- bei einem Defizit entlädt die Batterie zuerst zur Deckung des Haushaltsverbrauchs
+
+- anschließend kann die Batterie den technischen Systemverbrauch decken
+
+- verbleibender Bedarf wird aus dem Netz bezogen
+
+Der technische Systemverbrauch wird separat geführt und erhöht nicht den ausgewiesenen Haushaltsverbrauch.
 
 ---
 
@@ -147,6 +157,12 @@ Berücksichtigte Effekte:
 - Depth of Discharge (~90%)
 
 - Leistungsbegrenzung (0.5C Regel)
+
+- Selbstentladung der Batterie
+
+- technischer Systemverbrauch des Speichersystems (z. B. Elektronik, BMS, Betriebsbereitschaft)
+
+- getrennte Bilanzierung von Haushaltsverbrauch und Systemverbrauch
 
 Beispiel:  
 
@@ -212,6 +228,10 @@ Die Batteriesimulation basiert auf folgenden Annahmen:
 
 - Nutzbare Kapazität ist durch Depth of Discharge begrenzt
 
+Der Eigenverbrauch und der Autarkiegrad beziehen sich auf den Haushaltsverbrauch. Der technische Systemverbrauch des Speichersystems wird separat bilanziert und erhöht diese Kennzahlen nicht künstlich.
+
+Die Selbstentladung reduziert den Ladezustand der Batterie über die Zeit und wird als Batterieverlust berücksichtigt.
+
 👉 Wichtige Einschränkungen:
 
 - Keine temperaturabhängigen Effekte
@@ -245,6 +265,8 @@ Nicht explizit separat modelliert:
 - herstellerspezifische Systemlogik
 
 - Netzrestriktionen
+
+- detaillierte herstellerspezifische Wirkungsgradkennlinien von Batterie- und Hybridwechselrichtern
 
 ---
 
