@@ -118,6 +118,16 @@ function formatKwpDisplay(n: number): string {
   return parseFloat((Math.round(n * 100) / 100).toFixed(2)).toString();
 }
 
+/** Parse exact azimuth text: whole digits only, 0–359 inclusive; otherwise invalid (NaN). */
+function parseAzimuthInput(raw: string): { valid: boolean; deg: number } {
+  const s = raw.trim();
+  if (s === "") return { valid: false, deg: NaN };
+  if (!/^\d+$/.test(s)) return { valid: false, deg: NaN };
+  const n = parseInt(s, 10);
+  if (!Number.isFinite(n) || n < 0 || n > 359) return { valid: false, deg: NaN };
+  return { valid: true, deg: n };
+}
+
 function surfacesOrDefault(form: Partial<SpeicherInput>): PvSurfaceInput[] {
   const s = form.pvSurfaces;
   if (s && s.length > 0) return s.map((row) => ({ ...row }));
@@ -157,6 +167,11 @@ export default function SpeicherCalculatePage() {
   /** Raw kWp strings per Dachfläche so comma decimals stay typable (controlled text input). */
   const [kwpInputStrings, setKwpInputStrings] = useState<string[]>([""]);
 
+  /** Raw azimuth strings per Dachfläche so the field can be cleared while typing. */
+  const [azimuthInputStrings, setAzimuthInputStrings] = useState<string[]>([
+    String(DEFAULT_SURFACE.azimuthDeg),
+  ]);
+
   const surfaces = surfacesOrDefault(formData);
 
   const updateSurface = (
@@ -175,6 +190,10 @@ export default function SpeicherCalculatePage() {
 
   const addSurface = () => {
     setKwpInputStrings((prev) => [...prev, ""]);
+    setAzimuthInputStrings((prev) => [
+      ...prev,
+      String(DEFAULT_SURFACE.azimuthDeg),
+    ]);
     setFormData((prev) => ({
       ...prev,
       pvSurfaces: [
@@ -191,6 +210,7 @@ export default function SpeicherCalculatePage() {
   const removeSurface = (planeIndex: number) => {
     if (planeIndex <= 0) return;
     setKwpInputStrings((prev) => prev.filter((_, i) => i !== planeIndex));
+    setAzimuthInputStrings((prev) => prev.filter((_, i) => i !== planeIndex));
     setFormData((prev) => {
       const list = surfacesOrDefault(prev).filter((_, i) => i !== planeIndex);
       return { ...prev, pvSurfaces: list.length > 0 ? list : [{ ...DEFAULT_SURFACE }] };
@@ -538,16 +558,31 @@ export default function SpeicherCalculatePage() {
                             Dachausrichtung (°) *
                           </label>
                           <select
-                            value={surface.azimuthDeg}
+                            value={
+                              Number.isFinite(surface.azimuthDeg)
+                                ? surface.azimuthDeg
+                                : ""
+                            }
                             onChange={(e) => {
                               const raw = e.target.value;
                               const n = parseInt(raw, 10);
                               if (!Number.isFinite(n)) return;
+                              setAzimuthInputStrings((prev) => {
+                                const next = [...prev];
+                                next[planeIndex] = String(n);
+                                return next;
+                              });
                               updateSurface(planeIndex, { azimuthDeg: n });
                             }}
                             className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
                           >
-                            {!isPresetAzimuth(surface.azimuthDeg) && (
+                            {!Number.isFinite(surface.azimuthDeg) && (
+                              <option value="" disabled>
+                                —
+                              </option>
+                            )}
+                            {Number.isFinite(surface.azimuthDeg) &&
+                              !isPresetAzimuth(surface.azimuthDeg) && (
                               <option value={surface.azimuthDeg}>
                                 Individuell ({surface.azimuthDeg}°)
                               </option>
@@ -567,18 +602,34 @@ export default function SpeicherCalculatePage() {
                             Exakter Azimut (°)
                           </label>
                           <input
-                            type="number"
-                            min={0}
-                            max={359}
-                            step={1}
-                            value={surface.azimuthDeg}
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="off"
+                            value={azimuthInputStrings[planeIndex] ?? ""}
                             onChange={(e) => {
                               const raw = e.target.value;
-                              if (raw === "") return;
-                              const n = parseInt(raw, 10);
-                              if (!Number.isFinite(n)) return;
+                              setAzimuthInputStrings((prev) => {
+                                const next = [...prev];
+                                next[planeIndex] = raw;
+                                return next;
+                              });
+                              const parsed = parseAzimuthInput(raw);
                               updateSurface(planeIndex, {
-                                azimuthDeg: Math.min(359, Math.max(0, n)),
+                                azimuthDeg: parsed.valid ? parsed.deg : NaN,
+                              });
+                            }}
+                            onBlur={() => {
+                              const raw =
+                                azimuthInputStrings[planeIndex] ?? "";
+                              const parsed = parseAzimuthInput(raw);
+                              if (!parsed.valid) return;
+                              setAzimuthInputStrings((prev) => {
+                                const next = [...prev];
+                                next[planeIndex] = String(parsed.deg);
+                                return next;
+                              });
+                              updateSurface(planeIndex, {
+                                azimuthDeg: parsed.deg,
                               });
                             }}
                             className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
@@ -1000,11 +1051,11 @@ export default function SpeicherCalculatePage() {
                     </div>
 
                     <div className={SPEICHER_REPORT_ROWS}>
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
+                      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-x-4 gap-y-1 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
                         <div className="min-w-0 leading-snug text-slate-400">
                           Adresse:
                         </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                        <div className="min-w-0 break-words whitespace-normal text-left font-medium text-slate-100">
                           {formData.address ?? "—"}
                         </div>
                       </div>
