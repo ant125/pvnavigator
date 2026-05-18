@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ANALYTICS_CARD_TEXT_HOVER } from "../analyticsCardHoverClasses";
 import { SpeicherInput, type PvSurfaceInput } from "../types/speicher";
@@ -83,6 +83,62 @@ function isPresetAzimuth(deg: number | undefined): deg is AzimuthPreset {
   );
 }
 
+const TILT_PRESET_DEGREES = [0, 15, 25, 30, 35, 40, 45, 60] as const;
+
+function isPresetTilt(deg: number | undefined): boolean {
+  return (
+    deg !== undefined &&
+    (TILT_PRESET_DEGREES as readonly number[]).includes(deg)
+  );
+}
+
+type PresetDropdownOption = {
+  value: number | string;
+  label: string;
+};
+
+const AZIMUTH_PRESET_OPTIONS: PresetDropdownOption[] = [
+  { value: 0, label: "Nord (0°)" },
+  { value: 45, label: "Nordost (45°)" },
+  { value: 90, label: "Ost (90°)" },
+  { value: 135, label: "Südost (135°)" },
+  { value: 180, label: "Süd (180°)" },
+  { value: 225, label: "Südwest (225°)" },
+  { value: 270, label: "West (270°)" },
+  { value: 315, label: "Nordwest (315°)" },
+];
+
+const TILT_PRESET_OPTIONS: PresetDropdownOption[] = [
+  { value: 0, label: "Flachdach (0°)" },
+  { value: 15, label: "15°" },
+  { value: 25, label: "25°" },
+  { value: 30, label: "30°" },
+  { value: 35, label: "35°" },
+  { value: 40, label: "40°" },
+  { value: 45, label: "45°" },
+  { value: 60, label: "60° (steil)" },
+];
+
+function buildAzimuthDropdownOptions(azimuthDeg: number): PresetDropdownOption[] {
+  if (Number.isFinite(azimuthDeg) && !isPresetAzimuth(azimuthDeg)) {
+    return [
+      { value: azimuthDeg, label: `Individuell (${azimuthDeg}°)` },
+      ...AZIMUTH_PRESET_OPTIONS,
+    ];
+  }
+  return AZIMUTH_PRESET_OPTIONS;
+}
+
+function buildTiltDropdownOptions(tiltDeg: number): PresetDropdownOption[] {
+  if (Number.isFinite(tiltDeg) && !isPresetTilt(tiltDeg)) {
+    return [
+      { value: tiltDeg, label: `Individuell (${tiltDeg}°)` },
+      ...TILT_PRESET_OPTIONS,
+    ];
+  }
+  return TILT_PRESET_OPTIONS;
+}
+
 const DEFAULT_SURFACE: PvSurfaceInput = {
   systemSizeKwP: NaN,
   tiltDeg: 30,
@@ -126,6 +182,137 @@ function parseAzimuthInput(raw: string): { valid: boolean; deg: number } {
   const n = parseInt(s, 10);
   if (!Number.isFinite(n) || n < 0 || n > 359) return { valid: false, deg: NaN };
   return { valid: true, deg: n };
+}
+
+/** Parse exact tilt text: whole digits only, 0–90 inclusive; otherwise invalid (NaN). */
+function parseTiltInput(raw: string): { valid: boolean; deg: number } {
+  const s = raw.trim();
+  if (s === "") return { valid: false, deg: NaN };
+  if (!/^\d+$/.test(s)) return { valid: false, deg: NaN };
+  const n = parseInt(s, 10);
+  if (!Number.isFinite(n) || n < 0 || n > 90) return { valid: false, deg: NaN };
+  return { valid: true, deg: n };
+}
+
+function PresetDropdown({
+  value,
+  options,
+  onChange,
+  placeholder = "—",
+}: {
+  value: number | string | "";
+  options: PresetDropdownOption[];
+  onChange: (value: number) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (rootRef.current && !rootRef.current.contains(target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+  }, [open]);
+
+  const selected = options.find((opt) => opt.value === value);
+  const displayLabel = selected?.label ?? placeholder;
+
+  return (
+    <div ref={rootRef} className="relative w-full min-w-0">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+        onBlur={(e) => {
+          if (!rootRef.current?.contains(e.relatedTarget as Node | null)) {
+            setOpen(false);
+          }
+        }}
+        className={`flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border bg-slate-900 px-4 py-3 text-left text-slate-100 outline-none transition-colors ${
+          open
+            ? "border-green-500 ring-1 ring-green-500"
+            : "border-slate-700 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+        }`}
+      >
+        <span className="min-w-0 truncate">{displayLabel}</span>
+        <svg
+          className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 py-1 shadow-lg [scrollbar-color:theme(colors.slate.700)_theme(colors.slate.900)] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-slate-900 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb:hover]:bg-slate-600"
+        >
+          {options.map((opt) => {
+            const isSelected = opt.value === value;
+            return (
+              <li key={String(opt.value)} role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    const n =
+                      typeof opt.value === "number"
+                        ? opt.value
+                        : parseInt(String(opt.value), 10);
+                    if (!Number.isFinite(n)) return;
+                    onChange(n);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm transition-colors ${
+                    isSelected
+                      ? "bg-green-500/10 text-green-400"
+                      : "text-slate-100 hover:bg-slate-800"
+                  }`}
+                >
+                  <span className="min-w-0 truncate">{opt.label}</span>
+                  {isSelected && (
+                    <svg
+                      className="h-4 w-4 shrink-0 text-green-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.42 0l-3.25-3.25a1 1 0 111.42-1.42l2.54 2.54 6.54-6.54a1 1 0 011.42 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 function surfacesOrDefault(form: Partial<SpeicherInput>): PvSurfaceInput[] {
@@ -172,6 +359,11 @@ export default function SpeicherCalculatePage() {
     String(DEFAULT_SURFACE.azimuthDeg),
   ]);
 
+  /** Raw tilt strings per Dachfläche so the field can be cleared while typing. */
+  const [tiltInputStrings, setTiltInputStrings] = useState<string[]>([
+    String(DEFAULT_SURFACE.tiltDeg),
+  ]);
+
   const surfaces = surfacesOrDefault(formData);
 
   const updateSurface = (
@@ -194,6 +386,10 @@ export default function SpeicherCalculatePage() {
       ...prev,
       String(DEFAULT_SURFACE.azimuthDeg),
     ]);
+    setTiltInputStrings((prev) => [
+      ...prev,
+      String(DEFAULT_SURFACE.tiltDeg),
+    ]);
     setFormData((prev) => ({
       ...prev,
       pvSurfaces: [
@@ -211,6 +407,7 @@ export default function SpeicherCalculatePage() {
     if (planeIndex <= 0) return;
     setKwpInputStrings((prev) => prev.filter((_, i) => i !== planeIndex));
     setAzimuthInputStrings((prev) => prev.filter((_, i) => i !== planeIndex));
+    setTiltInputStrings((prev) => prev.filter((_, i) => i !== planeIndex));
     setFormData((prev) => {
       const list = surfacesOrDefault(prev).filter((_, i) => i !== planeIndex);
       return { ...prev, pvSurfaces: list.length > 0 ? list : [{ ...DEFAULT_SURFACE }] };
@@ -551,22 +748,22 @@ export default function SpeicherCalculatePage() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-3">
                         <div className="space-y-2">
                           <label className="block text-sm font-medium text-slate-200">
                             Dachausrichtung (°) *
                           </label>
-                          <select
+                          <PresetDropdown
                             value={
                               Number.isFinite(surface.azimuthDeg)
                                 ? surface.azimuthDeg
                                 : ""
                             }
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              const n = parseInt(raw, 10);
-                              if (!Number.isFinite(n)) return;
+                            options={buildAzimuthDropdownOptions(
+                              surface.azimuthDeg
+                            )}
+                            onChange={(n) => {
                               setAzimuthInputStrings((prev) => {
                                 const next = [...prev];
                                 next[planeIndex] = String(n);
@@ -574,28 +771,7 @@ export default function SpeicherCalculatePage() {
                               });
                               updateSurface(planeIndex, { azimuthDeg: n });
                             }}
-                            className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
-                          >
-                            {!Number.isFinite(surface.azimuthDeg) && (
-                              <option value="" disabled>
-                                —
-                              </option>
-                            )}
-                            {Number.isFinite(surface.azimuthDeg) &&
-                              !isPresetAzimuth(surface.azimuthDeg) && (
-                              <option value={surface.azimuthDeg}>
-                                Individuell ({surface.azimuthDeg}°)
-                              </option>
-                            )}
-                            <option value={0}>Nord (0°)</option>
-                            <option value={45}>Nordost (45°)</option>
-                            <option value={90}>Ost (90°)</option>
-                            <option value={135}>Südost (135°)</option>
-                            <option value={180}>Süd (180°)</option>
-                            <option value={225}>Südwest (225°)</option>
-                            <option value={270}>West (270°)</option>
-                            <option value={315}>Nordwest (315°)</option>
-                          </select>
+                          />
                         </div>
                         <div className="space-y-2">
                           <label className="block text-sm font-medium text-slate-200">
@@ -640,28 +816,68 @@ export default function SpeicherCalculatePage() {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-slate-200">
-                          Dachneigung (°) *
-                        </label>
-                        <select
-                          value={surface.tiltDeg}
-                          onChange={(e) =>
-                            updateSurface(planeIndex, {
-                              tiltDeg: parseInt(e.target.value, 10),
-                            })
-                          }
-                          className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
-                        >
-                          <option value={0}>Flachdach (0°)</option>
-                          <option value={15}>15°</option>
-                          <option value={25}>25°</option>
-                          <option value={30}>30°</option>
-                          <option value={35}>35°</option>
-                          <option value={40}>40°</option>
-                          <option value={45}>45°</option>
-                          <option value={60}>60° (steil)</option>
-                        </select>
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-slate-200">
+                            Dachneigung (°) *
+                          </label>
+                          <PresetDropdown
+                            value={
+                              Number.isFinite(surface.tiltDeg)
+                                ? surface.tiltDeg
+                                : ""
+                            }
+                            options={buildTiltDropdownOptions(surface.tiltDeg)}
+                            onChange={(n) => {
+                              setTiltInputStrings((prev) => {
+                                const next = [...prev];
+                                next[planeIndex] = String(n);
+                                return next;
+                              });
+                              updateSurface(planeIndex, { tiltDeg: n });
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-slate-200">
+                            Exakte Neigung (°)
+                          </label>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="off"
+                            value={tiltInputStrings[planeIndex] ?? ""}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              setTiltInputStrings((prev) => {
+                                const next = [...prev];
+                                next[planeIndex] = raw;
+                                return next;
+                              });
+                              const parsed = parseTiltInput(raw);
+                              updateSurface(planeIndex, {
+                                tiltDeg: parsed.valid ? parsed.deg : NaN,
+                              });
+                            }}
+                            onBlur={() => {
+                              const raw = tiltInputStrings[planeIndex] ?? "";
+                              const parsed = parseTiltInput(raw);
+                              if (!parsed.valid) return;
+                              setTiltInputStrings((prev) => {
+                                const next = [...prev];
+                                next[planeIndex] = String(parsed.deg);
+                                return next;
+                              });
+                              updateSurface(planeIndex, {
+                                tiltDeg: parsed.deg,
+                              });
+                            }}
+                            className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                          />
+                          <p className="text-xs text-slate-500">
+                            0° = flach, 90° = senkrecht.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
