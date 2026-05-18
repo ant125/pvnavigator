@@ -302,14 +302,18 @@ export default function SpeicherCalculatePage() {
       : undefined;
   const batteryAnVerbrauchAvgKwh =
     speicherGrenz && recommendedSize > 0
+      ? speicherGrenz.averageBatteryToHouseholdKwh[recommendedSize]
+      : undefined;
+  const batteryTotalDischargedAvgKwh =
+    speicherGrenz && recommendedSize > 0
       ? speicherGrenz.averageBatteryDischargedKwh[recommendedSize]
       : undefined;
   const differenzBatterieflussKwh =
     typeof batteryGeladenAvgKwh === "number" &&
     Number.isFinite(batteryGeladenAvgKwh) &&
-    typeof batteryAnVerbrauchAvgKwh === "number" &&
-    Number.isFinite(batteryAnVerbrauchAvgKwh)
-      ? Math.round(batteryGeladenAvgKwh - batteryAnVerbrauchAvgKwh)
+    typeof batteryTotalDischargedAvgKwh === "number" &&
+    Number.isFinite(batteryTotalDischargedAvgKwh)
+      ? Math.round(batteryGeladenAvgKwh - batteryTotalDischargedAvgKwh)
       : null;
 
   const avgChargeLossKwh =
@@ -409,8 +413,7 @@ export default function SpeicherCalculatePage() {
 
   const ledgerGridImportAvgKwh =
     speicherGrenz && recommendedSize > 0
-      ? speicherGrenz.averageGridToHouseholdKwh[recommendedSize] +
-        speicherGrenz.averageGridToAuxiliaryKwh[recommendedSize]
+      ? speicherGrenz.averageGridToHouseholdKwh[recommendedSize]
       : undefined;
   const ledgerGridExportAvgKwh =
     speicherGrenz && recommendedSize > 0
@@ -1305,8 +1308,8 @@ export default function SpeicherCalculatePage() {
                           <span
                             className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
                           >
-                            Nicht im Haushaltsverbrauch, Eigenverbrauch oder
-                            Autarkiegrad enthalten.
+                            Separat bilanziert; nicht im Haushaltsverbrauch,
+                            Eigenverbrauch oder Autarkiegrad enthalten.
                           </span>
                         </div>
                         <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
