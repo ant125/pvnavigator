@@ -52,7 +52,7 @@ export const DEFAULT_BATTERY_SPEC: BatterySpec = {
   roundtripEfficiency: 0.94,
   cycleLife80Pct: 6000,
   calendarLifeYears: 15,
-  depthOfDischarge: 0.9,
+  depthOfDischarge: 1.0,
   auxiliaryPowerW: 15,
   selfDischargePerMonth: 0.01,
   efficiencyModel: "hybrid",

@@ -164,7 +164,9 @@ Berücksichtigte Effekte:
 
   Der effektive Gesamt-Roundtrip liegt weiterhin in der Größenordnung von etwa 94 %, wird aber aus mehreren modellierten Stufen abgeleitet.
 
-- Depth of Discharge (~90%)
+- Speichergrößen entsprechen der herstellerseitig ausgewiesenen nutzbaren Kapazität (market usable kWh); interner BMS-/Chemie-Schutz ist darin bereits enthalten
+
+- Im Standardmodell wird kein zusätzlicher Depth-of-Discharge-Abschlag angewendet (DEFAULT depthOfDischarge = 100 %)
 
 - Realistische größenabhängige Lade- und Entladeleistungsbegrenzung moderner Hybrid-Heimspeichersysteme
 
@@ -234,7 +236,11 @@ Die Batteriesimulation basiert auf folgenden Annahmen:
 
 - Wirkungsgrad wird berücksichtigt
 
-- Nutzbare Kapazität ist durch Depth of Discharge begrenzt
+- Die modellierte Speichergröße entspricht der ausgewiesenen nutzbaren Kapazität moderner Heimspeicher; ein zusätzlicher DoD-Abschlag wird im Standardmodell nicht angewendet (DEFAULT depthOfDischarge = 100 %)
+
+- Optionale Notstromreserve bleibt eine separate, vom Anwender gewählte untere Kapazitätsgrenze (siehe Abschnitt 4.1)
+
+- Für Legacy- oder Rohkapazitätsmodelle können benutzerdefinierte Spezifikationen weiterhin depthOfDischarge < 1.0 setzen
 
 Der Eigenverbrauch und der Autarkiegrad beziehen sich auf den Haushaltsverbrauch. Der Systemverbrauch des Speichersystems wird separat bilanziert und erhöht diese Kennzahlen nicht künstlich.
 
