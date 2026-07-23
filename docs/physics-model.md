@@ -382,6 +382,26 @@ Das bedeutet:
 
 ---
 
+### Technische Speichergrenze und Kaufplanung
+
+Die Analyse unterscheidet zwei Größen:
+
+1. **Technische Speichergrenze (Simulationsergebnis)**  
+   Der letzte Punkt vor abnehmendem Grenznutzen auf der Eigenverbrauchskurve — die heute technisch sinnvolle **nutzbare Kapazität** unter den aktuellen Simulationsannahmen (ohne Kapazitätsalterung im Modell).
+
+2. **Empfohlene Anfangskapazität (Kaufplanung)**  
+   Eine **planerische** Größe für den Speicherkauf: so viel **nutzbare Anfangskapazität**, dass nach einem angenommenen **Kapazitätsverlust von 25 %** über die Nutzungsdauer noch ungefähr die technische Speichergrenze als **Restkapazität (ca. 75 %)** zur Verfügung steht.
+
+**Formel:** `Anfangskapazität = ⌈ technische Speichergrenze ÷ 0,75 ⌉` (kWh, aufgerundet)
+
+**Beispiel:** Speichergrenze 6 kWh → empfohlene Anfangskapazität 8 kWh, weil 8 × 0,75 ≈ 6 kWh.
+
+Das entspricht etwa **33 % mehr Anfangskapazität** gegenüber der technischen Speichergrenze — **nicht** einfach „Speichergrenze + 25 %“.
+
+👉 **Wichtig:** Die Alterungsannahme dient der langfristigen Kaufplanung und ist von der stündlichen Simulation getrennt. Sie ist **keine** herstellerspezifische Garantie und **kein** garantierter Degradationsverlauf. Alle physikalischen Kennzahlen (Eigenverbrauch, Autarkie, Netzbezug, Batterieflüsse, Verluste) beziehen sich weiterhin auf die **technische Speichergrenze**, nicht auf die planerische Anfangskapazität.
+
+---
+
 ## 11. Nächster Schritt
 
 Diese Analyse zeigt die technisch sinnvolle Speichergröße basierend auf physikalischen Daten.

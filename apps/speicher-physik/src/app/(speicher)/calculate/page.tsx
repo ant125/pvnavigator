@@ -11,6 +11,12 @@ import {
   type VerifiedResult,
 } from "./actions";
 import { buildSpeicherChartData } from "@/lib/speicherChartData";
+import {
+  deriveRecommendedPlanningSize,
+  deriveRecommendedTechnicalSize,
+  getPhysicalKpiLookupSize,
+  SIMULATED_BATTERY_MAX_KWH,
+} from "@/lib/speicherRecommendation";
 import SpeicherChart from "@/components/SpeicherChart";
 
 /**
@@ -500,30 +506,33 @@ export default function SpeicherCalculatePage() {
     average: speicherGrenz?.average ?? {},
   });
 
-  const recommendedSize = (() => {
-    for (let i = 1; i < chart.data.length; i++) {
-      if (chart.data[i].deltaEigenverbrauch < 50) {
-        return chart.data[i - 1].size;
-      }
-    }
-    return chart.data[chart.data.length - 1]?.size ?? 0;
-  })();
+  const recommendedTechnicalSize = deriveRecommendedTechnicalSize({
+    data: chart.data,
+  });
+  const recommendedPlanningSize = deriveRecommendedPlanningSize(
+    recommendedTechnicalSize
+  );
+  const physicalKpiLookupSize = getPhysicalKpiLookupSize(
+    recommendedTechnicalSize
+  );
+  const planningExceedsSimulatedRange =
+    recommendedPlanningSize > SIMULATED_BATTERY_MAX_KWH;
 
   const recommendedEV = chart.data.find(
-    (p) => p.size === recommendedSize
+    (p) => p.size === physicalKpiLookupSize
   )?.eigenverbrauch;
 
   const batteryGeladenAvgKwh =
-    speicherGrenz && recommendedSize > 0
-      ? speicherGrenz.averageBatteryChargedKwh[recommendedSize]
+    speicherGrenz && physicalKpiLookupSize > 0
+      ? speicherGrenz.averageBatteryChargedKwh[physicalKpiLookupSize]
       : undefined;
   const batteryAnVerbrauchAvgKwh =
-    speicherGrenz && recommendedSize > 0
-      ? speicherGrenz.averageBatteryToHouseholdKwh[recommendedSize]
+    speicherGrenz && physicalKpiLookupSize > 0
+      ? speicherGrenz.averageBatteryToHouseholdKwh[physicalKpiLookupSize]
       : undefined;
   const batteryTotalDischargedAvgKwh =
-    speicherGrenz && recommendedSize > 0
-      ? speicherGrenz.averageBatteryDischargedKwh[recommendedSize]
+    speicherGrenz && physicalKpiLookupSize > 0
+      ? speicherGrenz.averageBatteryDischargedKwh[physicalKpiLookupSize]
       : undefined;
   const differenzBatterieflussKwh =
     typeof batteryGeladenAvgKwh === "number" &&
@@ -534,12 +543,12 @@ export default function SpeicherCalculatePage() {
       : null;
 
   const avgChargeLossKwh =
-    speicherGrenz && recommendedSize > 0
-      ? speicherGrenz.averageChargeLossKwh[recommendedSize]
+    speicherGrenz && physicalKpiLookupSize > 0
+      ? speicherGrenz.averageChargeLossKwh[physicalKpiLookupSize]
       : undefined;
   const avgDischargeLossKwh =
-    speicherGrenz && recommendedSize > 0
-      ? speicherGrenz.averageDischargeLossKwh[recommendedSize]
+    speicherGrenz && physicalKpiLookupSize > 0
+      ? speicherGrenz.averageDischargeLossKwh[physicalKpiLookupSize]
       : undefined;
   const batterieverlusteModellGesamtKwh =
     typeof avgChargeLossKwh === "number" &&
@@ -550,24 +559,24 @@ export default function SpeicherCalculatePage() {
       : null;
 
   const hybridChargeBreakdownAvgKwh =
-    speicherGrenz && recommendedSize > 0
-      ? (speicherGrenz.averageChargeLossPvToBatteryKwh[recommendedSize] ??
+    speicherGrenz && physicalKpiLookupSize > 0
+      ? (speicherGrenz.averageChargeLossPvToBatteryKwh[physicalKpiLookupSize] ??
           0) +
-        (speicherGrenz.averageChargeLossChemicalKwh[recommendedSize] ?? 0)
+        (speicherGrenz.averageChargeLossChemicalKwh[physicalKpiLookupSize] ?? 0)
       : 0;
   const showBatterieverlusteHybridBreakdown =
     speicherGrenz != null &&
-    recommendedSize > 0 &&
+    physicalKpiLookupSize > 0 &&
     batterieverlusteModellGesamtKwh !== null &&
     hybridChargeBreakdownAvgKwh > 1e-3;
 
   const avgSelfDischargeLossDisplayKwh =
-    speicherGrenz && recommendedSize > 0
-      ? speicherGrenz.averageSelfDischargeLossKwh[recommendedSize]
+    speicherGrenz && physicalKpiLookupSize > 0
+      ? speicherGrenz.averageSelfDischargeLossKwh[physicalKpiLookupSize]
       : undefined;
   const avgAuxiliaryConsumptionDisplayKwh =
-    speicherGrenz && recommendedSize > 0
-      ? speicherGrenz.averageAuxiliaryConsumptionKwh[recommendedSize]
+    speicherGrenz && physicalKpiLookupSize > 0
+      ? speicherGrenz.averageAuxiliaryConsumptionKwh[physicalKpiLookupSize]
       : undefined;
 
   const totalConsumption =
@@ -629,12 +638,12 @@ export default function SpeicherCalculatePage() {
       : null;
 
   const ledgerGridImportAvgKwh =
-    speicherGrenz && recommendedSize > 0
-      ? speicherGrenz.averageGridToHouseholdKwh[recommendedSize]
+    speicherGrenz && physicalKpiLookupSize > 0
+      ? speicherGrenz.averageGridToHouseholdKwh[physicalKpiLookupSize]
       : undefined;
   const ledgerGridExportAvgKwh =
-    speicherGrenz && recommendedSize > 0
-      ? speicherGrenz.averageGridExportKwh[recommendedSize]
+    speicherGrenz && physicalKpiLookupSize > 0
+      ? speicherGrenz.averageGridExportKwh[physicalKpiLookupSize]
       : undefined;
 
   const netzbezugMitSpeicherKwhYear =
@@ -1169,15 +1178,68 @@ export default function SpeicherCalculatePage() {
                 <div
                   className={`flex items-center justify-between ${ANALYTICS_CARD_TEXT_HOVER}`}
                 >
-                  <div>
-                    <p className="text-sm text-slate-400">
-                      Empfohlene Speichergröße
-                    </p>
-                    <p className="text-3xl font-bold text-emerald-400 opacity-90">
-                      {recommendedSize} kWh
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    {recommendedTechnicalSize > 0 ? (
+                      <>
+                        <p className="text-sm text-slate-400">
+                          Empfohlene Speichergröße
+                        </p>
+                        <p className="text-3xl font-bold text-emerald-400 opacity-90">
+                          {recommendedPlanningSize} kWh
+                        </p>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                          Die technische Simulation zeigt, dass für Ihr
+                          Verbrauchsprofil heute bereits etwa{" "}
+                          <strong className="font-semibold text-slate-300">
+                            {recommendedTechnicalSize} kWh nutzbare
+                            Speicherkapazität
+                          </strong>{" "}
+                          ausreichen.
+                        </p>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                          Viele Hersteller moderner Batteriespeicher geben nach
+                          rund <strong className="font-semibold text-slate-300">10 Jahren</strong>{" "}
+                          oder einer bestimmten Anzahl von Ladezyklen eine
+                          verbleibende nutzbare Speicherkapazität von etwa{" "}
+                          <strong className="font-semibold text-slate-300">
+                            70–80&nbsp;%
+                          </strong>{" "}
+                          der ursprünglichen Kapazität an.
+                        </p>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                          Deshalb empfehlen wir für die Kaufentscheidung eine{" "}
+                          <strong className="font-semibold text-slate-300">
+                            Speichergröße von {recommendedPlanningSize} kWh
+                          </strong>
+                          . Dadurch bleibt voraussichtlich auch nach einer
+                          möglichen Kapazitätsabnahme genügend nutzbare
+                          Speicherkapazität erhalten.
+                        </p>
+                        <p className="mt-3 text-xs italic leading-relaxed text-slate-500">
+                          Die angenommene Kapazitätsabnahme ist eine
+                          Planungsannahme und keine Garantie für die tatsächliche
+                          Alterung eines bestimmten Batteriespeichers.
+                        </p>
+                        {planningExceedsSimulatedRange && (
+                          <p className="mt-3 text-sm leading-relaxed text-amber-400/90">
+                            Die empfohlene Anfangskapazität liegt außerhalb des
+                            simulierten Speicherbereichs von 5–30 kWh.
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm text-slate-400">
+                          Speicherempfehlung
+                        </p>
+                        <p className="mt-2 text-lg font-semibold leading-relaxed text-slate-200">
+                          Unter den aktuellen Annahmen ist kein Batteriespeicher
+                          technisch erforderlich.
+                        </p>
+                      </>
+                    )}
                   </div>
-                  <div className="w-14 h-14 rounded-xl bg-emerald-400/10 flex items-center justify-center">
+                  <div className="w-14 h-14 shrink-0 rounded-xl bg-emerald-400/10 flex items-center justify-center ml-4">
                     <svg
                       className="w-7 h-7 text-emerald-400 opacity-90"
                       fill="none"
@@ -1386,9 +1448,12 @@ export default function SpeicherCalculatePage() {
                       Technische Kennzahlen
                     </h3>
                     <p className="mb-3 text-xs leading-relaxed text-slate-500 sm:mb-4">
-                      Bezogen auf die PV-Erzeugung aus dem ersten Simulationsprofil und
-                      Ihre empfohlene Speichergröße (Mehrjahresmittel beim
-                      Eigenverbrauch mit Speicher).
+                      Alle technischen Kennzahlen beziehen sich auf die technisch
+                      ermittelte Speichergrenze von{" "}
+                      <strong className="font-semibold text-slate-400">
+                        {recommendedTechnicalSize} kWh
+                      </strong>{" "}
+                      und nicht auf die größere Kaufempfehlung.
                     </p>
 
                     <dl className={SPEICHER_REPORT_ROWS}>
@@ -1487,7 +1552,7 @@ export default function SpeicherCalculatePage() {
                               <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
                                 {Math.round(
                                   speicherGrenz.averageChargeLossPvToBatteryKwh[
-                                    recommendedSize
+                                    physicalKpiLookupSize
                                   ] ?? 0
                                 )}{" "}
                                 kWh/Jahr
@@ -1500,7 +1565,7 @@ export default function SpeicherCalculatePage() {
                               <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
                                 {Math.round(
                                   speicherGrenz.averageChargeLossChemicalKwh[
-                                    recommendedSize
+                                    physicalKpiLookupSize
                                   ] ?? 0
                                 )}{" "}
                                 kWh/Jahr
@@ -1513,7 +1578,7 @@ export default function SpeicherCalculatePage() {
                               <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
                                 {Math.round(
                                   speicherGrenz.averageDischargeLossChemicalKwh[
-                                    recommendedSize
+                                    physicalKpiLookupSize
                                   ] ?? 0
                                 )}{" "}
                                 kWh/Jahr
@@ -1526,7 +1591,7 @@ export default function SpeicherCalculatePage() {
                               <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
                                 {Math.round(
                                   speicherGrenz.averageDischargeLossBatteryToAcKwh[
-                                    recommendedSize
+                                    physicalKpiLookupSize
                                   ] ?? 0
                                 )}{" "}
                                 kWh/Jahr
@@ -1646,7 +1711,10 @@ export default function SpeicherCalculatePage() {
                   Eigenverbrauch vs Speichergröße
                 </h2>
 
-                <SpeicherChart data={chart.data} recommendedSize={recommendedSize} />
+                <SpeicherChart
+                  data={chart.data}
+                  recommendedTechnicalSize={recommendedTechnicalSize}
+                />
 
                 <div className="mt-6 mb-8 text-slate-400 text-sm">
                   Der zusätzliche Eigenverbrauch nimmt mit wachsender
@@ -1663,77 +1731,109 @@ export default function SpeicherCalculatePage() {
                   Unsere Einschätzung
                 </h3>
                 <>
-                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300">
-                    Wir empfehlen eine Speichergröße von{" "}
-                    <span className="text-emerald-400 opacity-90 font-semibold">
-                      {recommendedSize} kWh
-                    </span>
-                    .
-                  </p>
-                  {hasActiveBackupReserve && (
-                    <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                      Die Berechnung berücksichtigt eine Notstromreserve von{" "}
-                      {resolvedBackupReserveKwh} kWh.
-                    </p>
-                  )}
-                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                    Diese Größe passt zu Ihrem Verbrauchsprofil:
-                  </p>
-                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                    Ein Teil Ihres Stromverbrauchs fällt in die Abendstunden,
-                    während Ihre PV-Anlage hauptsächlich tagsüber Energie
-                    erzeugt.
-                  </p>
-                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                    Der Speicher gleicht genau diese zeitliche Lücke aus und
-                    erhöht so Ihren Eigenverbrauch deutlich.
-                  </p>
-                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                    Gleichzeitig zeigt die Simulation:
-                  </p>
-                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                    Ab etwa {recommendedSize} kWh nimmt der zusätzliche Nutzen
-                    deutlich ab.
-                  </p>
-                  <div className="mt-3 w-full min-w-0 border-l border-emerald-500/30 pl-3">
-                    <p className="text-emerald-300 font-medium">
-                      Plateau erreicht
-                    </p>
-                    <p className="text-sm leading-6 text-slate-300 mt-1">
-                      Ab diesem Punkt bringt zusätzlicher Speicher nur noch sehr
-                      geringen Mehrwert.
-                    </p>
-                    <p className="text-sm leading-6 text-slate-300 mt-3">
-                      Jede weitere kWh erhöht den Eigenverbrauch nur minimal
-                      (unter ~1 % pro kWh).
-                    </p>
-                  </div>
-                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-4">
-                    👉 Das bedeutet:
-                  </p>
-                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                    Ein größerer Speicher wäre technisch möglich, würde aber kaum
-                    zusätzlichen Nutzen bringen.
-                  </p>
-                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                    Diese Empfehlung basiert ausschließlich auf physikalischen
-                    Zusammenhängen zwischen Erzeugung, Verbrauch und
-                    Speicherverhalten.
-                  </p>
-                  <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                    Die Berechnung erfolgt auf Basis einer stündlichen Simulation
-                    (8760 Stunden pro Jahr).
-                  </p>
-                  {hasActiveBackupReserve && (
+                  {recommendedTechnicalSize > 0 ? (
                     <>
+                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300">
+                        Wir empfehlen für Ihr Gebäude eine{" "}
+                        <strong className="font-semibold text-slate-200">
+                          Speichergröße von {recommendedPlanningSize} kWh
+                        </strong>
+                        .
+                      </p>
+                      {planningExceedsSimulatedRange && (
+                        <p className="w-full min-w-0 text-sm leading-6 text-amber-400/90 mt-3">
+                          Die empfohlene Anfangskapazität liegt außerhalb des
+                          simulierten Speicherbereichs von 5–30 kWh.
+                        </p>
+                      )}
                       <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                        Durch die aktivierte Notstromreserve steht ein Teil des
-                        Speichers im Alltag nicht zur Verfügung.
+                        Die technische Simulation zeigt, dass bereits{" "}
+                        <strong className="font-semibold text-slate-200">
+                          etwa {recommendedTechnicalSize} kWh nutzbare Kapazität
+                        </strong>{" "}
+                        ausreichen, um den wirtschaftlich sinnvollen Bereich zu
+                        erreichen.
                       </p>
                       <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                        Dadurch sinken Eigenverbrauch und Autarkie leicht.
+                        Die Empfehlung von{" "}
+                        <strong className="font-semibold text-slate-200">
+                          {recommendedPlanningSize} kWh
+                        </strong>{" "}
+                        berücksichtigt zusätzlich eine mögliche
+                        Kapazitätsabnahme über die Nutzungsdauer des
+                        Batteriespeichers.
                       </p>
+                      {hasActiveBackupReserve && (
+                        <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                          Die Berechnung berücksichtigt eine Notstromreserve von{" "}
+                          {resolvedBackupReserveKwh} kWh.
+                        </p>
+                      )}
+                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                        Gleichzeitig zeigt die Simulation:
+                      </p>
+                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                        Ab etwa{" "}
+                        <strong className="font-semibold text-slate-200">
+                          {recommendedTechnicalSize} kWh
+                        </strong>{" "}
+                        nimmt der zusätzliche Nutzen deutlich ab.
+                      </p>
+                      <div className="mt-3 w-full min-w-0 border-l border-emerald-500/30 pl-3">
+                        <p className="text-emerald-300 font-medium">
+                          Plateau erreicht
+                        </p>
+                        <p className="text-sm leading-6 text-slate-300 mt-1">
+                          Ab diesem Punkt bringt zusätzlicher Speicher nur noch
+                          sehr geringen Mehrwert.
+                        </p>
+                        <p className="text-sm leading-6 text-slate-300 mt-3">
+                          Jede weitere kWh erhöht den Eigenverbrauch nur minimal
+                          (unter ~1&nbsp;% pro zusätzlicher kWh).
+                        </p>
+                      </div>
+                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-4">
+                        👉 Das bedeutet:
+                      </p>
+                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                        Ein größerer Speicher wäre technisch möglich, würde unter
+                        den heutigen Bedingungen jedoch nur einen geringen
+                        zusätzlichen Nutzen bringen.
+                      </p>
+                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                        Die technische Speichergrenze wird ausschließlich anhand
+                        der physikalischen Simulation berechnet.
+                      </p>
+                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                        Die empfohlene Speichergröße berücksichtigt zusätzlich
+                        eine langfristige Planungsannahme zur möglichen
+                        Kapazitätsabnahme moderner Batteriespeicher.
+                      </p>
+                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                        Die Berechnung basiert auf einer stündlichen Simulation
+                        (8760 Stunden pro Jahr). Die Alterungsannahme beeinflusst
+                        die Simulation nicht, sondern ausschließlich die
+                        Kaufempfehlung.
+                      </p>
+                      {hasActiveBackupReserve && (
+                        <>
+                          <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                            Durch die aktivierte Notstromreserve steht ein Teil
+                            des Speichers im Alltag nicht zur Verfügung.
+                          </p>
+                          <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                            Dadurch sinken Eigenverbrauch und Autarkie leicht.
+                          </p>
+                        </>
+                      )}
                     </>
+                  ) : (
+                    <p className="w-full min-w-0 text-sm leading-6 text-slate-300">
+                      Unter den aktuellen Annahmen ist kein Batteriespeicher
+                      technisch erforderlich. Die Simulation zeigt, dass ein
+                      zusätzlicher Speicher den Eigenverbrauch unter diesen
+                      Bedingungen kaum erhöht.
+                    </p>
                   )}
                 </>
               </div>

@@ -13,7 +13,7 @@ import {
   type LabelProps,
 } from "recharts";
 
-function RecommendedPlateauReferenceLabel(props: LabelProps) {
+function TechnicalPlateauReferenceLabel(props: LabelProps) {
   const { offset = 5, viewBox } = props;
   if (
     !viewBox ||
@@ -39,8 +39,7 @@ function RecommendedPlateauReferenceLabel(props: LabelProps) {
       fill="#34d399"
       fontSize={12}
     >
-      <tspan>Empfohlen </tspan>
-      <tspan className="fill-emerald-400/70">(Plateau)</tspan>
+      Technische Speichergrenze
     </text>
   );
 }
@@ -51,10 +50,13 @@ type Props = {
     eigenverbrauch: number;
     deltaEigenverbrauch: number;
   }[];
-  recommendedSize: number;
+  recommendedTechnicalSize: number;
 };
 
-export default function SpeicherChart({ data, recommendedSize }: Props) {
+export default function SpeicherChart({
+  data,
+  recommendedTechnicalSize,
+}: Props) {
   const minYRaw = Math.min(...data.map((d) => d.eigenverbrauch));
   const maxY = Math.max(...data.map((d) => d.eigenverbrauch));
 
@@ -91,7 +93,7 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
             />
 
             <ReferenceLine
-              x={recommendedSize}
+              x={recommendedTechnicalSize}
               stroke="#10b981"
               strokeWidth={2}
               strokeDasharray="4 4"
@@ -101,7 +103,7 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
                   fill="#34d399"
                   fontSize={12}
                   offset={5}
-                  content={RecommendedPlateauReferenceLabel}
+                  content={TechnicalPlateauReferenceLabel}
                 />
               }
             />
@@ -140,7 +142,8 @@ export default function SpeicherChart({ data, recommendedSize }: Props) {
               strokeWidth={3}
               dot={(props) => {
                 const { cx, cy, payload } = props;
-                const isRecommended = payload.size === recommendedSize;
+                const isRecommended =
+                  payload.size === recommendedTechnicalSize;
 
                 return (
                   <circle
