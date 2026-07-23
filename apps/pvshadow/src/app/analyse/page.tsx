@@ -1,5 +1,6 @@
 "use client";
 
+import { buildAddressString } from "@geocoding/core";
 import { useEffect, useState, useRef, useCallback } from "react";
 import DraggableMap from "../components/DraggableMapComponent";
 import DebugLocationPanel from "../components/DebugLocationPanel";
@@ -150,13 +151,12 @@ export default function AnalysePage() {
      Полный текстовый адрес
      Full address string
   ------------------------- */
-  const fullAddress =
-    address.strasse.trim() &&
-    address.hausnummer.trim() &&
-    address.plz.trim() &&
-    address.ort.trim()
-      ? `${address.strasse} ${address.hausnummer}, ${address.plz} ${address.ort}, Deutschland`
-      : "";
+  const fullAddress = buildAddressString({
+    street: address.strasse,
+    houseNumber: address.hausnummer,
+    postalCode: address.plz,
+    city: address.ort,
+  });
 
   /* -------------------------
      Геокодинг — превращаем текст в координаты

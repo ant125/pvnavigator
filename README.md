@@ -18,7 +18,8 @@ pvnavigator/
 ├── packages/
 │   ├── pv-core/           # Kernberechnungen (Eigenverbrauch, etc.)
 │   ├── pvgis-adapter/     # PVGIS API-Adapter
-│   └── bdew-profile/      # BDEW H0 Lastprofil
+│   ├── bdew-profile/      # BDEW H0 Lastprofil
+│   └── geocoding/         # Adressaufbau und Google Geocoding
 ├── docs/
 │   └── ARCHITECTURE.md    # Single Source of Truth (подробно)
 ```
@@ -101,3 +102,4 @@ import { calculateMockResult } from "../utils/mockCalculation";
 | `@pvgis-adapter/core` | `loadPVGISHourlyProduction`, `loadPVGISHourlyProfile` | Server-only (fetch) |
 | `@bdew-profile/loader` | `loadBDEWProfileHourlies`, `scaleToAnnualKWh`, `createUserLoadProfile` | Server-only (fs) |
 | `@bdew-profile/loader/chart` | `BDEW_H0_PROFILES`, `formatWeight` | Client (UI-Chart) |
+| `@geocoding/core` | `buildAddressString`, `geocodeAddress` | Server (`geocodeAddress`), Client/UI (`buildAddressString`) |
