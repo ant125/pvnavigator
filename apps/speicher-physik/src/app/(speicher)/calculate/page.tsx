@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type RefObject } from "react";
 import Link from "next/link";
 import { ANALYTICS_CARD_TEXT_HOVER } from "../analyticsCardHoverClasses";
 import { SpeicherInput, type PvSurfaceInput } from "../types/speicher";
-import { validateInput } from "../utils/validateInput";
+import { validateInput, type SpeicherFieldErrors, type SpeicherFieldErrorKey } from "../utils/validateInput";
 import {
   calculateHouseholdConsumptionAction,
   type SpeicherGrenzPayload,
@@ -28,6 +28,25 @@ import SpeicherChart from "@/components/SpeicherChart";
  */
 
 type Step = "input" | "calculating" | "results";
+
+const POSTAL_CODE_MISMATCH_GENERAL_MESSAGE =
+  "Die eingegebene PLZ stimmt nicht mit der gefundenen Adresse überein. Bitte prüfen Sie die PLZ.";
+
+const FOCUS_FIELD_ORDER = [
+  "postalCode",
+  "city",
+  "street",
+  "houseNumber",
+  "annualConsumptionKwh",
+] as const;
+
+function fieldInputClassName(hasError: boolean): string {
+  return `w-full rounded-lg bg-slate-900 border px-4 py-3 text-slate-100 placeholder-slate-500 outline-none transition-colors ${
+    hasError
+      ? "border-rose-500 focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+      : "border-slate-700 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+  }`;
+}
 
 const LOADING_STEPS = [
   "Standort wird analysiert",
@@ -334,17 +353,48 @@ export default function SpeicherCalculatePage() {
   const [step, setStep] = useState<Step>("input");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<SpeicherFieldErrors>({});
   const [verifiedResult, setVerifiedResult] = useState<VerifiedResult | null>(
     null
   );
   const [speicherGrenz, setSpeicherGrenz] =
     useState<SpeicherGrenzPayload | null>(null);
   const [calculationLink, setCalculationLink] = useState<string>("/result");
+  const [displayAddress, setDisplayAddress] = useState<string | null>(null);
+  const errorBoxRef = useRef<HTMLDivElement | null>(null);
+  const postalCodeInputRef = useRef<HTMLInputElement | null>(null);
+  const cityInputRef = useRef<HTMLInputElement | null>(null);
+  const streetInputRef = useRef<HTMLInputElement | null>(null);
+  const houseNumberInputRef = useRef<HTMLInputElement | null>(null);
+  const annualConsumptionInputRef = useRef<HTMLInputElement | null>(null);
+
+  const fieldInputRefs: Record<
+    (typeof FOCUS_FIELD_ORDER)[number],
+    RefObject<HTMLInputElement | null>
+  > = {
+    postalCode: postalCodeInputRef,
+    city: cityInputRef,
+    street: streetInputRef,
+    houseNumber: houseNumberInputRef,
+    annualConsumptionKwh: annualConsumptionInputRef,
+  };
+
+  const clearFieldError = (field: SpeicherFieldErrorKey) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   // Form state
   const [formData, setFormData] = useState<Partial<SpeicherInput>>({
     pvSurfaces: [{ ...DEFAULT_SURFACE }],
-    address: "",
+    street: "",
+    houseNumber: "",
+    postalCode: "",
+    city: "",
     annualConsumptionKwh: undefined,
     heatPumpEnabled: false,
     heatPumpConsumptionKwh: undefined,
@@ -429,6 +479,30 @@ export default function SpeicherCalculatePage() {
     return () => clearInterval(timer);
   }, [step]);
 
+  useEffect(() => {
+    if (errors.length === 0 || step !== "input") return;
+
+    const scrollFrame = requestAnimationFrame(() => {
+      errorBoxRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      requestAnimationFrame(() => {
+        const firstInvalidField = FOCUS_FIELD_ORDER.find(
+          (field) => fieldErrors[field]
+        );
+        if (firstInvalidField) {
+          fieldInputRefs[firstInvalidField].current?.focus({
+            preventScroll: true,
+          });
+        }
+      });
+    });
+
+    return () => cancelAnimationFrame(scrollFrame);
+  }, [errors, fieldErrors, step]);
+
   /**
    * Handle form submission
    */
@@ -439,10 +513,12 @@ export default function SpeicherCalculatePage() {
     const validation = validateInput(formData);
     if (!validation.isValid) {
       setErrors(validation.errors);
+      setFieldErrors(validation.fieldErrors);
       return;
     }
 
     setErrors([]);
+    setFieldErrors({});
     setStep("calculating");
 
     try {
@@ -456,8 +532,10 @@ export default function SpeicherCalculatePage() {
       const response = await calculateHouseholdConsumptionAction({
         annualConsumptionKWh: formData.annualConsumptionKwh as number,
         pvSystemKwP: totalKwP,
-        latitude: 48.137154,
-        longitude: 11.576124,
+        street: formData.street as string,
+        houseNumber: formData.houseNumber as string,
+        postalCode: formData.postalCode as string,
+        city: formData.city as string,
         tiltDeg: pvSurfaces[0].tiltDeg,
         azimuthDeg: pvSurfaces[0].azimuthDeg,
         pvSurfaces,
@@ -468,6 +546,7 @@ export default function SpeicherCalculatePage() {
 
       setVerifiedResult(response.verifiedResult);
       setSpeicherGrenz(response.speicherGrenz);
+      setDisplayAddress(response.displayAddress);
       setCalculationLink("/result");
       setStep("results");
     } catch (err) {
@@ -476,6 +555,11 @@ export default function SpeicherCalculatePage() {
           ? err.message
           : "Die Berechnung ist fehlgeschlagen. Bitte versuchen Sie es erneut.";
       setErrors([message]);
+      if (message === POSTAL_CODE_MISMATCH_GENERAL_MESSAGE) {
+        setFieldErrors({ postalCode: "Bitte prüfen Sie die PLZ." });
+      } else {
+        setFieldErrors({});
+      }
       setStep("input");
     }
   };
@@ -487,8 +571,10 @@ export default function SpeicherCalculatePage() {
     setStep("input");
     setVerifiedResult(null);
     setSpeicherGrenz(null);
+    setDisplayAddress(null);
     setCalculationLink("/result");
     setErrors([]);
+    setFieldErrors({});
   };
 
   const totalKwPConfigured = sumSurfaceKwP(surfaces);
@@ -576,7 +662,12 @@ export default function SpeicherCalculatePage() {
 
             {/* Error display */}
             {errors.length > 0 && (
-              <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30">
+              <div
+                ref={errorBoxRef}
+                role="alert"
+                aria-live="polite"
+                className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30"
+              >
                 <p className="text-sm font-semibold text-rose-300 mb-2">
                   Bitte korrigieren Sie folgende Fehler:
                 </p>
@@ -789,17 +880,118 @@ export default function SpeicherCalculatePage() {
                 <label className="block text-sm font-medium text-slate-200">
                   Standort / Adresse *
                 </label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
-                  placeholder="z.B. München oder 80331"
-                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-200">
+                      PLZ *
+                    </label>
+                    <input
+                      ref={postalCodeInputRef}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      value={formData.postalCode ?? ""}
+                      onChange={(e) => {
+                        clearFieldError("postalCode");
+                        setFormData({ ...formData, postalCode: e.target.value });
+                      }}
+                      aria-invalid={fieldErrors.postalCode ? true : undefined}
+                      aria-describedby={
+                        fieldErrors.postalCode ? "postalCode-error" : undefined
+                      }
+                      className={fieldInputClassName(!!fieldErrors.postalCode)}
+                      placeholder="z.B. 80331"
+                    />
+                    {fieldErrors.postalCode && (
+                      <p id="postalCode-error" className="text-xs text-rose-400">
+                        {fieldErrors.postalCode}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-200">
+                      Ort *
+                    </label>
+                    <input
+                      ref={cityInputRef}
+                      type="text"
+                      autoComplete="address-level2"
+                      value={formData.city ?? ""}
+                      onChange={(e) => {
+                        clearFieldError("city");
+                        setFormData({ ...formData, city: e.target.value });
+                      }}
+                      aria-invalid={fieldErrors.city ? true : undefined}
+                      aria-describedby={
+                        fieldErrors.city ? "city-error" : undefined
+                      }
+                      className={fieldInputClassName(!!fieldErrors.city)}
+                      placeholder="z.B. München"
+                    />
+                    {fieldErrors.city && (
+                      <p id="city-error" className="text-xs text-rose-400">
+                        {fieldErrors.city}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-200">
+                      Straße *
+                    </label>
+                    <input
+                      ref={streetInputRef}
+                      type="text"
+                      autoComplete="street-address"
+                      value={formData.street ?? ""}
+                      onChange={(e) => {
+                        clearFieldError("street");
+                        setFormData({ ...formData, street: e.target.value });
+                      }}
+                      aria-invalid={fieldErrors.street ? true : undefined}
+                      aria-describedby={
+                        fieldErrors.street ? "street-error" : undefined
+                      }
+                      className={fieldInputClassName(!!fieldErrors.street)}
+                      placeholder="z.B. Marienplatz"
+                    />
+                    {fieldErrors.street && (
+                      <p id="street-error" className="text-xs text-rose-400">
+                        {fieldErrors.street}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-200">
+                      Hausnummer *
+                    </label>
+                    <input
+                      ref={houseNumberInputRef}
+                      type="text"
+                      autoComplete="off"
+                      value={formData.houseNumber ?? ""}
+                      onChange={(e) => {
+                        clearFieldError("houseNumber");
+                        setFormData({
+                          ...formData,
+                          houseNumber: e.target.value,
+                        });
+                      }}
+                      aria-invalid={fieldErrors.houseNumber ? true : undefined}
+                      aria-describedby={
+                        fieldErrors.houseNumber ? "houseNumber-error" : undefined
+                      }
+                      className={fieldInputClassName(!!fieldErrors.houseNumber)}
+                      placeholder="z.B. 1"
+                    />
+                    {fieldErrors.houseNumber && (
+                      <p id="houseNumber-error" className="text-xs text-rose-400">
+                        {fieldErrors.houseNumber}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 <p className="text-xs text-slate-500">
-                  Für die Berechnung der lokalen Sonneneinstrahlung.
+                  Bitte geben Sie die vollständige Adresse des Gebäudes ein.
                 </p>
               </div>
 
@@ -809,20 +1001,38 @@ export default function SpeicherCalculatePage() {
                   Hausverbrauch (ohne Wärmepumpe) *
                 </label>
                 <input
+                  ref={annualConsumptionInputRef}
                   type="number"
                   min="500"
                   max="50000"
                   value={formData.annualConsumptionKwh || ""}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    clearFieldError("annualConsumptionKwh");
                     setFormData({
                       ...formData,
                       annualConsumptionKwh:
                         parseInt(e.target.value) || undefined,
-                    })
+                    });
+                  }}
+                  aria-invalid={
+                    fieldErrors.annualConsumptionKwh ? true : undefined
                   }
-                  className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                  aria-describedby={
+                    fieldErrors.annualConsumptionKwh
+                      ? "annualConsumptionKwh-error"
+                      : undefined
+                  }
+                  className={fieldInputClassName(!!fieldErrors.annualConsumptionKwh)}
                   placeholder="z.B. 4500"
                 />
+                {fieldErrors.annualConsumptionKwh && (
+                  <p
+                    id="annualConsumptionKwh-error"
+                    className="text-xs text-rose-400"
+                  >
+                    {fieldErrors.annualConsumptionKwh}
+                  </p>
+                )}
                 <p className="text-xs text-slate-500">
                   Bitte geben Sie hier nur den Haushaltsstromverbrauch ein – ohne
                   Wärmepumpe.
@@ -1217,7 +1427,7 @@ export default function SpeicherCalculatePage() {
                           Adresse:
                         </div>
                         <div className="min-w-0 break-words whitespace-normal text-left font-medium text-slate-100">
-                          {formData.address ?? "—"}
+                          {displayAddress ?? PLACEHOLDER}
                         </div>
                       </div>
 

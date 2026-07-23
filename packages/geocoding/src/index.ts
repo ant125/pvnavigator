@@ -1,2 +1,6 @@
 export { buildAddressString } from "./buildAddressString";
-export { geocodeAddress } from "./geocodeAddress";
+export {
+  geocodeAddress,
+  type GeocodeAddressOptions,
+  type GeocodeAddressResult,
+} from "./geocodeAddress";

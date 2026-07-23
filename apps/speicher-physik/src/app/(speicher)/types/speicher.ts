@@ -27,8 +27,17 @@ export interface SpeicherInput {
   /** PV system size in kWp */
   pvSizeKwp: number;
   
-  /** Location address (for irradiance estimation) */
-  address: string;
+  /** Building street name (for geocoding / irradiance estimation) */
+  street: string;
+
+  /** Building house number */
+  houseNumber: string;
+
+  /** German postal code (PLZ) */
+  postalCode: string;
+
+  /** City / municipality */
+  city: string;
   
   /** Roof azimuth in whole degrees clockwise from North, 0–359 (0° = N, 90° = E, 180° = S, 270° = W). */
   azimuth: number;

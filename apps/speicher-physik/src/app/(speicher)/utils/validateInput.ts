@@ -9,6 +9,22 @@ import type { PvSurfaceInput, SpeicherInput } from "../types/speicher";
 const PV_TOTAL_KWP_MAX = 100;
 const PV_PER_SURFACE_KWP_MAX = 100;
 
+const POSTAL_CODE_PATTERN = /^\d{5}$/;
+
+export const SPEICHER_FIELD_INLINE_MESSAGES = {
+  postalCode: "Bitte geben Sie eine gültige fünfstellige PLZ ein.",
+  city: "Bitte geben Sie einen Ort ein.",
+  street: "Bitte geben Sie eine Straße ein.",
+  houseNumber: "Bitte geben Sie eine Hausnummer ein.",
+  annualConsumptionKwh: "Bitte geben Sie einen gültigen Hausverbrauch ein.",
+} as const;
+
+export type SpeicherFieldErrorKey = keyof typeof SPEICHER_FIELD_INLINE_MESSAGES;
+
+export type SpeicherFieldErrors = Partial<
+  Record<SpeicherFieldErrorKey, string>
+>;
+
 function validatePvSurfacesList(
   surfaces: PvSurfaceInput[],
   errors: string[]
@@ -50,11 +66,48 @@ function validatePvSurfacesList(
   }
 }
 
+export function validateAddressFields(input: {
+  street?: string;
+  houseNumber?: string;
+  postalCode?: string;
+  city?: string;
+}): { errors: string[]; fieldErrors: SpeicherFieldErrors } {
+  const errors: string[] = [];
+  const fieldErrors: SpeicherFieldErrors = {};
+
+  if (!input.postalCode?.trim()) {
+    errors.push("Bitte geben Sie die PLZ ein.");
+    fieldErrors.postalCode = SPEICHER_FIELD_INLINE_MESSAGES.postalCode;
+  } else if (!POSTAL_CODE_PATTERN.test(input.postalCode.trim())) {
+    errors.push("Die PLZ muss aus genau fünf Ziffern bestehen.");
+    fieldErrors.postalCode = SPEICHER_FIELD_INLINE_MESSAGES.postalCode;
+  }
+
+  if (!input.city?.trim()) {
+    errors.push("Bitte geben Sie den Ort ein.");
+    fieldErrors.city = SPEICHER_FIELD_INLINE_MESSAGES.city;
+  }
+
+  if (!input.street?.trim()) {
+    errors.push("Bitte geben Sie die Straße ein.");
+    fieldErrors.street = SPEICHER_FIELD_INLINE_MESSAGES.street;
+  }
+
+  if (!input.houseNumber?.trim()) {
+    errors.push("Bitte geben Sie die Hausnummer ein.");
+    fieldErrors.houseNumber = SPEICHER_FIELD_INLINE_MESSAGES.houseNumber;
+  }
+
+  return { errors, fieldErrors };
+}
+
 export function validateInput(input: Partial<SpeicherInput>): {
   isValid: boolean;
   errors: string[];
+  fieldErrors: SpeicherFieldErrors;
 } {
   const errors: string[] = [];
+  const fieldErrors: SpeicherFieldErrors = {};
 
   const surfaces = input.pvSurfaces;
   if (surfaces && surfaces.length > 0) {
@@ -86,12 +139,19 @@ export function validateInput(input: Partial<SpeicherInput>): {
     }
   }
 
-  if (!input.address || input.address.trim().length < 3) {
-    errors.push("Bitte geben Sie eine gültige Adresse ein.");
-  }
+  const addressValidation = validateAddressFields({
+    street: input.street,
+    houseNumber: input.houseNumber,
+    postalCode: input.postalCode,
+    city: input.city,
+  });
+  errors.push(...addressValidation.errors);
+  Object.assign(fieldErrors, addressValidation.fieldErrors);
 
   if (!input.annualConsumptionKwh || input.annualConsumptionKwh <= 0) {
     errors.push("Bitte geben Sie Ihren Jahresverbrauch ein.");
+    fieldErrors.annualConsumptionKwh =
+      SPEICHER_FIELD_INLINE_MESSAGES.annualConsumptionKwh;
   }
 
   if (input.heatPumpEnabled) {
@@ -117,5 +177,6 @@ export function validateInput(input: Partial<SpeicherInput>): {
   return {
     isValid: errors.length === 0,
     errors,
+    fieldErrors,
   };
 }
