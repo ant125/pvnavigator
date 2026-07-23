@@ -10,13 +10,7 @@ import {
   type SpeicherGrenzPayload,
   type VerifiedResult,
 } from "./actions";
-import { buildSpeicherChartData } from "@/lib/speicherChartData";
-import {
-  deriveRecommendedPlanningSize,
-  deriveRecommendedTechnicalSize,
-  getPhysicalKpiLookupSize,
-  SIMULATED_BATTERY_MAX_KWH,
-} from "@/lib/speicherRecommendation";
+import { deriveSpeicherBusinessMetrics } from "@/lib/deriveSpeicherBusinessMetrics";
 import SpeicherChart from "@/components/SpeicherChart";
 
 /**
@@ -497,65 +491,49 @@ export default function SpeicherCalculatePage() {
     setErrors([]);
   };
 
-  const chart = buildSpeicherChartData({
-    selfConsumptionWithoutStorage:
-      speicherGrenz && verifiedResult
-        ? verifiedResult.energy.year.selfConsumptionWithoutStorage
-        : 0,
-    batterySizes: speicherGrenz?.batterySizes ?? [],
-    average: speicherGrenz?.average ?? {},
+  const totalKwPConfigured = sumSurfaceKwP(surfaces);
+
+  const metrics = deriveSpeicherBusinessMetrics({
+    verifiedResult,
+    speicherGrenz,
+    annualConsumptionKwh: formData.annualConsumptionKwh,
+    heatPumpEnabled: formData.heatPumpEnabled,
+    heatPumpConsumptionKwh: formData.heatPumpConsumptionKwh,
+    backupReserveKwh: formData.backupReserveKwh,
+    totalKwPConfigured,
   });
 
-  const recommendedTechnicalSize = deriveRecommendedTechnicalSize({
-    data: chart.data,
-  });
-  const recommendedPlanningSize = deriveRecommendedPlanningSize(
-    recommendedTechnicalSize
-  );
-  const physicalKpiLookupSize = getPhysicalKpiLookupSize(
-    recommendedTechnicalSize
-  );
-  const planningExceedsSimulatedRange =
-    recommendedPlanningSize > SIMULATED_BATTERY_MAX_KWH;
+  const {
+    chart,
+    recommendedTechnicalSize,
+    recommendedPlanningSize,
+    physicalKpiLookupSize,
+    planningExceedsSimulatedRange,
+    recommendedEV,
+    batteryGeladenAvgKwh,
+    batteryAnVerbrauchAvgKwh,
+    batteryTotalDischargedAvgKwh,
+    batterieverlusteModellGesamtKwh,
+    avgSelfDischargeLossDisplayKwh,
+    avgAuxiliaryConsumptionDisplayKwh,
+    eigenverbrauchMitSpeicher,
+    autarkieOhnePct,
+    autarkieMitPct,
+    deltaEigenverbrauch,
+    resolvedBackupReserveKwh,
+    pvYieldKwhAnnual,
+    specificYieldKwhPerKwp,
+    netzbezugMitSpeicherKwhYear,
+    einspeisungRechnerischKwhYear,
+    eigenverbrauchsquoteMitSpeicherPct,
+  } = metrics;
 
-  const recommendedEV = chart.data.find(
-    (p) => p.size === physicalKpiLookupSize
-  )?.eigenverbrauch;
-
-  const batteryGeladenAvgKwh =
-    speicherGrenz && physicalKpiLookupSize > 0
-      ? speicherGrenz.averageBatteryChargedKwh[physicalKpiLookupSize]
-      : undefined;
-  const batteryAnVerbrauchAvgKwh =
-    speicherGrenz && physicalKpiLookupSize > 0
-      ? speicherGrenz.averageBatteryToHouseholdKwh[physicalKpiLookupSize]
-      : undefined;
-  const batteryTotalDischargedAvgKwh =
-    speicherGrenz && physicalKpiLookupSize > 0
-      ? speicherGrenz.averageBatteryDischargedKwh[physicalKpiLookupSize]
-      : undefined;
   const differenzBatterieflussKwh =
     typeof batteryGeladenAvgKwh === "number" &&
     Number.isFinite(batteryGeladenAvgKwh) &&
     typeof batteryTotalDischargedAvgKwh === "number" &&
     Number.isFinite(batteryTotalDischargedAvgKwh)
       ? Math.round(batteryGeladenAvgKwh - batteryTotalDischargedAvgKwh)
-      : null;
-
-  const avgChargeLossKwh =
-    speicherGrenz && physicalKpiLookupSize > 0
-      ? speicherGrenz.averageChargeLossKwh[physicalKpiLookupSize]
-      : undefined;
-  const avgDischargeLossKwh =
-    speicherGrenz && physicalKpiLookupSize > 0
-      ? speicherGrenz.averageDischargeLossKwh[physicalKpiLookupSize]
-      : undefined;
-  const batterieverlusteModellGesamtKwh =
-    typeof avgChargeLossKwh === "number" &&
-    Number.isFinite(avgChargeLossKwh) &&
-    typeof avgDischargeLossKwh === "number" &&
-    Number.isFinite(avgDischargeLossKwh)
-      ? Math.round(avgChargeLossKwh + avgDischargeLossKwh)
       : null;
 
   const hybridChargeBreakdownAvgKwh =
@@ -570,110 +548,15 @@ export default function SpeicherCalculatePage() {
     batterieverlusteModellGesamtKwh !== null &&
     hybridChargeBreakdownAvgKwh > 1e-3;
 
-  const avgSelfDischargeLossDisplayKwh =
-    speicherGrenz && physicalKpiLookupSize > 0
-      ? speicherGrenz.averageSelfDischargeLossKwh[physicalKpiLookupSize]
-      : undefined;
-  const avgAuxiliaryConsumptionDisplayKwh =
-    speicherGrenz && physicalKpiLookupSize > 0
-      ? speicherGrenz.averageAuxiliaryConsumptionKwh[physicalKpiLookupSize]
-      : undefined;
-
-  const totalConsumption =
-    (formData.annualConsumptionKwh ?? 0) +
-    (formData.heatPumpEnabled === true
-      ? formData.heatPumpConsumptionKwh ?? 0
-      : 0);
-
-  const eigenverbrauchOhneSpeicher =
-    verifiedResult?.energy.year.selfConsumptionWithoutStorage;
-  const eigenverbrauchMitSpeicher = recommendedEV;
-
-  const autarkieOhnePct =
-    totalConsumption > 0 &&
-    typeof eigenverbrauchOhneSpeicher === "number" &&
-    Number.isFinite(eigenverbrauchOhneSpeicher)
-      ? Math.round((eigenverbrauchOhneSpeicher / totalConsumption) * 100)
-      : null;
-
-  const autarkieMitPct =
-    totalConsumption > 0 &&
-    typeof eigenverbrauchMitSpeicher === "number" &&
-    Number.isFinite(eigenverbrauchMitSpeicher)
-      ? Math.round((eigenverbrauchMitSpeicher / totalConsumption) * 100)
-      : null;
-
-  const deltaEigenverbrauch =
-    typeof eigenverbrauchMitSpeicher === "number" &&
-    Number.isFinite(eigenverbrauchMitSpeicher) &&
-    typeof eigenverbrauchOhneSpeicher === "number" &&
-    Number.isFinite(eigenverbrauchOhneSpeicher)
-      ? Math.round(
-          eigenverbrauchMitSpeicher - eigenverbrauchOhneSpeicher
-        )
-      : null;
-
   const deltaAutarkie =
     autarkieMitPct !== null && autarkieOhnePct !== null
       ? Math.round(autarkieMitPct - autarkieOhnePct)
       : null;
 
-  const resolvedBackupReserveKwh =
-    verifiedResult?.backupReserveKwh ?? formData.backupReserveKwh ?? 0;
   const hasActiveBackupReserve =
     typeof resolvedBackupReserveKwh === "number" &&
     Number.isFinite(resolvedBackupReserveKwh) &&
     resolvedBackupReserveKwh > 0;
-
-  const pvYieldKwhAnnual = verifiedResult?.energy.year.pvYieldKwhAnnual;
-
-  const totalKwPConfigured = sumSurfaceKwP(surfaces);
-
-  const specificYieldKwhPerKwp =
-    typeof pvYieldKwhAnnual === "number" &&
-    Number.isFinite(pvYieldKwhAnnual) &&
-    totalKwPConfigured > 0 &&
-    Number.isFinite(totalKwPConfigured)
-      ? pvYieldKwhAnnual / totalKwPConfigured
-      : null;
-
-  const ledgerGridImportAvgKwh =
-    speicherGrenz && physicalKpiLookupSize > 0
-      ? speicherGrenz.averageGridToHouseholdKwh[physicalKpiLookupSize]
-      : undefined;
-  const ledgerGridExportAvgKwh =
-    speicherGrenz && physicalKpiLookupSize > 0
-      ? speicherGrenz.averageGridExportKwh[physicalKpiLookupSize]
-      : undefined;
-
-  const netzbezugMitSpeicherKwhYear =
-    typeof ledgerGridImportAvgKwh === "number" &&
-    Number.isFinite(ledgerGridImportAvgKwh)
-      ? ledgerGridImportAvgKwh
-      : typeof eigenverbrauchMitSpeicher === "number" &&
-          Number.isFinite(eigenverbrauchMitSpeicher) &&
-          Number.isFinite(totalConsumption)
-        ? totalConsumption - eigenverbrauchMitSpeicher
-        : null;
-
-  const einspeisungRechnerischKwhYear =
-    typeof ledgerGridExportAvgKwh === "number" &&
-    Number.isFinite(ledgerGridExportAvgKwh)
-      ? ledgerGridExportAvgKwh
-      : typeof pvYieldKwhAnnual === "number" &&
-          Number.isFinite(pvYieldKwhAnnual) &&
-          typeof eigenverbrauchMitSpeicher === "number" &&
-          Number.isFinite(eigenverbrauchMitSpeicher)
-        ? pvYieldKwhAnnual - eigenverbrauchMitSpeicher
-        : null;
-
-  const eigenverbrauchsquoteMitSpeicherPct =
-    typeof pvYieldKwhAnnual === "number" &&
-    pvYieldKwhAnnual > 0 &&
-    typeof eigenverbrauchMitSpeicher === "number" &&
-    Number.isFinite(eigenverbrauchMitSpeicher)
-      ? Math.round((eigenverbrauchMitSpeicher / pvYieldKwhAnnual) * 100)
-      : null;
 
   return (
     <div className="py-12 px-4">
