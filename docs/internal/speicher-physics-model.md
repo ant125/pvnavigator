@@ -268,9 +268,11 @@ Die Batterie entlädt nur bis zu einem definierten Mindestladestand
 
 Beispiel:
 
-Bei 2 kWh Notstromreserve bleibt diese Energiemenge jederzeit im Speicher erhalten
-
-und steht im Alltag nicht zur Verfügung.
+Bei 2 kWh Notstromreserve startet die Jahres-Simulation mit 2 kWh gespeicherter
+Energie. Diese Reserve ist vor aktiver Haushalts- und Auxiliary-Entladung geschützt.
+Selbstentladung kann den SoC leicht unter die konfigurierte Reserve absenken;
+eine automatische Nachfüllung (Netzladung oder unverbuchte SoC-Klemme) findet nicht statt.
+PV-Ladung kann den SoC später wieder über die Reserve anheben.
 
 👉 Auswirkungen:
 
@@ -292,7 +294,8 @@ Keine Umschaltlogik bei Netzausfall
 
 Keine Priorisierung einzelner Verbraucher
 
-👉 Die Notstromreserve wird als statischer Mindestladestand modelliert.
+👉 Die Notstromreserve wird als geschützte Startenergie und Entladeboden modelliert
+(keine automatische Nachfüllung nach Selbstentladung).
 
 ---
 
@@ -713,17 +716,30 @@ Auswahl der technischen Speichergrenze:
 
 ### Anfangs-SoC
 
-Aktuelles Implementierungsverhalten:
+Implementiertes Verhalten (Modellversion 1.0.0):
 
 - Ohne Notstromreserve startet jeder Jahreslauf mit **0 kWh** (`soc = 0`).
 - Der Anfangs-SoC ist **nicht** 50 %, nicht voll und nicht vom vorherigen Wetterjahr geerbt.
-- Mit der aktuellen Notstromreserve-Implementierung wird der **aufgezeichnete Start** weiterhin als **0 kWh** geführt; der Live-SoC wird anschließend auf die Mindestreserve **geklemmt** (`soc = max(soc, minSoc)`).
-- Diese Klemme wird **nicht** als Ladung und **nicht** als Netzfluss verbucht.
-- Die Differenz kann in `energyBalanceErrorKwh` sichtbar werden.
-- Die geschützte Reserve steht der Haushaltsentladung weiterhin **nicht** zur Verfügung (`soc > minSoc` als Entladebedingung).
+- Mit Notstromreserve \(R\) gilt
+  `minSoc = clamp(R / C, 0, maxSoc)`, dann
+  `initialSocKwh = minSoc × C` (nutzbare Kapazität) und `initialSoc = minSoc`.
+  `socStartKwh` / `socStartPct` melden diesen Anfangswert.
+  Weil `minSoc` bereits auf `[0, maxSoc]` begrenzt ist, kann der Start-SoC weder negativ
+  noch oberhalb des modellierten Maximums liegen.
+- Die Reserve ist vor aktiver Haushalts- und Auxiliary-Entladung geschützt
+  (`soc > minSoc` sowie Entladekopfraum nur oberhalb der Reserve).
+- Selbstentladung ist ein physikalischer Verlust und wird **nicht** durch eine aufwärts gerichtete
+  `minSoc`-Klemme nachgefüllt; SoC darf nach Selbstentladung leicht unter die Reserve fallen.
+- Spätere PV-Ladung kann den SoC wieder über die Reserve anheben.
+- Es gibt **keine** modellierte Netzladung zur Reservennachfüllung und **keine**
+  unverbuchte Ladungsbuchung.
+- Numerische Sicherheitsgrenzen bleiben `[0, maxSoc]`.
 
-> **Bekannte Modellinkonsistenz – vor dem Einfrieren von Modellversion 1.0 zu korrigieren.**  
-> Die Backup-Reserve-SoC-Klemme erzeugt unverbuchte Energie und kann `energyBalanceErrorKwh` erhöhen. Dies ist der aktuelle Produktionszustand, nicht die gewünschte Zielmodellierung.
+> **Behoben in Modellversion 1.0.0.**
+> Die frühere Backup-Reserve-SoC-Klemme (`soc = max(soc, minSoc)` nach Selbstentladung und
+> am Intervallende) erzeugte unverbuchte Energie und erhöhte `energyBalanceErrorKwh`.
+> Mit korrekter Initialisierung und ohne Aufwärtsklemme schließt die Energiebilanz
+> innerhalb der numerischen Toleranz.
 
 ### End-SoC
 
@@ -780,8 +796,9 @@ Diese Werte sind **theoretische Obergrenzen**, keine gemessenen Fehler eines bes
 | Standby-Jahresenergie | 131.4 | kWh/a | 15 W × 8760 h |
 | Efficiency model | `hybrid` | – | Getrennte Lade- und Entladestufen |
 | Anfangs-SoC ohne Reserve | 0 | kWh | Kaltstart jedes Wetterjahres |
+| Anfangs-SoC mit Reserve \(R\) | \(\mathrm{minSoc} \times C\) | kWh | `minSoc = clamp(R/C, 0, maxSoc)`; geschützte Startenergie |
 | Standard-Notstromreserve | 0 | kWh | Optional über das Formular veränderbar |
-| Modellversion | noch nicht implementiert | – | Vor Freeze von Version 1.0 ergänzen |
+| Modellversion | `1.0.0` | – | `BATTERY_MODEL_VERSION` in `packages/pv-core/src/battery.ts` |
 
 ### Roundtrip-Produkt (nur Wandlung)
 
@@ -861,7 +878,8 @@ Implementierungsdetails:
 - `backupReserveKwh` ist die einzige batterierelevante Produktions-Überschreibung.
 - Wärmepumpe und mehrere Dachflächen ändern Last-/PV-Profile, **nicht** Batteriewirkungsgrade oder Leistungsparameter.
 - Die Wirkungsgrade sind für jede simulierte Kapazität **identisch**.
-- Mit der Kapazität variieren nur Leistungsgrenzen und der relative Reserveanteil (`minSoc = reserveKwh / usableCapacityKwh`).
+- Mit der Kapazität variieren nur Leistungsgrenzen und der relative Reserveanteil
+  (`minSoc = clamp(reserveKwh / usableCapacityKwh, 0, maxSoc)`).
 
 ### Quellcode-Referenzen
 
@@ -915,10 +933,16 @@ Implementierungsdetails:
 
 Aktueller Stand:
 
-- Im Code existiert derzeit **keine** Batterie-/Physik-Modellversion.
-- Historische Produktionsergebnisse können daher noch **nicht** automatisch einem eingefrorenen Parametersatz zugeordnet werden.
-- Empfohlene zukünftige Konstante: `BATTERY_MODEL_VERSION = "1.0.0"`.
-- Version **1.0.0 ist noch nicht implementiert**.
+- Kanonische Konstante: `BATTERY_MODEL_VERSION = "1.0.0"` in
+  `packages/pv-core/src/battery.ts` (einzige Produktions-Literalquelle).
+- Die Version wird mit Simulationsergebnissen zurückgegeben:
+  - `BatterySimulationResult.batteryModelVersion`
+  - `SimulateMultiYearSpeicherGrenzResult.batteryModelVersion`
+  - `SpeicherGrenzPayload.batteryModelVersion`
+  - `VerifiedResult.batteryModelVersion` / `CalculateSpeicherResultOutput.verifiedResult.batteryModelVersion`
+- Mehrjahressimulation prüft, dass alle Einzelresultate dieselbe Version tragen.
+- Die öffentliche Methodikseite (`docs/physics-model.md` / `/technische-details`)
+  exponiert **nicht** die vollständige Parametertabelle und nicht zwingend die Modellversion.
 
 Version-Bump ist erforderlich bei Änderungen an:
 
@@ -935,18 +959,19 @@ Reine Dokumentations-Formulierungsänderungen erfordern **keinen** Modellversion
 
 ---
 
-## Bekannte Punkte vor Modellversion 1.0
+## Bekannte Punkte nach Modellversion 1.0.0
 
-1. Die Backup-Reserve-SoC-Klemme kann unverbuchte Energie und `energyBalanceErrorKwh` erzeugen.
-2. Es existiert kein Modellversions-Feld.
-3. Das Legacy-Feld `roundtripEfficiency = 0.94` wird vom Hybrid-Modell nicht genutzt und kann mit dem exakten Produkt 0.94128804 verwechselt werden.
-4. Jahresläufe starten kalt und schließen die jährliche SoC-Grenze nicht.
-5. Dedizierte Regressionstests fehlen noch für:
+1. Das Legacy-Feld `roundtripEfficiency = 0.94` wird vom Hybrid-Modell nicht genutzt und kann mit dem exakten Produkt 0.94128804 verwechselt werden.
+2. Jahresläufe starten kalt und schließen die jährliche SoC-Grenze nicht:
+   - kein Warm-up;
+   - keine zyklische Konvergenz;
+   - kein Jahr-zu-Jahr-SoC-Übertrag;
+   - keine Korrektur der Form `final SoC − initial SoC`.
+3. Berechnungsergebnisse werden serverseitig nur im In-Memory-`verifiedResultStore` gehalten
+   (kein dauerhaftes Persistieren der Modellversion in einer Datenbank).
+4. Dedizierte Regressionstests decken nun ab:
    - eingefrorene `DEFAULT_BATTERY_SPEC`
    - exaktes Roundtrip-Produkt
-   - stündliche Selbstentladungs-Compoundierung
-   - jährliche Auxiliary-Summe 15 W und Versorgungspriorität
-   - Platzierung der Lade-/Entladegrenzen relativ zu den Wirkungsgraden
-   - Anfangs-SoC und fehlender Jahr-zu-Jahr-SoC-Übertrag
+   - energieerhaltende Backup-Reserve-Initialisierung
    - vollständige Leistungs-Tabelle 5–30 kWh
-   - Produktion überschreibt `batterySpec` nicht
+   - `BATTERY_MODEL_VERSION` in Einzel- und Mehrjahresresultaten
