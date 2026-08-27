@@ -1844,7 +1844,7 @@ export default function SpeicherCalculatePage() {
                         <strong className="font-semibold text-slate-200">
                           etwa {recommendedTechnicalSize} kWh nutzbare Kapazität
                         </strong>{" "}
-                        ausreichen, um den wirtschaftlich sinnvollen Bereich zu
+                        ausreichen, um die technisch sinnvolle Speichergrenze zu
                         erreichen.
                       </p>
                       <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
@@ -1881,8 +1881,9 @@ export default function SpeicherCalculatePage() {
                           sehr geringen Mehrwert.
                         </p>
                         <p className="text-sm leading-6 text-slate-300 mt-3">
-                          Jede weitere kWh erhöht den Eigenverbrauch nur minimal
-                          (unter ~1&nbsp;% pro zusätzlicher kWh).
+                          Die technische Speichergrenze liegt unmittelbar vor dem
+                          ersten weiteren Kapazitätsschritt, der den jährlichen
+                          Eigenverbrauch um weniger als 50&nbsp;kWh erhöht.
                         </p>
                       </div>
                       <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-4">

@@ -255,7 +255,7 @@ function WhatWeActuallyCalculateSection() {
 
         <div className="text-center space-y-3">
           <p className="text-sm text-white/60 max-w-2xl mx-auto leading-relaxed">
-            Speicherkapazität wird schrittweise erhöht; die Ableitung des Grenznutzens zeigt, ab wann zusätzliche kWh kaum noch Eigenverbrauch oder Autarkie erhöhen.
+            Speicherkapazität wird schrittweise erhöht; die Ableitung des Grenznutzens zeigt, ab wann zusätzliche kWh den jährlichen Eigenverbrauch kaum noch erhöhen.
           </p>
           <p className="text-sm text-green-400 font-medium max-w-2xl mx-auto">
             Diese Schwelle wird als SpeicherGrenze ausgewiesen.

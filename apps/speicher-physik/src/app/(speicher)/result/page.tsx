@@ -169,8 +169,9 @@ function CalculationBasisSection({
       </div>
 
       <p className="text-sm text-slate-500 leading-relaxed">
-        Die PV-Erzeugung wird stündlich über ein gesamtes Jahr modelliert, um
-        Erzeugung und Verbrauch zeitlich vergleichen zu können.
+        Die PV-Erzeugung wird stündlich (8760 Stunden je Wetterjahr) modelliert
+        und über die Jahre 2016–2020 gemittelt, um Erzeugung und Verbrauch
+        zeitlich vergleichen zu können.
       </p>
     </section>
   );

@@ -10,7 +10,9 @@ Diese Berechnung basiert auf einem physikalischen Simulationsmodell
 
 für Photovoltaik-Erzeugung und Batteriespeicher.
 
-Die Simulation erfolgt stündlich (8760 Stunden pro Jahr).
+### Zeitauflösung und Kalender
+
+Die Simulation erfolgt stündlich. Jedes modellierte Jahr besteht aus genau 8760 Intervallen mit einer Dauer von jeweils einer Stunde (Δt = 1 h). Ein 15- oder 30-Minuten-Modell wird nicht verwendet.
 
 ---
 
@@ -48,9 +50,19 @@ Diese Verluste betreffen ausschließlich die PV-Anlage. Speicherverluste sind da
 
 - Strahlungsdaten: SARAH2 Satellitendatenbank
 
-- Zeitauflösung: stündlich (8760 Werte pro Jahr)
+- Zeitauflösung: stündlich (8760 Werte pro Jahr nach Kalenderangleichung)
 
-- Mehrjährige Simulation (z. B. 2016–2020)
+- Mehrjährige Simulation (2016–2020)
+
+### Schaltjahre
+
+Die Wetterjahre 2016 und 2020 sind Schaltjahre. Nach der Umrechnung der PVGIS-Zeitstempel auf Europe/Berlin wird der lokale 29. Februar entfernt. Dadurch verwenden PV-Erzeugung, Lastprofil und Batteriesimulation für jedes Jahr dasselbe nicht-schaltjährige Raster mit 8760 Stunden.
+
+### Zeitzone und Sommerzeit
+
+PVGIS-Zeitstempel werden als UTC interpretiert und auf Europe/Berlin umgerechnet. Anschließend werden sie einem festen Raster aus 365 Tagen mit jeweils 24 Zivilstunden zugeordnet.
+
+Die Zeitumstellung wird dabei vereinfacht abgebildet: Die fehlende Stunde im Frühjahr bleibt leer, während die doppelte Stunde im Herbst in einem gemeinsamen Stundenintervall zusammengefasst wird. Tage mit 23 oder 25 Simulationsintervallen werden nicht verwendet.
 
 👉 Die Berechnung erfolgt physikalisch basierend auf realen Klimadaten,
 
@@ -78,6 +90,12 @@ aber keine exakte Vorhersage der tatsächlichen Produktion.
 
 - Repräsentiert ein typisches Haushaltsverbrauchsverhalten
 
+### BDEW-Lastprofil H0
+
+Als Haushaltslast dient das BDEW-Standardlastprofil H0 in bereits stündlicher Form mit 8760 Werten. Die hinterlegte Referenzreihe entspricht dem Kalenderjahr 2025 und einer Bezugsmenge von 1 GWh.
+
+Für jedes Wetterjahr von 2016 bis 2020 wird das Profil anhand von Monat und Tagestyp (Werktag, Samstag oder Sonntag) für die jeweilige Kalenderstruktur neu zusammengesetzt. Anschließend wird es so skaliert, dass seine Jahressumme exakt dem eingegebenen Haushaltsverbrauch entspricht.
+
 👉 Wichtig:
 
 Dieses Profil ist ein statistisches Durchschnittsprofil und kein individuelles Messprofil.
@@ -102,7 +120,7 @@ separat modelliert und dem Haushaltsverbrauch hinzugefügt.
 
 Annahmen:
 
-Der zusätzliche Verbrauch wird gleichmäßig über typische Heizperioden verteilt
+Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche stündliche Lastreihe modelliert. Die Verteilung erfolgt anhand monatlicher saisonaler Gewichtungen: mit höherem relativem Verbrauch im Winter und geringerem Verbrauch im Sommer. Die Jahressumme entspricht dem eingegebenen Wärmepumpenverbrauch.
 
 Erhöhter Strombedarf tritt vor allem in den Wintermonaten auf
 
@@ -123,6 +141,12 @@ Keine Abbildung von realen Steuerstrategien
 Keine Unterscheidung zwischen verschiedenen Wärmepumpentypen
 
 👉 Die Modellierung stellt eine vereinfachte, aber realistische Näherung dar.
+
+---
+
+### Mehrjährige Mittelung
+
+PV-Ertrag, Eigenverbrauch ohne Speicher und die Batteriesimulationen für Speichergrößen von 5 bis 30 kWh werden für dieselben Wetterjahre 2016 bis 2020 berechnet. Die ausgewiesenen Jahreswerte sind Mittelwerte dieser fünf Jahre.
 
 ---
 
@@ -304,7 +328,9 @@ Typische Abweichung:
 
 ## 8. Ziel
 
-Abschätzung der optimalen Speichergröße.
+Ermittlung der technisch sinnvollen Speichergrenze.
+
+Eine wirtschaftlich optimale Speichergröße wird in dieser Analyse nicht berechnet. Dafür müssen zusätzlich unter anderem Anschaffungskosten, Strompreis, Einspeisevergütung und mögliche Förderungen berücksichtigt werden.
 
 Für detaillierte Wirtschaftlichkeitsanalysen siehe Premium-Version.
 
@@ -320,7 +346,7 @@ Wichtige Hinweise:
 
 - Große Speicher erhöhen den Eigenverbrauch, sind aber oft wirtschaftlich nicht sinnvoll  
 
-- Die optimale Speichergröße liegt meist in dem Bereich, in dem zusätzliche Kapazität nur noch geringe Mehrwerte bringt
+- Die technisch sinnvolle Speichergrenze liegt in dem Bereich, ab dem zusätzliche Speicherkapazität den Eigenverbrauch nur noch geringfügig erhöht
 
 👉 Einfluss der Eingaben:
 
@@ -352,7 +378,7 @@ Dies führt zu einem leicht geringeren Eigenverbrauch und geringerer Autarkie.
 
 👉 Wichtig:
 
-Die optimale Speichergröße ergibt sich immer aus dem Zusammenspiel aller Faktoren.
+Die technisch sinnvolle Speichergrenze ergibt sich aus dem Zusammenspiel der technischen Eingaben und Simulationsannahmen.
 
 Es gibt keine universell „richtige“ Speichergröße ohne Berücksichtigung des individuellen Systems.
 
@@ -360,7 +386,7 @@ Es gibt keine universell „richtige“ Speichergröße ohne Berücksichtigung d
 
 ## 10. Empfehlung
 
-Die optimale Speichergröße ist individuell und hängt ab von:
+Die technisch sinnvolle Speichergrenze ist individuell und hängt unter anderem ab von:
 
 - Ihrem Stromverbrauch  
 
@@ -368,7 +394,7 @@ Die optimale Speichergröße ist individuell und hängt ab von:
 
 - Ihrem Lastprofil  
 
-👉 In dieser Analyse erkennen Sie die optimale Größe daran,  
+👉 In dieser Analyse erkennen Sie die technisch sinnvolle Speichergrenze daran,  
 
 dass der zusätzliche Eigenverbrauch mit wachsender Speichergröße deutlich abnimmt.
 
@@ -384,21 +410,40 @@ Das bedeutet:
 
 ### Technische Speichergrenze und Kaufplanung
 
-Die Analyse unterscheidet zwei Größen:
+Die Analyse unterscheidet drei Begriffe:
 
 1. **Technische Speichergrenze (Simulationsergebnis)**  
-   Der letzte Punkt vor abnehmendem Grenznutzen auf der Eigenverbrauchskurve — die heute technisch sinnvolle **nutzbare Kapazität** unter den aktuellen Simulationsannahmen (ohne Kapazitätsalterung im Modell).
+   Die heute technisch sinnvolle **nutzbare Kapazität** unter den aktuellen Simulationsannahmen (ohne Kapazitätsalterung im Modell). Sie wird über die feste Schwelle von **50 kWh zusätzlichem Eigenverbrauch pro Jahr** ermittelt (siehe unten). Das ist **kein** wirtschaftlicher Rentabilitätsschwellenwert.
 
 2. **Empfohlene Anfangskapazität (Kaufplanung)**  
    Eine **planerische** Größe für den Speicherkauf: so viel **nutzbare Anfangskapazität**, dass nach einem angenommenen **Kapazitätsverlust von 25 %** über die Nutzungsdauer noch ungefähr die technische Speichergrenze als **Restkapazität (ca. 75 %)** zur Verfügung steht.
 
-**Formel:** `Anfangskapazität = ⌈ technische Speichergrenze ÷ 0,75 ⌉` (kWh, aufgerundet)
+3. **Wirtschaftlich optimale Speichergröße**  
+   Wird in SpeicherGrenze **nicht** berechnet. Dafür wären unter anderem Anschaffungskosten, Strompreis, Einspeisevergütung und mögliche Förderungen erforderlich.
+
+**Formel (Kaufplanung):** `Anfangskapazität = ⌈ technische Speichergrenze ÷ 0,75 ⌉` (kWh, aufgerundet)
 
 **Beispiel:** Speichergrenze 6 kWh → empfohlene Anfangskapazität 8 kWh, weil 8 × 0,75 ≈ 6 kWh.
 
 Das entspricht etwa **33 % mehr Anfangskapazität** gegenüber der technischen Speichergrenze — **nicht** einfach „Speichergrenze + 25 %“.
 
 👉 **Wichtig:** Die Alterungsannahme dient der langfristigen Kaufplanung und ist von der stündlichen Simulation getrennt. Sie ist **keine** herstellerspezifische Garantie und **kein** garantierter Degradationsverlauf. Alle physikalischen Kennzahlen (Eigenverbrauch, Autarkie, Netzbezug, Batterieflüsse, Verluste) beziehen sich weiterhin auf die **technische Speichergrenze**, nicht auf die planerische Anfangskapazität.
+
+### Ermittlung der technischen Speichergrenze
+
+Als Vergleichspunkt wird zunächst der Betrieb ohne Batteriespeicher mit 0 kWh betrachtet. Anschließend werden nutzbare Speicherkapazitäten von 5 bis 30 kWh simuliert. Zwischen 5 und 30 kWh beträgt die Schrittweite 1 kWh.
+
+Für jede Kapazitätsstufe wird der zusätzliche jährliche Eigenverbrauch gegenüber der vorherigen simulierten Stufe bestimmt:
+
+`ΔEV(Cᵢ) = EV(Cᵢ) − EV(Cᵢ₋₁)`
+
+Sobald dieser zusätzliche Eigenverbrauch erstmals weniger als 50 kWh pro Jahr beträgt, wird die vorherige Kapazitätsstufe als technische Speichergrenze ausgewiesen.
+
+Ein Wert von genau 50 kWh pro Jahr löst die Grenze noch nicht aus. Wird der Schwellenwert bis 30 kWh nicht unterschritten, liegt das Ergebnis am oberen Rand des simulierten Bereichs bei 30 kWh.
+
+Der Schwellenwert ist ein fester absoluter Wert. Er wird nicht als Prozentsatz des Haushaltsverbrauchs, der PV-Erzeugung oder des Eigenverbrauchs berechnet.
+
+**Beispiel:** Liegt der zusätzliche Eigenverbrauch beim Schritt von 9 auf 10 kWh erstmals unter 50 kWh pro Jahr, beträgt die technische Speichergrenze 9 kWh.
 
 ---
 
