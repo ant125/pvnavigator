@@ -5,6 +5,7 @@ import { simulateMultiYearSpeicherGrenz } from "@/lib/multiYearSimulation";
 import { createHeatPumpComponent } from "@/load/heatpump";
 import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
 import type { PvSurfaceInput } from "@/app/(speicher)/types/speicher";
+import { BATTERY_MODEL_VERSION } from "../../../../packages/pv-core";
 
 function buildMergedLoadForYear(
   year: number,
@@ -87,6 +88,7 @@ export type SpeicherGrenzPayload = {
   averageSelfConsumptionWithoutStorageKwh: number;
   averagePvYieldKwhAnnual: number;
   averageLoadKwhAnnual: number;
+  batteryModelVersion: typeof BATTERY_MODEL_VERSION;
 };
 
 export type CalculateSpeicherResultInput = {
@@ -113,6 +115,7 @@ export type CalculateSpeicherResultOutput = {
       };
     };
     backupReserveKwh?: number;
+    batteryModelVersion: typeof BATTERY_MODEL_VERSION;
   };
   speicherGrenz: SpeicherGrenzPayload;
 };
@@ -151,6 +154,7 @@ export async function calculateSpeicherResult(
         pvYieldKwhAnnual: multiYear.averagePvYieldKwhAnnual,
       },
     },
+    batteryModelVersion: multiYear.batteryModelVersion,
     ...(reserveKwh > 0 ? { backupReserveKwh: reserveKwh } : {}),
   };
 
@@ -185,6 +189,7 @@ export async function calculateSpeicherResult(
         multiYear.averageSelfConsumptionWithoutStorageKwh,
       averagePvYieldKwhAnnual: multiYear.averagePvYieldKwhAnnual,
       averageLoadKwhAnnual: multiYear.averageLoadKwhAnnual,
+      batteryModelVersion: multiYear.batteryModelVersion,
     },
   };
 }

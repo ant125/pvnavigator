@@ -4,6 +4,7 @@ import {
   calculateBatterySimulation,
   calculateEigenverbrauch,
   DEFAULT_BATTERY_SPEC,
+  BATTERY_MODEL_VERSION,
   type BatterySpec,
   type BatterySimulationResult,
 } from "../../../../packages/pv-core";
@@ -153,6 +154,8 @@ export type SimulateMultiYearSpeicherGrenzResult = {
   averagePvYieldKwhAnnual: number;
   /** Mean of Σ load over the same years as `average`. */
   averageLoadKwhAnnual: number;
+  /** Canonical battery physics model version (all year×size runs must agree). */
+  batteryModelVersion: typeof BATTERY_MODEL_VERSION;
 };
 
 function sleep(ms: number): Promise<void> {
@@ -383,6 +386,11 @@ export async function simulateMultiYearSpeicherGrenz(
         spec,
         params.backupReserveKwh ?? 0
       );
+      if (result.batteryModelVersion !== BATTERY_MODEL_VERSION) {
+        throw new Error(
+          `Battery model version mismatch: expected ${BATTERY_MODEL_VERSION}, got ${result.batteryModelVersion}`
+        );
+      }
       sizeMap[size] = result.selfConsumptionWithStorage;
       chargedMap[size] = result.totalChargedKwh;
       dischargedMap[size] = result.totalDischargedKwh;
@@ -584,5 +592,6 @@ export async function simulateMultiYearSpeicherGrenz(
     averageSelfConsumptionWithoutStorageKwh,
     averagePvYieldKwhAnnual,
     averageLoadKwhAnnual,
+    batteryModelVersion: BATTERY_MODEL_VERSION,
   };
 }

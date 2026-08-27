@@ -10,6 +10,11 @@ export type VerifiedResult = {
   };
   /** Set when the last run used a Notstromreserve greater than 0 (kWh). */
   backupReserveKwh?: number;
+  /**
+   * Canonical battery physics model version from the calculation run
+   * (propagated from `BATTERY_MODEL_VERSION` in `@pv-core`, not hardcoded here).
+   */
+  batteryModelVersion: string;
 };
 
 let lastVerifiedResult: VerifiedResult | null = null;

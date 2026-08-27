@@ -59,6 +59,13 @@ export const DEFAULT_BATTERY_SPEC: BatterySpec = {
   ...HYBRID_EFFICIENCY_DEFAULTS,
 };
 
+/**
+ * Frozen production battery physics model identifier.
+ * Bump only when changing efficiencies, power limits, flow priority,
+ * SoC boundary treatment, self-discharge method, or loss ledger definitions.
+ */
+export const BATTERY_MODEL_VERSION = "1.0.0" as const;
+
 export interface BatterySimulationResult {
   socHourly: number[];
   totalChargedKwh: number;
@@ -97,8 +104,13 @@ export interface BatterySimulationResult {
   chargeLossChemicalKwh?: number;
   dischargeLossChemicalKwh?: number;
   dischargeLossBatteryToAcKwh?: number;
-  /** SOC × nominal usable envelope at hour 0 (always 0 with current initializer) */
+  /**
+   * SOC × nominal usable envelope at simulation start
+   * (0 with no reserve; equals protected backup reserve when configured, capped at maxSoc).
+   */
   socStartKwh: number;
+  /** SOC fraction × 100 at simulation start (same convention as `socEndPct`). */
+  socStartPct: number;
   /** SOC × nominal usable envelope after hour 8759 */
   socEndKwh: number;
   /** SOC fraction × 100 (same SOC convention as hourly arrays; typical ceiling DoD×100) */
@@ -112,6 +124,8 @@ export interface BatterySimulationResult {
   energyBalanceErrorKwh: number;
   /** Σ stored energy removed by hourly self-discharge compounding. */
   totalSelfDischargeLossKwh: number;
+  /** Canonical battery physics model version used for this run. */
+  batteryModelVersion: typeof BATTERY_MODEL_VERSION;
 }
 
 /**
@@ -135,12 +149,8 @@ export function calculateBatterySimulation(
   }
 
   const reserveKwh = backupReserveKwh ?? 0;
-  const minSoc =
-    reserveKwh > 0 ? reserveKwh / usableCapacityKwh : 0;
 
   const socHourly: number[] = [];
-  let soc = 0;
-  const socStart = soc;
   let totalCharged = 0;
   let totalDischarged = 0;
   let selfConsumptionWithStorage = 0;
@@ -195,6 +205,11 @@ export function calculateBatterySimulation(
     ? spec.batteryChargeEfficiency ?? HYBRID_EFFICIENCY_DEFAULTS.batteryChargeEfficiency
     : 0;
   const maxSoc = spec.depthOfDischarge;
+  // Single source of truth: clamp reserve fraction, then derive initial energy from minSoc.
+  const minSoc = Math.min(Math.max(reserveKwh / usableCapacityKwh, 0), maxSoc);
+  const initialSocKwh = minSoc * usableCapacityKwh;
+  let soc = minSoc;
+  const socStart = soc;
   const { chargePowerKw, dischargePowerKw } =
     resolveBatteryPowerLimitsKw(usableCapacityKwh, spec);
 
@@ -210,7 +225,8 @@ export function calculateBatterySimulation(
       energyStoredBeforeSd - energyStoredAfterSd
     );
 
-    soc = Math.max(soc, minSoc);
+    // Numerical safety only — do not replenish reserve via upward minSoc clamp.
+    if (soc < 0) soc = 0;
     if (soc > maxSoc) soc = maxSoc;
 
     // --- PV allocation: household → auxiliary → battery charge → export ---
@@ -307,7 +323,8 @@ export function calculateBatterySimulation(
     gridToHouseholdKwh += houseNeedRem;
     gridToAuxiliaryKwh += auxNeedRem;
 
-    soc = Math.max(soc, minSoc);
+    // Numerical safety only — do not replenish reserve via upward minSoc clamp.
+    if (soc < 0) soc = 0;
     if (soc > maxSoc) soc = maxSoc;
 
     selfConsumptionWithStorage += directPvToHousehold + fromBattH;
@@ -317,7 +334,8 @@ export function calculateBatterySimulation(
   const cyclesPerYear =
     usableCapacityKwh > 0 ? totalDischarged / usableCapacityKwh : 0;
 
-  const socStartKwh = socStart * usableCapacityKwh;
+  const socStartKwh = initialSocKwh;
+  const socStartPct = socStart * 100;
   const socEndKwh = soc * usableCapacityKwh;
   const socEndPct = soc * 100;
   const energyBalanceErrorKwh =
@@ -344,10 +362,12 @@ export function calculateBatterySimulation(
     chargeLossKwh,
     dischargeLossKwh,
     socStartKwh,
+    socStartPct,
     socEndKwh,
     socEndPct,
     energyBalanceErrorKwh,
     totalSelfDischargeLossKwh,
+    batteryModelVersion: BATTERY_MODEL_VERSION,
   };
 
   if (useHybrid) {

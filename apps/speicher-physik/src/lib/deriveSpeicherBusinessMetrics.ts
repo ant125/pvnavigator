@@ -19,6 +19,7 @@ export type SpeicherVerifiedResultInput = {
     };
   };
   backupReserveKwh?: number;
+  batteryModelVersion?: string;
 };
 
 export type DeriveSpeicherBusinessMetricsInput = {

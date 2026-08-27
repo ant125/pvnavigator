@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { calculateEigenverbrauch } from "../../../../packages/pv-core";
+import {
+  BATTERY_MODEL_VERSION,
+  calculateEigenverbrauch,
+} from "../../../../packages/pv-core";
 import {
   DEFAULT_MULTI_YEAR_YEARS,
   simulateMultiYearSpeicherGrenz,
@@ -39,6 +42,21 @@ function pvForYear(year: number): number[] {
   }
   return out;
 }
+
+describe("simulateMultiYearSpeicherGrenz battery model version", () => {
+  it("returns the canonical BATTERY_MODEL_VERSION without a conflicting literal", async () => {
+    const result = await simulateMultiYearSpeicherGrenz({
+      years: [2016],
+      batterySizes: [5],
+      getLoadForYear: loadForYear,
+      getPvForYear: pvForYear,
+      latitude: 0,
+      longitude: 0,
+    });
+    expect(result.batteryModelVersion).toBe(BATTERY_MODEL_VERSION);
+    expect(result.batteryModelVersion).toBe("1.0.0");
+  });
+});
 
 describe("simulateMultiYearSpeicherGrenz no-storage baseline", () => {
   it("averages no-storage KPIs over 2016–2020 from the same arrays as sizes 5–30", async () => {

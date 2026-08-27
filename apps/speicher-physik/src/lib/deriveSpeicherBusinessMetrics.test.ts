@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BATTERY_MODEL_VERSION } from "../../../../packages/pv-core";
 import type { SpeicherGrenzPayload } from "./calculateSpeicherResult";
 import {
   deriveSpeicherBusinessMetrics,
@@ -36,6 +37,7 @@ function emptySpeicherGrenz(
     averageSelfConsumptionWithoutStorageKwh: 0,
     averagePvYieldKwhAnnual: 0,
     averageLoadKwhAnnual: 0,
+    batteryModelVersion: BATTERY_MODEL_VERSION,
     ...overrides,
   };
 }
