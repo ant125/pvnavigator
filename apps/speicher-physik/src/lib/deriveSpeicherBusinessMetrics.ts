@@ -132,28 +132,40 @@ export function deriveSpeicherBusinessMetrics(
       ? speicherGrenz.averageAuxiliaryConsumptionKwh[physicalKpiLookupSize]
       : undefined;
 
-  const totalConsumption =
+  const formTotalConsumption =
     (input.annualConsumptionKwh ?? 0) +
     (input.heatPumpEnabled === true
       ? input.heatPumpConsumptionKwh ?? 0
       : 0);
+
+  /** Prefer multi-year modeled load mean when available (same years as EV KPIs). */
+  const modeledLoadAnnual = speicherGrenz?.averageLoadKwhAnnual;
+  const autarkieDenominatorKwh =
+    typeof modeledLoadAnnual === "number" &&
+    Number.isFinite(modeledLoadAnnual) &&
+    modeledLoadAnnual > 0
+      ? modeledLoadAnnual
+      : formTotalConsumption;
+
+  /** Form-entered house (+ HP) total — kept for display of user inputs. */
+  const totalConsumption = formTotalConsumption;
 
   const eigenverbrauchOhneSpeicher =
     verifiedResult?.energy.year.selfConsumptionWithoutStorage;
   const eigenverbrauchMitSpeicher = recommendedEV;
 
   const autarkieOhnePct =
-    totalConsumption > 0 &&
+    autarkieDenominatorKwh > 0 &&
     typeof eigenverbrauchOhneSpeicher === "number" &&
     Number.isFinite(eigenverbrauchOhneSpeicher)
-      ? Math.round((eigenverbrauchOhneSpeicher / totalConsumption) * 100)
+      ? Math.round((eigenverbrauchOhneSpeicher / autarkieDenominatorKwh) * 100)
       : null;
 
   const autarkieMitPct =
-    totalConsumption > 0 &&
+    autarkieDenominatorKwh > 0 &&
     typeof eigenverbrauchMitSpeicher === "number" &&
     Number.isFinite(eigenverbrauchMitSpeicher)
-      ? Math.round((eigenverbrauchMitSpeicher / totalConsumption) * 100)
+      ? Math.round((eigenverbrauchMitSpeicher / autarkieDenominatorKwh) * 100)
       : null;
 
   const deltaEigenverbrauch =
@@ -196,8 +208,8 @@ export function deriveSpeicherBusinessMetrics(
       ? ledgerGridImportAvgKwh
       : typeof eigenverbrauchMitSpeicher === "number" &&
           Number.isFinite(eigenverbrauchMitSpeicher) &&
-          Number.isFinite(totalConsumption)
-        ? totalConsumption - eigenverbrauchMitSpeicher
+          Number.isFinite(autarkieDenominatorKwh)
+        ? autarkieDenominatorKwh - eigenverbrauchMitSpeicher
         : null;
 
   const einspeisungRechnerischKwhYear =

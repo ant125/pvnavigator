@@ -33,6 +33,9 @@ function emptySpeicherGrenz(
     averageSocEndPct: {},
     averageEnergyBalanceErrorKwh: {},
     averageSelfDischargeLossKwh: {},
+    averageSelfConsumptionWithoutStorageKwh: 0,
+    averagePvYieldKwhAnnual: 0,
+    averageLoadKwhAnnual: 0,
     ...overrides,
   };
 }

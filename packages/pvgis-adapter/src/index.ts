@@ -1,7 +1,11 @@
 /**
  * PVGIS Adapter – loads hourly PV production (8760h) from PVGIS API.
  * Server-only: fetch, no client usage.
- * Handles hourly, hourly_fixed, time_series.data. Leap-year: filters Feb 29.
+ * Handles hourly, hourly_fixed, time_series.data.
+ *
+ * Temporal model: UTC stamps → Europe/Berlin civil parts → skip local Feb 29 →
+ * explicit non-leap 8760 index. DST is a fixed-grid approximation (spring gap /
+ * autumn accumulation), not 23/25-hour simulation days.
  */
 
 export type LoadPVGISParams = {
@@ -28,6 +32,13 @@ export type LoadPVGISHourlyProductionResult = {
     source: "hourly" | "hourly_fixed" | "time_series";
   };
 };
+
+export const HOURS_PER_NON_LEAP_YEAR = 8760;
+
+/** Month lengths for the fixed non-leap civil grid (February = 28). */
+export const NON_LEAP_MONTH_LENGTHS = [
+  31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+] as const;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -91,12 +102,92 @@ async function fetchWithRetry(
   throw lastErr;
 }
 
-function realignPvToBerlinLocal8760(
-  raw: ReadonlyArray<{ time?: string; P?: number }>,
-  anchorYear: number = 2018
+/**
+ * Map validated Europe/Berlin civil month/day/hour onto the fixed non-leap
+ * 8760 grid. Does not use Date.UTC rollover; rejects Feb 29 and invalid dates.
+ *
+ * @param month - 1..12
+ * @param day - 1..monthLength (Feb max 28)
+ * @param hour - 0..23
+ * @returns index in 0..8759
+ */
+export function nonLeapCivilHourIndex(
+  month: number,
+  day: number,
+  hour: number
+): number {
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error(`Invalid month: ${month}`);
+  }
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
+    throw new Error(`Invalid hour: ${hour}`);
+  }
+  if (month === 2 && day === 29) {
+    throw new Error("February 29 is not part of the non-leap 8760 grid");
+  }
+  const monthLen = NON_LEAP_MONTH_LENGTHS[month - 1];
+  if (!Number.isInteger(day) || day < 1 || day > monthLen) {
+    throw new Error(`Invalid day ${day} for month ${month}`);
+  }
+
+  let dayOfYear0 = 0;
+  for (let m = 1; m < month; m++) {
+    dayOfYear0 += NON_LEAP_MONTH_LENGTHS[m - 1];
+  }
+  dayOfYear0 += day - 1;
+  return dayOfYear0 * 24 + hour;
+}
+
+export type BerlinLocalParts = {
+  year: number;
+  /** 1..12 */
+  month: number;
+  day: number;
+  hour: number;
+};
+
+/** Convert a UTC instant to Europe/Berlin civil calendar parts. */
+export function utcMsToBerlinLocalParts(utcMs: number): BerlinLocalParts {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Berlin",
+    hourCycle: "h23",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+  }).formatToParts(new Date(utcMs));
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value);
+
+  return {
+    year: get("year"),
+    month: get("month"),
+    day: get("day"),
+    hour: get("hour"),
+  };
+}
+
+/**
+ * Align raw PVGIS hourly rows onto the fixed 8760 Berlin civil grid.
+ *
+ * Pipeline per row:
+ * 1. Parse `YYYYMMDD:HHMM` as UTC.
+ * 2. Convert to Europe/Berlin local year/month/day/hour.
+ * 3. Skip intervals whose local date is February 29 (energy discarded).
+ * 4. Index via {@link nonLeapCivilHourIndex} (no Date rollover).
+ * 5. Accumulate with `+=` when multiple UTC stamps map to the same local hour
+ *    (intentional autumn DST simplification on a fixed 24×365 grid).
+ * 6. Missing local hours (e.g. spring DST gap) remain 0.
+ *
+ * Year-boundary UTC stamps may land on the periodic civil grid by local
+ * month/day/hour only (local year is ignored for indexing).
+ */
+export function alignPvgisRowsToBerlinLocal8760(
+  raw: ReadonlyArray<{ time?: string; P?: number }>
 ): { ts: string; pvKWh: number }[] {
-  const result = new Array<number>(8760).fill(0);
-  const tsArr: string[] = new Array(8760);
+  const result = new Array<number>(HOURS_PER_NON_LEAP_YEAR).fill(0);
+  const tsArr: string[] = new Array(HOURS_PER_NON_LEAP_YEAR);
 
   for (let i = 0; i < raw.length; i++) {
     const row = raw[i];
@@ -108,37 +199,30 @@ function realignPvToBerlinLocal8760(
 
     // YYYYMMDD:HHMM
     const year = Number(timeStr.slice(0, 4));
-    const month = Number(timeStr.slice(4, 6)) - 1;
-    const day = Number(timeStr.slice(6, 8));
+    const monthUtc = Number(timeStr.slice(4, 6));
+    const dayUtc = Number(timeStr.slice(6, 8));
     const hour = Number(timeStr.slice(9, 11));
     const minute = Number(timeStr.slice(11, 13));
 
-    const utcMs = Date.UTC(year, month, day, hour, minute);
+    if (
+      !Number.isFinite(year) ||
+      !Number.isFinite(monthUtc) ||
+      !Number.isFinite(dayUtc) ||
+      !Number.isFinite(hour) ||
+      !Number.isFinite(minute)
+    ) {
+      continue;
+    }
 
-    // convert to Berlin
-    const parts = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Europe/Berlin",
-      hourCycle: "h23",
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
-      hour: "numeric",
-    }).formatToParts(new Date(utcMs));
+    const utcMs = Date.UTC(year, monthUtc - 1, dayUtc, hour, minute);
+    const berlin = utcMsToBerlinLocalParts(utcMs);
 
-    const get = (type: Intl.DateTimeFormatPartTypes) =>
-      Number(parts.find((p) => p.type === type)?.value);
+    // Leap-day policy: drop Europe/Berlin February 29 entirely (do not fold).
+    if (berlin.month === 2 && berlin.day === 29) {
+      continue;
+    }
 
-    const y = get("year");
-    const m = get("month") - 1;
-    const d = get("day");
-    const h = get("hour");
-
-    // индекс зависит только от дня года и часа (год не учитывается)
-    const dayOfYear = Math.floor(
-      (Date.UTC(2018, m, d) - Date.UTC(2018, 0, 1)) / (1000 * 60 * 60 * 24)
-    );
-    const idx = dayOfYear * 24 + h;
-
+    const idx = nonLeapCivilHourIndex(berlin.month, berlin.day, berlin.hour);
     result[idx] += pvKwh;
 
     if (!tsArr[idx]) {
@@ -181,43 +265,22 @@ export async function loadPVGISHourlyProduction(
   }
   const data = await res.json();
 
-  let hourly = data?.outputs?.hourly ?? data?.outputs?.hourly_fixed;
+  const hourly = data?.outputs?.hourly ?? data?.outputs?.hourly_fixed;
 
   if (Array.isArray(hourly)) {
-    hourly = hourly.filter((row: { time?: string }) => {
-      if (!row?.time) return true;
-      const month = Number(row.time.slice(4, 6));
-      const day = Number(row.time.slice(6, 8));
-      return !(month === 2 && day === 29);
-    });
-
-    if (hourly.length !== 8760) {
+    // Leap/DST normalization happens inside align (Berlin Feb 29 skipped).
+    const rows = alignPvgisRowsToBerlinLocal8760(hourly);
+    if (rows.length !== HOURS_PER_NON_LEAP_YEAR) {
       throw new Error(
-        `PVGIS hourly length mismatch AFTER FILTER: ${hourly.length}`
+        `PVGIS hourly length mismatch AFTER ALIGN: ${rows.length}`
       );
     }
-
-    const rows = realignPvToBerlinLocal8760(hourly);
-
     return { hourly: rows, meta: { count: rows.length, source: "hourly" } };
   }
 
   const timeSeries = data?.outputs?.time_series?.data;
   if (Array.isArray(timeSeries)) {
-    let mappedRaw: ReadonlyArray<{ time?: string; P?: number }> = timeSeries;
-
-    if (mappedRaw.length === 8784) {
-      mappedRaw = mappedRaw.filter((row) => {
-        if (!row?.time) return true;
-        const month = Number(row.time.slice(4, 6));
-        const day = Number(row.time.slice(6, 8));
-        return !(month === 2 && day === 29);
-      });
-    }
-
-    if (mappedRaw.length !== 8760) {
-      throw new Error(`PVGIS hourly length mismatch: ${mappedRaw.length}`);
-    }
+    const mappedRaw: ReadonlyArray<{ time?: string; P?: number }> = timeSeries;
 
     if (
       mappedRaw.some((row) => {
@@ -236,7 +299,10 @@ export async function loadPVGISHourlyProduction(
       throw new Error("PVGIS hourly data contains negative values");
     }
 
-    const rows = realignPvToBerlinLocal8760(mappedRaw, startYear);
+    const rows = alignPvgisRowsToBerlinLocal8760(mappedRaw);
+    if (rows.length !== HOURS_PER_NON_LEAP_YEAR) {
+      throw new Error(`PVGIS hourly length mismatch: ${rows.length}`);
+    }
 
     return {
       hourly: rows,

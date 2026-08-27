@@ -2,6 +2,7 @@ import "server-only";
 import { loadPVGISHourlyProfile } from "../../../../packages/pvgis-adapter";
 import {
   calculateBatterySimulation,
+  calculateEigenverbrauch,
   DEFAULT_BATTERY_SPEC,
   type BatterySpec,
   type BatterySimulationResult,
@@ -97,6 +98,11 @@ export const DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH: ReadonlyArray<number> =
 export type SimulateMultiYearSpeicherGrenzParams = {
   /** Hourly load (8760h) for each simulated PV year — must match `years` rows. */
   getLoadForYear: (year: number) => number[];
+  /**
+   * Optional synthetic/hourly PV injector (8760h). When set, skips PVGIS fetches
+   * (used by unit tests). Production callers omit this and use lat/lon + surfaces.
+   */
+  getPvForYear?: (year: number) => number[] | Promise<number[]>;
   latitude: number;
   longitude: number;
   /**
@@ -141,6 +147,12 @@ export type SimulateMultiYearSpeicherGrenzResult = {
   averageSocEndPct: Record<number, number>;
   averageEnergyBalanceErrorKwh: Record<number, number>;
   averageSelfDischargeLossKwh: Record<number, number>;
+  /** Mean of Σ min(pv, load) over the same years as `average` (no battery). */
+  averageSelfConsumptionWithoutStorageKwh: number;
+  /** Mean of Σ pv over the same years as `average`. */
+  averagePvYieldKwhAnnual: number;
+  /** Mean of Σ load over the same years as `average`. */
+  averageLoadKwhAnnual: number;
 };
 
 function sleep(ms: number): Promise<void> {
@@ -245,13 +257,31 @@ function legacySinglePvParams(params: SimulateMultiYearSpeicherGrenzParams): {
   };
 }
 
+function averageFiniteYears(
+  years: readonly number[],
+  yearlyValues: Record<number, number>
+): number {
+  let sum = 0;
+  let count = 0;
+  for (const year of years) {
+    const v = yearlyValues[year];
+    if (typeof v === "number" && Number.isFinite(v)) {
+      sum += v;
+      count += 1;
+    }
+  }
+  return count > 0 ? sum / count : 0;
+}
+
 /**
  * Multi-year orchestration: runs `calculateBatterySimulation` for every
  * (year, batterySize) pair and aggregates `selfConsumptionWithStorage` per
  * battery size as the mean across years. Also averages `totalChargedKwh` and
- * `totalDischargedKwh` from the same runs. Caller supplies `getLoadForYear`
- * so the load calendar matches each PVGIS `year`. PVGIS data is fetched per
- * year via the existing adapter (year passed through `startYear`/`endYear`).
+ * `totalDischargedKwh` from the same runs. From the same load/PV arrays,
+ * computes no-storage Eigenverbrauch, PV yield, and load sum, then averages
+ * those over the same years. Caller supplies `getLoadForYear` so the load
+ * calendar matches each PVGIS `year`. PVGIS data is fetched per year via the
+ * existing adapter unless `getPvForYear` is provided.
  */
 export async function simulateMultiYearSpeicherGrenz(
   params: SimulateMultiYearSpeicherGrenzParams
@@ -261,6 +291,7 @@ export async function simulateMultiYearSpeicherGrenz(
     params.batterySizes ?? DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH
   ).slice();
   const spec = params.batterySpec ?? DEFAULT_BATTERY_SPEC;
+  const useInjectedPv = typeof params.getPvForYear === "function";
 
   if (years.length === 0) {
     throw new Error("years must contain at least one year");
@@ -285,14 +316,19 @@ export async function simulateMultiYearSpeicherGrenz(
     number,
     Record<number, BatteryLedgerAnnual>
   > = {};
+  const yearlySelfConsumptionWithoutStorage: Record<number, number> = {};
+  const yearlyPvYieldKwh: Record<number, number> = {};
+  const yearlyLoadKwh: Record<number, number> = {};
 
   let first = true;
   for (const year of years) {
-    if (!first) await sleep(300);
+    if (!first && !useInjectedPv) await sleep(300);
     first = false;
 
     let pvProfile: number[];
-    if (multiSurfaces !== null && multiSurfaces.length > 0) {
+    if (useInjectedPv) {
+      pvProfile = await params.getPvForYear!(year);
+    } else if (multiSurfaces !== null && multiSurfaces.length > 0) {
       pvProfile = await loadCombinedHourlyPvForYear(
         params.latitude,
         params.longitude,
@@ -317,9 +353,23 @@ export async function simulateMultiYearSpeicherGrenz(
         `PV profile invalid after normalization: ${pvProfile.length}`
       );
     }
+    assertHourlyArray(pvProfile, `pv year ${year}`);
 
     const loadKwhYear = params.getLoadForYear(year);
     assertHourlyArray(loadKwhYear, `load year ${year}`);
+
+    let loadSum = 0;
+    let pvSum = 0;
+    for (let h = 0; h < HOURS_PER_YEAR; h++) {
+      loadSum += loadKwhYear[h];
+      pvSum += pvProfile[h];
+    }
+    yearlyLoadKwh[year] = loadSum;
+    yearlyPvYieldKwh[year] = pvSum;
+    yearlySelfConsumptionWithoutStorage[year] = calculateEigenverbrauch(
+      loadKwhYear,
+      pvProfile
+    );
 
     const sizeMap: Record<number, number> = {};
     const chargedMap: Record<number, number> = {};
@@ -499,6 +549,13 @@ export async function simulateMultiYearSpeicherGrenz(
     "totalSelfDischargeLossKwh"
   );
 
+  const averageSelfConsumptionWithoutStorageKwh = averageFiniteYears(
+    years,
+    yearlySelfConsumptionWithoutStorage
+  );
+  const averagePvYieldKwhAnnual = averageFiniteYears(years, yearlyPvYieldKwh);
+  const averageLoadKwhAnnual = averageFiniteYears(years, yearlyLoadKwh);
+
   return {
     batterySizes,
     yearly,
@@ -524,5 +581,8 @@ export async function simulateMultiYearSpeicherGrenz(
     averageSocEndPct,
     averageEnergyBalanceErrorKwh,
     averageSelfDischargeLossKwh,
+    averageSelfConsumptionWithoutStorageKwh,
+    averagePvYieldKwhAnnual,
+    averageLoadKwhAnnual,
   };
 }

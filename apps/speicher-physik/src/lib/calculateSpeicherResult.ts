@@ -1,17 +1,10 @@
 import "server-only";
 
 import { createUserLoadProfileForYear } from "../../../../packages/bdew-profile";
-import { calculateEigenverbrauch } from "../../../../packages/pv-core";
-import {
-  loadCombinedHourlyPvForYear,
-  simulateMultiYearSpeicherGrenz,
-} from "@/lib/multiYearSimulation";
+import { simulateMultiYearSpeicherGrenz } from "@/lib/multiYearSimulation";
 import { createHeatPumpComponent } from "@/load/heatpump";
 import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
 import type { PvSurfaceInput } from "@/app/(speicher)/types/speicher";
-
-/** PVGIS + BDEW weekday calendar alignment for verified metrics and charts. */
-const SPEICHER_VERIFIED_REFERENCE_YEAR = 2018;
 
 function buildMergedLoadForYear(
   year: number,
@@ -91,6 +84,9 @@ export type SpeicherGrenzPayload = {
   averageSocEndPct: Record<number, number>;
   averageEnergyBalanceErrorKwh: Record<number, number>;
   averageSelfDischargeLossKwh: Record<number, number>;
+  averageSelfConsumptionWithoutStorageKwh: number;
+  averagePvYieldKwhAnnual: number;
+  averageLoadKwhAnnual: number;
 };
 
 export type CalculateSpeicherResultInput = {
@@ -124,43 +120,14 @@ export type CalculateSpeicherResultOutput = {
 export async function calculateSpeicherResult(
   input: CalculateSpeicherResultInput
 ): Promise<CalculateSpeicherResultOutput> {
-  const refYear = SPEICHER_VERIFIED_REFERENCE_YEAR;
   const pvSurfaces = normalizePvSurfacesForSpeicherAction({
     pvSurfaces: input.pvSurfaces,
     pvSystemKwP: input.pvSystemKwP,
     tiltDeg: input.tiltDeg,
     azimuthDeg: input.azimuthDeg,
   });
-  const loadKwh = buildMergedLoadForYear(
-    refYear,
-    input.annualConsumptionKWh,
-    input.heatPumpEnabled,
-    input.heatPumpConsumptionKWh
-  );
-  const pvKwh = await loadCombinedHourlyPvForYear(
-    input.latitude,
-    input.longitude,
-    refYear,
-    pvSurfaces
-  );
-
-  const pvYieldKwhAnnual = pvKwh.reduce((sum, hour) => sum + hour, 0);
-
-  const selfConsumptionWithoutStorage = calculateEigenverbrauch(
-    loadKwh,
-    pvKwh
-  );
 
   const reserveKwh = input.backupReserveKwh ?? 0;
-  const verifiedResult: CalculateSpeicherResultOutput["verifiedResult"] = {
-    energy: {
-      year: {
-        selfConsumptionWithoutStorage,
-        pvYieldKwhAnnual,
-      },
-    },
-    ...(reserveKwh > 0 ? { backupReserveKwh: reserveKwh } : {}),
-  };
 
   const multiYear = await simulateMultiYearSpeicherGrenz({
     getLoadForYear: (year) =>
@@ -175,6 +142,17 @@ export async function calculateSpeicherResult(
     pvSurfaces: pvSurfaces,
     backupReserveKwh: reserveKwh,
   });
+
+  const verifiedResult: CalculateSpeicherResultOutput["verifiedResult"] = {
+    energy: {
+      year: {
+        selfConsumptionWithoutStorage:
+          multiYear.averageSelfConsumptionWithoutStorageKwh,
+        pvYieldKwhAnnual: multiYear.averagePvYieldKwhAnnual,
+      },
+    },
+    ...(reserveKwh > 0 ? { backupReserveKwh: reserveKwh } : {}),
+  };
 
   return {
     verifiedResult,
@@ -196,12 +174,17 @@ export async function calculateSpeicherResult(
       averageChargeLossPvToBatteryKwh: multiYear.averageChargeLossPvToBatteryKwh,
       averageChargeLossChemicalKwh: multiYear.averageChargeLossChemicalKwh,
       averageDischargeLossChemicalKwh: multiYear.averageDischargeLossChemicalKwh,
-      averageDischargeLossBatteryToAcKwh: multiYear.averageDischargeLossBatteryToAcKwh,
+      averageDischargeLossBatteryToAcKwh:
+        multiYear.averageDischargeLossBatteryToAcKwh,
       averageSocStartKwh: multiYear.averageSocStartKwh,
       averageSocEndKwh: multiYear.averageSocEndKwh,
       averageSocEndPct: multiYear.averageSocEndPct,
       averageEnergyBalanceErrorKwh: multiYear.averageEnergyBalanceErrorKwh,
       averageSelfDischargeLossKwh: multiYear.averageSelfDischargeLossKwh,
+      averageSelfConsumptionWithoutStorageKwh:
+        multiYear.averageSelfConsumptionWithoutStorageKwh,
+      averagePvYieldKwhAnnual: multiYear.averagePvYieldKwhAnnual,
+      averageLoadKwhAnnual: multiYear.averageLoadKwhAnnual,
     },
   };
 }

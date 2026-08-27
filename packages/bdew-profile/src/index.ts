@@ -60,6 +60,9 @@ export function createUserLoadProfile(annualConsumptionKWh: number): number[] {
  * BDEW H0 hourly load (8760h) scaled to `annualKWh`, using the same (month × day-type)
  * templates as the static profile but with weekday/Sat/Sun layout for `year`
  * (`Europe/Berlin`). Leap years omit Feb 29 to match PVGIS 8760h series.
+ *
+ * Scaling uses the **actual** sum of the year-remapped weights (not the fixed
+ * 1 GWh reference), so `sum(result) === annualKWh` within floating-point error.
  */
 export function createUserLoadProfileForYear(
   annualKWh: number,
@@ -69,7 +72,19 @@ export function createUserLoadProfileForYear(
     throw new Error("annualKWh must be a positive finite number");
   }
   const weights = buildBdewH0WeightsForYear(year);
-  return scaleToAnnualKWh(weights, annualKWh);
+  let actualWeightSum = 0;
+  for (let i = 0; i < weights.length; i++) {
+    const w = weights[i];
+    if (!Number.isFinite(w) || w < 0) {
+      throw new Error(`BDEW weight at index ${i} is invalid`);
+    }
+    actualWeightSum += w;
+  }
+  if (!(actualWeightSum > 0) || !Number.isFinite(actualWeightSum)) {
+    throw new Error("BDEW weight sum must be a positive finite number");
+  }
+  const scaleFactor = annualKWh / actualWeightSum;
+  return weights.map((w) => w * scaleFactor);
 }
 
 export {
