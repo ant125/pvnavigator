@@ -126,7 +126,7 @@ Das bedeutet:
 
 - Individuelle Abweichungen (z. B. Home Office, Wärmepumpe, E-Auto) sind möglich
 
-👉 Die Genauigkeit der Simulation hängt stark davon ab,
+👉 Die Abweichung der Simulation hängt stark davon ab,
 
 wie gut das Standardlastprofil dem tatsächlichen Verbrauchsverhalten entspricht.
 
@@ -431,9 +431,17 @@ Der Wert stammt aus dem expliziten Netzeinspeisungs-Ledger der Simulation (Mehrj
 
 Diese Berechnung ist eine Erstabschätzung.
 
-Typische Abweichung:
+Die Abweichung kann je nach Übereinstimmung des Standardlastprofils mit dem
+tatsächlichen Verbrauch, lokaler Verschattung, Wetterabweichungen und den
+Eigenschaften des konkreten Speichersystems deutlich variieren. Eine
+Genauigkeitsgarantie besteht nicht.
 
-👉 ±5–10%
+Wichtige Einschränkungen:
+
+- BDEW H0 ist ein Standardprofil, kein gemessenes Haushaltsprofil
+- lokale Verschattung wird nicht modelliert
+- PVGIS-Wetterjahre sind historische Eingangsdaten, keine Ertragsgarantie
+- herstellerspezifische Steuerstrategien und Wirkungsgradkennlinien werden nicht modelliert
 
 ---
 
@@ -524,21 +532,64 @@ Das bedeutet:
 Die Analyse unterscheidet drei Begriffe:
 
 1. **Technische Speichergrenze (Simulationsergebnis)**  
-   Die heute technisch sinnvolle **nutzbare Kapazität** unter den aktuellen Simulationsannahmen (ohne Kapazitätsalterung im Modell). Sie wird über die feste Schwelle von **50 kWh zusätzlichem Eigenverbrauch pro Jahr** ermittelt (siehe unten). Das ist **kein** wirtschaftlicher Rentabilitätsschwellenwert.
+   Ergebnis der physikalischen Mehrjahressimulation: die heute technisch sinnvolle
+   **nutzbare Kapazität** unter den aktuellen Simulationsannahmen (ohne
+   Kapazitätsalterung im Modell). Sie wird über die feste Schwelle von
+   **50 kWh zusätzlichem Eigenverbrauch pro Jahr** ermittelt (siehe unten). Das
+   ist **kein** wirtschaftlicher Rentabilitätsschwellenwert.
 
-2. **Empfohlene Anfangskapazität (Kaufplanung)**  
-   Eine **planerische** Größe für den Speicherkauf: so viel **nutzbare Anfangskapazität**, dass nach einem angenommenen **Kapazitätsverlust von 25 %** über die Nutzungsdauer noch ungefähr die technische Speichergrenze als **Restkapazität (ca. 75 %)** zur Verfügung steht.
+2. **Planerische Kaufempfehlung / Planerische Anfangskapazität**
+   Eine **planerische** Größe für den Speicherkauf. Die physikalische Simulation
+   liefert die technische Speichergrenze; die angezeigte Kaufplanungs-Kapazität
+   wird daraus abgeleitet:
+
+   `Planerische Anfangskapazität = ⌈ technische Speichergrenze ÷ 0,75 ⌉`
+
+   Dabei bedeutet 0,75 eine Planungsannahme von **75 % verbleibender nutzbarer
+   Kapazität** (gleichbedeutend mit einer **25 %-Alterungsreserve**). Der
+   Planungshorizont beträgt etwa **10 Jahre**. Das ist eine allgemeine
+   Planungsannahme, **keine** Prognose der tatsächlichen Batteriedegradation,
+   **kein** Ergebnis der stündlichen oder mehrjährigen physikalischen Simulation
+   und **keine** Garantie für ein bestimmtes Speichersystem. Alle technischen
+   Kennzahlen werden weiterhin mit der technischen Speichergrenze berechnet.
 
 3. **Wirtschaftlich optimale Speichergröße**  
-   Wird in SpeicherGrenze **nicht** berechnet. Dafür wären unter anderem Anschaffungskosten, Strompreis, Einspeisevergütung und mögliche Förderungen erforderlich.
+   Wird in SpeicherGrenze **nicht** berechnet. Dafür wären unter anderem
+   Anschaffungskosten, Strompreis, Einspeisevergütung und mögliche Förderungen
+   erforderlich.
 
-**Formel (Kaufplanung):** `Anfangskapazität = ⌈ technische Speichergrenze ÷ 0,75 ⌉` (kWh, aufgerundet)
+**Beispiel:** Technische Speichergrenze 9 kWh → planerische Anfangskapazität
+12 kWh, weil ⌈ 9 ÷ 0,75 ⌉ = 12.
 
-**Beispiel:** Speichergrenze 6 kWh → empfohlene Anfangskapazität 8 kWh, weil 8 × 0,75 ≈ 6 kWh.
+Das entspricht etwa **33 % mehr Anfangskapazität** gegenüber der technischen
+Speichergrenze — **nicht** einfach „Speichergrenze + 25 %“.
 
-Das entspricht etwa **33 % mehr Anfangskapazität** gegenüber der technischen Speichergrenze — **nicht** einfach „Speichergrenze + 25 %“.
+👉 **Wichtig:** Die 75-%-Anpassung liegt außerhalb der Jahres- und
+Mehrjahressimulation. Die tatsächliche Alterung hängt unter anderem von
+Hersteller, Batteriechemie, Temperatur, Betriebsstrategie, Zyklenzahl,
+Entladetiefe und Garantiebedingungen ab.
 
-👉 **Wichtig:** Die Alterungsannahme dient der langfristigen Kaufplanung und ist von der stündlichen Simulation getrennt. Sie ist **keine** herstellerspezifische Garantie und **kein** garantierter Degradationsverlauf. Alle physikalischen Kennzahlen (Eigenverbrauch, Autarkie, Netzbezug, Batterieflüsse, Verluste) beziehen sich weiterhin auf die **technische Speichergrenze**, nicht auf die planerische Anfangskapazität.
+#### Herstellerkontext (Beispiele, keine Empfehlung)
+
+Herstellergarantien zeigen, dass eine verbleibende Speicherkapazität häufig über
+einen bestimmten Zeitraum, eine Zyklenzahl oder einen Energiedurchsatz definiert
+wird. Die konkreten Bedingungen unterscheiden sich jedoch je nach Produkt.
+Beispielsweise nennt [sonnen für die sonnenBatterie 10 performance](https://www.sonnen.de/stromspeicher/sonnenbatterie-10-performance)
+mindestens 80 % nach 10 Jahren oder 10.000 Ladezyklen. Andere Hersteller
+verwenden abweichende Zeiträume, Restkapazitäten und Bedingungen — etwa die
+[Enphase IQ Battery 5P-Garantie](https://enphase.com/de-de/download/iq-battery-5p-de-de-austria-2024-10-25-warranty)
+(unterschiedliche Laufzeiten, Zyklen-/Durchsatzbedingungen und
+Restkapazitätsschwellen). Als historisches, produkt- und dokumentenspezifisches
+Beispiel siehe auch die
+[Tesla Powerwall 2 European Warranty](https://www.tesla.com/sites/default/files/pdfs/powerwall/Powerwall_2_DC_Warranty_Europe_1-1_English.pdf).
+
+Die in SpeicherGrenze verwendeten 75 % sind deshalb keine Übernahme einer
+bestimmten Herstellergarantie, sondern eine einheitliche und vorsichtige
+Planungsannahme. Vor dem Kauf müssen die Garantiebedingungen des konkret
+angebotenen Speichers geprüft werden. Diese Herstellerangaben stellen keine
+Empfehlung oder Endorsement von PVNavigator dar.
+
+Quellenstand: 27. August 2026
 
 ### Ermittlung der technischen Speichergrenze
 
@@ -576,41 +627,40 @@ Für eine fundierte Entscheidung empfehlen wir eine Wirtschaftlichkeitsanalyse, 
 
 ## 12. Gesamtsystem-Genauigkeit
 
-Die Genauigkeit der Gesamtsimulation ergibt sich aus dem Zusammenspiel mehrerer Modellkomponenten:
+Die Einschätzung der Gesamtsimulation ergibt sich aus dem Zusammenspiel mehrerer Modellkomponenten:
 
 ### PV-Erzeugung (PVGIS)
 
-- Hohe Genauigkeit durch physikalische Modellierung auf Basis realer Klimadaten
-
-- Typische Abweichung: gering
+- Physikalische Modellierung auf Basis historischer Klimadaten
+- Wetterjahre sind Eingangsdaten, keine Ertragsgarantie
+- lokale Verschattung wird nicht modelliert
 
 ### Lastprofil (BDEW)
 
-- Statistisches Standardprofil
-
+- Statistisches Standardprofil (BDEW H0), kein gemessenes Haushaltsprofil
 - Individuelle Abweichungen möglich
-
 - Größter Unsicherheitsfaktor im Modell
 
 ### Batteriesimulation
 
 - Physikalisch basiertes Modell mit praxisnahen Annahmen
-
 - Vereinfachungen bei Steuerung und realem Systemverhalten
+- herstellerspezifische Steuerstrategien und Wirkungsgradkennlinien werden nicht modelliert
 
 ---
 
 👉 Gesamteinschätzung:
 
-Die Simulation liefert eine realistische Erstabschätzung mit typischer Genauigkeit von:
-
-**±5–10%**
+Die Abweichung kann je nach Übereinstimmung des Standardlastprofils mit dem
+tatsächlichen Verbrauch, lokaler Verschattung, Wetterabweichungen und den
+Eigenschaften des konkreten Speichersystems deutlich variieren. Eine
+Genauigkeitsgarantie besteht nicht.
 
 ---
 
 👉 Wichtig:
 
-Die tatsächliche Genauigkeit hängt stark davon ab,
+Die tatsächliche Abweichung hängt stark davon ab,
 
 wie gut das Lastprofil dem realen Verbrauch entspricht.
 
