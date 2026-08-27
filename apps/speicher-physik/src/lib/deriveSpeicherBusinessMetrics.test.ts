@@ -84,6 +84,7 @@ describe("deriveSpeicherBusinessMetrics", () => {
     expect(result.batteryGeladenAvgKwh).toBeUndefined();
     expect(result.autarkieOhnePct).toBeNull();
     expect(result.autarkieMitPct).toBeNull();
+    expect(result.deltaAutarkiePctPoints).toBeNull();
     expect(result.deltaEigenverbrauch).toBeNull();
     expect(result.netzbezugMitSpeicherKwhYear).toBe(0);
     expect(result.einspeisungRechnerischKwhYear).toBeNull();
@@ -148,6 +149,29 @@ describe("deriveSpeicherBusinessMetrics", () => {
     expect(result.autarkieOhnePct).toBe(64);
     expect(result.autarkieMitPct).toBe(82);
     expect(result.deltaEigenverbrauch).toBe(900);
+    expect(result.deltaAutarkiePctPoints).toBe(18);
+  });
+
+  it("4b. ΔAutarkie from unrounded ratios — differs from round(A)−round(B)", () => {
+    // ohne 2520/5000 = 50.4% → 50; mit 3230/5000 = 64.6% → 65;
+    // round(65)−round(50)=15, but round((3230−2520)/5000×100)=round(14.2)=14
+    const result = deriveSpeicherBusinessMetrics(
+      baseInput({
+        verifiedResult: verified(2520, 8000),
+        speicherGrenz: emptySpeicherGrenz({
+          batterySizes: [6],
+          average: { 6: 3230 },
+          averageLoadKwhAnnual: 5000,
+        }),
+        annualConsumptionKwh: 5000,
+        totalKwPConfigured: 10,
+      })
+    );
+
+    expect(result.autarkieOhnePct).toBe(50);
+    expect(result.autarkieMitPct).toBe(65);
+    expect(result.autarkieMitPct! - result.autarkieOhnePct!).toBe(15);
+    expect(result.deltaAutarkiePctPoints).toBe(14);
   });
 
   it("5. ledger-first netzbezug — finite averageGridToHouseholdKwh", () => {
@@ -198,9 +222,10 @@ describe("deriveSpeicherBusinessMetrics", () => {
     );
 
     expect(result.einspeisungRechnerischKwhYear).toBe(567.3);
+    expect(result.ledgerGridExportAvgKwh).toBe(567.3);
   });
 
-  it("8. einspeisung fallback — export missing", () => {
+  it("8. einspeisung — missing ledger export yields null (no PV−EV fallback)", () => {
     const result = deriveSpeicherBusinessMetrics(
       baseInput({
         verifiedResult: verified(3200, 8000),
@@ -213,10 +238,76 @@ describe("deriveSpeicherBusinessMetrics", () => {
       })
     );
 
-    expect(result.einspeisungRechnerischKwhYear).toBe(3900);
+    // Would have been 8000 − 4100 = 3900 under the old PV−Eigenverbrauch fallback
+    expect(result.einspeisungRechnerischKwhYear).toBeNull();
+    expect(result.ledgerGridExportAvgKwh).toBeUndefined();
   });
 
-  it("9. battery losses sum — charge=120.4, discharge=80.6", () => {
+  it("8b. einspeisung — non-finite ledger export yields null", () => {
+    const result = deriveSpeicherBusinessMetrics(
+      baseInput({
+        verifiedResult: verified(3200, 8000),
+        speicherGrenz: emptySpeicherGrenz({
+          batterySizes: [6],
+          average: { 6: 4100 },
+          averageGridExportKwh: { 6: Number.NaN },
+        }),
+        annualConsumptionKwh: 5000,
+        totalKwPConfigured: 10,
+      })
+    );
+
+    expect(result.einspeisungRechnerischKwhYear).toBeNull();
+  });
+
+  it("9. Batterieverluste gesamt — charge + discharge + Selbstentladung (unrounded sum)", () => {
+    const result = deriveSpeicherBusinessMetrics(
+      baseInput({
+        verifiedResult: verified(3200, 8000),
+        speicherGrenz: emptySpeicherGrenz({
+          batterySizes: [6],
+          average: { 6: 4100 },
+          averageChargeLossKwh: { 6: 120.4 },
+          averageDischargeLossKwh: { 6: 80.6 },
+          averageSelfDischargeLossKwh: { 6: 15.3 },
+          averageAuxiliaryConsumptionKwh: { 6: 131.4 },
+          averageGridToHouseholdKwh: { 6: 900 },
+        }),
+        annualConsumptionKwh: 5000,
+        totalKwPConfigured: 10,
+      })
+    );
+
+    // 120.4 + 80.6 + 15.3 = 216.3 → 216; standby/grid import not included
+    expect(result.batterieverlusteModellGesamtKwh).toBe(216);
+    expect(result.avgAuxiliaryConsumptionDisplayKwh).toBe(131.4);
+    expect(result.netzbezugMitSpeicherKwhYear).toBe(900);
+  });
+
+  it("9b. Batterieverluste gesamt — round only final total (components would sum differently)", () => {
+    // Individually: round(10.4)+round(10.4)+round(10.4)=30; unrounded sum 31.2 → 31
+    const result = deriveSpeicherBusinessMetrics(
+      baseInput({
+        verifiedResult: verified(3200, 8000),
+        speicherGrenz: emptySpeicherGrenz({
+          batterySizes: [6],
+          average: { 6: 4100 },
+          averageChargeLossKwh: { 6: 10.4 },
+          averageDischargeLossKwh: { 6: 10.4 },
+          averageSelfDischargeLossKwh: { 6: 10.4 },
+        }),
+        annualConsumptionKwh: 5000,
+        totalKwPConfigured: 10,
+      })
+    );
+
+    expect(
+      Math.round(10.4) + Math.round(10.4) + Math.round(10.4)
+    ).toBe(30);
+    expect(result.batterieverlusteModellGesamtKwh).toBe(31);
+  });
+
+  it("9c. Batterieverluste gesamt — missing Selbstentladung → null (no partial total)", () => {
     const result = deriveSpeicherBusinessMetrics(
       baseInput({
         verifiedResult: verified(3200, 8000),
@@ -231,7 +322,36 @@ describe("deriveSpeicherBusinessMetrics", () => {
       })
     );
 
-    expect(result.batterieverlusteModellGesamtKwh).toBe(201);
+    expect(result.batterieverlusteModellGesamtKwh).toBeNull();
+  });
+
+  it("9d. physical KPIs use technical Speichergrenze lookup size", () => {
+    const result = deriveSpeicherBusinessMetrics(
+      baseInput({
+        verifiedResult: verified(3000, 8000),
+        speicherGrenz: emptySpeicherGrenz({
+          batterySizes: [5, 6, 7],
+          average: { 5: 3120, 6: 3170, 7: 3200 },
+          averageBatteryChargedKwh: { 5: 100, 6: 200, 7: 300 },
+          averageBatteryToHouseholdKwh: { 5: 80, 6: 160, 7: 240 },
+          averageGridExportKwh: { 5: 50, 6: 60, 7: 70 },
+          averageChargeLossKwh: { 5: 10, 6: 20, 7: 30 },
+          averageDischargeLossKwh: { 5: 5, 6: 10, 7: 15 },
+          averageSelfDischargeLossKwh: { 5: 1, 6: 2, 7: 3 },
+        }),
+        annualConsumptionKwh: 5000,
+        totalKwPConfigured: 10,
+      })
+    );
+
+    // Plateau: delta at 7 is 30 < 50 → technical = 6 (not planning 8)
+    expect(result.recommendedTechnicalSize).toBe(6);
+    expect(result.recommendedPlanningSize).toBe(8);
+    expect(result.physicalKpiLookupSize).toBe(6);
+    expect(result.batteryGeladenAvgKwh).toBe(200);
+    expect(result.batteryAnVerbrauchAvgKwh).toBe(160);
+    expect(result.einspeisungRechnerischKwhYear).toBe(60);
+    expect(result.batterieverlusteModellGesamtKwh).toBe(32);
   });
 
   it("10. eigenverbrauchsquote — pvYield=8000, mit=5600", () => {

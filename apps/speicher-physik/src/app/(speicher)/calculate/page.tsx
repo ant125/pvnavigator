@@ -598,13 +598,13 @@ export default function SpeicherCalculatePage() {
     recommendedEV,
     batteryGeladenAvgKwh,
     batteryAnVerbrauchAvgKwh,
-    batteryTotalDischargedAvgKwh,
     batterieverlusteModellGesamtKwh,
     avgSelfDischargeLossDisplayKwh,
     avgAuxiliaryConsumptionDisplayKwh,
     eigenverbrauchMitSpeicher,
     autarkieOhnePct,
     autarkieMitPct,
+    deltaAutarkiePctPoints,
     deltaEigenverbrauch,
     resolvedBackupReserveKwh,
     pvYieldKwhAnnual,
@@ -613,14 +613,6 @@ export default function SpeicherCalculatePage() {
     einspeisungRechnerischKwhYear,
     eigenverbrauchsquoteMitSpeicherPct,
   } = metrics;
-
-  const differenzBatterieflussKwh =
-    typeof batteryGeladenAvgKwh === "number" &&
-    Number.isFinite(batteryGeladenAvgKwh) &&
-    typeof batteryTotalDischargedAvgKwh === "number" &&
-    Number.isFinite(batteryTotalDischargedAvgKwh)
-      ? Math.round(batteryGeladenAvgKwh - batteryTotalDischargedAvgKwh)
-      : null;
 
   const hybridChargeBreakdownAvgKwh =
     speicherGrenz && physicalKpiLookupSize > 0
@@ -633,11 +625,6 @@ export default function SpeicherCalculatePage() {
     physicalKpiLookupSize > 0 &&
     batterieverlusteModellGesamtKwh !== null &&
     hybridChargeBreakdownAvgKwh > 1e-3;
-
-  const deltaAutarkie =
-    autarkieMitPct !== null && autarkieOhnePct !== null
-      ? Math.round(autarkieMitPct - autarkieOhnePct)
-      : null;
 
   const hasActiveBackupReserve =
     typeof resolvedBackupReserveKwh === "number" &&
@@ -1402,10 +1389,10 @@ export default function SpeicherCalculatePage() {
                         ? `${autarkieMitPct} %`
                         : PLACEHOLDER}
                     </p>
-                    {deltaAutarkie !== null && (
+                    {deltaAutarkiePctPoints !== null && (
                       <p className="text-sm mt-1 font-medium text-emerald-500">
-                        ({deltaAutarkie >= 0 ? "+" : ""}
-                        {deltaAutarkie}%)
+                        ({deltaAutarkiePctPoints >= 0 ? "+" : ""}
+                        {deltaAutarkiePctPoints} Prozentpunkte)
                       </p>
                     )}
                   </div>
@@ -1595,9 +1582,16 @@ export default function SpeicherCalculatePage() {
 
                       <div className={SPEICHER_REPORT_KPI_ROW}>
                         <div className="min-w-0 leading-snug text-slate-400">
-                          Batterie geladen
+                          <span className="block leading-snug">
+                            PV-Energie zur Batterieladung
+                          </span>
+                          <span
+                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
+                          >
+                            PV-Überschuss vor den modellierten Ladeverlusten.
+                          </span>
                         </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                        <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
                           {typeof batteryGeladenAvgKwh === "number" &&
                           Number.isFinite(batteryGeladenAvgKwh)
                             ? `${Math.round(batteryGeladenAvgKwh)} kWh/Jahr`
@@ -1607,9 +1601,17 @@ export default function SpeicherCalculatePage() {
 
                       <div className={SPEICHER_REPORT_KPI_ROW}>
                         <div className="min-w-0 leading-snug text-slate-400">
-                          Batterie an Verbrauch
+                          <span className="block leading-snug">
+                            Batterie → Haushalt (AC)
+                          </span>
+                          <span
+                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
+                          >
+                            An den Haushalt gelieferte Energie nach den
+                            modellierten Entladeverlusten.
+                          </span>
                         </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                        <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
                           {typeof batteryAnVerbrauchAvgKwh === "number" &&
                           Number.isFinite(batteryAnVerbrauchAvgKwh)
                             ? `${Math.round(batteryAnVerbrauchAvgKwh)} kWh/Jahr`
@@ -1627,8 +1629,10 @@ export default function SpeicherCalculatePage() {
                               <span
                                 className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
                               >
-                                Modell: Lade- + Entladeverluste
-                                (Mehrjahresmittel).
+                                Summe aus Lade-, Entladeverlusten und
+                                Selbstentladung (Mehrjahresmittel). Einzelne
+                                gerundete Komponenten können vom gerundeten
+                                Gesamtwert um 1&nbsp;kWh abweichen.
                               </span>
                             </div>
                             <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
@@ -1713,14 +1717,12 @@ export default function SpeicherCalculatePage() {
                             <span
                               className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
                             >
-                              Beinhaltet Lade-/Entladeverluste sowie geringe
-                              systembedingte Abweichungen.
+                              Für dieses Ergebnis liegt keine aufgeschlüsselte
+                              Verlustbilanz vor.
                             </span>
                           </div>
                           <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
-                            {differenzBatterieflussKwh !== null
-                              ? `${differenzBatterieflussKwh} kWh/Jahr`
-                              : PLACEHOLDER}
+                            {PLACEHOLDER}
                           </div>
                         </div>
                       )}
@@ -1733,7 +1735,9 @@ export default function SpeicherCalculatePage() {
                           <span
                             className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
                           >
-                            Separat bilanziert; nicht im Haushaltsverbrauch,
+                            Gesamter Eigenbedarf des Speichersystems; kann durch
+                            PV, Batterie oder Netz gedeckt werden. Separat
+                            bilanziert; nicht im Haushaltsverbrauch,
                             Eigenverbrauch oder Autarkiegrad enthalten.
                           </span>
                         </div>
@@ -1748,9 +1752,18 @@ export default function SpeicherCalculatePage() {
 
                       <div className={SPEICHER_REPORT_KPI_ROW}>
                         <div className="min-w-0 leading-snug text-slate-400">
-                          Netzbezug mit Speicher
+                          <span className="block leading-snug">
+                            Netzbezug Haushalt mit Speicher
+                          </span>
+                          <span
+                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
+                          >
+                            Nur Netzbezug des Haushalts einschließlich
+                            Wärmepumpe; Netzbezug des Speichersystems ist nicht
+                            enthalten.
+                          </span>
                         </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                        <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
                           {typeof netzbezugMitSpeicherKwhYear === "number" &&
                           Number.isFinite(netzbezugMitSpeicherKwhYear)
                             ? `${netzbezugMitSpeicherKwhYear.toFixed(0)} kWh/Jahr`
@@ -1761,10 +1774,13 @@ export default function SpeicherCalculatePage() {
                       <div className={SPEICHER_REPORT_KPI_ROW}>
                         <div className="min-w-0 leading-snug text-slate-400">
                           <span className="block leading-snug">
-                            Einspeisung (rechnerisch)
+                            Modellierte Netzeinspeisung
                           </span>
                           <span className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}>
-                            Grobe Größenordnung, nicht gleich EEG-Einspeisemenge
+                            Verbleibender PV-Überschuss am AC-Bus nach
+                            Haushaltsverbrauch, Systemverbrauch und
+                            Batterieladung. Keine Abbildung von EEG-Abrechnung
+                            oder realem Zählerverhalten.
                           </span>
                         </div>
                         <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">

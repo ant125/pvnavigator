@@ -53,6 +53,8 @@ export type DeriveSpeicherBusinessMetricsOutput = {
   eigenverbrauchMitSpeicher: number | undefined;
   autarkieOhnePct: number | null;
   autarkieMitPct: number | null;
+  /** Percentage-point change from unrounded ratios, then rounded. */
+  deltaAutarkiePctPoints: number | null;
   deltaEigenverbrauch: number | null;
   resolvedBackupReserveKwh: number;
   pvYieldKwhAnnual: number | undefined;
@@ -60,6 +62,7 @@ export type DeriveSpeicherBusinessMetricsOutput = {
   ledgerGridImportAvgKwh: number | undefined;
   ledgerGridExportAvgKwh: number | undefined;
   netzbezugMitSpeicherKwhYear: number | null;
+  /** Explicit multi-year ledger export at technical Speichergrenze; null if unavailable. */
   einspeisungRechnerischKwhYear: number | null;
   eigenverbrauchsquoteMitSpeicherPct: number | null;
 };
@@ -115,18 +118,25 @@ export function deriveSpeicherBusinessMetrics(
     speicherGrenz && physicalKpiLookupSize > 0
       ? speicherGrenz.averageDischargeLossKwh[physicalKpiLookupSize]
       : undefined;
-  const batterieverlusteModellGesamtKwh =
-    typeof avgChargeLossKwh === "number" &&
-    Number.isFinite(avgChargeLossKwh) &&
-    typeof avgDischargeLossKwh === "number" &&
-    Number.isFinite(avgDischargeLossKwh)
-      ? Math.round(avgChargeLossKwh + avgDischargeLossKwh)
-      : null;
-
   const avgSelfDischargeLossDisplayKwh =
     speicherGrenz && physicalKpiLookupSize > 0
       ? speicherGrenz.averageSelfDischargeLossKwh[physicalKpiLookupSize]
       : undefined;
+  /** Charge-path + discharge-path + self-discharge; round only the final total. */
+  const batterieverlusteModellGesamtKwh =
+    typeof avgChargeLossKwh === "number" &&
+    Number.isFinite(avgChargeLossKwh) &&
+    typeof avgDischargeLossKwh === "number" &&
+    Number.isFinite(avgDischargeLossKwh) &&
+    typeof avgSelfDischargeLossDisplayKwh === "number" &&
+    Number.isFinite(avgSelfDischargeLossDisplayKwh)
+      ? Math.round(
+          avgChargeLossKwh +
+            avgDischargeLossKwh +
+            avgSelfDischargeLossDisplayKwh
+        )
+      : null;
+
   const avgAuxiliaryConsumptionDisplayKwh =
     speicherGrenz && physicalKpiLookupSize > 0
       ? speicherGrenz.averageAuxiliaryConsumptionKwh[physicalKpiLookupSize]
@@ -166,6 +176,19 @@ export function deriveSpeicherBusinessMetrics(
     typeof eigenverbrauchMitSpeicher === "number" &&
     Number.isFinite(eigenverbrauchMitSpeicher)
       ? Math.round((eigenverbrauchMitSpeicher / autarkieDenominatorKwh) * 100)
+      : null;
+
+  const deltaAutarkiePctPoints =
+    autarkieDenominatorKwh > 0 &&
+    typeof eigenverbrauchMitSpeicher === "number" &&
+    Number.isFinite(eigenverbrauchMitSpeicher) &&
+    typeof eigenverbrauchOhneSpeicher === "number" &&
+    Number.isFinite(eigenverbrauchOhneSpeicher)
+      ? Math.round(
+          ((eigenverbrauchMitSpeicher - eigenverbrauchOhneSpeicher) /
+            autarkieDenominatorKwh) *
+            100
+        )
       : null;
 
   const deltaEigenverbrauch =
@@ -212,16 +235,12 @@ export function deriveSpeicherBusinessMetrics(
         ? autarkieDenominatorKwh - eigenverbrauchMitSpeicher
         : null;
 
+  /** Ledger-only: never reconstruct as PV − Eigenverbrauch. */
   const einspeisungRechnerischKwhYear =
     typeof ledgerGridExportAvgKwh === "number" &&
     Number.isFinite(ledgerGridExportAvgKwh)
       ? ledgerGridExportAvgKwh
-      : typeof pvYieldKwhAnnual === "number" &&
-          Number.isFinite(pvYieldKwhAnnual) &&
-          typeof eigenverbrauchMitSpeicher === "number" &&
-          Number.isFinite(eigenverbrauchMitSpeicher)
-        ? pvYieldKwhAnnual - eigenverbrauchMitSpeicher
-        : null;
+      : null;
 
   const eigenverbrauchsquoteMitSpeicherPct =
     typeof pvYieldKwhAnnual === "number" &&
@@ -251,6 +270,7 @@ export function deriveSpeicherBusinessMetrics(
     eigenverbrauchMitSpeicher,
     autarkieOhnePct,
     autarkieMitPct,
+    deltaAutarkiePctPoints,
     deltaEigenverbrauch,
     resolvedBackupReserveKwh,
     pvYieldKwhAnnual,

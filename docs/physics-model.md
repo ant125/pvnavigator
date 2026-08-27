@@ -82,6 +82,26 @@ aber keine exakte Vorhersage der tatsächlichen Produktion.
 
 ---
 
+### Mehrere Dachflächen
+
+Für jede eingegebene Dachfläche werden PV-Leistung, Neigung und Ausrichtung separat berücksichtigt. Die Geocodierung des Gebäudes erfolgt einmal.
+
+PVGIS berechnet für jede Dachfläche und jedes Wetterjahr eine eigene stündliche Erzeugungsreihe. Der im Formular verwendete Azimut von 0° bis 359° wird dabei in die von PVGIS erwartete Ausrichtung umgerechnet.
+
+Nach der zeitlichen Ausrichtung auf das gemeinsame Raster mit 8760 Stunden werden die Erzeugungsreihen aller Dachflächen stundenweise addiert. Erst die zusammengefasste PV-Erzeugung wird anschließend mit dem Lastprofil und dem Batteriespeicher simuliert.
+
+Der gesamte PV-Jahresertrag und die installierte Gesamtleistung ergeben sich aus allen Dachflächen. Der spezifische Ertrag wird als gesamter PV-Jahresertrag geteilt durch die Summe der installierten kWp berechnet.
+
+Weitere Annahmen:
+
+- Die PVGIS-Systemverluste von 14 % werden für jede Dachfläche angewendet.
+- Lokale Verschattung wird derzeit nicht modelliert.
+- Alle Dachflächen verwenden die Wetterjahre 2016–2020.
+
+Es wird **keine** mittlere Dachneigung und **kein** mittlerer Azimut über die Flächen gebildet. Jede Fläche behält ihre eigenen Eingaben für Neigung und Ausrichtung.
+
+---
+
 ### 2.2 Lastprofil (Stromverbrauch)
 
 - Quelle: BDEW Standardlastprofil H0
@@ -146,27 +166,33 @@ Keine Unterscheidung zwischen verschiedenen Wärmepumpentypen
 
 ### Mehrjährige Mittelung
 
-PV-Ertrag, Eigenverbrauch ohne Speicher und die Batteriesimulationen für Speichergrößen von 5 bis 30 kWh werden für dieselben Wetterjahre 2016 bis 2020 berechnet. Die ausgewiesenen Jahreswerte sind Mittelwerte dieser fünf Jahre.
+PV-Ertrag, Eigenverbrauch ohne Speicher und die Batteriesimulationen für Speichergrößen von 5 bis 30 kWh werden für dieselben Wetterjahre 2016 bis 2020 berechnet. Die ausgewiesenen Jahresenergiewerte sind arithmetische Mittelwerte dieser fünf Jahre.
+
+Autarkiegrad und Eigenverbrauchsquote sind Quotienten aus diesen Mittelwerten der Energiegrößen — **nicht** Mittelwerte von fünf jährlichen Prozentwerten.
+
+Ist eine Wärmepumpe aktiviert, ist ihr Verbrauch Bestandteil der modellierten Haushaltslast.
+
+Alle physikalischen Kennzahlen beziehen sich auf die **technische Speichergrenze**. Die planerische Anfangskapazität (75 %-Restkapazitäts-Anpassung) dient nur der Kaufempfehlung und wird **nicht** zur Berechnung der physikalischen Kennzahlen verwendet.
 
 ---
 
 ## 3. Simulationslogik
 
-Für jede Stunde wird ein AC-Bus-Modell verwendet:
+Für jede Stunde wird ein AC-Bus-Modell verwendet. Haushaltsflüsse und Systemverbrauch des Speichers werden getrennt bilanziert.
 
-- PV-Erzeugung deckt zuerst den Haushaltsverbrauch.
+### PV-Überschuss-Stunde
 
-- Verbleibende PV-Erzeugung deckt den Systemverbrauch des Speichersystems.
+1. PV deckt zuerst den Haushaltsverbrauch.
+2. Verbleibende PV-Erzeugung deckt den Systemverbrauch (Auxiliary) des Speichersystems.
+3. Weiterer PV-Überschuss lädt die Batterie über die modellierten Verluststufen.
+4. Verbleibender Überschuss wird ins Netz eingespeist.
 
-- Weiterer PV-Überschuss lädt die Batterie.
+### Defizit-Stunde
 
-- Verbleibender Überschuss wird ins Netz eingespeist.
-
-- Bei einem Defizit entlädt die Batterie zuerst zur Deckung des Haushaltsverbrauchs.
-
-- Anschließend kann die Batterie den Systemverbrauch des Speichersystems decken.
-
-- Verbleibender Bedarf wird aus dem Netz bezogen.
+1. Die Batterie deckt zuerst das Haushaltsdefizit.
+2. Verbleibende verfügbare Batterieleistung kann den Systemverbrauch decken.
+3. Das Netz deckt den restlichen Haushaltsbedarf.
+4. Das Netz deckt den restlichen Systemverbrauch.
 
 Der Systemverbrauch des Speichersystems wird separat erfasst. Er erhöht weder den ausgewiesenen Haushaltsverbrauch noch den Eigenverbrauch oder den Autarkiegrad.
 
@@ -310,9 +336,94 @@ Nicht explizit separat modelliert:
 
 ## 6. Ergebnis
 
-**Eigenverbrauch:**
+Die folgenden Kennzahlen beziehen sich auf die **technische Speichergrenze**, nicht auf die größere planerische Anfangskapazität. Jahresenergiewerte sind Mittelwerte der Wetterjahre 2016–2020.
 
-Energie, die direkt oder über Batterie zur Deckung der Last genutzt wird.
+### PV-Jahresertrag
+
+Mittlere jährliche PV-Erzeugung aller Dachflächen nach den in PVGIS angesetzten Systemverlusten von 14 %. Mittelwert der Wetterjahre 2016–2020.
+
+### Spezifischer Ertrag
+
+PV-Jahresertrag geteilt durch die installierte Gesamtleistung aller Dachflächen.
+
+`Spezifischer Ertrag = PV-Jahresertrag / PV-Gesamtleistung`
+
+### Direktverbrauch ohne Speicher
+
+PV-Energie, die im selben Stundenintervall unmittelbar den Haushaltsverbrauch einschließlich einer optionalen Wärmepumpe deckt.
+
+`EV₀ = Σ min(PV, Last)`
+
+### Eigenverbrauch mit Speicher
+
+Energie zur Deckung des Haushaltsverbrauchs aus direkter PV-Erzeugung und aus der Batterie. Maßgeblich ist die technische Speichergrenze, nicht die größere planerische Anfangskapazität.
+
+`Eigenverbrauch mit Speicher = Direktverbrauch + Batterie → Haushalt (AC)`
+
+Der Systemverbrauch des Speichersystems ist **nicht** Bestandteil dieses Eigenverbrauchs.
+
+### PV-Energie zur Batterieladung
+
+PV-Überschuss, der vor den modellierten Ladeverlusten für die Batterieladung vorgesehen wird.
+
+### Batterie → Haushalt (AC)
+
+Energie, die nach Zell- und Wechselrichterverlusten auf der AC-Seite an den Haushalt geliefert wird.
+
+Batterieenergie, die den Systemverbrauch des Speichersystems deckt, ist hier **nicht** enthalten.
+
+### Batterieverluste gesamt
+
+Summe aus PV→Speicher-Verlust, Zellverlust beim Laden, Zellverlust beim Entladen, Speicher→AC-Verlust und Selbstentladung.
+
+Der Systemverbrauch Standby ist **nicht** Bestandteil der Batterieverluste gesamt.
+
+Die Summe wird aus den ungerundeten Komponenten gebildet und erst danach gerundet. Einzeln gerundete Komponenten können vom gerundeten Gesamtwert um 1 kWh abweichen.
+
+### Systemverbrauch Standby
+
+Konstanter modellierter Eigenbedarf des Speichersystems von 15 W. Dies entspricht bei 8760 Stunden rund 131 kWh pro Jahr. Der Bedarf kann durch PV, Batterie oder Netz gedeckt werden.
+
+Der Systemverbrauch wird separat bilanziert und ist nicht Bestandteil des Haushaltsverbrauchs, Eigenverbrauchs oder Autarkiegrads.
+
+### Netzbezug Haushalt mit Speicher
+
+Netzenergie zur Deckung des verbleibenden Haushaltsverbrauchs einschließlich einer optionalen Wärmepumpe.
+
+`Netzbezug Haushalt = modellierter Haushaltsverbrauch − Eigenverbrauch mit Speicher`
+
+Netzenergie für den Systemverbrauch des Speichersystems ist **nicht** enthalten.
+
+### Modellierte Netzeinspeisung
+
+Im Modell verbleibender PV-Überschuss nach direktem Haushaltsverbrauch, Systemverbrauch und Batterieladung.
+
+Der Wert stammt aus dem expliziten Netzeinspeisungs-Ledger der Simulation (Mehrjahresmittel an der technischen Speichergrenze). Es handelt sich **nicht** um eine EEG-Abrechnungsgröße und **nicht** um eine exakte Vorhersage des physikalischen Stromzählers. Eine Rekonstruktion als „PV-Jahresertrag − Eigenverbrauch“ wird nicht verwendet.
+
+### Autarkiegrad
+
+`Autarkiegrad = Eigenverbrauch / modellierter Haushaltsverbrauch × 100 %`
+
+- Der Haushaltsverbrauch enthält eine optionale Wärmepumpe.
+- Der Systemverbrauch des Speichersystems ist ausgeschlossen.
+- Autarkie wird getrennt ohne und mit Speicher berechnet.
+- Das Ergebnis ist der Quotient der Mittelwerte 2016–2020 (nicht das Mittel von fünf Jahres-Prozentwerten).
+
+### Eigenverbrauchsquote
+
+`Eigenverbrauchsquote = Eigenverbrauch mit Speicher / PV-Jahresertrag × 100 %`
+
+- Es wird nur der Haushalts-Eigenverbrauch verwendet.
+- Der Systemverbrauch des Speichersystems ist ausgeschlossen.
+- Das Ergebnis ist der Quotient der Mehrjahres-Mittelwerte.
+
+### Veränderungen
+
+`Δ Eigenverbrauch = Eigenverbrauch mit Speicher − Direktverbrauch ohne Speicher`
+
+`Δ Autarkie = (Eigenverbrauch mit Speicher − Direktverbrauch ohne Speicher) ÷ modellierter Haushaltsverbrauch × 100`
+
+Δ Autarkie wird in **Prozentpunkten** ausgewiesen (nicht als „%“ des Autarkiegrads). Die Einzelwerte Autarkie ohne/mit Speicher bleiben ganzzahlig gerundet; Δ Autarkie wird aus den ungerundeten Quotienten gebildet und erst danach gerundet.
 
 ---
 
