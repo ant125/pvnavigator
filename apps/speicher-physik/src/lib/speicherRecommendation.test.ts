@@ -4,6 +4,7 @@ import {
   deriveRecommendedPlanningSize,
   deriveRecommendedTechnicalSize,
   getPhysicalKpiLookupSize,
+  PLANNING_REMAINING_CAPACITY_FRACTION,
 } from "./speicherRecommendation";
 
 function chartPoints(
@@ -59,6 +60,23 @@ describe("deriveRecommendedTechnicalSize", () => {
 });
 
 describe("deriveRecommendedPlanningSize", () => {
+  it("technical 9 kWh → planning 12 kWh", () => {
+    expect(deriveRecommendedPlanningSize(9)).toBe(12);
+  });
+
+  it("technical 0 kWh → planning 0 kWh (no division)", () => {
+    expect(deriveRecommendedPlanningSize(0)).toBe(0);
+  });
+
+  it("uses Math.ceil for non-integer division (8 / 0.75 = 10.666… → 11)", () => {
+    expect(PLANNING_REMAINING_CAPACITY_FRACTION).toBe(0.75);
+    expect(8 / PLANNING_REMAINING_CAPACITY_FRACTION).toBeCloseTo(10.666666, 5);
+    expect(deriveRecommendedPlanningSize(8)).toBe(11);
+    expect(deriveRecommendedPlanningSize(8)).toBe(
+      Math.ceil(8 / PLANNING_REMAINING_CAPACITY_FRACTION)
+    );
+  });
+
   it.each([
     [0, 0],
     [6, 8],
@@ -75,14 +93,22 @@ describe("deriveRecommendedPlanningSize", () => {
 
 describe("getPhysicalKpiLookupSize", () => {
   it("uses recommendedTechnicalSize, not recommendedPlanningSize", () => {
-    const recommendedTechnicalSize = 6;
+    const recommendedTechnicalSize = 9;
     const recommendedPlanningSize =
       deriveRecommendedPlanningSize(recommendedTechnicalSize);
 
-    expect(recommendedPlanningSize).toBe(8);
-    expect(getPhysicalKpiLookupSize(recommendedTechnicalSize)).toBe(6);
+    expect(recommendedPlanningSize).toBe(12);
+    expect(getPhysicalKpiLookupSize(recommendedTechnicalSize)).toBe(9);
     expect(getPhysicalKpiLookupSize(recommendedTechnicalSize)).not.toBe(
       recommendedPlanningSize
     );
+  });
+
+  it("planning size does not enter physical KPI lookup", () => {
+    const technical = 6;
+    const planning = deriveRecommendedPlanningSize(technical);
+    expect(planning).toBe(8);
+    expect(getPhysicalKpiLookupSize(technical)).toBe(technical);
+    expect(getPhysicalKpiLookupSize(technical)).not.toBe(planning);
   });
 });

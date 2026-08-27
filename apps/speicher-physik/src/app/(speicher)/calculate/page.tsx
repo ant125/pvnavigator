@@ -1262,47 +1262,55 @@ export default function SpeicherCalculatePage() {
                     {recommendedTechnicalSize > 0 ? (
                       <>
                         <p className="text-sm text-slate-400">
-                          Empfohlene Speichergröße
+                          Planerische Kaufempfehlung
                         </p>
                         <p className="text-3xl font-bold text-emerald-400 opacity-90">
                           {recommendedPlanningSize} kWh
                         </p>
-                        <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                          Die technische Simulation zeigt, dass für Ihr
-                          Verbrauchsprofil heute bereits etwa{" "}
-                          <strong className="font-semibold text-slate-300">
-                            {recommendedTechnicalSize} kWh nutzbare
-                            Speicherkapazität
-                          </strong>{" "}
-                          ausreichen.
+                        <p className="mt-2 text-sm font-medium text-slate-300">
+                          Technische Speichergrenze heute:{" "}
+                          {recommendedTechnicalSize} kWh
                         </p>
                         <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                          Viele Hersteller moderner Batteriespeicher geben nach
-                          rund <strong className="font-semibold text-slate-300">10 Jahren</strong>{" "}
-                          oder einer bestimmten Anzahl von Ladezyklen eine
-                          verbleibende nutzbare Speicherkapazität von etwa{" "}
+                          Die physikalische Simulation ermittelt für die heutigen
+                          Bedingungen eine technische Speichergrenze von{" "}
                           <strong className="font-semibold text-slate-300">
-                            70–80&nbsp;%
-                          </strong>{" "}
-                          der ursprünglichen Kapazität an.
-                        </p>
-                        <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                          Deshalb empfehlen wir für die Kaufentscheidung eine{" "}
-                          <strong className="font-semibold text-slate-300">
-                            Speichergröße von {recommendedPlanningSize} kWh
+                            {recommendedTechnicalSize} kWh nutzbarer Kapazität
                           </strong>
-                          . Dadurch bleibt voraussichtlich auch nach einer
-                          möglichen Kapazitätsabnahme genügend nutzbare
-                          Speicherkapazität erhalten.
+                          .
+                        </p>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                          Für die Kaufplanung wird zusätzlich eine pauschale
+                          Alterungsreserve berücksichtigt. Dabei wird angenommen,
+                          dass nach einem Planungszeitraum von etwa 10 Jahren noch
+                          75&nbsp;% der anfänglichen nutzbaren Kapazität verfügbar
+                          sind.
+                        </p>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-300">
+                          Planerische Anfangskapazität = ⌈{" "}
+                          {recommendedTechnicalSize} kWh / 0,75 ⌉ ={" "}
+                          {recommendedPlanningSize} kWh
                         </p>
                         <p className="mt-3 text-xs italic leading-relaxed text-slate-500">
-                          Die angenommene Kapazitätsabnahme ist eine
-                          Planungsannahme und keine Garantie für die tatsächliche
-                          Alterung eines bestimmten Batteriespeichers.
+                          Die 75-%-Annahme ist keine Prognose für einen bestimmten
+                          Batteriespeicher und keine Herstellergarantie. Sie
+                          beeinflusst ausschließlich die planerische
+                          Kaufempfehlung. Die technische Simulation und sämtliche
+                          technischen Kennzahlen werden weiterhin mit der
+                          technischen Speichergrenze von{" "}
+                          {recommendedTechnicalSize} kWh berechnet.
+                        </p>
+                        <p className="mt-3 text-xs leading-relaxed">
+                          <Link
+                            href="/technische-details"
+                            className="text-emerald-400/90 underline underline-offset-2 hover:text-emerald-300"
+                          >
+                            Erläuterung der Planungsannahme und Herstellerbeispiele
+                          </Link>
                         </p>
                         {planningExceedsSimulatedRange && (
                           <p className="mt-3 text-sm leading-relaxed text-amber-400/90">
-                            Die empfohlene Anfangskapazität liegt außerhalb des
+                            Die planerische Anfangskapazität liegt außerhalb des
                             simulierten Speicherbereichs von 5–30 kWh.
                           </p>
                         )}
@@ -1528,12 +1536,12 @@ export default function SpeicherCalculatePage() {
                       Technische Kennzahlen
                     </h3>
                     <p className="mb-3 text-xs leading-relaxed text-slate-500 sm:mb-4">
-                      Alle technischen Kennzahlen beziehen sich auf die technisch
-                      ermittelte Speichergrenze von{" "}
+                      Alle technischen Kennzahlen beziehen sich auf die technische
+                      Speichergrenze von{" "}
                       <strong className="font-semibold text-slate-400">
                         {recommendedTechnicalSize} kWh
                       </strong>{" "}
-                      und nicht auf die größere Kaufempfehlung.
+                      und nicht auf die planerische Kaufempfehlung.
                     </p>
 
                     <dl className={SPEICHER_REPORT_ROWS}>
@@ -1843,34 +1851,34 @@ export default function SpeicherCalculatePage() {
                   {recommendedTechnicalSize > 0 ? (
                     <>
                       <p className="w-full min-w-0 text-sm leading-6 text-slate-300">
-                        Wir empfehlen für Ihr Gebäude eine{" "}
+                        Die planerische Kaufempfehlung für Ihr Gebäude beträgt{" "}
                         <strong className="font-semibold text-slate-200">
-                          Speichergröße von {recommendedPlanningSize} kWh
-                        </strong>
-                        .
+                          {recommendedPlanningSize} kWh
+                        </strong>{" "}
+                        (planerische Anfangskapazität).
                       </p>
                       {planningExceedsSimulatedRange && (
                         <p className="w-full min-w-0 text-sm leading-6 text-amber-400/90 mt-3">
-                          Die empfohlene Anfangskapazität liegt außerhalb des
+                          Die planerische Anfangskapazität liegt außerhalb des
                           simulierten Speicherbereichs von 5–30 kWh.
                         </p>
                       )}
                       <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                        Die technische Simulation zeigt, dass bereits{" "}
+                        Die physikalische Simulation ermittelt eine technische
+                        Speichergrenze von{" "}
                         <strong className="font-semibold text-slate-200">
-                          etwa {recommendedTechnicalSize} kWh nutzbare Kapazität
-                        </strong>{" "}
-                        ausreichen, um die technisch sinnvolle Speichergrenze zu
-                        erreichen.
+                          {recommendedTechnicalSize} kWh nutzbarer Kapazität
+                        </strong>
+                        .
                       </p>
                       <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                        Die Empfehlung von{" "}
+                        Die planerische Anfangskapazität von{" "}
                         <strong className="font-semibold text-slate-200">
                           {recommendedPlanningSize} kWh
                         </strong>{" "}
-                        berücksichtigt zusätzlich eine mögliche
-                        Kapazitätsabnahme über die Nutzungsdauer des
-                        Batteriespeichers.
+                        enthält zusätzlich eine pauschale Alterungsreserve
+                        (Planungsannahme: ca. 75&nbsp;% Restkapazität nach etwa
+                        10 Jahren).
                       </p>
                       {hasActiveBackupReserve && (
                         <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
@@ -1915,15 +1923,16 @@ export default function SpeicherCalculatePage() {
                         der physikalischen Simulation berechnet.
                       </p>
                       <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                        Die empfohlene Speichergröße berücksichtigt zusätzlich
-                        eine langfristige Planungsannahme zur möglichen
-                        Kapazitätsabnahme moderner Batteriespeicher.
+                        Die planerische Kaufempfehlung berücksichtigt zusätzlich
+                        eine einheitliche Alterungsreserve. Sie ist keine Prognose
+                        der tatsächlichen Batteriealterung und keine
+                        Herstellergarantie.
                       </p>
                       <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
                         Die Berechnung basiert auf einer stündlichen Simulation
-                        (8760 Stunden pro Jahr). Die Alterungsannahme beeinflusst
-                        die Simulation nicht, sondern ausschließlich die
-                        Kaufempfehlung.
+                        (8760 Stunden pro Jahr). Die 75-%-Planungsannahme
+                        beeinflusst die Simulation nicht, sondern ausschließlich
+                        die planerische Kaufempfehlung.
                       </p>
                       {hasActiveBackupReserve && (
                         <>
