@@ -17,7 +17,7 @@ const LANDING_KICKER =
   "text-xs font-semibold uppercase tracking-wide text-accent-text";
 
 const LANDING_H1 =
-  "text-3xl font-semibold tracking-tight text-ink sm:text-4xl md:text-5xl leading-tight";
+  "text-3xl font-semibold tracking-tight text-ink sm:text-4xl lg:text-[2.625rem] lg:leading-[1.15]";
 
 const LANDING_H2 =
   "text-2xl font-semibold tracking-tight text-ink sm:text-3xl";
@@ -111,16 +111,16 @@ function StepIcon({ children }: { children: ReactNode }) {
 
 function HeroPreviewPanel() {
   return (
-    <div className={`${LANDING_SHEET} lg:shadow-md`}>
+    <div className="rounded-lg border border-line bg-surface p-5 shadow-sm sm:p-6 lg:shadow-md">
       <p className={LANDING_KICKER}>Ergebnis der Simulation</p>
 
       <div
-        className="mt-5 rounded-md border border-line-soft bg-surface-muted p-4"
+        className="mt-4 rounded-md border border-line-soft bg-surface-muted p-3"
         aria-hidden
       >
         <svg
           viewBox="0 0 320 140"
-          className="h-auto w-full"
+          className="mx-auto h-auto w-full max-h-[8.75rem]"
           role="img"
           aria-label=""
         >
@@ -177,12 +177,12 @@ function HeroPreviewPanel() {
         </svg>
       </div>
 
-      <div className="mt-5 grid gap-4 border-t border-line-soft pt-5 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 border-t border-line-soft pt-4 sm:grid-cols-2">
         <div>
           <p className="text-xs leading-snug text-ink-muted">
             technische Speichergrenze
           </p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-ink">
+          <p className="mt-0.5 text-2xl font-semibold tabular-nums tracking-tight text-ink">
             8,4 kWh
           </p>
         </div>
@@ -190,13 +190,13 @@ function HeroPreviewPanel() {
           <p className="text-xs leading-snug text-ink-muted">
             planerische Kaufempfehlung als separate Planungsgröße
           </p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-accent-text">
+          <p className="mt-0.5 text-2xl font-semibold tabular-nums tracking-tight text-accent-text">
             10 kWh
           </p>
         </div>
       </div>
 
-      <p className="mt-5 text-xs leading-relaxed text-ink-muted">
+      <p className="mt-4 text-xs leading-snug text-ink-muted">
         Basierend auf 8760h Simulation
       </p>
     </div>
@@ -205,17 +205,18 @@ function HeroPreviewPanel() {
 
 function HeroSection() {
   return (
-    <section className="border-b border-line bg-gradient-to-b from-accent-soft/30 to-canvas py-16 lg:py-20">
+    <section className="border-b border-line bg-gradient-to-b from-accent-soft/30 to-canvas py-14 lg:py-16">
       <div className={LANDING_FRAME}>
-        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
-          <div className="space-y-6">
-            <p className={LANDING_KICKER}>Ganzjahres-Simulation</p>
+        <header>
+          <p className={LANDING_KICKER}>Ganzjahres-Simulation</p>
+          <h1 className={`mt-1.5 max-w-3xl ${LANDING_H1}`}>
+            Wie groß sollte Ihr Stromspeicher wirklich sein?
+          </h1>
+        </header>
 
-            <h1 className={LANDING_H1}>
-              Wie groß sollte Ihr Stromspeicher wirklich sein?
-            </h1>
-
-            <p className={LANDING_BODY}>
+        <div className="mt-7 grid items-start gap-10 lg:mt-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
+          <div className="space-y-5">
+            <p className="text-base leading-snug text-ink-secondary">
               Wir simulieren Ihr Haus Stunde für Stunde über ein ganzes Jahr.
               PV-Erzeugung am Standort, Ihr Stromverbrauch und optional Wärmepumpe
               oder Notstromreserve werden gemeinsam ausgewertet. So erkennen wir,
@@ -223,11 +224,11 @@ function HeroSection() {
               zunimmt.
             </p>
 
-            <blockquote className="border-l-2 border-accent pl-5">
-              <p className="text-xl font-semibold text-ink sm:text-2xl">
+            <blockquote className="border-l-2 border-accent pl-4">
+              <p className="text-lg font-semibold leading-snug text-ink sm:text-xl">
                 „Ein Stromspeicher verschiebt Solarstrom vom Tag in den Abend.“
               </p>
-              <p className="mt-3 text-base leading-relaxed text-ink-secondary">
+              <p className="mt-2 text-base leading-snug text-ink-secondary">
                 Unsere Ergebnisse basieren auf physikalischer Simulation – nicht
                 auf Verkaufsannahmen.
               </p>
