@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, type RefObject } from "react";
 import Link from "next/link";
-import { ANALYTICS_CARD_TEXT_HOVER } from "../analyticsCardHoverClasses";
 import { SpeicherInput, type PvSurfaceInput } from "../types/speicher";
 import { validateInput, type SpeicherFieldErrors, type SpeicherFieldErrorKey } from "../utils/validateInput";
 import {
@@ -40,11 +39,60 @@ const FOCUS_FIELD_ORDER = [
   "annualConsumptionKwh",
 ] as const;
 
+/**
+ * The result is one document: a single white sheet on the light canvas. Every
+ * result section lives inside this sheet, so the page has exactly one vertical
+ * document edge instead of a stack of separately framed cards.
+ */
+const REPORT_SHEET =
+  "max-w-sheet mx-auto rounded-lg border border-line bg-surface p-5 sm:p-8 lg:p-10";
+
+/**
+ * Major section boundary inside the sheet: one rule with symmetric space above
+ * and below, so every section transition carries the same weight. Section
+ * headings therefore need no rule of their own.
+ */
+const REPORT_SECTION = "mt-8 border-t border-line pt-8 lg:mt-10 lg:pt-10";
+
+/** Report-section heading — a document chapter, not a micro label. */
+const REPORT_SECTION_HEADING = "text-lg font-semibold text-ink";
+
+/** Micro label above a value or a form group. */
+const REPORT_SECTION_TITLE =
+  "text-xs font-semibold uppercase tracking-wide text-ink-secondary";
+
+/** Label of a group nested inside a section — one step darker than a micro label. */
+const REPORT_GROUP_TITLE =
+  "text-xs font-semibold uppercase tracking-wide text-ink";
+
+const FORM_LABEL = "block text-sm font-medium text-ink";
+
+const FORM_HELP = "text-xs leading-relaxed text-ink-muted";
+
+/** Input wizard: one sheet on the canvas, narrower than the results document. */
+const INPUT_SHEET =
+  "rounded-lg border border-line bg-surface p-5 shadow-sm sm:p-8";
+
+/** Form section title — sentence case, not report micro-labels. */
+const FORM_SECTION_HEADING = "text-sm font-semibold text-ink";
+
+/** Optional checkbox groups (Wärmepumpe, Notstromreserve). */
+const FORM_OPTIONAL_BLOCK = "space-y-3 rounded-md bg-accent-soft/40 p-4";
+
+/** Submit band — full bleed to the input sheet edges. */
+const FORM_SUBMIT_ZONE =
+  "border-t border-line bg-surface-muted -mx-5 px-5 pt-6 sm:-mx-8 sm:px-8";
+
+const BTN_PRIMARY =
+  "inline-flex items-center justify-center rounded-md bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-hover";
+
+const BTN_SECONDARY =
+  "inline-flex items-center justify-center rounded-md border border-line bg-surface px-6 py-3 font-medium text-ink transition-colors hover:bg-surface-muted";
+
+/** Field focus is carried by the global :focus-visible outline plus an accent border. */
 function fieldInputClassName(hasError: boolean): string {
-  return `w-full rounded-lg bg-slate-900 border px-4 py-3 text-slate-100 placeholder-slate-500 outline-none transition-colors ${
-    hasError
-      ? "border-rose-500 focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
-      : "border-slate-700 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+  return `w-full rounded-md border bg-field px-3.5 py-2.5 text-ink placeholder-ink-muted transition-colors ${
+    hasError ? "border-danger" : "border-field-border focus:border-accent"
   }`;
 }
 
@@ -65,28 +113,74 @@ const BACKUP_RESERVE_RADIO_OPTIONS: ReadonlyArray<{
   { kwh: 3.0, label: "3.0 kWh" },
 ];
 
-/** Shared label/value rows: Ausgangsdaten + Technische Kennzahlen */
-const SPEICHER_REPORT_ROWS =
-  "flex flex-col gap-y-3 text-sm text-slate-300";
+/**
+ * Main + aside split of a section: the primary result on the left, the
+ * reference value and its caveats on the right, divided by a hairline.
+ */
+const REPORT_SPLIT = "grid gap-8 lg:grid-cols-[3fr_2fr] lg:gap-12";
 
-const SPEICHER_REPORT_KPI_ROW =
-  "grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-1 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline";
+const REPORT_SPLIT_ASIDE =
+  "border-t border-line-soft pt-6 lg:border-t-0 lg:border-l lg:border-line-soft lg:pt-0 lg:pl-8";
+
+/**
+ * Two side-by-side metric/comparison tracks. Each track is an independent
+ * closed table, so the report width carries two columns of metrics instead of
+ * one long single-column list.
+ */
+const REPORT_TWO_TRACKS = "grid gap-x-12 gap-y-8 lg:grid-cols-2";
+
+/** One metric/comparison track: a closed table of label/value rows. */
+const REPORT_METRIC_LIST =
+  "divide-y divide-line-soft border-y border-line-soft text-sm";
+
+/** Metric row: label left, value aligned to the right edge of its track. */
+const REPORT_METRIC_ROW =
+  "grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-6 py-3";
+
+const REPORT_METRIC_LABEL = "min-w-0 leading-snug text-ink-secondary";
+
+const REPORT_METRIC_VALUE =
+  "shrink-0 text-right tabular-nums font-medium text-ink";
+
+const REPORT_METRIC_VALUE_ACCENT =
+  "shrink-0 text-right tabular-nums font-semibold text-accent-text";
+
+/**
+ * Stammdaten datasheet: short label above its value, three columns on desktop,
+ * so a small dataset stays horizontally compact instead of vertically long.
+ */
+const REPORT_DATA_GRID = "grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3";
+
+const REPORT_DATA_ITEM = "border-t border-line-soft pt-3";
+
+const REPORT_DATA_LABEL = "text-xs leading-snug text-ink-muted";
+
+const REPORT_DATA_VALUE = "mt-1 text-sm font-medium tabular-nums text-ink";
+
+/**
+ * Tinted technical band for a nested energy balance inside a section: the total
+ * on top, its components below, all within one boundary so the components read
+ * as parts of that total rather than as separate metrics.
+ */
+const REPORT_BAND =
+  "mt-8 rounded-md border border-line-soft bg-surface-muted p-5 lg:p-6";
+
+const REPORT_BAND_GRID =
+  "mt-5 grid gap-x-8 gap-y-4 border-t border-line pt-5 sm:grid-cols-2 lg:grid-cols-3";
+
+/**
+ * Written conclusion of the report: prose on the left, key figures in the
+ * split aside. Hierarchy comes from colour and spacing within the prose track.
+ */
+const REPORT_CONCLUSION_BODY = "text-sm leading-relaxed text-ink";
+
+const REPORT_CONCLUSION_CONTEXT = "text-sm leading-relaxed text-ink-secondary";
+
+/** Methodological note closing the conclusion — demoted footnote prose. */
+const REPORT_NOTE = "text-xs leading-relaxed text-ink-muted";
 
 const SPEICHER_REPORT_HELPER_TEXT =
-  "text-[10px] sm:text-[11px] leading-snug text-slate-500 font-normal normal-case";
-
-/** Grouped hybrid breakdown under „Batterieverluste gesamt“ (own value column, not main KPI) */
-const SPEICHER_BATTERY_LOSS_BREAKDOWN_GROUP =
-  "mt-2 max-w-[min(100%,430px)] border-l border-slate-700/60 pl-4 space-y-1";
-
-const SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW =
-  "grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-[11px] sm:text-xs text-slate-400";
-
-const SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL =
-  "min-w-0 leading-snug text-slate-400";
-
-const SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE =
-  "shrink-0 tabular-nums text-right text-slate-300 text-[11px] sm:text-xs";
+  "text-xs leading-snug text-ink-muted font-normal normal-case";
 
 /** Cardinal presets for Dachausrichtung (clockwise from Nord). */
 const AZIMUTH_PRESET_DEGREES = [
@@ -258,15 +352,13 @@ function PresetDropdown({
             setOpen(false);
           }
         }}
-        className={`flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border bg-slate-900 px-4 py-3 text-left text-slate-100 outline-none transition-colors ${
-          open
-            ? "border-green-500 ring-1 ring-green-500"
-            : "border-slate-700 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+        className={`flex w-full min-w-0 items-center justify-between gap-2 rounded-md border bg-field px-3.5 py-2.5 text-left text-ink transition-colors ${
+          open ? "border-accent" : "border-field-border focus:border-accent"
         }`}
       >
         <span className="min-w-0 truncate">{displayLabel}</span>
         <svg
-          className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${
+          className={`h-4 w-4 shrink-0 text-ink-muted transition-transform ${
             open ? "rotate-180" : ""
           }`}
           viewBox="0 0 20 20"
@@ -283,7 +375,7 @@ function PresetDropdown({
       {open && (
         <ul
           role="listbox"
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 py-1 shadow-lg [scrollbar-color:theme(colors.slate.700)_theme(colors.slate.900)] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-slate-900 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb:hover]:bg-slate-600"
+          className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-line bg-surface py-1 shadow-sm [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-surface [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-line [&::-webkit-scrollbar-thumb:hover]:bg-line-strong"
         >
           {options.map((opt) => {
             const isSelected = opt.value === value;
@@ -303,16 +395,16 @@ function PresetDropdown({
                     onChange(n);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm transition-colors ${
+                  className={`flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-sm transition-colors ${
                     isSelected
-                      ? "bg-green-500/10 text-green-400"
-                      : "text-slate-100 hover:bg-slate-800"
+                      ? "bg-accent-soft font-medium text-accent-text"
+                      : "text-ink hover:bg-surface-muted"
                   }`}
                 >
                   <span className="min-w-0 truncate">{opt.label}</span>
                   {isSelected && (
                     <svg
-                      className="h-4 w-4 shrink-0 text-green-400"
+                      className="h-4 w-4 shrink-0 text-accent-text"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                       aria-hidden
@@ -362,6 +454,8 @@ export default function SpeicherCalculatePage() {
   const [calculationLink, setCalculationLink] = useState<string>("/result");
   const [displayAddress, setDisplayAddress] = useState<string | null>(null);
   const errorBoxRef = useRef<HTMLDivElement | null>(null);
+  const calculatingStepRef = useRef<HTMLDivElement | null>(null);
+  const resultsMastheadRef = useRef<HTMLDivElement | null>(null);
   const postalCodeInputRef = useRef<HTMLInputElement | null>(null);
   const cityInputRef = useRef<HTMLInputElement | null>(null);
   const streetInputRef = useRef<HTMLInputElement | null>(null);
@@ -477,6 +571,21 @@ export default function SpeicherCalculatePage() {
       );
     }, 800);
     return () => clearInterval(timer);
+  }, [step]);
+
+  useEffect(() => {
+    if (step !== "calculating" && step !== "results") return;
+
+    const target =
+      step === "calculating"
+        ? calculatingStepRef.current
+        : resultsMastheadRef.current;
+
+    const scrollFrame = requestAnimationFrame(() => {
+      target?.scrollIntoView({ behavior: "auto", block: "start" });
+    });
+
+    return () => cancelAnimationFrame(scrollFrame);
   }, [step]);
 
   useEffect(() => {
@@ -632,18 +741,22 @@ export default function SpeicherCalculatePage() {
     resolvedBackupReserveKwh > 0;
 
   return (
-    <div className="py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* ========== INPUT STEP ========== */}
-        {step === "input" && (
-          <>
+    <div className="py-12">
+      {/* ========== INPUT STEP ========== */}
+      {step === "input" && (
+        <div className="max-w-form mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={INPUT_SHEET}>
             {/* Header */}
-            <div className="text-center mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-2">
+            <div className="border-b border-line pb-6">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink mb-2">
                 SpeicherGrenze – Ihre Analyse
               </h1>
-              <p className="text-slate-400">
+              <p className="text-ink-secondary">
                 Geben Sie Ihre Daten ein und erhalten Sie eine erste Einschätzung.
+              </p>
+              <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-accent-text">
+                Ersteinschätzung · 8760h-Simulation · Daten werden nicht
+                gespeichert
               </p>
             </div>
 
@@ -653,12 +766,12 @@ export default function SpeicherCalculatePage() {
                 ref={errorBoxRef}
                 role="alert"
                 aria-live="polite"
-                className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30"
+                className="mt-6 rounded-md border border-danger/40 bg-danger-soft p-4"
               >
-                <p className="text-sm font-semibold text-rose-300 mb-2">
+                <p className="mb-2 text-sm font-semibold text-danger">
                   Bitte korrigieren Sie folgende Fehler:
                 </p>
-                <ul className="text-sm text-rose-200/70 list-disc list-inside">
+                <ul className="list-disc list-inside text-sm text-danger">
                   {errors.map((error, i) => (
                     <li key={i}>{error}</li>
                   ))}
@@ -667,20 +780,29 @@ export default function SpeicherCalculatePage() {
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            <form
+              onSubmit={handleSubmit}
+              className={`space-y-8 ${errors.length > 0 ? "mt-6" : "mt-8"}`}
+              noValidate
+            >
               {/* PV: one or multiple roof surfaces */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {surfaces.map((surface, planeIndex) => (
-                  <div key={planeIndex} className="space-y-4">
+                  <div
+                    key={planeIndex}
+                    className={`space-y-4 ${
+                      planeIndex > 0 ? "border-t border-line pt-8" : ""
+                    }`}
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h2 className="text-sm font-semibold text-slate-200">
+                      <h2 className={FORM_SECTION_HEADING}>
                         Dachfläche {planeIndex + 1}
                       </h2>
                       {planeIndex > 0 && (
                         <button
                           type="button"
                           onClick={() => removeSurface(planeIndex)}
-                          className="text-xs rounded-lg border border-slate-600 px-3 py-1.5 text-slate-400 hover:bg-slate-800/80 hover:text-slate-200 transition-colors"
+                          className="rounded-md border border-line px-3 py-1.5 text-xs text-ink-secondary transition-colors hover:bg-surface-muted hover:text-ink"
                         >
                           Diese Fläche entfernen
                         </button>
@@ -688,7 +810,7 @@ export default function SpeicherCalculatePage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-200">
+                      <label className={FORM_LABEL}>
                         PV-Leistung (kWp) *
                       </label>
                       <input
@@ -707,11 +829,11 @@ export default function SpeicherCalculatePage() {
                             systemSizeKwP: parseKwpDecimalInput(v),
                           });
                         }}
-                        className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                        className={fieldInputClassName(false)}
                         placeholder="z.B. 10"
                       />
                       {planeIndex === 0 && (
-                        <p className="text-xs text-slate-500">
+                        <p className={FORM_HELP}>
                           Die Größe Ihrer bestehenden oder geplanten PV-Anlage
                           auf dieser Dachfläche.
                         </p>
@@ -721,7 +843,7 @@ export default function SpeicherCalculatePage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-3">
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-slate-200">
+                          <label className={FORM_LABEL}>
                             Dachausrichtung (°) *
                           </label>
                           <PresetDropdown
@@ -744,7 +866,7 @@ export default function SpeicherCalculatePage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-slate-200">
+                          <label className={FORM_LABEL}>
                             Exakter Azimut (°)
                           </label>
                           <input
@@ -778,9 +900,9 @@ export default function SpeicherCalculatePage() {
                                 azimuthDeg: parsed.deg,
                               });
                             }}
-                            className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                            className={fieldInputClassName(false)}
                           />
-                          <p className="text-xs text-slate-500">
+                          <p className={FORM_HELP}>
                             0° = Nord, 90° = Ost, 180° = Süd, 270° = West.
                           </p>
                         </div>
@@ -788,7 +910,7 @@ export default function SpeicherCalculatePage() {
 
                       <div className="space-y-3">
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-slate-200">
+                          <label className={FORM_LABEL}>
                             Dachneigung (°) *
                           </label>
                           <PresetDropdown
@@ -809,7 +931,7 @@ export default function SpeicherCalculatePage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-slate-200">
+                          <label className={FORM_LABEL}>
                             Exakte Neigung (°)
                           </label>
                           <input
@@ -842,9 +964,9 @@ export default function SpeicherCalculatePage() {
                                 tiltDeg: parsed.deg,
                               });
                             }}
-                            className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                            className={fieldInputClassName(false)}
                           />
-                          <p className="text-xs text-slate-500">
+                          <p className={FORM_HELP}>
                             0° = flach, 90° = senkrecht.
                           </p>
                         </div>
@@ -856,20 +978,18 @@ export default function SpeicherCalculatePage() {
                 <button
                   type="button"
                   onClick={addSurface}
-                  className="text-sm rounded-full border border-slate-600 px-4 py-2 text-slate-300 hover:bg-slate-800/80 hover:text-slate-100 transition-colors"
+                  className="rounded-md border border-line px-4 py-2 text-sm font-medium text-ink-secondary transition-colors hover:bg-surface-muted hover:text-ink"
                 >
                   Weitere Dachfläche hinzufügen
                 </button>
               </div>
 
               {/* Address */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200">
-                  Standort / Adresse *
-                </label>
+              <div className="space-y-3 border-t border-line pt-8">
+                <h2 className={FORM_SECTION_HEADING}>Standort / Adresse *</h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className={FORM_LABEL}>
                       PLZ *
                     </label>
                     <input
@@ -890,13 +1010,13 @@ export default function SpeicherCalculatePage() {
                       placeholder="z.B. 80331"
                     />
                     {fieldErrors.postalCode && (
-                      <p id="postalCode-error" className="text-xs text-rose-400">
+                      <p id="postalCode-error" className="text-xs text-danger">
                         {fieldErrors.postalCode}
                       </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className={FORM_LABEL}>
                       Ort *
                     </label>
                     <input
@@ -916,13 +1036,13 @@ export default function SpeicherCalculatePage() {
                       placeholder="z.B. München"
                     />
                     {fieldErrors.city && (
-                      <p id="city-error" className="text-xs text-rose-400">
+                      <p id="city-error" className="text-xs text-danger">
                         {fieldErrors.city}
                       </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className={FORM_LABEL}>
                       Straße *
                     </label>
                     <input
@@ -942,13 +1062,13 @@ export default function SpeicherCalculatePage() {
                       placeholder="z.B. Marienplatz"
                     />
                     {fieldErrors.street && (
-                      <p id="street-error" className="text-xs text-rose-400">
+                      <p id="street-error" className="text-xs text-danger">
                         {fieldErrors.street}
                       </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className={FORM_LABEL}>
                       Hausnummer *
                     </label>
                     <input
@@ -971,20 +1091,20 @@ export default function SpeicherCalculatePage() {
                       placeholder="z.B. 1"
                     />
                     {fieldErrors.houseNumber && (
-                      <p id="houseNumber-error" className="text-xs text-rose-400">
+                      <p id="houseNumber-error" className="text-xs text-danger">
                         {fieldErrors.houseNumber}
                       </p>
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className={FORM_HELP}>
                   Bitte geben Sie die vollständige Adresse des Gebäudes ein.
                 </p>
               </div>
 
               {/* Annual Consumption */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200">
+              <div className="space-y-2 border-t border-line pt-8">
+                <label className={FORM_LABEL}>
                   Hausverbrauch (ohne Wärmepumpe) *
                 </label>
                 <input
@@ -1015,19 +1135,20 @@ export default function SpeicherCalculatePage() {
                 {fieldErrors.annualConsumptionKwh && (
                   <p
                     id="annualConsumptionKwh-error"
-                    className="text-xs text-rose-400"
+                    className="text-xs text-danger"
                   >
                     {fieldErrors.annualConsumptionKwh}
                   </p>
                 )}
-                <p className="text-xs text-slate-500">
+                <p className={FORM_HELP}>
                   Bitte geben Sie hier nur den Haushaltsstromverbrauch ein – ohne
                   Wärmepumpe.
                 </p>
               </div>
 
               {/* Heat pump */}
-              <div className="space-y-3">
+              <div className="border-t border-line pt-8">
+                <div className={FORM_OPTIONAL_BLOCK}>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1042,15 +1163,15 @@ export default function SpeicherCalculatePage() {
                           : { heatPumpConsumptionKwh: undefined }),
                       })
                     }
-                    className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-green-500 focus:ring-green-500"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-field-border accent-accent"
                   />
-                  <span className="text-sm font-medium text-slate-200">
+                  <span className="text-sm font-medium text-ink">
                     Wärmepumpe vorhanden
                   </span>
                 </label>
                 {formData.heatPumpEnabled && (
                   <div className="space-y-2 pl-7">
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className={FORM_LABEL}>
                       Stromverbrauch Wärmepumpe (kWh/Jahr)
                     </label>
                     <input
@@ -1065,23 +1186,25 @@ export default function SpeicherCalculatePage() {
                             parseInt(e.target.value, 10) || undefined,
                         })
                       }
-                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-colors"
+                      className={fieldInputClassName(false)}
                       placeholder="z. B. 5000"
                     />
-                    <p className="text-xs text-slate-500">
+                    <p className={FORM_HELP}>
                       Falls vorhanden: separater Stromverbrauch Ihrer Wärmepumpe.
                     </p>
                   </div>
                 )}
-                <p className="text-xs text-slate-500">
+                <p className={FORM_HELP}>
                   Viele Haushalte haben mit Wärmepumpe einen deutlich höheren
                   Stromverbrauch im Winter. Diese wird hier separat
                   berücksichtigt.
                 </p>
+                </div>
               </div>
 
               {/* Notstromreserve */}
-              <div className="space-y-3">
+              <div className="border-t border-line pt-8">
+                <div className={FORM_OPTIONAL_BLOCK}>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1093,22 +1216,22 @@ export default function SpeicherCalculatePage() {
                         backupReserveKwh: e.target.checked ? 2 : 0,
                       })
                     }
-                    className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-green-500 focus:ring-green-500"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-field-border accent-accent"
                   />
-                  <span className="text-sm font-medium text-slate-200">
+                  <span className="text-sm font-medium text-ink">
                     Notstromreserve aktivieren
                   </span>
                 </label>
                 {(formData.backupReserveKwh ?? 0) > 0 && (
                   <div className="space-y-2 pl-7 mt-3">
-                    <span className="block text-sm font-medium text-slate-200">
+                    <span className={`block ${FORM_LABEL}`}>
                       Reservierte Kapazität
                     </span>
                     <div className="flex flex-col gap-2">
                       {BACKUP_RESERVE_RADIO_OPTIONS.map((opt) => (
                         <label
                           key={opt.kwh}
-                          className="flex items-center gap-2 cursor-pointer text-sm text-slate-100"
+                          className="flex items-center gap-2 cursor-pointer text-sm text-ink"
                         >
                           <input
                             type="radio"
@@ -1120,12 +1243,12 @@ export default function SpeicherCalculatePage() {
                                 backupReserveKwh: opt.kwh,
                               })
                             }
-                            className="h-4 w-4 border-slate-600 bg-slate-900 text-green-500 focus:ring-green-500"
+                            className="h-4 w-4 shrink-0 border-field-border accent-accent"
                           />
                           <span className="inline-flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
                             <span>{opt.label}</span>
                             {opt.recommended && (
-                              <span className="text-xs text-emerald-400/70 font-normal">
+                              <span className="text-xs font-normal text-accent-text">
                                 (empfohlen)
                               </span>
                             )}
@@ -1135,52 +1258,47 @@ export default function SpeicherCalculatePage() {
                     </div>
                   </div>
                 )}
-                <p className="text-xs text-slate-500">
+                <p className={FORM_HELP}>
                   Ein Teil des Speichers wird für Notfälle reserviert und im
                   Alltag nicht genutzt.
                   <br />
                   Dies reduziert leicht Eigenverbrauch und Autarkie.
                 </p>
+                </div>
               </div>
 
               {/* Submit */}
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  className="w-full py-4 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 active:scale-[0.98] transition-all duration-200 hover:scale-[1.03] shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_20px_rgba(34,197,94,0.25)] text-white font-semibold"
-                >
+              <div className={`${FORM_SUBMIT_ZONE} -mb-5 pb-5 sm:-mb-8 sm:pb-8`}>
+                <button type="submit" className={`${BTN_PRIMARY} w-full`}>
                   Berechnung starten
                 </button>
               </div>
             </form>
 
             {/* Disclaimer */}
-            <p className="mt-6 text-xs text-slate-500 text-center">
+            <p className="mt-6 border-t border-line-soft pt-6 text-xs text-ink-muted">
               * Pflichtfelder. Ihre Daten werden nicht gespeichert.
             </p>
-          </>
-        )}
+          </div>
+        </div>
+      )}
 
-        {/* ========== CALCULATING STEP ========== */}
-        {step === "calculating" && (
-          <div
-            className="items-center py-20"
-            style={{
-              minHeight: "100vh",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
+      {/* ========== CALCULATING STEP ========== */}
+      {step === "calculating" && (
+        <div
+          ref={calculatingStepRef}
+          className="max-w-2xl mx-auto scroll-mt-20 px-4 sm:px-6 lg:px-8"
+        >
+          <div className="flex flex-col items-center py-20">
             {/* Spinner */}
             <div className="relative mb-6">
-              <div className="w-16 h-16 border-4 border-slate-700 rounded-full" />
-              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-green-500 rounded-full border-t-transparent animate-spin" />
+              <div className="w-16 h-16 border-4 border-line rounded-full" />
+              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-accent rounded-full border-t-transparent animate-spin" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-100 mb-2">
+            <h2 className="text-xl font-semibold text-ink mb-2">
               Berechnung läuft...
             </h2>
-            <p className="text-slate-400 text-sm text-center max-w-md px-4 mb-6">
+            <p className="text-ink-secondary text-sm text-center max-w-md px-4 mb-6">
               Wir analysieren Ihre Daten… Das dauert nur wenige Sekunden.
             </p>
             <ul className="flex flex-col gap-2 w-full max-w-sm px-4">
@@ -1189,7 +1307,7 @@ export default function SpeicherCalculatePage() {
                   return (
                     <li
                       key={label}
-                      className="text-sm flex items-center gap-2 justify-center text-emerald-500"
+                      className="text-sm flex items-center gap-2 justify-center text-success"
                     >
                       <span aria-hidden>✔</span>
                       <span>{label}</span>
@@ -1200,10 +1318,10 @@ export default function SpeicherCalculatePage() {
                   return (
                     <li
                       key={label}
-                      className="text-sm flex items-center gap-2 justify-center font-medium text-slate-100"
+                      className="text-sm flex items-center gap-2 justify-center font-medium text-ink"
                     >
                       <span
-                        className="inline-block w-3.5 h-3.5 shrink-0 border-2 border-green-500 border-t-transparent rounded-full animate-spin"
+                        className="inline-block w-3.5 h-3.5 shrink-0 border-2 border-accent border-t-transparent rounded-full animate-spin"
                         aria-hidden
                       />
                       <span>{label}</span>
@@ -1213,8 +1331,7 @@ export default function SpeicherCalculatePage() {
                 return (
                   <li
                     key={label}
-                    className="text-sm flex items-center gap-2 justify-center"
-                    style={{ color: "#64748b" }}
+                    className="text-sm flex items-center gap-2 justify-center text-ink-muted"
                   >
                     <span className="w-3.5 shrink-0" aria-hidden />
                     <span>{label}</span>
@@ -1223,18 +1340,21 @@ export default function SpeicherCalculatePage() {
               })}
             </ul>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ========== RESULTS STEP ========== */}
-        {step === "results" && (
-          <>
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/20 mb-4">
+      {/* ========== RESULTS STEP ========== */}
+      {step === "results" && (
+        <div className="max-w-frame mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={REPORT_SHEET}>
+            {/* Masthead — title block of the report sheet */}
+            <div ref={resultsMastheadRef} className="scroll-mt-20">
+              <div className="flex items-center gap-1.5">
                 <svg
-                  className="w-4 h-4 text-emerald-400 opacity-90"
+                  className="h-4 w-4 shrink-0 text-accent-text"
                   fill="currentColor"
                   viewBox="0 0 20 20"
+                  aria-hidden
                 >
                   <path
                     fillRule="evenodd"
@@ -1242,195 +1362,206 @@ export default function SpeicherCalculatePage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="text-xs text-emerald-400 opacity-90 font-medium">
+                <span className="text-xs font-semibold uppercase tracking-wide text-accent-text">
                   Analyse abgeschlossen
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-100 mb-2">
+              <h1 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
                 Ihre Speicher-Analyse
               </h1>
             </div>
 
-            {/* Result Cards */}
-            <div className="space-y-4 mb-8">
-              {/* Recommended Size */}
-              <div className="p-6 rounded-2xl bg-[#0F1620] border border-white/5 group">
-                <div
-                  className={`flex items-center justify-between ${ANALYTICS_CARD_TEXT_HOVER}`}
-                >
-                  <div className="min-w-0 flex-1">
-                    {recommendedTechnicalSize > 0 ? (
-                      <>
-                        <p className="text-sm text-slate-400">
-                          Planerische Kaufempfehlung
-                        </p>
-                        <p className="text-3xl font-bold text-emerald-400 opacity-90">
-                          {recommendedPlanningSize} kWh
-                        </p>
-                        <p className="mt-2 text-sm font-medium text-slate-300">
-                          Technische Speichergrenze heute:{" "}
-                          {recommendedTechnicalSize} kWh
-                        </p>
-                        <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                          Die physikalische Simulation ermittelt für die heutigen
-                          Bedingungen eine technische Speichergrenze von{" "}
-                          <strong className="font-semibold text-slate-300">
-                            {recommendedTechnicalSize} kWh nutzbarer Kapazität
-                          </strong>
-                          .
-                        </p>
-                        <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                          Für die Kaufplanung wird zusätzlich eine pauschale
-                          Alterungsreserve berücksichtigt. Dabei wird angenommen,
-                          dass nach einem Planungszeitraum von etwa 10 Jahren noch
-                          75&nbsp;% der anfänglichen nutzbaren Kapazität verfügbar
-                          sind.
-                        </p>
-                        <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                          Planerische Anfangskapazität = ⌈{" "}
-                          {recommendedTechnicalSize} kWh / 0,75 ⌉ ={" "}
-                          {recommendedPlanningSize} kWh
-                        </p>
-                        <p className="mt-3 text-xs italic leading-relaxed text-slate-500">
-                          Die 75-%-Annahme ist keine Prognose für einen bestimmten
-                          Batteriespeicher und keine Herstellergarantie. Sie
-                          beeinflusst ausschließlich die planerische
-                          Kaufempfehlung. Die technische Simulation und sämtliche
-                          technischen Kennzahlen werden weiterhin mit der
-                          technischen Speichergrenze von{" "}
-                          {recommendedTechnicalSize} kWh berechnet.
-                        </p>
-                        <p className="mt-3 text-xs leading-relaxed">
-                          <Link
-                            href="/technische-details"
-                            className="text-emerald-400/90 underline underline-offset-2 hover:text-emerald-300"
-                          >
-                            Erläuterung der Planungsannahme und Herstellerbeispiele
-                          </Link>
-                        </p>
-                        {planningExceedsSimulatedRange && (
-                          <p className="mt-3 text-sm leading-relaxed text-amber-400/90">
-                            Die planerische Anfangskapazität liegt außerhalb des
-                            simulierten Speicherbereichs von 5–30 kWh.
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-sm text-slate-400">
-                          Speicherempfehlung
-                        </p>
-                        <p className="mt-2 text-lg font-semibold leading-relaxed text-slate-200">
-                          Unter den aktuellen Annahmen ist kein Batteriespeicher
-                          technisch erforderlich.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <div className="w-14 h-14 shrink-0 rounded-xl bg-emerald-400/10 flex items-center justify-center ml-4">
-                    <svg
-                      className="w-7 h-7 text-emerald-400 opacity-90"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
+            {/* Recommended Size */}
+            <section className={REPORT_SECTION}>
+              {recommendedTechnicalSize > 0 ? (
+                /*
+                  One composition instead of a headline grid stacked on a second
+                  grid: the purchase-planning result and its derivation form the
+                  main column, the physical reference value and its caveats the
+                  aside. The planning value therefore outranks the technical one
+                  typographically while both stay visibly related.
+                */
+                <div className={REPORT_SPLIT}>
+                  <div className="space-y-6">
+                    <div>
+                      <p className={REPORT_SECTION_TITLE}>
+                        Planerische Kaufempfehlung
+                      </p>
+                      <p className="mt-2 text-4xl font-semibold tabular-nums tracking-tight text-ink">
+                        {recommendedPlanningSize} kWh
+                      </p>
+                    </div>
 
-              {/* Self Consumption */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 group">
-                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
-                    <p className="text-xs text-slate-400 mb-1">
-                      Eigenverbrauch ohne Speicher (jährlich)
-                    </p>
-                    <p className="text-2xl font-bold text-slate-300">
-                      {formatKwh(
-                        verifiedResult?.energy.year.selfConsumptionWithoutStorage
-                      )}
-                    </p>
+                    <div className="space-y-4 text-sm leading-relaxed text-ink-secondary">
+                      <p>
+                        Die physikalische Simulation ermittelt für die heutigen
+                        Bedingungen eine technische Speichergrenze von{" "}
+                        <strong className="font-semibold text-ink">
+                          {recommendedTechnicalSize} kWh nutzbarer Kapazität
+                        </strong>
+                        .
+                      </p>
+                      <p>
+                        Für die Kaufplanung wird zusätzlich eine pauschale
+                        Alterungsreserve berücksichtigt. Dabei wird angenommen,
+                        dass nach einem Planungszeitraum von etwa 10 Jahren
+                        noch 75&nbsp;% der anfänglichen nutzbaren Kapazität
+                        verfügbar sind.
+                      </p>
+                      <p className="rounded-md border border-line-soft bg-surface-muted px-4 py-3 font-medium tabular-nums text-ink">
+                        Planerische Anfangskapazität = ⌈{" "}
+                        {recommendedTechnicalSize} kWh / 0,75 ⌉ ={" "}
+                        {recommendedPlanningSize} kWh
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 group">
-                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
-                    <p className="text-xs text-slate-400 mb-1">
-                      Eigenverbrauch mit Speicher
+
+                  <div className={`${REPORT_SPLIT_ASIDE} space-y-4`}>
+                    <div>
+                      <p className={REPORT_SECTION_TITLE}>
+                        Technische Speichergrenze heute:
+                      </p>
+                      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-ink">
+                        {recommendedTechnicalSize} kWh
+                      </p>
+                    </div>
+                    <p className="text-xs italic leading-relaxed text-ink-muted">
+                      Die 75-%-Annahme ist keine Prognose für einen bestimmten
+                      Batteriespeicher und keine Herstellergarantie. Sie
+                      beeinflusst ausschließlich die planerische
+                      Kaufempfehlung. Die technische Simulation und sämtliche
+                      technischen Kennzahlen werden weiterhin mit der
+                      technischen Speichergrenze von{" "}
+                      {recommendedTechnicalSize} kWh berechnet.
                     </p>
-                    <p className="text-2xl font-bold text-emerald-400 opacity-90">
-                      {formatKwh(recommendedEV)}
+                    <p className="text-xs leading-relaxed">
+                      <Link
+                        href="/technische-details"
+                        className="font-medium text-accent-text underline underline-offset-2 hover:text-accent-hover"
+                      >
+                        Erläuterung der Planungsannahme und Herstellerbeispiele
+                      </Link>
                     </p>
-                    {deltaEigenverbrauch !== null && (
-                      <p className="text-sm mt-1 font-medium text-emerald-500">
-                        ({deltaEigenverbrauch >= 0 ? "+" : ""}
-                        {deltaEigenverbrauch} kWh)
+                    {planningExceedsSimulatedRange && (
+                      <p className="rounded-md border border-warning/40 bg-warning-soft px-4 py-3 text-sm leading-relaxed text-warning">
+                        Die planerische Anfangskapazität liegt außerhalb des
+                        simulierten Speicherbereichs von 5–30 kWh.
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 group">
-                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
-                    <p className="text-xs text-slate-400 mb-1">
+              ) : (
+                <div className="max-w-reading">
+                  <p className={REPORT_SECTION_TITLE}>Speicherempfehlung</p>
+                  <p className="mt-2 text-lg font-semibold leading-relaxed text-ink">
+                    Unter den aktuellen Annahmen ist kein Batteriespeicher
+                    technisch erforderlich.
+                  </p>
+                </div>
+              )}
+            </section>
+
+            {/*
+              Two comparison groups instead of a four-tile strip: each group
+              reads "ohne Speicher" (left) → "mit Speicher" (right, accented,
+              with its delta), separated by a hairline.
+            */}
+            <section className={`${REPORT_SECTION} ${REPORT_TWO_TRACKS}`}>
+              <div>
+                <h3 className={`mb-3 ${REPORT_GROUP_TITLE}`}>
+                  Eigenverbrauch
+                </h3>
+                <div className={REPORT_METRIC_LIST}>
+                  <div className={REPORT_METRIC_ROW}>
+                    <span className={REPORT_METRIC_LABEL}>
+                      Eigenverbrauch ohne Speicher (jährlich)
+                    </span>
+                    <span className="shrink-0 text-right text-base font-medium tabular-nums text-ink">
+                      {formatKwh(
+                        verifiedResult?.energy.year
+                          .selfConsumptionWithoutStorage
+                      )}
+                    </span>
+                  </div>
+                  <div className={REPORT_METRIC_ROW}>
+                    <span className={REPORT_METRIC_LABEL}>
+                      Eigenverbrauch mit Speicher
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="block text-lg font-semibold tabular-nums text-accent-text">
+                        {formatKwh(recommendedEV)}
+                      </span>
+                      {deltaEigenverbrauch !== null && (
+                        <span className="mt-0.5 block text-xs font-medium tabular-nums text-success">
+                          ({deltaEigenverbrauch >= 0 ? "+" : ""}
+                          {deltaEigenverbrauch} kWh)
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className={`mb-3 ${REPORT_GROUP_TITLE}`}>Autarkie</h3>
+                <div className={REPORT_METRIC_LIST}>
+                  <div className={REPORT_METRIC_ROW}>
+                    <span className={REPORT_METRIC_LABEL}>
                       Autarkie ohne Speicher:
-                    </p>
-                    <p className="text-2xl font-bold text-slate-300">
+                    </span>
+                    <span className="shrink-0 text-right text-base font-medium tabular-nums text-ink">
                       {autarkieOhnePct !== null
                         ? `${autarkieOhnePct} %`
                         : PLACEHOLDER}
-                    </p>
+                    </span>
                   </div>
-                </div>
-                <div className="p-4 rounded-xl bg-[#0F1620] border border-white/5 group">
-                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
-                    <p className="text-xs text-slate-400 mb-1">
+                  <div className={REPORT_METRIC_ROW}>
+                    <span className={REPORT_METRIC_LABEL}>
                       Autarkie mit Speicher:
-                    </p>
-                    <p className="text-2xl font-bold text-emerald-400 opacity-90">
-                      {autarkieMitPct !== null
-                        ? `${autarkieMitPct} %`
-                        : PLACEHOLDER}
-                    </p>
-                    {deltaAutarkiePctPoints !== null && (
-                      <p className="text-sm mt-1 font-medium text-emerald-500">
-                        ({deltaAutarkiePctPoints >= 0 ? "+" : ""}
-                        {deltaAutarkiePctPoints} Prozentpunkte)
-                      </p>
-                    )}
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="block text-lg font-semibold tabular-nums text-accent-text">
+                        {autarkieMitPct !== null
+                          ? `${autarkieMitPct} %`
+                          : PLACEHOLDER}
+                      </span>
+                      {deltaAutarkiePctPoints !== null && (
+                        <span className="mt-0.5 block text-xs font-medium tabular-nums text-success">
+                          ({deltaAutarkiePctPoints >= 0 ? "+" : ""}
+                          {deltaAutarkiePctPoints} Prozentpunkte)
+                        </span>
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
 
             {speicherGrenz && (
               <>
-                <div className="bg-[#0F1620] rounded-xl p-4 sm:p-6 mb-8 border border-white/5 group">
-                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
-                    <div className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-300 sm:mb-4">
+                <section className={REPORT_SECTION}>
+                    <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
                       Ausgangsdaten
-                    </div>
+                    </h2>
 
-                    <div className={SPEICHER_REPORT_ROWS}>
-                      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-x-4 gap-y-1 sm:grid-cols-2 sm:gap-x-6 sm:items-baseline">
-                        <div className="min-w-0 leading-snug text-slate-400">
-                          Adresse:
-                        </div>
-                        <div className="min-w-0 break-words whitespace-normal text-left font-medium text-slate-100">
+                    {/*
+                      Stammdaten as a datasheet grid: label above value, so a
+                      short dataset reads across the report width instead of
+                      running down a long two-column table.
+                    */}
+                    <dl className={REPORT_DATA_GRID}>
+                      <div className={`${REPORT_DATA_ITEM} sm:col-span-2`}>
+                        <dt className={REPORT_DATA_LABEL}>Adresse:</dt>
+                        <dd
+                          className={`${REPORT_DATA_VALUE} break-words whitespace-normal`}
+                        >
                           {displayAddress ?? PLACEHOLDER}
-                        </div>
+                        </dd>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
-                          PV-Anlage:
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                      <div className={REPORT_DATA_ITEM}>
+                        <dt className={REPORT_DATA_LABEL}>PV-Anlage:</dt>
+                        <dd className={REPORT_DATA_VALUE}>
                           <span>
                             {Number.isFinite(totalKwPConfigured)
                               ? formatKwpDisplay(totalKwPConfigured)
@@ -1438,7 +1569,7 @@ export default function SpeicherCalculatePage() {
                             kWp
                           </span>
                           {surfaces.length > 1 && (
-                            <span className="text-slate-400 font-normal">{` auf ${surfaces.length} Dachflächen`}</span>
+                            <span className="text-ink-secondary font-normal">{` auf ${surfaces.length} Dachflächen`}</span>
                           )}
                           {surfaces.length > 1 && (
                             <div className={`mt-2 ${SPEICHER_REPORT_HELPER_TEXT} space-y-1`}>
@@ -1450,67 +1581,63 @@ export default function SpeicherCalculatePage() {
                               ))}
                             </div>
                           )}
-                        </div>
+                        </dd>
                       </div>
 
                       {surfaces.length === 1 && (
                         <>
-                          <div className={SPEICHER_REPORT_KPI_ROW}>
-                            <div className="min-w-0 leading-snug text-slate-400">
-                              Neigung:
-                            </div>
-                            <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                          <div className={REPORT_DATA_ITEM}>
+                            <dt className={REPORT_DATA_LABEL}>Neigung:</dt>
+                            <dd className={REPORT_DATA_VALUE}>
                               {surfaces[0]?.tiltDeg}°
-                            </div>
+                            </dd>
                           </div>
 
-                          <div className={SPEICHER_REPORT_KPI_ROW}>
-                            <div className="min-w-0 leading-snug text-slate-400">
+                          <div className={REPORT_DATA_ITEM}>
+                            <dt className={REPORT_DATA_LABEL}>
                               Ausrichtung:
-                            </div>
-                            <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                            </dt>
+                            <dd className={REPORT_DATA_VALUE}>
                               {surfaces[0]?.azimuthDeg}°
-                            </div>
+                            </dd>
                           </div>
                         </>
                       )}
 
                       {hasActiveBackupReserve && (
-                        <div className={SPEICHER_REPORT_KPI_ROW}>
-                          <div className="min-w-0 leading-snug text-slate-400">
+                        <div className={REPORT_DATA_ITEM}>
+                          <dt className={REPORT_DATA_LABEL}>
                             Notstromreserve:
-                          </div>
-                          <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                          </dt>
+                          <dd className={REPORT_DATA_VALUE}>
                             {resolvedBackupReserveKwh} kWh
-                          </div>
+                          </dd>
                         </div>
                       )}
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_DATA_ITEM}>
+                        <dt className={REPORT_DATA_LABEL}>
                           Hausverbrauch (ohne Wärmepumpe):
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                        </dt>
+                        <dd className={REPORT_DATA_VALUE}>
                           {formData.annualConsumptionKwh} kWh/Jahr
-                        </div>
+                        </dd>
                       </div>
 
                       {formData.heatPumpEnabled === true && (
-                        <div className={SPEICHER_REPORT_KPI_ROW}>
-                          <div className="min-w-0 leading-snug text-slate-400">
-                            Wärmepumpe:
-                          </div>
-                          <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                        <div className={REPORT_DATA_ITEM}>
+                          <dt className={REPORT_DATA_LABEL}>Wärmepumpe:</dt>
+                          <dd className={REPORT_DATA_VALUE}>
                             {formData.heatPumpConsumptionKwh} kWh/Jahr
-                          </div>
+                          </dd>
                         </div>
                       )}
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_DATA_ITEM}>
+                        <dt className={REPORT_DATA_LABEL}>
                           Gesamtverbrauch:
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100">
+                        </dt>
+                        <dd className={REPORT_DATA_VALUE}>
                           <div>
                             {(formData.annualConsumptionKwh ?? 0) +
                               (formData.heatPumpEnabled === true
@@ -1524,472 +1651,536 @@ export default function SpeicherCalculatePage() {
                               kWh
                             </div>
                           )}
-                        </div>
+                        </dd>
                       </div>
+                    </dl>
+                </section>
+
+                <section className={REPORT_SECTION}>
+                    <div className="mb-6">
+                      <h2 className={REPORT_SECTION_HEADING}>
+                        Technische Kennzahlen
+                      </h2>
+                      <p className="mt-2 max-w-reading text-xs leading-relaxed text-ink-muted">
+                        Alle technischen Kennzahlen beziehen sich auf die
+                        technische Speichergrenze von{" "}
+                        <strong className="font-semibold text-ink-secondary">
+                          {recommendedTechnicalSize} kWh
+                        </strong>{" "}
+                        und nicht auf die planerische Kaufempfehlung.
+                      </p>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-[#0F1620] rounded-xl p-4 sm:p-6 mb-8 border border-white/5 group">
-                  <div className={ANALYTICS_CARD_TEXT_HOVER}>
-                    <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-1">
-                      Technische Kennzahlen
-                    </h3>
-                    <p className="mb-3 text-xs leading-relaxed text-slate-500 sm:mb-4">
-                      Alle technischen Kennzahlen beziehen sich auf die technische
-                      Speichergrenze von{" "}
-                      <strong className="font-semibold text-slate-400">
-                        {recommendedTechnicalSize} kWh
-                      </strong>{" "}
-                      und nicht auf die planerische Kaufempfehlung.
-                    </p>
-
-                    <dl className={SPEICHER_REPORT_ROWS}>
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                    {/*
+                      Two metric tracks: energy flow on the left, system, grid
+                      and autarky on the right. The nested battery-loss balance
+                      follows below as its own full-width band.
+                    */}
+                    <div className={REPORT_TWO_TRACKS}>
+                    <dl className={REPORT_METRIC_LIST}>
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           Jahresertrag PV
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE}>
                           {typeof pvYieldKwhAnnual === "number" &&
                           Number.isFinite(pvYieldKwhAnnual)
                             ? `${pvYieldKwhAnnual.toFixed(0)} kWh/Jahr`
                             : PLACEHOLDER}
-                        </div>
+                        </dd>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           Spezifischer Ertrag
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE}>
                           {specificYieldKwhPerKwp !== null
                             ? `${specificYieldKwhPerKwp.toFixed(1)} kWh/kWp`
                             : PLACEHOLDER}
-                        </div>
+                        </dd>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           Direktverbrauch ohne Speicher
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE}>
                           {formatKwh(
                             verifiedResult?.energy.year.selfConsumptionWithoutStorage
                           )}
-                        </div>
+                        </dd>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           Eigenverbrauch mit Speicher
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-emerald-400/90 sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE_ACCENT}>
                           {formatKwh(eigenverbrauchMitSpeicher)}
-                        </div>
+                        </dd>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           <span className="block leading-snug">
                             PV-Energie zur Batterieladung
                           </span>
                           <span
-                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
+                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0.5`}
                           >
                             PV-Überschuss vor den modellierten Ladeverlusten.
                           </span>
-                        </div>
-                        <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE}>
                           {typeof batteryGeladenAvgKwh === "number" &&
                           Number.isFinite(batteryGeladenAvgKwh)
                             ? `${Math.round(batteryGeladenAvgKwh)} kWh/Jahr`
                             : PLACEHOLDER}
-                        </div>
+                        </dd>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           <span className="block leading-snug">
                             Batterie → Haushalt (AC)
                           </span>
                           <span
-                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
+                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0.5`}
                           >
                             An den Haushalt gelieferte Energie nach den
                             modellierten Entladeverlusten.
                           </span>
-                        </div>
-                        <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE}>
                           {typeof batteryAnVerbrauchAvgKwh === "number" &&
                           Number.isFinite(batteryAnVerbrauchAvgKwh)
                             ? `${Math.round(batteryAnVerbrauchAvgKwh)} kWh/Jahr`
                             : PLACEHOLDER}
-                        </div>
+                        </dd>
                       </div>
+                    </dl>
 
-                      {speicherGrenz && showBatterieverlusteHybridBreakdown ? (
-                        <>
-                          <div className={SPEICHER_REPORT_KPI_ROW}>
-                            <div className="min-w-0 leading-snug text-slate-400">
-                              <span className="block leading-snug">
-                                Batterieverluste gesamt
-                              </span>
-                              <span
-                                className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
-                              >
-                                Summe aus Lade-, Entladeverlusten und
-                                Selbstentladung (Mehrjahresmittel). Einzelne
-                                gerundete Komponenten können vom gerundeten
-                                Gesamtwert um 1&nbsp;kWh abweichen.
-                              </span>
-                            </div>
-                            <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
-                              {batterieverlusteModellGesamtKwh !== null
-                                ? `${batterieverlusteModellGesamtKwh} kWh/Jahr`
-                                : PLACEHOLDER}
-                            </div>
-                          </div>
-                          <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_GROUP}>
-                            <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW}>
-                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL}>
-                                PV → Speicher
-                              </span>
-                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
-                                {Math.round(
-                                  speicherGrenz.averageChargeLossPvToBatteryKwh[
-                                    physicalKpiLookupSize
-                                  ] ?? 0
-                                )}{" "}
-                                kWh/Jahr
-                              </span>
-                            </div>
-                            <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW}>
-                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL}>
-                                Zellverluste beim Laden
-                              </span>
-                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
-                                {Math.round(
-                                  speicherGrenz.averageChargeLossChemicalKwh[
-                                    physicalKpiLookupSize
-                                  ] ?? 0
-                                )}{" "}
-                                kWh/Jahr
-                              </span>
-                            </div>
-                            <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW}>
-                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL}>
-                                Zellverluste beim Entladen
-                              </span>
-                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
-                                {Math.round(
-                                  speicherGrenz.averageDischargeLossChemicalKwh[
-                                    physicalKpiLookupSize
-                                  ] ?? 0
-                                )}{" "}
-                                kWh/Jahr
-                              </span>
-                            </div>
-                            <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW}>
-                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL}>
-                                Speicher → AC-Bus
-                              </span>
-                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
-                                {Math.round(
-                                  speicherGrenz.averageDischargeLossBatteryToAcKwh[
-                                    physicalKpiLookupSize
-                                  ] ?? 0
-                                )}{" "}
-                                kWh/Jahr
-                              </span>
-                            </div>
-                            <div className={SPEICHER_BATTERY_LOSS_BREAKDOWN_ROW}>
-                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_LABEL}>
-                                Selbstentladung
-                              </span>
-                              <span className={SPEICHER_BATTERY_LOSS_BREAKDOWN_VALUE}>
-                                {typeof avgSelfDischargeLossDisplayKwh ===
-                                  "number" &&
-                                Number.isFinite(avgSelfDischargeLossDisplayKwh)
-                                  ? `${Math.round(avgSelfDischargeLossDisplayKwh)} kWh/Jahr`
-                                  : PLACEHOLDER}
-                              </span>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <div className={SPEICHER_REPORT_KPI_ROW}>
-                          <div className="min-w-0 leading-snug text-slate-400">
-                            <span className="block leading-snug">
-                              Batterieverluste
-                            </span>
-                            <span
-                              className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
-                            >
-                              Für dieses Ergebnis liegt keine aufgeschlüsselte
-                              Verlustbilanz vor.
-                            </span>
-                          </div>
-                          <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
-                            {PLACEHOLDER}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                    <dl className={REPORT_METRIC_LIST}>
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           <span className="block leading-snug">
                             Systemverbrauch Standby
                           </span>
                           <span
-                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
+                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0.5`}
                           >
                             Gesamter Eigenbedarf des Speichersystems; kann durch
                             PV, Batterie oder Netz gedeckt werden. Separat
                             bilanziert; nicht im Haushaltsverbrauch,
                             Eigenverbrauch oder Autarkiegrad enthalten.
                           </span>
-                        </div>
-                        <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE}>
                           {typeof avgAuxiliaryConsumptionDisplayKwh ===
                             "number" &&
                           Number.isFinite(avgAuxiliaryConsumptionDisplayKwh)
                             ? `${Math.round(avgAuxiliaryConsumptionDisplayKwh)} kWh/Jahr`
                             : PLACEHOLDER}
-                        </div>
+                        </dd>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           <span className="block leading-snug">
                             Netzbezug Haushalt mit Speicher
                           </span>
                           <span
-                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}
+                            className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0.5`}
                           >
                             Nur Netzbezug des Haushalts einschließlich
                             Wärmepumpe; Netzbezug des Speichersystems ist nicht
                             enthalten.
                           </span>
-                        </div>
-                        <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE}>
                           {typeof netzbezugMitSpeicherKwhYear === "number" &&
                           Number.isFinite(netzbezugMitSpeicherKwhYear)
                             ? `${netzbezugMitSpeicherKwhYear.toFixed(0)} kWh/Jahr`
                             : PLACEHOLDER}
-                        </div>
+                        </dd>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           <span className="block leading-snug">
                             Modellierte Netzeinspeisung
                           </span>
-                          <span className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0 sm:mt-0.5`}>
+                          <span className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0.5`}>
                             Verbleibender PV-Überschuss am AC-Bus nach
                             Haushaltsverbrauch, Systemverbrauch und
                             Batterieladung. Keine Abbildung von EEG-Abrechnung
                             oder realem Zählerverhalten.
                           </span>
-                        </div>
-                        <div className="min-w-0 shrink-0 self-start text-left tabular-nums font-medium text-slate-100 sm:self-center sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE}>
                           {typeof einspeisungRechnerischKwhYear === "number" &&
                           Number.isFinite(einspeisungRechnerischKwhYear)
                             ? `${einspeisungRechnerischKwhYear.toFixed(0)} kWh/Jahr`
                             : PLACEHOLDER}
-                        </div>
+                        </dd>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           Autarkiegrad mit Speicher
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-emerald-400/90 sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE_ACCENT}>
                           {autarkieMitPct !== null
                             ? `${autarkieMitPct} %`
                             : PLACEHOLDER}
-                        </div>
+                        </dd>
                       </div>
 
-                      <div className={SPEICHER_REPORT_KPI_ROW}>
-                        <div className="min-w-0 leading-snug text-slate-400">
+                      <div className={REPORT_METRIC_ROW}>
+                        <dt className={REPORT_METRIC_LABEL}>
                           Eigenverbrauchsquote
-                        </div>
-                        <div className="min-w-0 shrink-0 text-left tabular-nums font-medium text-slate-100 sm:text-left">
+                        </dt>
+                        <dd className={REPORT_METRIC_VALUE}>
                           {eigenverbrauchsquoteMitSpeicherPct !== null
                             ? `${eigenverbrauchsquoteMitSpeicherPct} %`
                             : PLACEHOLDER}
-                        </div>
+                        </dd>
                       </div>
                     </dl>
+                    </div>
+
+                    {/*
+                      Battery losses are a nested energy balance, not a single
+                      metric: the total sits on top of the band and its
+                      components fill a mini-grid inside the same boundary, so
+                      they read as parts of that total.
+                    */}
+                    {speicherGrenz && showBatterieverlusteHybridBreakdown ? (
+                      <div className={REPORT_BAND}>
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-6">
+                          <div>
+                            <span className="block text-sm font-semibold leading-snug text-ink">
+                              Batterieverluste gesamt
+                            </span>
+                            <span
+                              className={`mt-1 block max-w-reading ${SPEICHER_REPORT_HELPER_TEXT}`}
+                            >
+                              Summe aus Lade-, Entladeverlusten und
+                              Selbstentladung (Mehrjahresmittel). Einzelne
+                              gerundete Komponenten können vom gerundeten
+                              Gesamtwert um 1&nbsp;kWh abweichen.
+                            </span>
+                          </div>
+                          <div className="shrink-0 text-right text-lg font-semibold tabular-nums text-ink">
+                            {batterieverlusteModellGesamtKwh !== null
+                              ? `${batterieverlusteModellGesamtKwh} kWh/Jahr`
+                              : PLACEHOLDER}
+                          </div>
+                        </div>
+
+                        <dl className={REPORT_BAND_GRID}>
+                          <div>
+                            <dt className={REPORT_DATA_LABEL}>
+                              PV → Speicher
+                            </dt>
+                            <dd className={REPORT_DATA_VALUE}>
+                              {Math.round(
+                                speicherGrenz.averageChargeLossPvToBatteryKwh[
+                                  physicalKpiLookupSize
+                                ] ?? 0
+                              )}{" "}
+                              kWh/Jahr
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className={REPORT_DATA_LABEL}>
+                              Zellverluste beim Laden
+                            </dt>
+                            <dd className={REPORT_DATA_VALUE}>
+                              {Math.round(
+                                speicherGrenz.averageChargeLossChemicalKwh[
+                                  physicalKpiLookupSize
+                                ] ?? 0
+                              )}{" "}
+                              kWh/Jahr
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className={REPORT_DATA_LABEL}>
+                              Zellverluste beim Entladen
+                            </dt>
+                            <dd className={REPORT_DATA_VALUE}>
+                              {Math.round(
+                                speicherGrenz.averageDischargeLossChemicalKwh[
+                                  physicalKpiLookupSize
+                                ] ?? 0
+                              )}{" "}
+                              kWh/Jahr
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className={REPORT_DATA_LABEL}>
+                              Speicher → AC-Bus
+                            </dt>
+                            <dd className={REPORT_DATA_VALUE}>
+                              {Math.round(
+                                speicherGrenz
+                                  .averageDischargeLossBatteryToAcKwh[
+                                  physicalKpiLookupSize
+                                ] ?? 0
+                              )}{" "}
+                              kWh/Jahr
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className={REPORT_DATA_LABEL}>
+                              Selbstentladung
+                            </dt>
+                            <dd className={REPORT_DATA_VALUE}>
+                              {typeof avgSelfDischargeLossDisplayKwh ===
+                                "number" &&
+                              Number.isFinite(avgSelfDischargeLossDisplayKwh)
+                                ? `${Math.round(avgSelfDischargeLossDisplayKwh)} kWh/Jahr`
+                                : PLACEHOLDER}
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+                    ) : (
+                      <div className="mt-8 border-t border-line-soft pt-4">
+                        <div className={REPORT_METRIC_ROW}>
+                          <div className={REPORT_METRIC_LABEL}>
+                            <span className="block leading-snug">
+                              Batterieverluste
+                            </span>
+                            <span
+                              className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0.5`}
+                            >
+                              Für dieses Ergebnis liegt keine aufgeschlüsselte
+                              Verlustbilanz vor.
+                            </span>
+                          </div>
+                          <div className={REPORT_METRIC_VALUE}>
+                            {PLACEHOLDER}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                </section>
+
+                <section className={REPORT_SECTION}>
+                  <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
+                    Eigenverbrauch vs Speichergröße
+                  </h2>
+
+                  <SpeicherChart
+                    data={chart.data}
+                    recommendedTechnicalSize={recommendedTechnicalSize}
+                  />
+
+                  <div className="mt-4 max-w-reading text-sm leading-relaxed text-ink-secondary">
+                    Der zusätzliche Eigenverbrauch nimmt mit wachsender
+                    Speichergröße deutlich ab. Ab einem bestimmten Punkt bringt
+                    mehr Speicher nur noch geringen Mehrwert.
                   </div>
-                </div>
-
-                <h2 className="text-xl font-semibold mb-4">
-                  Eigenverbrauch vs Speichergröße
-                </h2>
-
-                <SpeicherChart
-                  data={chart.data}
-                  recommendedTechnicalSize={recommendedTechnicalSize}
-                />
-
-                <div className="mt-6 mb-8 text-slate-400 text-sm">
-                  Der zusätzliche Eigenverbrauch nimmt mit wachsender
-                  Speichergröße deutlich ab. Ab einem bestimmten Punkt bringt
-                  mehr Speicher nur noch geringen Mehrwert.
-                </div>
+                </section>
               </>
             )}
 
-            {/* Recommendation */}
-            <div className="mt-10 w-full min-w-0 p-6 rounded-2xl bg-[#0F1620] border border-white/5 group">
-              <div className={`w-full min-w-0 ${ANALYTICS_CARD_TEXT_HOVER}`}>
-                <h3 className="font-semibold text-emerald-400 opacity-90 mb-2">
-                  Unsere Einschätzung
-                </h3>
+            {/*
+              Written conclusion: prose argument on the left, compact key figures
+              on the right (same split pattern as the recommendation section).
+              Methodological notes and Hinweis stay full-width below.
+            */}
+            <section className={REPORT_SECTION}>
+              <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
+                Unsere Einschätzung
+              </h2>
+              {recommendedTechnicalSize > 0 ? (
                 <>
-                  {recommendedTechnicalSize > 0 ? (
-                    <>
-                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300">
-                        Die planerische Kaufempfehlung für Ihr Gebäude beträgt{" "}
-                        <strong className="font-semibold text-slate-200">
-                          {recommendedPlanningSize} kWh
-                        </strong>{" "}
-                        (planerische Anfangskapazität).
-                      </p>
+                  <div className={REPORT_SPLIT}>
+                    <div className="min-w-0">
+                      {/* The result of the report, restated in one compact group. */}
+                      <div className="space-y-3">
+                        <p className={REPORT_CONCLUSION_BODY}>
+                          Die planerische Kaufempfehlung für Ihr Gebäude beträgt{" "}
+                          <strong className="font-semibold text-ink">
+                            {recommendedPlanningSize} kWh
+                          </strong>{" "}
+                          (planerische Anfangskapazität).
+                        </p>
+                        <p className={REPORT_CONCLUSION_BODY}>
+                          Die physikalische Simulation ermittelt eine technische
+                          Speichergrenze von{" "}
+                          <strong className="font-semibold text-ink">
+                            {recommendedTechnicalSize} kWh nutzbarer Kapazität
+                          </strong>
+                          .
+                        </p>
+                        <p className={REPORT_CONCLUSION_CONTEXT}>
+                          Die planerische Anfangskapazität von{" "}
+                          <strong className="font-semibold text-ink">
+                            {recommendedPlanningSize} kWh
+                          </strong>{" "}
+                          enthält zusätzlich eine pauschale Alterungsreserve
+                          (Planungsannahme: ca. 75&nbsp;% Restkapazität nach etwa
+                          10 Jahren).
+                        </p>
+                        {hasActiveBackupReserve && (
+                          <p className={REPORT_CONCLUSION_CONTEXT}>
+                            Die Berechnung berücksichtigt eine Notstromreserve von{" "}
+                            {resolvedBackupReserveKwh} kWh.
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Caveat on the result above — ruled, not boxed. */}
                       {planningExceedsSimulatedRange && (
-                        <p className="w-full min-w-0 text-sm leading-6 text-amber-400/90 mt-3">
+                        <p className="mt-5 border-l-2 border-warning pl-5 text-sm leading-relaxed text-warning">
                           Die planerische Anfangskapazität liegt außerhalb des
                           simulierten Speicherbereichs von 5–30 kWh.
                         </p>
                       )}
-                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                        Die physikalische Simulation ermittelt eine technische
-                        Speichergrenze von{" "}
-                        <strong className="font-semibold text-slate-200">
-                          {recommendedTechnicalSize} kWh nutzbarer Kapazität
-                        </strong>
-                        .
-                      </p>
-                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                        Die planerische Anfangskapazität von{" "}
-                        <strong className="font-semibold text-slate-200">
-                          {recommendedPlanningSize} kWh
-                        </strong>{" "}
-                        enthält zusätzlich eine pauschale Alterungsreserve
-                        (Planungsannahme: ca. 75&nbsp;% Restkapazität nach etwa
-                        10 Jahren).
-                      </p>
-                      {hasActiveBackupReserve && (
-                        <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                          Die Berechnung berücksichtigt eine Notstromreserve von{" "}
-                          {resolvedBackupReserveKwh} kWh.
-                        </p>
-                      )}
-                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+
+                      {/* What the simulation adds, ending in the Plateau finding. */}
+                      <p className={`mt-8 ${REPORT_CONCLUSION_CONTEXT}`}>
                         Gleichzeitig zeigt die Simulation:
                       </p>
-                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+                      <p className={`mt-1 ${REPORT_CONCLUSION_BODY}`}>
                         Ab etwa{" "}
-                        <strong className="font-semibold text-slate-200">
+                        <strong className="font-semibold text-ink">
                           {recommendedTechnicalSize} kWh
                         </strong>{" "}
                         nimmt der zusätzliche Nutzen deutlich ab.
                       </p>
-                      <div className="mt-3 w-full min-w-0 border-l border-emerald-500/30 pl-3">
-                        <p className="text-emerald-300 font-medium">
+
+                      <div className="mt-5 border-l-2 border-accent pl-5">
+                        <p className="text-sm font-semibold text-accent-text">
                           Plateau erreicht
                         </p>
-                        <p className="text-sm leading-6 text-slate-300 mt-1">
+                        <p className={`mt-1.5 ${REPORT_CONCLUSION_BODY}`}>
                           Ab diesem Punkt bringt zusätzlicher Speicher nur noch
                           sehr geringen Mehrwert.
                         </p>
-                        <p className="text-sm leading-6 text-slate-300 mt-3">
+                        <p className="mt-2 text-sm leading-relaxed text-ink-secondary">
                           Die technische Speichergrenze liegt unmittelbar vor dem
                           ersten weiteren Kapazitätsschritt, der den jährlichen
                           Eigenverbrauch um weniger als 50&nbsp;kWh erhöht.
                         </p>
                       </div>
-                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-4">
-                        👉 Das bedeutet:
-                      </p>
-                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
+
+                      {/* What that means in practice — run-in, not a pseudo-heading. */}
+                      <p className={`mt-8 ${REPORT_CONCLUSION_BODY}`}>
+                        <strong className="font-semibold">Das bedeutet:</strong>{" "}
                         Ein größerer Speicher wäre technisch möglich, würde unter
                         den heutigen Bedingungen jedoch nur einen geringen
                         zusätzlichen Nutzen bringen.
                       </p>
-                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                        Die technische Speichergrenze wird ausschließlich anhand
-                        der physikalischen Simulation berechnet.
-                      </p>
-                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                        Die planerische Kaufempfehlung berücksichtigt zusätzlich
-                        eine einheitliche Alterungsreserve. Sie ist keine Prognose
-                        der tatsächlichen Batteriealterung und keine
-                        Herstellergarantie.
-                      </p>
-                      <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                        Die Berechnung basiert auf einer stündlichen Simulation
-                        (8760 Stunden pro Jahr). Die 75-%-Planungsannahme
-                        beeinflusst die Simulation nicht, sondern ausschließlich
-                        die planerische Kaufempfehlung.
-                      </p>
+                    </div>
+
+                    <dl className={`${REPORT_SPLIT_ASIDE} space-y-0`}>
+                      <div className={`${REPORT_DATA_ITEM} lg:border-t-0 lg:pt-0`}>
+                        <dt className={REPORT_DATA_LABEL}>
+                          Planerische Kaufempfehlung
+                        </dt>
+                        <dd
+                          className={`${REPORT_DATA_VALUE} font-semibold text-accent-text`}
+                        >
+                          {recommendedPlanningSize} kWh
+                        </dd>
+                      </div>
+                      <div className={REPORT_DATA_ITEM}>
+                        <dt className={REPORT_DATA_LABEL}>
+                          Technische Speichergrenze
+                        </dt>
+                        <dd className={REPORT_DATA_VALUE}>
+                          {recommendedTechnicalSize} kWh
+                        </dd>
+                      </div>
+                      <div className={REPORT_DATA_ITEM}>
+                        <dt className={REPORT_DATA_LABEL}>Plateau ab</dt>
+                        <dd className={REPORT_DATA_VALUE}>
+                          {recommendedTechnicalSize} kWh
+                        </dd>
+                      </div>
                       {hasActiveBackupReserve && (
-                        <>
-                          <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                            Durch die aktivierte Notstromreserve steht ein Teil
-                            des Speichers im Alltag nicht zur Verfügung.
-                          </p>
-                          <p className="w-full min-w-0 text-sm leading-6 text-slate-300 mt-3">
-                            Dadurch sinken Eigenverbrauch und Autarkie leicht.
-                          </p>
-                        </>
+                        <div className={REPORT_DATA_ITEM}>
+                          <dt className={REPORT_DATA_LABEL}>Notstromreserve</dt>
+                          <dd className={REPORT_DATA_VALUE}>
+                            {resolvedBackupReserveKwh} kWh
+                          </dd>
+                        </div>
                       )}
-                    </>
-                  ) : (
-                    <p className="w-full min-w-0 text-sm leading-6 text-slate-300">
-                      Unter den aktuellen Annahmen ist kein Batteriespeicher
-                      technisch erforderlich. Die Simulation zeigt, dass ein
-                      zusätzlicher Speicher den Eigenverbrauch unter diesen
-                      Bedingungen kaum erhöht.
+                    </dl>
+                  </div>
+
+                  <div className="mt-10 max-w-reading space-y-2.5 border-t border-line-soft pt-6">
+                    <p className={REPORT_NOTE}>
+                      Die technische Speichergrenze wird ausschließlich anhand
+                      der physikalischen Simulation berechnet.
                     </p>
-                  )}
+                    <p className={REPORT_NOTE}>
+                      Die planerische Kaufempfehlung berücksichtigt zusätzlich
+                      eine einheitliche Alterungsreserve. Sie ist keine Prognose
+                      der tatsächlichen Batteriealterung und keine
+                      Herstellergarantie.
+                    </p>
+                    <p className={REPORT_NOTE}>
+                      Die Berechnung basiert auf einer stündlichen Simulation
+                      (8760 Stunden pro Jahr). Die 75-%-Planungsannahme
+                      beeinflusst die Simulation nicht, sondern ausschließlich
+                      die planerische Kaufempfehlung.
+                    </p>
+                    {hasActiveBackupReserve && (
+                      <>
+                        <p className={REPORT_NOTE}>
+                          Durch die aktivierte Notstromreserve steht ein Teil
+                          des Speichers im Alltag nicht zur Verfügung.
+                        </p>
+                        <p className={REPORT_NOTE}>
+                          Dadurch sinken Eigenverbrauch und Autarkie leicht.
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </>
-              </div>
-            </div>
+              ) : (
+                <p className="max-w-reading text-sm leading-relaxed text-ink">
+                  Unter den aktuellen Annahmen ist kein Batteriespeicher
+                  technisch erforderlich. Die Simulation zeigt, dass ein
+                  zusätzlicher Speicher den Eigenverbrauch unter diesen
+                  Bedingungen kaum erhöht.
+                </p>
+              )}
+            </section>
 
-            {/* Disclaimer */}
-            <div className="mt-8 p-4 rounded-xl bg-[#0F1620] border border-white/5 mb-8 group">
-              <div className={ANALYTICS_CARD_TEXT_HOVER}>
-              <p className="text-xs text-slate-500">
-                <strong className="text-slate-400">Hinweis:</strong> Dies ist
-                eine vereinfachte Ersteinschätzung auf Basis Ihrer Angaben. Die
-                tatsächliche Wirtschaftlichkeit hängt von vielen weiteren
-                Faktoren ab (Lastprofil, Stromtarif, Fördermittel, etc.). Für
-                eine detaillierte Analyse empfehlen wir eine individuelle
-                Beratung.
+            {/* Disclaimer — closing footnote of the report, not a section */}
+            <div className="mt-8 border-t border-line-soft pt-6 lg:mt-10">
+              <p className="max-w-reading text-xs leading-relaxed text-ink-muted">
+                <strong className="font-semibold text-ink-secondary">
+                  Hinweis:
+                </strong>{" "}
+                Dies ist eine vereinfachte Ersteinschätzung auf Basis Ihrer
+                Angaben. Die tatsächliche Wirtschaftlichkeit hängt von vielen
+                weiteren Faktoren ab (Lastprofil, Stromtarif, Fördermittel,
+                etc.). Für eine detaillierte Analyse empfehlen wir eine
+                individuelle Beratung.
               </p>
-              </div>
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleReset}
-                className="flex-1 py-3 rounded-full border border-white/10 bg-transparent text-white/80 hover:bg-white/5 hover:border-white/20 hover:text-white transition-all duration-200 hover:shadow-[0_0_12px_rgba(255,255,255,0.05)] font-medium"
-              >
-                Neue Berechnung
-              </button>
-              <Link
-                href={calculationLink}
-                className="flex-1 py-3 rounded-full text-center bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 active:scale-[0.98] transition-all duration-200 hover:scale-[1.03] shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_20px_rgba(34,197,94,0.25)] text-white font-semibold"
-              >
-                Detaillierte Analyse ansehen
-              </Link>
-            </div>
-          </>
-        )}
-      </div>
+          {/* Actions — page controls on the canvas, aligned to the sheet edges */}
+          <div className="max-w-sheet mx-auto mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <button onClick={handleReset} className={BTN_SECONDARY}>
+              Neue Berechnung
+            </button>
+            <Link href={calculationLink} className={BTN_PRIMARY}>
+              Detaillierte Analyse ansehen
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -13,8 +13,55 @@ import {
   type LabelProps,
 } from "recharts";
 
+/**
+ * Semantic chart tokens from globals.css. SVG presentation attributes are
+ * parsed as CSS values, so Recharts can forward `var(...)` unchanged.
+ */
+const CHART = {
+  grid: "var(--color-chart-grid)",
+  axis: "var(--color-chart-axis)",
+  line: "var(--color-chart-line)",
+  marker: "var(--color-chart-marker)",
+  surface: "var(--color-surface)",
+} as const;
+
+/** Y grid granularity, and the tick count the ladder aims for. */
+const Y_TICK_STEP_KWH = 500;
+const Y_TICK_MAX_INTERVALS = 5;
+
+/**
+ * Uniform Y ladder across the visible range: one step size, no gaps, no
+ * duplicates. The step grows in 500 kWh multiples until the range fits into
+ * `Y_TICK_MAX_INTERVALS` intervals, so a wide range stays readable and a narrow
+ * one keeps its 500 kWh granularity.
+ */
+function buildYAxisScale(values: number[]): { domain: [number, number]; ticks: number[] } {
+  const rawMin = Math.min(...values);
+  const rawMax = Math.max(...values);
+  const step =
+    Math.max(
+      1,
+      Math.ceil((rawMax - rawMin) / (Y_TICK_MAX_INTERVALS * Y_TICK_STEP_KWH))
+    ) * Y_TICK_STEP_KWH;
+
+  const min = Math.floor(rawMin / step) * step;
+  const max = Math.max(Math.ceil(rawMax / step) * step, min + step);
+
+  const ticks: number[] = [];
+  for (let value = min; value <= max; value += step) {
+    ticks.push(value);
+  }
+
+  return { domain: [min, max], ticks };
+}
+
+/**
+ * The label is centred on the marker, so at the first and last visible capacity
+ * it would reach past the plot into the Y-axis labels or the right edge. There
+ * it is anchored to the inner side of the line instead.
+ */
 function TechnicalPlateauReferenceLabel(props: LabelProps) {
-  const { offset = 5, viewBox } = props;
+  const { offset = 5, viewBox, textAnchor = "middle" } = props;
   if (
     !viewBox ||
     typeof viewBox !== "object" ||
@@ -29,14 +76,16 @@ function TechnicalPlateauReferenceLabel(props: LabelProps) {
   const cx = vx + vw / 2;
   const verticalSign = vh >= 0 ? 1 : -1;
   const labelY = vy - verticalSign * offset;
+  const labelX =
+    textAnchor === "start" ? cx + 6 : textAnchor === "end" ? cx - 6 : cx;
 
   return (
     <text
-      x={cx}
+      x={labelX}
       y={labelY}
-      textAnchor="middle"
+      textAnchor={textAnchor}
       className="recharts-text recharts-label"
-      fill="#34d399"
+      fill={CHART.marker}
       fontSize={12}
     >
       Technische Speichergrenze
@@ -57,77 +106,89 @@ export default function SpeicherChart({
   data,
   recommendedTechnicalSize,
 }: Props) {
-  const minYRaw = Math.min(...data.map((d) => d.eigenverbrauch));
-  const maxY = Math.max(...data.map((d) => d.eigenverbrauch));
+  /*
+    Display-only view of the model data. The simulation keeps its 0 kWh
+    baseline — it carries Eigenverbrauch without storage, the baseline KPIs and
+    the plateau logic — but the chart shows only the capacities that were
+    actually swept, so no category, segment or tooltip exists at 0 kWh.
+  */
+  const visibleData = data.filter((point) => point.size > 0);
+  if (visibleData.length === 0) {
+    return null;
+  }
 
-  const minY = Math.floor(minYRaw / 500) * 500;
-  const maxYRounded = Math.ceil(maxY / 500) * 500;
+  const { domain: yDomain, ticks: yTicks } = buildYAxisScale(
+    visibleData.map((point) => point.eigenverbrauch)
+  );
+
+  const markerIndex = visibleData.findIndex(
+    (point) => point.size === recommendedTechnicalSize
+  );
+  const markerLabelAnchor =
+    markerIndex === 0
+      ? "start"
+      : markerIndex === visibleData.length - 1
+        ? "end"
+        : "middle";
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="w-full h-[420px]">
+    <div className="w-full">
+      <div className="w-full h-[380px]">
         <ResponsiveContainer>
           <LineChart
-            data={data}
-            margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+            data={visibleData}
+            margin={{ top: 20, right: 24, left: 0, bottom: 12 }}
           >
-            <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
+            <CartesianGrid vertical={false} stroke={CHART.grid} />
 
             <XAxis
               dataKey="size"
-              tick={{ fill: "#94a3b8", fontSize: 12 }}
+              stroke={CHART.axis}
+              tick={{ fill: CHART.axis, fontSize: 12 }}
               tickMargin={6}
+              padding={{ left: 8, right: 8 }}
             />
 
             <YAxis
-              domain={[minY, maxYRounded]}
-              ticks={[
-                minY,
-                minY + 500,
-                minY + 1000,
-                minY + 1500,
-                maxYRounded,
-              ]}
-              tick={{ fill: "#94a3b8", fontSize: 12 }}
+              domain={yDomain}
+              ticks={yTicks}
+              stroke={CHART.axis}
+              tick={{ fill: CHART.axis, fontSize: 12 }}
               tickMargin={8}
             />
 
-            <ReferenceLine
-              x={recommendedTechnicalSize}
-              stroke="#10b981"
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              label={
-                <Label
-                  position="top"
-                  fill="#34d399"
-                  fontSize={12}
-                  offset={5}
-                  content={TechnicalPlateauReferenceLabel}
-                />
-              }
-            />
+            {recommendedTechnicalSize > 0 && (
+              <ReferenceLine
+                x={recommendedTechnicalSize}
+                stroke={CHART.marker}
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                label={
+                  <Label
+                    position="top"
+                    fill={CHART.marker}
+                    fontSize={12}
+                    offset={5}
+                    textAnchor={markerLabelAnchor}
+                    content={TechnicalPlateauReferenceLabel}
+                  />
+                }
+              />
+            )}
 
             <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 const ev = payload[0]?.value;
                 return (
-                  <div
-                    className="px-3 py-2 text-sm text-slate-200"
-                    style={{
-                      backgroundColor: "#020617",
-                      border: "1px solid #334155",
-                      borderRadius: "8px",
-                    }}
-                  >
+                  <div className="rounded-md border border-tooltip-border bg-tooltip-bg px-3 py-2 text-sm text-tooltip-ink shadow-sm">
                     <div>Speichergröße: {label} kWh</div>
                     <div>Eigenverbrauch: {Math.round(Number(ev))} kWh</div>
                   </div>
                 );
               }}
               cursor={{
-                stroke: "#94a3b8",
+                stroke: CHART.axis,
                 strokeWidth: 1,
                 strokeDasharray: "4 4",
                 opacity: 0.4,
@@ -138,7 +199,7 @@ export default function SpeicherChart({
               type="monotone"
               dataKey="eigenverbrauch"
               name="Eigenverbrauch"
-              stroke="#34d399"
+              stroke={CHART.line}
               strokeWidth={3}
               dot={(props) => {
                 const { cx, cy, payload } = props;
@@ -150,17 +211,17 @@ export default function SpeicherChart({
                     cx={cx}
                     cy={cy}
                     r={isRecommended ? 6 : 3}
-                    fill={isRecommended ? "#10b981" : "#34d399"}
-                    stroke={isRecommended ? "#fff" : "none"}
+                    fill={isRecommended ? CHART.marker : CHART.line}
+                    stroke={isRecommended ? CHART.surface : "none"}
                     strokeWidth={isRecommended ? 2 : 0}
                   />
                 );
               }}
               activeDot={{
                 r: 6,
-                stroke: "#34d399",
+                stroke: CHART.line,
                 strokeWidth: 2,
-                fill: "#020617",
+                fill: CHART.surface,
               }}
             />
           </LineChart>

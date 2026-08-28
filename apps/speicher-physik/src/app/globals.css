@@ -1,25 +1,69 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/**
+ * SpeicherGrenze semantic design tokens.
+ * Light theme only — no theme switching, no prefers-color-scheme override.
+ */
+@theme {
+  --color-canvas: #f5f7f6;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eef2f0;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-}
+  --color-ink: #17212b;
+  --color-ink-secondary: #5a6763;
+  --color-ink-muted: #6e7b76;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Report sheet boundary and major section separators. Slightly stronger than
+     the initial #dde5e1 so they stay visible on the light canvas without
+     looking heavy. */
+  --color-line: #d3ddd8;
+  /* Dividers inside a section (data rows, footnote rules) — one step lighter,
+     so a section boundary always outranks a row boundary. */
+  --color-line-soft: #e4ebe7;
+  --color-line-strong: #869790;
+
+  --color-accent: #11875d;
+  --color-accent-hover: #0d704d;
+  --color-accent-text: #0d704d;
+  --color-accent-soft: #eaf6f0;
+
+  --color-success: #0d704d;
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf4e7;
+  --color-danger: #be123c;
+  --color-danger-soft: #fdf2f4;
+
+  --color-field: #ffffff;
+  --color-field-border: #869790;
+  --color-focus: #11875d;
+
+  --color-chart-grid: #dde5e1;
+  --color-chart-axis: #5a6763;
+  --color-chart-line: #11875d;
+  --color-chart-marker: #b45309;
+  --color-tooltip-bg: #ffffff;
+  --color-tooltip-border: #c7d3cd;
+  --color-tooltip-ink: #17212b;
+
+  /* Width system: the frame carries the page gutters and is shared by header,
+     report sheet, actions and footer; the sheet is the document itself. */
+  --container-frame: 68rem;
+  --container-sheet: 64rem;
+  --container-form: 52rem;
+  /* The one prose track inside a section: long-form body text and notes keep
+     this measure instead of spanning the full report width. Sections use grids,
+     not their own widths, so this is the only internal width token. */
+  --container-reading: 42rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-canvas);
+  color: var(--color-ink);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }

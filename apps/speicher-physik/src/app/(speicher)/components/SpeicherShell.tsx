@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 const btnEnergy =
-  "inline-flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 active:scale-[0.98] transition-all duration-200 hover:scale-[1.03] shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_20px_rgba(34,197,94,0.25)] text-white font-semibold";
+  "inline-flex items-center justify-center bg-accent hover:bg-accent-hover text-white font-semibold transition-colors duration-200";
 
 export function SpeicherShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -16,19 +16,19 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
     pathname?.startsWith("/calculate/");
 
   return (
-    <div className="min-h-screen bg-[#0B0F14] text-slate-50">
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0B0F14]/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+    <div className="min-h-screen flex flex-col bg-canvas text-ink">
+      <header className="sticky top-0 z-50 border-b border-line bg-surface">
+        <div className="max-w-frame mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-2 sm:gap-6">
             <Link href="/" className="flex min-w-0 flex-1 items-center gap-2 sm:flex-initial sm:min-w-0">
-              <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-green-600 to-emerald-700 flex items-center justify-center">
+              <div className="w-8 h-8 shrink-0 rounded-lg bg-accent flex items-center justify-center">
                 <BatteryMedium className="h-6 w-6 text-white" strokeWidth={2} aria-hidden />
               </div>
               <div className="flex min-w-0 flex-col gap-0.5 leading-snug sm:flex-row sm:items-baseline sm:gap-x-2 sm:gap-y-0 sm:leading-normal">
-                <span className="font-semibold leading-tight text-white sm:leading-normal">
+                <span className="font-semibold leading-tight text-ink sm:leading-normal">
                   {isSimplifiedNav ? "SpeicherGrenze" : "PV Speicher"}
                 </span>
-                <span className="text-xs leading-none text-white/50 whitespace-nowrap sm:leading-normal">
+                <span className="text-xs leading-none text-ink-muted whitespace-nowrap sm:leading-normal">
                   by PVNavigator
                 </span>
               </div>
@@ -38,13 +38,13 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
               <nav className="hidden sm:flex items-center gap-6">
                 <Link
                   href="/"
-                  className="text-sm text-white/50 hover:text-white transition-colors"
+                  className="text-sm text-ink-secondary hover:text-ink transition-colors"
                 >
                   Übersicht
                 </Link>
                 <Link
                   href="/calculate"
-                  className="text-sm text-white/50 hover:text-white transition-colors"
+                  className="text-sm text-ink-secondary hover:text-ink transition-colors"
                 >
                   Rechner
                 </Link>
@@ -61,25 +61,25 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main>{children}</main>
+      <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-white/5 py-6 mt-auto bg-[#0B0F14]">
-        <div className="max-w-6xl mx-auto px-4">
+      <footer className="border-t border-line py-6 bg-surface">
+        <div className="max-w-frame mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <Link
               href="https://pvnavigator.de"
-              className="text-slate-300 hover:text-white transition-colors"
+              className="text-ink-secondary hover:text-ink transition-colors"
             >
               PVNavigator.de
             </Link>
             <Link
               href="/technische-details"
-              className="text-slate-300 hover:text-white transition-colors sm:text-right"
+              className="text-ink-secondary hover:text-ink transition-colors sm:text-right"
             >
               Technische Details zur Berechnung
             </Link>
           </div>
-          <div className="text-xs text-slate-500 text-center mt-4 space-y-1">
+          <div className="text-xs text-ink-muted text-center mt-4 space-y-1">
             <p>Basierend auf 8760h Simulation</p>
             <p>Physikalisches Modell ohne Verkaufslogik</p>
           </div>
