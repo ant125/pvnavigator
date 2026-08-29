@@ -10,6 +10,7 @@ import {
   type PhysicalKernelResult,
 } from "../../../../packages/pv-core";
 
+/** Production load: hourly BDEW (8760). Quarter-hour builder is not used here. */
 function buildMergedLoadForYear(
   year: number,
   annualConsumptionKWh: number,

@@ -1,8 +1,9 @@
 /**
- * Merge hourly load components (8760h each) by summing per hour.
+ * Merge load components index-by-index.
+ *
+ * All profiles must share the same length (8760 hourly or 35040 quarter-hour).
+ * Mixing timesteps is an error. Output length equals input length.
  */
-
-const HOURS_PER_YEAR = 8760;
 
 export type LoadComponent = {
   name: string;
@@ -15,22 +16,27 @@ export function mergeLoadProfiles(components: LoadComponent[]): number[] {
     throw new Error("mergeLoadProfiles: at least one component is required");
   }
 
-  const merged = new Array<number>(HOURS_PER_YEAR).fill(0);
+  const expectedLength = components[0].profile.length;
+  if (expectedLength === 0) {
+    throw new Error("mergeLoadProfiles: profile must be non-empty");
+  }
+
+  const merged = new Array<number>(expectedLength).fill(0);
 
   for (const c of components) {
-    if (c.profile.length !== HOURS_PER_YEAR) {
+    if (c.profile.length !== expectedLength) {
       throw new Error(
-        `mergeLoadProfiles: component "${c.name}" has length ${c.profile.length}, expected ${HOURS_PER_YEAR}`
+        `mergeLoadProfiles: component "${c.name}" has length ${c.profile.length}, expected ${expectedLength} (all components must share the same timestep length)`
       );
     }
-    for (let h = 0; h < HOURS_PER_YEAR; h++) {
-      const v = c.profile[h];
+    for (let i = 0; i < expectedLength; i++) {
+      const v = c.profile[i];
       if (!Number.isFinite(v) || v < 0) {
         throw new Error(
-          `mergeLoadProfiles: component "${c.name}" invalid value at hour ${h}`
+          `mergeLoadProfiles: component "${c.name}" invalid value at index ${i}`
         );
       }
-      merged[h] += v;
+      merged[i] += v;
     }
   }
 

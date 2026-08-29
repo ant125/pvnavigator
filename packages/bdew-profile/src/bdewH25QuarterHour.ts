@@ -5,7 +5,8 @@
  * hourly production path: Sunday → FT template, Saturday → SA, other days → WT.
  * Weekday public holidays are not remapped. Dynamisierung is not applied.
  *
- * Not used by SpeicherGrenze production yet (still 8760 hourly).
+ * Not used by SpeicherGrenze production yet (still 8760 hourly; Phase 4C
+ * exposes this via buildQuarterHourPhysicalInputsForYear only).
  */
 
 import {
@@ -86,7 +87,7 @@ export function buildBdewH25QuarterHourWeightsForYear(year: number): number[] {
  * Scaling uses the actual remapped-year sum (not a second 1 GWh factor),
  * so `sum(result) === annualKWh` within floating-point error.
  *
- * Not wired into SpeicherGrenze production in Phase 4B.
+ * Not wired into SpeicherGrenze production (Phase 4C builder only).
  */
 export function createUserLoadProfile15MinForYear(
   annualKWh: number,

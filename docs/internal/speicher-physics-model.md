@@ -32,7 +32,15 @@ für Photovoltaik-Erzeugung und Batteriespeicher.
 
 ### Zeitauflösung und Kalender
 
-Die Simulation erfolgt stündlich. Jedes modellierte Jahr besteht aus genau 8760 Intervallen mit einer Dauer von jeweils einer Stunde (Δt = 1 h). Ein 15- oder 30-Minuten-Modell wird nicht verwendet.
+Die **Produktionssimulation** erfolgt stündlich. Jedes modellierte Jahr besteht aus genau 8760 Intervallen mit einer Dauer von jeweils einer Stunde (Δt = 1 h). Ein 15-Minuten-Kern ist noch nicht an `calculateSpeicherResult` / `runPhysicalKernel` angeschlossen.
+
+Vorbereiteter alternativer Eingangspfad (Phase 4C, intern, nicht in Produktion):
+
+- BDEW-Quelle: natives H25-Viertelstundenprofil (96 Slots/Tag, 35040 Schritte/Nichtschaltjahr). Keine Dynamisierung, keine Feiertags-Umbelegung.
+- PVGIS-Quelle: unverändert stündlich (seriescalc). Nach der bestehenden Berlin-8760-Ausrichtung wird jede Stundenenergie \(E\) gleichmäßig auf vier Viertelstunden \([E/4, E/4, E/4, E/4]\) verteilt. Keine 15-min-PVGIS-API, keine Einstrahlungsinterpolation.
+- Wärmepumpe: dasselbe synthetische Saisonmodell, nur das Zeitraster (96 Slots/Tag). Jahressumme unverändert die eingegebene kWh.
+- Merge: indexweise, alle Komponenten müssen dieselbe Länge haben (kein Mix 8760 + 35040).
+- API: `buildQuarterHourPhysicalInputsForYear` in `apps/speicher-physik/src/lib/buildQuarterHourPhysicalInputs.ts`.
 
 ---
 

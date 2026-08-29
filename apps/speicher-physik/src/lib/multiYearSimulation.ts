@@ -98,6 +98,9 @@ export function sumHourlyProfiles(
  * hourly PV (8760 h) year-by-year (UI azimuth each).
  *
  * Request count = number of surfaces (not surfaces × years).
+ * Production stays on this hourly sum. For 15-min inputs, expand the
+ * combined yearly arrays with `expandAlignedPvgisHourlyByYear` (sum
+ * surfaces hourly first, then split — lower memory than expand-then-sum).
  */
 export async function loadCombinedHourlyPvByYear(
   latitude: number,

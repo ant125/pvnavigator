@@ -35,6 +35,16 @@ export {
 } from "./multiYear";
 
 export {
+  TIME_STEP_MINUTES_15,
+  TIME_STEP_HOURS_15,
+  STEPS_PER_HOUR_15,
+  STEPS_PER_DAY_15,
+  STEPS_PER_NON_LEAP_YEAR_15,
+  expandHourlyEnergyToQuarterHours,
+  expandHourlyEnergyToQuarterHoursByYear,
+} from "./quarterHourGrid";
+
+export {
   runPhysicalKernel,
   findKernelYear,
   findKernelYearBattery,

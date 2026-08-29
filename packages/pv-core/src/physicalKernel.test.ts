@@ -37,6 +37,19 @@ function pvForYear(year: number): number[] {
 }
 
 describe("runPhysicalKernel", () => {
+  it("still requires 8760 arrays (15-min pipeline is not wired to production)", () => {
+    const qh = new Array(35040).fill(0.1);
+    expect(() =>
+      runPhysicalKernel({
+        years: [2018],
+        batterySizes: [5],
+        getLoadForYear: () => qh,
+        getPvForYear: () => qh,
+        timeStepHours: 0.25,
+      })
+    ).toThrow(/35040/);
+  });
+
   it("keeps a full yearly ledger for every weather year × battery size", () => {
     const years = [...DEFAULT_MULTI_YEAR_YEARS];
     const batterySizes = [5, 6];

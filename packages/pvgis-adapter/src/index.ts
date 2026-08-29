@@ -9,6 +9,11 @@
  *
  * Multi-year responses MUST be split by UTC year before alignment (local year is
  * ignored when indexing into the 8760 grid).
+ *
+ * PVGIS remains an hourly source. Optional quarter-hour energy is produced
+ * after Berlin 8760 alignment by splitting each hour E into four equal
+ * quarter-hours [E/4, E/4, E/4, E/4] ({@link expandAlignedPvgisHourlyToQuarterHours}).
+ * That helper is not used by SpeicherGrenze production (still 8760 / Δt = 1 h).
  */
 
 export type LoadPVGISParams = {
@@ -478,3 +483,13 @@ export async function loadPVGISHourlyProfilesByYear(
 
   return byYear;
 }
+
+export {
+  expandAlignedPvgisHourlyToQuarterHours,
+  expandAlignedPvgisHourlyByYear,
+  TIME_STEP_MINUTES_15,
+  TIME_STEP_HOURS_15,
+  STEPS_PER_HOUR_15,
+  STEPS_PER_DAY_15,
+  STEPS_PER_NON_LEAP_YEAR_15,
+} from "./expandAlignedHourly";
