@@ -34,22 +34,26 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
               </div>
             </Link>
 
-            {!isSimplifiedNav ? (
-              <nav className="hidden sm:flex items-center gap-6">
-                <Link
-                  href="/"
-                  className="text-sm text-ink-secondary hover:text-ink transition-colors"
-                >
-                  Übersicht
-                </Link>
-                <Link
-                  href="/calculate"
-                  className="text-sm text-ink-secondary hover:text-ink transition-colors"
-                >
-                  Rechner
-                </Link>
-              </nav>
-            ) : null}
+            <nav className="hidden sm:flex items-center gap-6">
+              <Link
+                href="/"
+                className="text-sm text-ink-secondary hover:text-ink transition-colors"
+              >
+                Übersicht
+              </Link>
+              <Link
+                href="/calculate"
+                className="text-sm text-ink-secondary hover:text-ink transition-colors"
+              >
+                Rechner
+              </Link>
+              <Link
+                href="/methodik-quellen"
+                className="text-sm text-ink-secondary hover:text-ink transition-colors"
+              >
+                Methodik & Quellen
+              </Link>
+            </nav>
 
             <Link
               href="/calculate"
@@ -72,12 +76,20 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
             >
               PVNavigator.de
             </Link>
-            <Link
-              href="/technische-details"
-              className="text-ink-secondary hover:text-ink transition-colors sm:text-right"
-            >
-              Technische Details zur Berechnung
-            </Link>
+            <div className="flex flex-col sm:items-end gap-1 sm:text-right">
+              <Link
+                href="/methodik-quellen"
+                className="text-ink-secondary hover:text-ink transition-colors"
+              >
+                Methodik & Quellen
+              </Link>
+              <Link
+                href="/technische-details"
+                className="text-ink-secondary hover:text-ink transition-colors"
+              >
+                Technische Details zur Berechnung
+              </Link>
+            </div>
           </div>
           <div className="text-xs text-ink-muted text-center mt-4 space-y-1">
             <p>Basierend auf 8760h Simulation</p>

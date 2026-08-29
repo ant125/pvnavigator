@@ -12,6 +12,7 @@
 |---|---|
 | Interne kanonische technische Spezifikation | dieses File (`docs/internal/speicher-physics-model.md`) |
 | Öffentliche, vereinfachte Methodik | `docs/physics-model.md` (gerendert unter `/technische-details`) |
+| Offizielle Quellen (SSOT) | `packages/pv-methodology` → `/methodik-quellen` |
 
 - Implementiertes Verhalten ist letztlich durch den referenzierten Produktions-Quellcode definiert.
 - Abweichungen zwischen Code und Dokumentation sind als Defekte zu behandeln und zu auditieren.
@@ -625,14 +626,12 @@ ab.
 Herstellergarantien zeigen, dass eine verbleibende Speicherkapazität häufig über
 einen bestimmten Zeitraum, eine Zyklenzahl oder einen Energiedurchsatz definiert
 wird. Die konkreten Bedingungen unterscheiden sich jedoch je nach Produkt.
-Beispielsweise nennt [sonnen für die sonnenBatterie 10 performance](https://www.sonnen.de/stromspeicher/sonnenbatterie-10-performance)
-mindestens 80 % nach 10 Jahren oder 10.000 Ladezyklen. Andere Hersteller
-verwenden abweichende Zeiträume, Restkapazitäten und Bedingungen — etwa die
-[Enphase IQ Battery 5P-Garantie](https://enphase.com/de-de/download/iq-battery-5p-de-de-austria-2024-10-25-warranty)
-(unterschiedliche Laufzeiten, Zyklen-/Durchsatzbedingungen und
-Restkapazitätsschwellen). Als historisches, produkt- und dokumentenspezifisches
-Beispiel siehe auch die
-[Tesla Powerwall 2 European Warranty](https://www.tesla.com/sites/default/files/pdfs/powerwall/Powerwall_2_DC_Warranty_Europe_1-1_English.pdf).
+Beispiele (sonnenBatterie 10 performance, Enphase IQ Battery 5P-Garantie,
+Tesla Powerwall 2 European Warranty) sowie weitere Herstellerseiten
+(Huawei LUNA, BYD Battery-Box, Tesla Powerwall) sind ausschließlich im zentralen
+Register **Methodik & Quellen** (`packages/pv-methodology`,
+`@pv-methodology/registry`) hinterlegt und unter `/methodik-quellen` öffentlich
+einsehbar. Keine offiziellen Quell-URLs in dieser Datei duplizieren.
 
 Die in SpeicherGrenze verwendeten 75 % sind deshalb keine Übernahme einer
 bestimmten Herstellergarantie, sondern eine einheitliche und vorsichtige
@@ -640,7 +639,7 @@ Planungsannahme. Vor dem Kauf müssen die Garantiebedingungen des konkret
 angebotenen Speichers geprüft werden. Diese Herstellerangaben stellen keine
 Empfehlung oder Endorsement von PVNavigator dar.
 
-Quellenstand: 27. August 2026
+Quellenstand: siehe Methodik & Quellen (`@pv-methodology/registry`)
 
 ### Ermittlung der technischen Speichergrenze
 

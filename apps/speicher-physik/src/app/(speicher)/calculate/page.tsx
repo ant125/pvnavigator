@@ -1275,6 +1275,21 @@ export default function SpeicherCalculatePage() {
               </div>
             </form>
 
+            <div className="mt-8 border-t border-line pt-6">
+              <p className="text-sm leading-relaxed text-ink-secondary max-w-reading">
+                Unsere Berechnung basiert auf offiziellen Wetterdaten,
+                BDEW-Lastprofilen und einer dokumentierten Simulationsmethodik.
+              </p>
+              <p className="mt-2">
+                <Link
+                  href="/methodik-quellen"
+                  className="text-sm font-medium text-accent hover:text-accent-hover transition-colors"
+                >
+                  → Methodik & Quellen
+                </Link>
+              </p>
+            </div>
+
             {/* Disclaimer */}
             <p className="mt-6 border-t border-line-soft pt-6 text-xs text-ink-muted">
               * Pflichtfelder. Ihre Daten werden nicht gespeichert.

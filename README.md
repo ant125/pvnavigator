@@ -18,8 +18,9 @@ pvnavigator/
 ├── packages/
 │   ├── pv-core/           # Kernberechnungen (Eigenverbrauch, etc.)
 │   ├── pvgis-adapter/     # PVGIS API-Adapter
-│   ├── bdew-profile/      # BDEW H0 Lastprofil
-│   └── geocoding/         # Adressaufbau und Google Geocoding
+│   ├── bdew-profile/      # BDEW H0/H25 Lastprofil
+│   ├── geocoding/         # Adressaufbau und Google Geocoding
+│   └── pv-methodology/    # Methodik & Quellen (SSOT für offizielle Quellen)
 ├── docs/
 │   └── ARCHITECTURE.md    # Single Source of Truth (подробно)
 ```
@@ -58,7 +59,7 @@ npm run dev:pvnavigator-web
 ## Routen
 
 - **pvnavigator-web** (Home/Hub): `/`, `/impressum`, `/datenschutz`
-- **speicher-physik / speicher-wirtschaft**: `/`, `/speicher`, `/speicher/calculate`, `/speicher/result`
+- **speicher-physik / speicher-wirtschaft**: `/`, `/calculate`, `/result`, `/technische-details`, `/methodik-quellen`
 - **pvshadow**: `/`, `/analyse`, `/create`
 
 ---
@@ -67,7 +68,7 @@ npm run dev:pvnavigator-web
 
 **Правило:** Вся математика, физика, агрегации, парсеры и адаптеры данных — **только в `packages/`**. В `apps/` — только UI, server actions (оркестрация), валидация формы, хранение результата.
 
-Подробнее: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+**Engineering Rule:** Любое новое инженерное допущение может стать production-логикой только после регистрации официального источника в `@pv-methodology/registry`. Подробнее: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ### Как правильно импортировать
 
@@ -76,6 +77,9 @@ npm run dev:pvnavigator-web
 import { calculateEigenverbrauch } from "@pv-core/calculations";
 import { createUserLoadProfile } from "@bdew-profile/loader";
 import { loadPVGISHourlyProfile } from "@pvgis-adapter/core";
+
+// Methodik & Quellen (website / future PDF)
+import { getMethodologySources } from "@pv-methodology/registry";
 
 // Client component — данные для графика (без fs)
 import { BDEW_H0_PROFILES, formatWeight } from "@bdew-profile/loader/chart";
@@ -92,6 +96,9 @@ import { loadBDEW } from "../data/bdewH0Profile";
 
 // ❌ mockCalculation с формулами
 import { calculateMockResult } from "../utils/mockCalculation";
+
+// ❌ Официальные source URLs вне registry
+const SOURCE = "https://www.example.com/official-doc";
 ```
 
 ### API пакетов
@@ -103,3 +110,4 @@ import { calculateMockResult } from "../utils/mockCalculation";
 | `@bdew-profile/loader` | `loadBDEWProfileHourlies`, `scaleToAnnualKWh`, `createUserLoadProfile` | Server-only (fs) |
 | `@bdew-profile/loader/chart` | `BDEW_H0_PROFILES`, `formatWeight` | Client (UI-Chart) |
 | `@geocoding/core` | `buildAddressString`, `geocodeAddress` | Server (`geocodeAddress`), Client/UI (`buildAddressString`) |
+| `@pv-methodology/registry` | `METHODOLOGY_SOURCES`, `getMethodologySources`, `getMethodologySourcesGrouped` | Website, docs, future PDF |

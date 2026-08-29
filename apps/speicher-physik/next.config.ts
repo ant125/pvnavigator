@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     "@pvgis-adapter/core",
     "@bdew-profile/loader",
     "@pv-core/calculations",
+    "@pv-methodology/registry",
   ],
 };
 
