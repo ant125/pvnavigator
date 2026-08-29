@@ -5,13 +5,15 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate:h25": "node scripts/generateH25QuarterHour.mjs"
   },
   "exports": {
     ".": "./src/index.ts",
     "./chart": "./src/chartData.ts"
   },
   "devDependencies": {
+    "jszip": "^3.10.1",
     "vitest": "^3.0.5"
   }
 }

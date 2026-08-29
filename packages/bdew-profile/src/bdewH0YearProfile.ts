@@ -51,7 +51,8 @@ function templateKey(month: number, dayType: BdewDayType): string {
   return `${month}:${dayType}`;
 }
 
-function classifyDayTypeEuropeBerlin(
+/** Weekday class in Europe/Berlin: WD / SA / SU. Does not remap public holidays. */
+export function classifyBdewDayTypeEuropeBerlin(
   year: number,
   month: number,
   day: number
@@ -83,7 +84,7 @@ function buildTemplateMap(): Map<string, readonly number[]> {
   let offset = 0;
   const refYear = BDEW_H0_REFERENCE_CALENDAR_YEAR;
   for (const { month, day } of iterateBdewProfileDays(refYear)) {
-    const dayType = classifyDayTypeEuropeBerlin(refYear, month, day);
+    const dayType = classifyBdewDayTypeEuropeBerlin(refYear, month, day);
     const key = templateKey(month, dayType);
     const slice = BDEW_H0.slice(offset, offset + 24);
     if (slice.length !== 24) {
@@ -114,7 +115,7 @@ export function buildBdewH0WeightsForYear(year: number): number[] {
   }
   const weights: number[] = [];
   for (const { month, day } of iterateBdewProfileDays(year)) {
-    const dayType = classifyDayTypeEuropeBerlin(year, month, day);
+    const dayType = classifyBdewDayTypeEuropeBerlin(year, month, day);
     const key = templateKey(month, dayType);
     const block = BDEW_H0_TEMPLATES_KWH_REF.get(key);
     if (!block) {

@@ -1,7 +1,12 @@
 /**
- * BDEW H0 Profile – loads and scales hourly consumption profile.
+ * BDEW household load profiles.
  * Pure module: no fs / filesystem access. Safe in serverless environments.
- * Single source of truth for household load (8760h).
+ *
+ * Production SpeicherGrenze still uses the hourly H0-named series (8760h)
+ * via {@link createUserLoadProfileForYear}. The native source workbook is
+ * BDEW H25 at 15-minute resolution; the 15-min API is prepared in Phase 4B
+ * and is not switched on for production yet.
+ *
  * Do not import in client components – use @bdew-profile/loader/chart for UI.
  */
 
@@ -90,5 +95,21 @@ export function createUserLoadProfileForYear(
 export {
   BDEW_H0_REFERENCE_CALENDAR_YEAR,
   iterateBdewProfileDays,
+  classifyBdewDayTypeEuropeBerlin,
 } from "./bdewH0YearProfile";
 export type { BdewDayType } from "./bdewH0YearProfile";
+
+export {
+  createUserLoadProfile15MinForYear,
+  buildBdewH25QuarterHourWeightsForYear,
+  aggregateQuarterHoursToHourly,
+  h25SourceDayTypeFromCalendar,
+  BDEW_H25_SOURCE,
+  BDEW_H25_SLOT_LABELS,
+  BDEW_H25_SLOTS_PER_DAY,
+  BDEW_H25_STEPS_PER_NON_LEAP_YEAR,
+  BDEW_H25_REFERENCE_CALENDAR_YEAR,
+  BDEW_H25_REFERENCE_ANNUAL_KWH,
+  BDEW_H25_TEMPLATES,
+} from "./bdewH25QuarterHour";
+export type { BdewH25SourceDayType } from "./bdewH25QuarterHour";
