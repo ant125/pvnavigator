@@ -129,6 +129,41 @@ describe("backup reserve SoC initialization and energy balance", () => {
     expect(result.socEndKwh).toBeCloseTo(9.999995771274104, 9);
   });
 
+  it("explicit timeStepHours: 1 matches omitted default on frozen no-reserve KPIs", () => {
+    const load = constantProfile(0.5);
+    const pv = constantProfile(0.8);
+    const omitted = calculateBatterySimulation(
+      load,
+      pv,
+      10,
+      DEFAULT_BATTERY_SPEC,
+      0
+    );
+    const explicit = calculateBatterySimulation(
+      load,
+      pv,
+      10,
+      DEFAULT_BATTERY_SPEC,
+      0,
+      { timeStepHours: 1 }
+    );
+    expect(explicit.selfConsumptionWithStorage).toBe(
+      omitted.selfConsumptionWithStorage
+    );
+    expect(explicit.totalChargedKwh).toBe(omitted.totalChargedKwh);
+    expect(explicit.totalDischargedKwh).toBe(omitted.totalDischargedKwh);
+    expect(explicit.totalSelfDischargeLossKwh).toBe(
+      omitted.totalSelfDischargeLossKwh
+    );
+    expect(explicit.auxiliaryConsumptionKwh).toBe(
+      omitted.auxiliaryConsumptionKwh
+    );
+    expect(explicit.socEndKwh).toBe(omitted.socEndKwh);
+    expect(explicit.energyBalanceErrorKwh).toBe(omitted.energyBalanceErrorKwh);
+    expect(explicit.gridExportKwh).toBe(omitted.gridExportKwh);
+    expect(explicit.socHourly).toEqual(omitted.socHourly);
+  });
+
   it("2. reserve initialization: starts with configured reserve energy", () => {
     const load = constantProfile(0);
     const pv = constantProfile(0);

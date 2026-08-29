@@ -8,8 +8,14 @@ import {
   type BatteryPowerLimitFields,
 } from "./batteryPowerLimit";
 
-const HOURS_PER_YEAR = 8760;
-/** Average hours per calendar month for hourly self-discharge compounding */
+/**
+ * Production default: one simulation step = 1 hour.
+ * Battery physics is timestep-aware; callers that omit `timeStepHours` keep
+ * this value. Do not change the default until the 15-minute production cutover.
+ */
+export const DEFAULT_TIME_STEP_HOURS = 1;
+
+/** Average hours per calendar month for self-discharge compounding. */
 const HOURS_PER_MONTH_AVG = (365 * 24) / 12;
 
 /** Default stage efficiencies when `efficiencyModel === "hybrid"` and fields are omitted. */
@@ -29,7 +35,7 @@ export interface BatterySpec extends BatteryPowerLimitFields {
   depthOfDischarge: number;
   /** Continuous inverter/BMS/system draw (W). AC-bus auxiliary after household PV use. */
   auxiliaryPowerW?: number;
-  /** Fraction (0–1) of stored energy lost per month via self-discharge; compounded hourly. */
+  /** Fraction (0–1) of stored energy lost per month via self-discharge; compounded per step. */
   selfDischargePerMonth?: number;
   /**
    * `"roundtrip"` (default): η_chg = η_dis = √roundtripEfficiency — legacy symmetric model.
@@ -68,14 +74,23 @@ export const BATTERY_MODEL_VERSION = "1.0.0" as const;
 
 export type BatterySimulationHourlyOptions = {
   /**
-   * When true, also return per-hour charge / discharge / grid import / export.
+   * When true, also return per-step charge / discharge / grid import / export.
    * Default false: `socHourly` is still always returned (existing API);
-   * the extra 8760-length series are omitted to keep SpeicherGrenze light.
+   * the extra per-step series are omitted to keep SpeicherGrenze light.
+   *
+   * Names remain `hourly*` for API compatibility; values are one sample per
+   * simulation step, which equals one clock hour only when `timeStepHours` is 1.
    */
   includeHourly?: boolean;
+  /**
+   * Duration of one simulation step in hours. Default {@link DEFAULT_TIME_STEP_HOURS} (1).
+   * Production SpeicherGrenze must leave this at 1 until the 15-minute cutover.
+   */
+  timeStepHours?: number;
 };
 
 export interface BatterySimulationResult {
+  /** SoC fraction after each simulation step (name kept for API compatibility). */
   socHourly: number[];
   totalChargedKwh: number;
   totalDischargedKwh: number;
@@ -90,9 +105,10 @@ export interface BatterySimulationResult {
    */
   totalDischargedFromSocKwh: number;
   /**
-   * Optional hourly series. Present only when `includeHourly: true`.
-   * Units: kWh per 1 h interval. Charge = AC surplus into the charge path
-   * (`toChargeRaw`); discharge = AC delivered to household+aux.
+   * Optional per-step series. Present only when `includeHourly: true`.
+   * Units: kWh per simulation step (1 h when `timeStepHours` is 1).
+   * Charge = AC surplus into the charge path (`toChargeRaw`);
+   * discharge = AC delivered to household+aux.
    */
   hourlyChargeKwh?: number[];
   hourlyDischargeKwh?: number[];
@@ -127,7 +143,11 @@ export interface BatterySimulationResult {
   gridToAuxiliaryKwh: number;
   /** Σ PV surplus not stored → implicit export. */
   gridExportKwh: number;
-  /** Annual auxiliary demand 8760 × (auxiliaryPowerW / 1000). */
+  /**
+   * Auxiliary demand over the run:
+   * `nSteps × (auxiliaryPowerW / 1000) × timeStepHours`.
+   * At production `timeStepHours = 1` and 8760 steps this is 8760 × (W / 1000).
+   */
   auxiliaryConsumptionKwh: number;
   /** Σ(toChargeRaw − toChargeStored) — charge-path inefficiency */
   chargeLossKwh: number;
@@ -148,27 +168,30 @@ export interface BatterySimulationResult {
   socStartKwh: number;
   /** SOC fraction × 100 at simulation start (same convention as `socEndPct`). */
   socStartPct: number;
-  /** SOC × nominal usable envelope after hour 8759 */
+  /** SOC × nominal usable envelope after the last simulation step */
   socEndKwh: number;
-  /** SOC fraction × 100 (same SOC convention as hourly arrays; typical ceiling DoD×100) */
+  /** SOC fraction × 100 (same SOC convention as per-step arrays; typical ceiling DoD×100) */
   socEndPct: number;
   /**
    * SOC ledger residual for validation (should be ~0):
    * `(socEnd − socStart) × usableCapacityKwh − (ΣΔE_in − ΣΔE_out − ΣΔE_sd)`
-   * with ΔE_in = toChargeStored per hour, ΔE_out = fromBattery/η_dis per hour,
+   * with ΔE_in = toChargeStored per step, ΔE_out = fromBattery/η_dis per step,
    * and ΣΔE_sd = totalSelfDischargeLossKwh.
    */
   energyBalanceErrorKwh: number;
-  /** Σ stored energy removed by hourly self-discharge compounding. */
+  /** Σ stored energy removed by per-step self-discharge compounding. */
   totalSelfDischargeLossKwh: number;
   /** Canonical battery physics model version used for this run. */
   batteryModelVersion: typeof BATTERY_MODEL_VERSION;
 }
 
 /**
- * Run hourly battery simulation over 8760h.
+ * Run battery simulation over `loadKwh.length` steps of duration `timeStepHours`.
  * Dispatch: PV → household → auxiliary → battery charge → export;
  * deficits: battery → household, then battery → auxiliary; then grid (split).
+ *
+ * Production still uses 8760 steps at {@link DEFAULT_TIME_STEP_HOURS} (1 h).
+ * Year-length invariants live in the physical kernel / orchestrator, not here.
  */
 export function calculateBatterySimulation(
   loadKwh: number[],
@@ -178,10 +201,14 @@ export function calculateBatterySimulation(
   backupReserveKwh?: number,
   options?: BatterySimulationHourlyOptions
 ): BatterySimulationResult {
+  const nSteps = loadKwh.length;
+  const timeStepHours = options?.timeStepHours ?? DEFAULT_TIME_STEP_HOURS;
   if (
-    loadKwh.length !== HOURS_PER_YEAR ||
-    pvKwh.length !== HOURS_PER_YEAR ||
-    usableCapacityKwh <= 0
+    nSteps === 0 ||
+    pvKwh.length !== nSteps ||
+    usableCapacityKwh <= 0 ||
+    !Number.isFinite(timeStepHours) ||
+    timeStepHours <= 0
   ) {
     throw new Error("Invalid inputs for battery simulation");
   }
@@ -189,18 +216,16 @@ export function calculateBatterySimulation(
   const reserveKwh = backupReserveKwh ?? 0;
 
   const collectHourly = options?.includeHourly === true;
-  const socHourly: number[] = [];
-  const hourlyChargeKwh = collectHourly
-    ? new Array<number>(HOURS_PER_YEAR)
-    : undefined;
+  const socHourly = new Array<number>(nSteps);
+  const hourlyChargeKwh = collectHourly ? new Array<number>(nSteps) : undefined;
   const hourlyDischargeKwh = collectHourly
-    ? new Array<number>(HOURS_PER_YEAR)
+    ? new Array<number>(nSteps)
     : undefined;
   const hourlyGridImportKwh = collectHourly
-    ? new Array<number>(HOURS_PER_YEAR)
+    ? new Array<number>(nSteps)
     : undefined;
   const hourlyGridExportKwh = collectHourly
-    ? new Array<number>(HOURS_PER_YEAR)
+    ? new Array<number>(nSteps)
     : undefined;
   let totalCharged = 0;
   let totalDischarged = 0;
@@ -223,8 +248,8 @@ export function calculateBatterySimulation(
   let totalSelfDischargeLossKwh = 0;
 
   const auxiliaryPowerW = spec.auxiliaryPowerW ?? 0;
-  const auxiliaryKwhPerHour = auxiliaryPowerW / 1000;
-  const auxiliaryConsumptionKwh = auxiliaryKwhPerHour * HOURS_PER_YEAR;
+  const auxiliaryEnergyKwhPerStep = (auxiliaryPowerW / 1000) * timeStepHours;
+  const auxiliaryConsumptionKwh = auxiliaryEnergyKwhPerStep * nSteps;
 
   const monthlySd = spec.selfDischargePerMonth ?? 0;
   let retentionPerHour = 1;
@@ -233,6 +258,7 @@ export function calculateBatterySimulation(
   } else if (monthlySd >= 1) {
     retentionPerHour = 0;
   }
+  const retentionPerStep = Math.pow(retentionPerHour, timeStepHours);
 
   const useHybrid = spec.efficiencyModel === "hybrid";
   const eff = spec.roundtripEfficiency;
@@ -263,13 +289,15 @@ export function calculateBatterySimulation(
   const socStart = soc;
   const { chargePowerKw, dischargePowerKw } =
     resolveBatteryPowerLimitsKw(usableCapacityKwh, spec);
+  const maxChargeEnergyKwh = chargePowerKw * timeStepHours;
+  const maxDischargeEnergyKwh = dischargePowerKw * timeStepHours;
 
-  for (let h = 0; h < HOURS_PER_YEAR; h++) {
+  for (let h = 0; h < nSteps; h++) {
     const pv = pvKwh[h];
     const load = loadKwh[h];
 
     const energyStoredBeforeSd = soc * usableCapacityKwh;
-    soc *= retentionPerHour;
+    soc *= retentionPerStep;
     const energyStoredAfterSd = soc * usableCapacityKwh;
     totalSelfDischargeLossKwh += Math.max(
       0,
@@ -287,12 +315,12 @@ export function calculateBatterySimulation(
     pvRem -= directPvToHousehold;
     directPvToHouseholdKwh += directPvToHousehold;
 
-    const directPvToAuxiliary = Math.min(pvRem, auxiliaryKwhPerHour);
+    const directPvToAuxiliary = Math.min(pvRem, auxiliaryEnergyKwhPerStep);
     pvRem -= directPvToAuxiliary;
     directPvToAuxiliaryKwh += directPvToAuxiliary;
 
     let houseNeedRem = load - directPvToHousehold;
-    let auxNeedRem = auxiliaryKwhPerHour - directPvToAuxiliary;
+    let auxNeedRem = auxiliaryEnergyKwhPerStep - directPvToAuxiliary;
 
     let toChargeRaw = 0;
     if (pvRem > 0) {
@@ -300,7 +328,7 @@ export function calculateBatterySimulation(
       toChargeRaw = Math.min(
         pvRem,
         Math.max(0, chargeRoom),
-        chargePowerKw
+        maxChargeEnergyKwh
       );
       let toChargeStored: number;
       if (useHybrid) {
@@ -320,8 +348,8 @@ export function calculateBatterySimulation(
 
     gridExportKwh += pvRem;
 
-    // --- Battery: household deficit first, then auxiliary (shared power cap) ---
-    let remainingBattPower = dischargePowerKw;
+    // --- Battery: household deficit first, then auxiliary (shared energy cap) ---
+    let remainingBattEnergy = maxDischargeEnergyKwh;
 
     let fromBattH = 0;
     if (houseNeedRem > 0 && soc > minSoc) {
@@ -330,7 +358,7 @@ export function calculateBatterySimulation(
       fromBattH = Math.min(
         houseNeedRem,
         maxDischargeAvailable,
-        remainingBattPower
+        remainingBattEnergy
       );
       const fromSocKwh = fromBattH / etaDis;
       if (useHybrid) {
@@ -342,7 +370,7 @@ export function calculateBatterySimulation(
       totalDischarged += fromBattH;
       sumDischargeFromSocKwh += fromSocKwh;
       dischargeLossKwh += fromSocKwh - fromBattH;
-      remainingBattPower -= fromBattH;
+      remainingBattEnergy -= fromBattH;
     }
     houseNeedRem -= fromBattH;
     batteryToHouseholdKwh += fromBattH;
@@ -354,7 +382,7 @@ export function calculateBatterySimulation(
       fromBattA = Math.min(
         auxNeedRem,
         maxDischargeAvailable,
-        remainingBattPower
+        remainingBattEnergy
       );
       const fromSocKwh = fromBattA / etaDis;
       if (useHybrid) {
@@ -366,7 +394,7 @@ export function calculateBatterySimulation(
       totalDischarged += fromBattA;
       sumDischargeFromSocKwh += fromSocKwh;
       dischargeLossKwh += fromSocKwh - fromBattA;
-      remainingBattPower -= fromBattA;
+      remainingBattEnergy -= fromBattA;
     }
     auxNeedRem -= fromBattA;
     batteryToAuxiliaryKwh += fromBattA;
@@ -379,7 +407,7 @@ export function calculateBatterySimulation(
     if (soc > maxSoc) soc = maxSoc;
 
     selfConsumptionWithStorage += directPvToHousehold + fromBattH;
-    socHourly.push(soc);
+    socHourly[h] = soc;
 
     if (collectHourly) {
       hourlyChargeKwh![h] = toChargeRaw;

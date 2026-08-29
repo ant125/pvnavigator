@@ -14,6 +14,7 @@ export {
   calculateLifecycle,
   estimateAnnualDischargedEnergy,
   DEFAULT_BATTERY_SPEC,
+  DEFAULT_TIME_STEP_HOURS,
   BATTERY_MODEL_VERSION,
   type BatterySpec,
   type BatterySimulationResult,

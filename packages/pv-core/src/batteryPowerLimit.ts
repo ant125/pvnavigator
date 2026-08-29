@@ -1,6 +1,7 @@
 /**
- * Default hybrid inverter usable power (charge and discharge, AC side, hourly kW)
+ * Default hybrid inverter usable power (charge and discharge, AC side, kW)
  * for home LiFePO4 systems used by the battery dispatcher.
+ * Energy per step is `kW × timeStepHours` inside the simulation loop.
  */
 
 /** Optional overrides read from `BatterySpec` for power resolution. */
@@ -67,7 +68,8 @@ function resolveDischargePowerKw(
 }
 
 /**
- * Hourly charge/discharge power caps (kW) for the battery hourly simulation.
+ * Charge/discharge power caps in kW. Converted to kWh per simulation step in
+ * `calculateBatterySimulation` as `powerKw × timeStepHours`.
  *
  * Precedence per side: explicit kW → C-rate × usable kWh → hybrid default curve.
  */

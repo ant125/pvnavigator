@@ -182,4 +182,33 @@ describe("runPhysicalKernel", () => {
     expect(findKernelYearBattery(yearRow, 7)!.hourly).toBeUndefined();
     expect(kernel.meta.hourlyBatterySizes).toEqual([6]);
   });
+
+  it("explicit timeStepHours: 1 matches omitted default aggregates", () => {
+    const omitted = runPhysicalKernel({
+      years: [2016, 2018],
+      batterySizes: [5],
+      getLoadForYear: loadForYear,
+      getPvForYear: pvForYear,
+    });
+    const explicit = runPhysicalKernel({
+      years: [2016, 2018],
+      batterySizes: [5],
+      getLoadForYear: loadForYear,
+      getPvForYear: pvForYear,
+      timeStepHours: 1,
+    });
+    expect(explicit.average[5]).toBe(omitted.average[5]);
+    expect(explicit.averageBatteryChargedKwh[5]).toBe(
+      omitted.averageBatteryChargedKwh[5]
+    );
+    expect(explicit.averageSelfDischargeLossKwh[5]).toBe(
+      omitted.averageSelfDischargeLossKwh[5]
+    );
+    expect(explicit.averageAuxiliaryConsumptionKwh[5]).toBe(
+      omitted.averageAuxiliaryConsumptionKwh[5]
+    );
+    expect(explicit.averageEnergyBalanceErrorKwh[5]).toBe(
+      omitted.averageEnergyBalanceErrorKwh[5]
+    );
+  });
 });

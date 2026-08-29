@@ -13,6 +13,7 @@ import {
   calculateBatterySimulation,
   BATTERY_MODEL_VERSION,
   DEFAULT_BATTERY_SPEC,
+  DEFAULT_TIME_STEP_HOURS,
   type BatterySpec,
   type BatterySimulationResult,
 } from "./battery";
@@ -45,19 +46,21 @@ export const PHYSICAL_KERNEL_SCHEMA_VERSION = "1.0.0" as const;
 export const DEFAULT_WEATHER_DATABASE = "PVGIS-SARAH2" as const;
 
 /**
- * Per-hour battery + grid series for one (year, size) pair.
+ * Per-step battery + grid series for one (year, size) pair.
  * PV and load are stored once per weather year, not here.
+ * Field names remain `hourly*` for API compatibility; one sample per
+ * simulation step (a clock hour only when `timeStepHours` is 1).
  */
 export type PhysicalKernelHourlySeries = {
-  /** SoC fraction after the hour (same convention as `socHourly`). */
+  /** SoC fraction after the step (same convention as `socHourly`). */
   soc: number[];
-  /** AC surplus entering the charge path (`toChargeRaw`), kWh. */
+  /** AC surplus entering the charge path (`toChargeRaw`), kWh per step. */
   batteryChargeKwh: number[];
-  /** AC energy delivered from the battery (household + aux), kWh. */
+  /** AC energy delivered from the battery (household + aux), kWh per step. */
   batteryDischargeKwh: number[];
-  /** Grid import serving residual household + auxiliary, kWh. */
+  /** Grid import serving residual household + auxiliary, kWh per step. */
   gridImportKwh: number[];
-  /** PV surplus not stored → export, kWh. */
+  /** PV surplus not stored → export, kWh per step. */
   gridExportKwh: number[];
 };
 
@@ -121,12 +124,12 @@ export type PhysicalKernelYearResult = {
   loadKwh: number;
   selfConsumptionWithoutStorageKwh: number;
   /**
-   * Hourly PV for this weather year. Stored once (not per battery size).
-   * Present only when `includeHourly` is true.
+   * PV series for this weather year (one sample per simulation step).
+   * Stored once (not per battery size). Present only when `includeHourly` is true.
    */
   hourlyPvKwh?: number[];
   /**
-   * Hourly household (+ merged HP) load for this weather year.
+   * Household (+ merged HP) load for this weather year (one sample per step).
    * Stored once. Present only when `includeHourly` is true.
    */
   hourlyLoadKwh?: number[];
@@ -205,8 +208,16 @@ export type RunPhysicalKernelParams = {
   batterySpec?: BatterySpec;
   backupReserveKwh?: number;
   /**
+   * Duration of one battery simulation step in hours.
+   * Default {@link DEFAULT_TIME_STEP_HOURS} (1). Production must leave this at 1.
+   * Year-length (8760) is still enforced here; timestep-agnostic length lives
+   * only inside `calculateBatterySimulation`.
+   */
+  timeStepHours?: number;
+  /**
    * When false (default), no 8760-length arrays are retained on the result.
    * SpeicherGrenze production path must leave this false.
+   * `hourly*` series are per simulation step, not necessarily per clock hour.
    */
   includeHourly?: boolean;
   /**
@@ -398,6 +409,7 @@ export function runPhysicalKernel(
     params.batterySizes ?? DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH
   ).slice();
   const spec = params.batterySpec ?? DEFAULT_BATTERY_SPEC;
+  const timeStepHours = params.timeStepHours ?? DEFAULT_TIME_STEP_HOURS;
   const includeHourly = params.includeHourly === true;
   const hourlySizeSet = new Set(
     (params.hourlyBatterySizes ?? (includeHourly ? batterySizes : [])).slice()
@@ -454,7 +466,10 @@ export function runPhysicalKernel(
         size,
         spec,
         params.backupReserveKwh ?? 0,
-        collectHourlyForSize ? { includeHourly: true } : undefined
+        {
+          includeHourly: collectHourlyForSize,
+          timeStepHours,
+        }
       );
       if (result.batteryModelVersion !== BATTERY_MODEL_VERSION) {
         throw new Error(
