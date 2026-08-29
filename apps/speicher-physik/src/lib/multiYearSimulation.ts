@@ -1,5 +1,5 @@
 import "server-only";
-import { loadPVGISHourlyProfile } from "../../../../packages/pvgis-adapter";
+import { loadPVGISHourlyProfilesByYear } from "../../../../packages/pvgis-adapter";
 import {
   calculateBatterySimulation,
   calculateEigenverbrauch,
@@ -107,8 +107,9 @@ export type SimulateMultiYearSpeicherGrenzParams = {
   latitude: number;
   longitude: number;
   /**
-   * When non-empty: one PVGIS call per roof surface per simulated year,
-   * hourly PV summed before battery simulation (UI rooftop azimuth in `azimuthDeg`).
+   * When non-empty: one PVGIS range request per roof surface covering all
+   * simulated years, then hourly PV summed per year before battery simulation
+   * (UI rooftop azimuth in `azimuthDeg`).
    * When omitted/empty (legacy single-roof): use `pvSystemKwP`, `tiltDeg`, `azimuthDeg`
    * where `azimuthDeg` must be the PVGIS `aspect`, not UI azimuth.
    */
@@ -158,10 +159,6 @@ export type SimulateMultiYearSpeicherGrenzResult = {
   batteryModelVersion: typeof BATTERY_MODEL_VERSION;
 };
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function assertHourlyArray(arr: number[], label: string): void {
   if (arr.length !== HOURS_PER_YEAR) {
     throw new Error(
@@ -207,27 +204,77 @@ export function sumHourlyProfiles(
   return out;
 }
 
-/** Fetch + combine hourly PV (8760 h) from PVGIS for one calendar year across roof surfaces (UI azimuth each). */
+/**
+ * One PVGIS range request per roof surface covering `years`, then combine
+ * hourly PV (8760 h) year-by-year (UI azimuth each).
+ *
+ * Request count = number of surfaces (not surfaces × years).
+ */
+export async function loadCombinedHourlyPvByYear(
+  latitude: number,
+  longitude: number,
+  years: readonly number[],
+  surfaces: readonly SpeicherPvSurfaceUi[]
+): Promise<Record<number, number[]>> {
+  if (years.length === 0) {
+    throw new Error("loadCombinedHourlyPvByYear: years must be non-empty");
+  }
+  if (surfaces.length === 0) {
+    throw new Error("loadCombinedHourlyPvByYear: surfaces must be non-empty");
+  }
+
+  const startYear = Math.min(...years);
+  const endYear = Math.max(...years);
+
+  const perSurface = await Promise.all(
+    surfaces.map((s) =>
+      loadPVGISHourlyProfilesByYear({
+        latitude,
+        longitude,
+        systemSizeKwP: s.systemSizeKwP,
+        tiltDeg: s.tiltDeg,
+        azimuthDeg: toPVGISAspect(s.azimuthDeg),
+        startYear,
+        endYear,
+      })
+    )
+  );
+
+  const out: Record<number, number[]> = {};
+  for (const year of years) {
+    const profiles: number[][] = [];
+    for (let s = 0; s < perSurface.length; s++) {
+      const profile = perSurface[s][year];
+      if (!profile) {
+        throw new Error(
+          `PVGIS multi-year response missing year ${year} for surface ${s}`
+        );
+      }
+      profiles.push(profile);
+    }
+    out[year] = sumHourlyProfiles(profiles);
+  }
+  return out;
+}
+
+/**
+ * @deprecated Prefer {@link loadCombinedHourlyPvByYear} (one range request per surface).
+ * Kept for callers that need a single year; still issues one range-capable fetch
+ * scoped to that year only.
+ */
 export async function loadCombinedHourlyPvForYear(
   latitude: number,
   longitude: number,
   year: number,
   surfaces: readonly SpeicherPvSurfaceUi[]
 ): Promise<number[]> {
-  const profiles = await Promise.all(
-    surfaces.map((s) =>
-      loadPVGISHourlyProfile({
-        latitude,
-        longitude,
-        systemSizeKwP: s.systemSizeKwP,
-        tiltDeg: s.tiltDeg,
-        azimuthDeg: toPVGISAspect(s.azimuthDeg),
-        startYear: year,
-        endYear: year,
-      })
-    )
+  const byYear = await loadCombinedHourlyPvByYear(
+    latitude,
+    longitude,
+    [year],
+    surfaces
   );
-  return sumHourlyProfiles(profiles);
+  return byYear[year];
 }
 
 function legacySinglePvParams(params: SimulateMultiYearSpeicherGrenzParams): {
@@ -283,8 +330,10 @@ function averageFiniteYears(
  * `totalDischargedKwh` from the same runs. From the same load/PV arrays,
  * computes no-storage Eigenverbrauch, PV yield, and load sum, then averages
  * those over the same years. Caller supplies `getLoadForYear` so the load
- * calendar matches each PVGIS `year`. PVGIS data is fetched per year via the
- * existing adapter unless `getPvForYear` is provided.
+ * calendar matches each PVGIS `year`.
+ *
+ * PVGIS: one range request per roof surface for the full year span (split +
+ * align locally), unless `getPvForYear` is provided.
  */
 export async function simulateMultiYearSpeicherGrenz(
   params: SimulateMultiYearSpeicherGrenzParams
@@ -311,6 +360,41 @@ export async function simulateMultiYearSpeicherGrenz(
       ? params.pvSurfaces.slice()
       : null;
 
+  /** Prefetched combined PV profiles (one range request per surface). */
+  let pvByYear: Record<number, number[]> | null = null;
+  if (!useInjectedPv) {
+    if (multiSurfaces !== null && multiSurfaces.length > 0) {
+      pvByYear = await loadCombinedHourlyPvByYear(
+        params.latitude,
+        params.longitude,
+        years,
+        multiSurfaces
+      );
+    } else {
+      const { pvSystemKwP, tiltDeg, azimuthPvAspectDeg } =
+        legacySinglePvParams(params);
+      const startYear = Math.min(...years);
+      const endYear = Math.max(...years);
+      const byYear = await loadPVGISHourlyProfilesByYear({
+        latitude: params.latitude,
+        longitude: params.longitude,
+        systemSizeKwP: pvSystemKwP,
+        tiltDeg: tiltDeg,
+        azimuthDeg: azimuthPvAspectDeg,
+        startYear,
+        endYear,
+      });
+      pvByYear = {};
+      for (const year of years) {
+        const profile = byYear[year];
+        if (!profile) {
+          throw new Error(`PVGIS multi-year response missing year ${year}`);
+        }
+        pvByYear[year] = profile;
+      }
+    }
+  }
+
   const yearly: Record<number, Record<number, number>> = {};
   const yearlyBatteryChargedKwh: Record<number, Record<number, number>> = {};
   const yearlyBatteryDischargedKwh: Record<number, Record<number, number>> =
@@ -323,33 +407,15 @@ export async function simulateMultiYearSpeicherGrenz(
   const yearlyPvYieldKwh: Record<number, number> = {};
   const yearlyLoadKwh: Record<number, number> = {};
 
-  let first = true;
   for (const year of years) {
-    if (!first && !useInjectedPv) await sleep(300);
-    first = false;
-
     let pvProfile: number[];
     if (useInjectedPv) {
       pvProfile = await params.getPvForYear!(year);
-    } else if (multiSurfaces !== null && multiSurfaces.length > 0) {
-      pvProfile = await loadCombinedHourlyPvForYear(
-        params.latitude,
-        params.longitude,
-        year,
-        multiSurfaces
-      );
     } else {
-      const { pvSystemKwP, tiltDeg, azimuthPvAspectDeg } =
-        legacySinglePvParams(params);
-      pvProfile = await loadPVGISHourlyProfile({
-        latitude: params.latitude,
-        longitude: params.longitude,
-        systemSizeKwP: pvSystemKwP,
-        tiltDeg: tiltDeg,
-        azimuthDeg: azimuthPvAspectDeg,
-        startYear: year,
-        endYear: year,
-      });
+      pvProfile = pvByYear![year];
+      if (!pvProfile) {
+        throw new Error(`Missing prefetched PV profile for year ${year}`);
+      }
     }
     if (pvProfile.length !== 8760) {
       throw new Error(

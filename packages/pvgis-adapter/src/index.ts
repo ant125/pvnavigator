@@ -6,6 +6,9 @@
  * Temporal model: UTC stamps → Europe/Berlin civil parts → skip local Feb 29 →
  * explicit non-leap 8760 index. DST is a fixed-grid approximation (spring gap /
  * autumn accumulation), not 23/25-hour simulation days.
+ *
+ * Multi-year responses MUST be split by UTC year before alignment (local year is
+ * ignored when indexing into the 8760 grid).
  */
 
 export type LoadPVGISParams = {
@@ -33,6 +36,11 @@ export type LoadPVGISHourlyProductionResult = {
   };
 };
 
+export type PvgisRawHourlyRow = {
+  time?: string;
+  P?: number;
+};
+
 export const HOURS_PER_NON_LEAP_YEAR = 8760;
 
 /** Month lengths for the fixed non-leap civil grid (February = 28). */
@@ -53,6 +61,27 @@ const RETRYABLE_ERROR_CODES = new Set([
   "UND_ERR_SOCKET",
   "UND_ERR_CONNECT_TIMEOUT",
 ]);
+
+/** Single-year default; multi-year range gets a modest increase. */
+const PVGIS_TIMEOUT_MS_SINGLE_YEAR = 10_000;
+/** Cap for multi-year range fetches (e.g. 2016–2020 ≈ 5× hourly payload). */
+const PVGIS_TIMEOUT_MS_MULTI_YEAR_CAP = 30_000;
+/** Extra ms per calendar year beyond the first in a range request. */
+const PVGIS_TIMEOUT_MS_PER_EXTRA_YEAR = 4_000;
+
+/**
+ * Timeout for a PVGIS seriescalc fetch.
+ * Single year: 10s (unchanged). Multi-year: 10s + 4s × (years−1), capped at 30s.
+ * Example: 2016–2020 → 5 years → 26s.
+ */
+export function pvgisFetchTimeoutMs(startYear: number, endYear: number): number {
+  const span = Math.max(1, endYear - startYear + 1);
+  if (span <= 1) return PVGIS_TIMEOUT_MS_SINGLE_YEAR;
+  return Math.min(
+    PVGIS_TIMEOUT_MS_MULTI_YEAR_CAP,
+    PVGIS_TIMEOUT_MS_SINGLE_YEAR + (span - 1) * PVGIS_TIMEOUT_MS_PER_EXTRA_YEAR
+  );
+}
 
 function isRetryableNetworkError(err: unknown): boolean {
   if (err instanceof TypeError && /fetch failed/i.test(err.message)) {
@@ -77,7 +106,7 @@ async function fetchWithRetry(
   url: string,
   init?: RequestInit,
   attempts: number = 3,
-  timeoutMs: number = 10_000
+  timeoutMs: number = PVGIS_TIMEOUT_MS_SINGLE_YEAR
 ): Promise<Response> {
   const delays = [500, 1000];
   let lastErr: unknown;
@@ -182,9 +211,12 @@ export function utcMsToBerlinLocalParts(utcMs: number): BerlinLocalParts {
  *
  * Year-boundary UTC stamps may land on the periodic civil grid by local
  * month/day/hour only (local year is ignored for indexing).
+ *
+ * Callers with multi-year rows MUST {@link bucketPvgisRowsByUtcYear} first and
+ * align each year separately — otherwise years are superimposed.
  */
 export function alignPvgisRowsToBerlinLocal8760(
-  raw: ReadonlyArray<{ time?: string; P?: number }>
+  raw: ReadonlyArray<PvgisRawHourlyRow>
 ): { ts: string; pvKWh: number }[] {
   const result = new Array<number>(HOURS_PER_NON_LEAP_YEAR).fill(0);
   const tsArr: string[] = new Array(HOURS_PER_NON_LEAP_YEAR);
@@ -237,11 +269,58 @@ export function alignPvgisRowsToBerlinLocal8760(
 }
 
 /**
- * Load PVGIS hourly production with full timestamp + value format.
+ * Bucket raw PVGIS rows by UTC calendar year from `YYYYMMDD:HHMM`.
+ * Rows without a parseable year are skipped.
  */
-export async function loadPVGISHourlyProduction(
-  params: LoadPVGISParams
-): Promise<LoadPVGISHourlyProductionResult> {
+export function bucketPvgisRowsByUtcYear(
+  raw: ReadonlyArray<PvgisRawHourlyRow>
+): Map<number, PvgisRawHourlyRow[]> {
+  const buckets = new Map<number, PvgisRawHourlyRow[]>();
+  for (let i = 0; i < raw.length; i++) {
+    const row = raw[i];
+    const timeStr = row?.time;
+    if (!timeStr || timeStr.length < 4) continue;
+    const year = Number(timeStr.slice(0, 4));
+    if (!Number.isInteger(year) || year < 1900 || year > 2100) continue;
+    let bucket = buckets.get(year);
+    if (!bucket) {
+      bucket = [];
+      buckets.set(year, bucket);
+    }
+    bucket.push(row);
+  }
+  return buckets;
+}
+
+/**
+ * Split multi-year raw rows by UTC year, then align each year with the existing
+ * Berlin 8760 pipeline. Returns one `number[]` of length 8760 per year.
+ *
+ * Order: bucket by UTC year → {@link alignPvgisRowsToBerlinLocal8760} per year.
+ * Never aligns the full multi-year array in one pass.
+ */
+export function alignMultiYearPvgisRowsByUtcYear(
+  raw: ReadonlyArray<PvgisRawHourlyRow>
+): Record<number, number[]> {
+  const buckets = bucketPvgisRowsByUtcYear(raw);
+  const out: Record<number, number[]> = {};
+  for (const [year, rows] of buckets) {
+    const aligned = alignPvgisRowsToBerlinLocal8760(rows);
+    if (aligned.length !== HOURS_PER_NON_LEAP_YEAR) {
+      throw new Error(
+        `PVGIS hourly length mismatch AFTER ALIGN for year ${year}: ${aligned.length}`
+      );
+    }
+    out[year] = aligned.map((r) => r.pvKWh);
+  }
+  return out;
+}
+
+function buildSeriescalcUrl(params: LoadPVGISParams): {
+  url: string;
+  startYear: number;
+  endYear: number;
+} {
   const url = new URL("https://re.jrc.ec.europa.eu/api/v5_2/seriescalc");
   url.searchParams.set("lat", String(params.latitude));
   url.searchParams.set("lon", String(params.longitude));
@@ -258,32 +337,38 @@ export async function loadPVGISHourlyProduction(
   url.searchParams.set("pvcalculation", "1");
   url.searchParams.set("pvtechchoice", "crystSi");
   url.searchParams.set("raddatabase", "PVGIS-SARAH2");
+  return { url: url.toString(), startYear, endYear };
+}
 
-  const res = await fetchWithRetry(url.toString());
-  if (!res.ok) {
-    throw new Error(`PVGIS request failed: ${res.status}`);
-  }
-  const data = await res.json();
+type ExtractedHourly = {
+  rows: PvgisRawHourlyRow[];
+  source: "hourly" | "hourly_fixed" | "time_series";
+};
 
-  const hourly = data?.outputs?.hourly ?? data?.outputs?.hourly_fixed;
+function extractRawHourlyFromPvgisJson(data: unknown): ExtractedHourly {
+  const outputs =
+    typeof data === "object" && data !== null
+      ? (data as { outputs?: Record<string, unknown> }).outputs
+      : undefined;
 
+  const hourly = outputs?.hourly ?? outputs?.hourly_fixed;
   if (Array.isArray(hourly)) {
-    // Leap/DST normalization happens inside align (Berlin Feb 29 skipped).
-    const rows = alignPvgisRowsToBerlinLocal8760(hourly);
-    if (rows.length !== HOURS_PER_NON_LEAP_YEAR) {
-      throw new Error(
-        `PVGIS hourly length mismatch AFTER ALIGN: ${rows.length}`
-      );
-    }
-    return { hourly: rows, meta: { count: rows.length, source: "hourly" } };
+    return {
+      rows: hourly as PvgisRawHourlyRow[],
+      source: outputs?.hourly ? "hourly" : "hourly_fixed",
+    };
   }
 
-  const timeSeries = data?.outputs?.time_series?.data;
-  if (Array.isArray(timeSeries)) {
-    const mappedRaw: ReadonlyArray<{ time?: string; P?: number }> = timeSeries;
+  const timeSeries =
+    typeof outputs?.time_series === "object" &&
+    outputs.time_series !== null &&
+    Array.isArray((outputs.time_series as { data?: unknown }).data)
+      ? ((outputs.time_series as { data: PvgisRawHourlyRow[] }).data)
+      : null;
 
+  if (timeSeries) {
     if (
-      mappedRaw.some((row) => {
+      timeSeries.some((row) => {
         const v = typeof row?.P === "number" ? row.P / 1000 : NaN;
         return !Number.isFinite(v);
       })
@@ -291,34 +376,105 @@ export async function loadPVGISHourlyProduction(
       throw new Error("PVGIS hourly data contains invalid values");
     }
     if (
-      mappedRaw.some((row) => {
+      timeSeries.some((row) => {
         const v = typeof row?.P === "number" ? row.P / 1000 : 0;
         return v < 0;
       })
     ) {
       throw new Error("PVGIS hourly data contains negative values");
     }
-
-    const rows = alignPvgisRowsToBerlinLocal8760(mappedRaw);
-    if (rows.length !== HOURS_PER_NON_LEAP_YEAR) {
-      throw new Error(`PVGIS hourly length mismatch: ${rows.length}`);
-    }
-
-    return {
-      hourly: rows,
-      meta: { count: rows.length, source: "time_series" },
-    };
+    return { rows: timeSeries, source: "time_series" };
   }
 
   throw new Error("PVGIS response does not contain usable hourly data");
 }
 
+async function fetchPvgisRawHourly(
+  params: LoadPVGISParams
+): Promise<ExtractedHourly> {
+  const { url, startYear, endYear } = buildSeriescalcUrl(params);
+  const timeoutMs = pvgisFetchTimeoutMs(startYear, endYear);
+  const res = await fetchWithRetry(url, undefined, 3, timeoutMs);
+  if (!res.ok) {
+    throw new Error(`PVGIS request failed: ${res.status}`);
+  }
+  const data = await res.json();
+  return extractRawHourlyFromPvgisJson(data);
+}
+
+/**
+ * Load PVGIS hourly production with full timestamp + value format.
+ * Intended for a single calendar year (`startyear` === `endyear`).
+ * For multi-year ranges use {@link loadPVGISHourlyProfilesByYear}.
+ */
+export async function loadPVGISHourlyProduction(
+  params: LoadPVGISParams
+): Promise<LoadPVGISHourlyProductionResult> {
+  const { rows, source } = await fetchPvgisRawHourly(params);
+
+  if (source === "hourly" || source === "hourly_fixed") {
+    // Leap/DST normalization happens inside align (Berlin Feb 29 skipped).
+    const aligned = alignPvgisRowsToBerlinLocal8760(rows);
+    if (aligned.length !== HOURS_PER_NON_LEAP_YEAR) {
+      throw new Error(
+        `PVGIS hourly length mismatch AFTER ALIGN: ${aligned.length}`
+      );
+    }
+    return {
+      hourly: aligned,
+      meta: { count: aligned.length, source: "hourly" },
+    };
+  }
+
+  const aligned = alignPvgisRowsToBerlinLocal8760(rows);
+  if (aligned.length !== HOURS_PER_NON_LEAP_YEAR) {
+    throw new Error(`PVGIS hourly length mismatch: ${aligned.length}`);
+  }
+
+  return {
+    hourly: aligned,
+    meta: { count: aligned.length, source: "time_series" },
+  };
+}
+
 /**
  * Load PVGIS hourly profile as plain number[] (backward compatible).
+ * Single-year path; for multi-year use {@link loadPVGISHourlyProfilesByYear}.
  */
 export async function loadPVGISHourlyProfile(
   params: LoadPVGISParams
 ): Promise<number[]> {
   const { hourly } = await loadPVGISHourlyProduction(params);
   return hourly.map((r) => r.pvKWh);
+}
+
+/**
+ * One PVGIS range request (`startyear`…`endyear`), then split by UTC year and
+ * align each year onto the fixed Berlin 8760 grid.
+ *
+ * Returns `Record<year, number[]>` where each array has length 8760.
+ */
+export async function loadPVGISHourlyProfilesByYear(
+  params: LoadPVGISParams
+): Promise<Record<number, number[]>> {
+  const { rows } = await fetchPvgisRawHourly(params);
+  const byYear = alignMultiYearPvgisRowsByUtcYear(rows);
+
+  const startYear = params.startYear ?? 2018;
+  const endYear = params.endYear ?? startYear;
+  for (let y = startYear; y <= endYear; y++) {
+    const profile = byYear[y];
+    if (!profile) {
+      throw new Error(
+        `PVGIS multi-year response missing year ${y} (requested ${startYear}–${endYear})`
+      );
+    }
+    if (profile.length !== HOURS_PER_NON_LEAP_YEAR) {
+      throw new Error(
+        `PVGIS hourly length mismatch for year ${y}: ${profile.length}`
+      );
+    }
+  }
+
+  return byYear;
 }
