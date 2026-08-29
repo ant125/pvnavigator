@@ -17,6 +17,7 @@ export {
   BATTERY_MODEL_VERSION,
   type BatterySpec,
   type BatterySimulationResult,
+  type BatterySimulationHourlyOptions,
   type LifecycleResult,
 } from "./battery";
 
@@ -31,3 +32,22 @@ export {
   type MultiYearAggregationResult,
   type MultiYearScenario,
 } from "./multiYear";
+
+export {
+  runPhysicalKernel,
+  findKernelYear,
+  findKernelYearBattery,
+  DEFAULT_MULTI_YEAR_START,
+  DEFAULT_MULTI_YEAR_END,
+  DEFAULT_MULTI_YEAR_YEARS,
+  DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH,
+  PHYSICAL_KERNEL_SCHEMA_VERSION,
+  DEFAULT_WEATHER_DATABASE,
+  type PhysicalKernelResult,
+  type PhysicalKernelMeta,
+  type PhysicalKernelYearResult,
+  type PhysicalKernelBatteryYearResult,
+  type PhysicalKernelHourlySeries,
+  type PhysicalKernelAggregates,
+  type RunPhysicalKernelParams,
+} from "./physicalKernel";

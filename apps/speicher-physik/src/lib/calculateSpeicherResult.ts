@@ -5,7 +5,10 @@ import { simulateMultiYearSpeicherGrenz } from "@/lib/multiYearSimulation";
 import { createHeatPumpComponent } from "@/load/heatpump";
 import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
 import type { PvSurfaceInput } from "@/app/(speicher)/types/speicher";
-import { BATTERY_MODEL_VERSION } from "../../../../packages/pv-core";
+import {
+  BATTERY_MODEL_VERSION,
+  type PhysicalKernelResult,
+} from "../../../../packages/pv-core";
 
 function buildMergedLoadForYear(
   year: number,
@@ -120,6 +123,47 @@ export type CalculateSpeicherResultOutput = {
   speicherGrenz: SpeicherGrenzPayload;
 };
 
+/**
+ * Compact UI payload from the internal kernel. Omits yearly ledgers,
+ * hourly series, and kernel metadata so the free SpeicherGrenze response
+ * stays small. The kernel itself is not returned to the browser.
+ */
+export function toSpeicherGrenzPayload(
+  kernel: PhysicalKernelResult
+): SpeicherGrenzPayload {
+  return {
+    batterySizes: kernel.batterySizes,
+    average: kernel.average,
+    averageBatteryChargedKwh: kernel.averageBatteryChargedKwh,
+    averageBatteryDischargedKwh: kernel.averageBatteryDischargedKwh,
+    averageDirectPvToHouseholdKwh: kernel.averageDirectPvToHouseholdKwh,
+    averageDirectPvToAuxiliaryKwh: kernel.averageDirectPvToAuxiliaryKwh,
+    averageBatteryToHouseholdKwh: kernel.averageBatteryToHouseholdKwh,
+    averageBatteryToAuxiliaryKwh: kernel.averageBatteryToAuxiliaryKwh,
+    averageGridToHouseholdKwh: kernel.averageGridToHouseholdKwh,
+    averageGridToAuxiliaryKwh: kernel.averageGridToAuxiliaryKwh,
+    averageGridExportKwh: kernel.averageGridExportKwh,
+    averageAuxiliaryConsumptionKwh: kernel.averageAuxiliaryConsumptionKwh,
+    averageChargeLossKwh: kernel.averageChargeLossKwh,
+    averageDischargeLossKwh: kernel.averageDischargeLossKwh,
+    averageChargeLossPvToBatteryKwh: kernel.averageChargeLossPvToBatteryKwh,
+    averageChargeLossChemicalKwh: kernel.averageChargeLossChemicalKwh,
+    averageDischargeLossChemicalKwh: kernel.averageDischargeLossChemicalKwh,
+    averageDischargeLossBatteryToAcKwh:
+      kernel.averageDischargeLossBatteryToAcKwh,
+    averageSocStartKwh: kernel.averageSocStartKwh,
+    averageSocEndKwh: kernel.averageSocEndKwh,
+    averageSocEndPct: kernel.averageSocEndPct,
+    averageEnergyBalanceErrorKwh: kernel.averageEnergyBalanceErrorKwh,
+    averageSelfDischargeLossKwh: kernel.averageSelfDischargeLossKwh,
+    averageSelfConsumptionWithoutStorageKwh:
+      kernel.averageSelfConsumptionWithoutStorageKwh,
+    averagePvYieldKwhAnnual: kernel.averagePvYieldKwhAnnual,
+    averageLoadKwhAnnual: kernel.averageLoadKwhAnnual,
+    batteryModelVersion: kernel.batteryModelVersion,
+  };
+}
+
 export async function calculateSpeicherResult(
   input: CalculateSpeicherResultInput
 ): Promise<CalculateSpeicherResultOutput> {
@@ -132,7 +176,7 @@ export async function calculateSpeicherResult(
 
   const reserveKwh = input.backupReserveKwh ?? 0;
 
-  const multiYear = await simulateMultiYearSpeicherGrenz({
+  const kernel = await simulateMultiYearSpeicherGrenz({
     getLoadForYear: (year) =>
       buildMergedLoadForYear(
         year,
@@ -144,52 +188,23 @@ export async function calculateSpeicherResult(
     longitude: input.longitude,
     pvSurfaces: pvSurfaces,
     backupReserveKwh: reserveKwh,
+    includeHourly: false,
   });
 
   const verifiedResult: CalculateSpeicherResultOutput["verifiedResult"] = {
     energy: {
       year: {
         selfConsumptionWithoutStorage:
-          multiYear.averageSelfConsumptionWithoutStorageKwh,
-        pvYieldKwhAnnual: multiYear.averagePvYieldKwhAnnual,
+          kernel.averageSelfConsumptionWithoutStorageKwh,
+        pvYieldKwhAnnual: kernel.averagePvYieldKwhAnnual,
       },
     },
-    batteryModelVersion: multiYear.batteryModelVersion,
+    batteryModelVersion: kernel.batteryModelVersion,
     ...(reserveKwh > 0 ? { backupReserveKwh: reserveKwh } : {}),
   };
 
   return {
     verifiedResult,
-    speicherGrenz: {
-      batterySizes: multiYear.batterySizes,
-      average: multiYear.average,
-      averageBatteryChargedKwh: multiYear.averageBatteryChargedKwh,
-      averageBatteryDischargedKwh: multiYear.averageBatteryDischargedKwh,
-      averageDirectPvToHouseholdKwh: multiYear.averageDirectPvToHouseholdKwh,
-      averageDirectPvToAuxiliaryKwh: multiYear.averageDirectPvToAuxiliaryKwh,
-      averageBatteryToHouseholdKwh: multiYear.averageBatteryToHouseholdKwh,
-      averageBatteryToAuxiliaryKwh: multiYear.averageBatteryToAuxiliaryKwh,
-      averageGridToHouseholdKwh: multiYear.averageGridToHouseholdKwh,
-      averageGridToAuxiliaryKwh: multiYear.averageGridToAuxiliaryKwh,
-      averageGridExportKwh: multiYear.averageGridExportKwh,
-      averageAuxiliaryConsumptionKwh: multiYear.averageAuxiliaryConsumptionKwh,
-      averageChargeLossKwh: multiYear.averageChargeLossKwh,
-      averageDischargeLossKwh: multiYear.averageDischargeLossKwh,
-      averageChargeLossPvToBatteryKwh: multiYear.averageChargeLossPvToBatteryKwh,
-      averageChargeLossChemicalKwh: multiYear.averageChargeLossChemicalKwh,
-      averageDischargeLossChemicalKwh: multiYear.averageDischargeLossChemicalKwh,
-      averageDischargeLossBatteryToAcKwh:
-        multiYear.averageDischargeLossBatteryToAcKwh,
-      averageSocStartKwh: multiYear.averageSocStartKwh,
-      averageSocEndKwh: multiYear.averageSocEndKwh,
-      averageSocEndPct: multiYear.averageSocEndPct,
-      averageEnergyBalanceErrorKwh: multiYear.averageEnergyBalanceErrorKwh,
-      averageSelfDischargeLossKwh: multiYear.averageSelfDischargeLossKwh,
-      averageSelfConsumptionWithoutStorageKwh:
-        multiYear.averageSelfConsumptionWithoutStorageKwh,
-      averagePvYieldKwhAnnual: multiYear.averagePvYieldKwhAnnual,
-      averageLoadKwhAnnual: multiYear.averageLoadKwhAnnual,
-      batteryModelVersion: multiYear.batteryModelVersion,
-    },
+    speicherGrenz: toSpeicherGrenzPayload(kernel),
   };
 }

@@ -394,3 +394,92 @@ describe("backup reserve SoC initialization and energy balance", () => {
     expect(DEFAULT_BATTERY_SPEC.depthOfDischarge).toBe(1.0);
   });
 });
+
+describe("optional hourly series and SoC throughput", () => {
+  it("omits extra hourly arrays by default and still returns socHourly", () => {
+    const result = calculateBatterySimulation(
+      constantProfile(0.5),
+      constantProfile(0.8),
+      10,
+      DEFAULT_BATTERY_SPEC,
+      0
+    );
+    expect(result.socHourly).toHaveLength(HOURS_PER_YEAR);
+    expect(result.hourlyChargeKwh).toBeUndefined();
+    expect(result.hourlyDischargeKwh).toBeUndefined();
+    expect(result.hourlyGridImportKwh).toBeUndefined();
+    expect(result.hourlyGridExportKwh).toBeUndefined();
+  });
+
+  it("includeHourly=true returns 8760-length series whose sums match annuals", () => {
+    const result = calculateBatterySimulation(
+      constantProfile(0.5),
+      constantProfile(0.8),
+      10,
+      DEFAULT_BATTERY_SPEC,
+      0,
+      { includeHourly: true }
+    );
+    expect(result.hourlyChargeKwh).toHaveLength(HOURS_PER_YEAR);
+    expect(result.hourlyDischargeKwh).toHaveLength(HOURS_PER_YEAR);
+    expect(result.hourlyGridImportKwh).toHaveLength(HOURS_PER_YEAR);
+    expect(result.hourlyGridExportKwh).toHaveLength(HOURS_PER_YEAR);
+
+    const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
+    expect(sum(result.hourlyChargeKwh!)).toBeCloseTo(result.totalChargedKwh, 9);
+    expect(sum(result.hourlyDischargeKwh!)).toBeCloseTo(
+      result.totalDischargedKwh,
+      9
+    );
+    expect(sum(result.hourlyGridImportKwh!)).toBeCloseTo(
+      result.gridToHouseholdKwh + result.gridToAuxiliaryKwh,
+      9
+    );
+    expect(sum(result.hourlyGridExportKwh!)).toBeCloseTo(
+      result.gridExportKwh,
+      9
+    );
+  });
+
+  it("does not change annual KPIs when includeHourly is toggled", () => {
+    const load = constantProfile(0.5);
+    const pv = constantProfile(0.8);
+    const off = calculateBatterySimulation(load, pv, 10, DEFAULT_BATTERY_SPEC, 0);
+    const on = calculateBatterySimulation(
+      load,
+      pv,
+      10,
+      DEFAULT_BATTERY_SPEC,
+      0,
+      { includeHourly: true }
+    );
+    expect(on.selfConsumptionWithStorage).toBe(off.selfConsumptionWithStorage);
+    expect(on.totalChargedKwh).toBe(off.totalChargedKwh);
+    expect(on.totalDischargedKwh).toBe(off.totalDischargedKwh);
+    expect(on.gridExportKwh).toBe(off.gridExportKwh);
+    expect(on.energyBalanceErrorKwh).toBe(off.energyBalanceErrorKwh);
+    expect(on.cyclesPerYear).toBe(off.cyclesPerYear);
+  });
+
+  it("exposes SoC throughput; AC discharge undercounts pack energy when discharging", () => {
+    const load = hourlyProfile((h) => ((h % 24) >= 18 || (h % 24) < 6 ? 0.8 : 0.2));
+    const pv = hourlyProfile((h) => ((h % 24) >= 10 && (h % 24) < 16 ? 1.5 : 0));
+    const result = calculateBatterySimulation(
+      load,
+      pv,
+      10,
+      DEFAULT_BATTERY_SPEC,
+      0
+    );
+    expect(result.totalChargedStoredKwh).toBeGreaterThan(0);
+    expect(result.totalDischargedFromSocKwh).toBeGreaterThan(0);
+    expect(result.totalChargedStoredKwh).toBeLessThan(result.totalChargedKwh);
+    expect(result.totalDischargedFromSocKwh).toBeGreaterThan(
+      result.totalDischargedKwh
+    );
+    expect(result.cyclesPerYear).toBeCloseTo(
+      result.totalDischargedKwh / 10,
+      12
+    );
+  });
+});

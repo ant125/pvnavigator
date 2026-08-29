@@ -14,6 +14,7 @@ import {
   DEFAULT_PLATEAU_DELTA_THRESHOLD_KWH,
   deriveRecommendedTechnicalSize,
 } from "./speicherRecommendation";
+import { toSpeicherGrenzPayload } from "./calculateSpeicherResult";
 
 const HOURS = 8760;
 
@@ -279,5 +280,54 @@ describe("simulateMultiYearSpeicherGrenz no-storage baseline", () => {
     // Aggregate curve: Δ(0→5)=80, Δ(5→6)= (7*10+8*60)/15 ≈ 36.67 < 50 → Grenze=5
     expect(grenzeFromAggregate).toBe(5);
     expect(meanYearlyGrenze).toBeCloseTo((7 * 5 + 8 * 6) / 15, 6);
+  });
+});
+
+describe("PhysicalKernelResult yearly retention and compact payload", () => {
+  it("retains full yearly ledgers while averages stay the Phase-2 mean", async () => {
+    const years = [...DEFAULT_MULTI_YEAR_YEARS];
+    const result = await simulateMultiYearSpeicherGrenz({
+      years,
+      batterySizes: [5, 6],
+      getLoadForYear: loadForYear,
+      getPvForYear: pvForYear,
+      latitude: 0,
+      longitude: 0,
+      createdAt: "2026-08-29T00:00:00.000Z",
+    });
+
+    expect(result.years).toHaveLength(15);
+    expect(result.meta.includeHourly).toBe(false);
+    expect(result.meta.weatherDatabase).toBe("injected");
+    for (const y of years) {
+      const yearRow = result.years.find((row) => row.year === y);
+      expect(yearRow?.batteries.map((b) => b.usableCapacityKwh)).toEqual([5, 6]);
+      expect(yearRow?.hourlyPvKwh).toBeUndefined();
+    }
+  });
+
+  it("toSpeicherGrenzPayload omits years, hourly series, and kernel meta", async () => {
+    const kernel = await simulateMultiYearSpeicherGrenz({
+      years: [2016, 2017],
+      batterySizes: [5],
+      getLoadForYear: loadForYear,
+      getPvForYear: pvForYear,
+      latitude: 0,
+      longitude: 0,
+      includeHourly: true,
+      hourlyBatterySizes: [5],
+    });
+    expect(kernel.years[0].hourlyPvKwh).toHaveLength(HOURS);
+    expect(kernel.years[0].batteries[0].hourly?.soc).toHaveLength(HOURS);
+
+    const payload = toSpeicherGrenzPayload(kernel);
+    const json = JSON.stringify(payload);
+    expect(payload.average[5]).toBe(kernel.average[5]);
+    expect(payload.batteryModelVersion).toBe(BATTERY_MODEL_VERSION);
+    expect("years" in payload).toBe(false);
+    expect("yearly" in payload).toBe(false);
+    expect("meta" in payload).toBe(false);
+    expect(json.includes("hourlyPvKwh")).toBe(false);
+    expect(json.includes('"hourly"')).toBe(false);
   });
 });

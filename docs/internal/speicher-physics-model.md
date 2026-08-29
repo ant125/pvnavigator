@@ -845,6 +845,109 @@ Diese Werte sind **theoretische Obergrenzen**, keine gemessenen Fehler eines bes
 
 ---
 
+## Physical Kernel (Phase 3)
+
+Phase 3 ändert **keine** physikalischen Formeln. Sie führt ein internes, serialisierbares Ergebnisobjekt ein, das SpeicherGrenze, SpeicherWirtschaft, PDF, künftigen Nutzer-/Firmenkabinetten und späteren Analysen (Zyklen, Degradation, dynamische Tarife) als gemeinsame Grundlage dient.
+
+### Pipeline
+
+```
+Calculation Input
+  → PhysicalKernelResult          (intern, serverseitig)
+    → SpeicherGrenzPayload        (kompakte Mittelwerte → UI)
+      → künftige Persistenz in einer Datenbank
+```
+
+`PhysicalKernelResult` hängt nicht von React, Server Actions oder UI ab. Es ist ein reines JSON-serialisierbares Objekt in `packages/pv-core`. Es wird **nicht** automatisch an den Browser gesendet.
+
+Der kostenlose SpeicherGrenze-Pfad ruft das Kernel mit `includeHourly: false` auf und kopiert anschließend nur die Mittelwert-Felder in `SpeicherGrenzPayload`.
+
+### Struktur
+
+```
+PhysicalKernelResult
+  meta
+    modelVersion              (= BATTERY_MODEL_VERSION, derzeit 1.0.0)
+    kernelSchemaVersion       (Form des Ergebnisobjekts, derzeit 1.0.0)
+    weatherDatabase           (Produktion: PVGIS-SARAH2)
+    weatherPeriod             ({ startYear, endYear }, Produktion 2006–2020)
+    createdAt                 (ISO-8601)
+    includeHourly
+    hourlyBatterySizes
+  batterySizes
+  years[]                     (ein Eintrag je Wetterjahr)
+    year
+    pvYieldKwh
+    loadKwh
+    selfConsumptionWithoutStorageKwh
+    hourlyPvKwh?              (nur bei includeHourly; einmal pro Jahr)
+    hourlyLoadKwh?            (nur bei includeHourly; einmal pro Jahr)
+    batteries[]               (ein Eintrag je Speicherkapazität)
+      Eigenverbrauch, Netzbezug, Einspeisung,
+      geladen/entladen (AC und SoC-Durchsatz),
+      Verluste, SoC-Start/Ende, Autarkie/Eigenverbrauchsquote (Jahresdiagnostik),
+      hourly?                 (nur bei includeHourly für diese Größe)
+  yearly                      (kompakter Index Jahr → Größe → Eigenverbrauch)
+  average*                    (arithmetische Mittel über die Wetterjahre; identisch zu Phase 2)
+```
+
+Jahresergebnisse werden **nicht** verworfen. Für jedes Wetterjahr 2006–2020 und jede simulierte Kapazität bleibt der vollständige physikalische Jahresledger erhalten.
+
+Mittelwerte werden weiterhin als arithmetisches Mittel der Jahresergebnisse gebildet. Die Speichergrenze wird auf der **mittleren Eigenverbrauchskurve** bestimmt — nicht als Mittel von 15 einzelnen Speichergrenzen. Jährliche Autarkie- und Eigenverbrauchsquote-Felder sind Diagnostik; die UI-Kennzahlen bleiben Quotienten der Mehrjahresmittel.
+
+### Optionale Stundenreihen
+
+`calculateBatterySimulation` berechnet intern stündlich SoC, Ladung, Entladung, Netzbezug und Einspeisung. Phase 3 macht die letzten vier Reihen **optional** rückgabefähig:
+
+| Reihe | Inhalt | Immer berechnet | Im Kernel behalten |
+|---|---|---|---|
+| `socHourly` / `hourly.soc` | SoC-Anteil nach der Stunde | ja (bestehende API) | nur bei `includeHourly` |
+| `hourly.batteryChargeKwh` | AC-Überschuss in den Ladepfad | nur bei `includeHourly` | nur bei `includeHourly` |
+| `hourly.batteryDischargeKwh` | AC-Abgabe Haushalt+Aux | nur bei `includeHourly` | nur bei `includeHourly` |
+| `hourly.gridImportKwh` | Netzbezug Haushalt+Aux | nur bei `includeHourly` | nur bei `includeHourly` |
+| `hourly.gridExportKwh` | nicht gespeicherter PV-Überschuss | nur bei `includeHourly` | nur bei `includeHourly` |
+
+PV- und Lastprofile sind für alle Kapazitäten eines Wetterjahres identisch. Wenn sie gespeichert werden, liegen sie **einmal pro Wetterjahr** in `years[].hourlyPvKwh` / `hourlyLoadKwh`, nicht 26-fach.
+
+Produktion (SpeicherGrenze): `includeHourly = false`.
+
+Für spätere Analysen: `includeHourly = true` und optional `hourlyBatterySizes` (z. B. nur die technische Speichergrenze), damit nicht 15 × 26 × 8760 Stunden gehalten werden.
+
+### Speicherbedarf (Groabschätzung, Float64)
+
+Eine Stundenreihe: 8760 × 8 Byte ≈ 70 kB.
+
+| Variante | Größenordnung |
+|---|---|
+| PV + Last, 15 Jahre, einmal pro Jahr | ≈ 2 MB |
+| 5 Batterie-Reihen × 15 Jahre × 26 Größen | ≈ 134 MB |
+| 5 Batterie-Reihen × 15 Jahre × 1 gewählte Größe | ≈ 5 MB |
+| plus PV+Last, eine Größe | ≈ 7 MB |
+
+Deshalb ist `hourlyBatterySizes` vorgesehen. Es wird **keine** Float32-Kompression und kein Streaming in Phase 3 eingeführt.
+
+### Vorbereitung Zyklen (nicht implementiert)
+
+Rainflow, Teiltiefenanalyse und Degradation sind **nicht** implementiert.
+
+Vorbereitete Daten:
+
+- Jahres-SoC-Durchsatz: `batteryChargedStoredKwh`, `batteryDischargedFromSocKwh`
+- bestehendes Modellmaß: `equivalentFullCyclesAc = totalDischargedKwh / C` (AC-Abgabe / nutzbare Kapazität) — unverändert
+- optionale Stunden-SoC-Trajektorie für späteres Rainflow
+
+**Nenner für künftige Equivalent Full Cycles:** In diesem Batteriemodell ist der zellnähere Durchsatz `batteryDischargedFromSocKwh / usableCapacityKwh`. Die aktuelle `cyclesPerYear`-Definition nutzt die **AC-Abgabe** nach η_dis und unterschätzt deshalb den Pack-Durchsatz (`fromSoc = AC / η_dis`). Phase 3 ändert diese Definition **nicht**.
+
+### Vorbereitung dynamische Tarife (nicht implementiert)
+
+Mit `includeHourly = true` stehen je Stunde Netzbezug, Einspeisung, Batterieladung, Batterieentladung und SoC zur Verfügung. Das reicht für einen späteren wirtschaftlichen Stundenmotor. Dynamische Tarife selbst sind nicht implementiert.
+
+### Vorbereitung Speicherung von Berechnungen
+
+Registrierung und Datenbank sind nicht Teil von Phase 3. `PhysicalKernelResult` ist so geschnitten, dass Input → Kernel → Compact-Payload → DB später ohne Umbau der Physikschicht möglich ist. `meta.modelVersion` und `meta.kernelSchemaVersion` sollen in einem Jahr erkennen lassen, mit welcher Modell- und Ergebnisform ein Lauf erzeugt wurde.
+
+---
+
 ## Batterieparameter des Produktionsmodells
 
 | Parameter | Produktionswert | Einheit | Bedeutung |
@@ -936,8 +1039,10 @@ Aufrufkette der Produktion:
 
 ```
 calculateSpeicherResult
-  → simulateMultiYearSpeicherGrenz
-    → calculateBatterySimulation
+  → simulateMultiYearSpeicherGrenz   (PVGIS-I/O)
+    → runPhysicalKernel             (packages/pv-core)
+      → calculateBatterySimulation
+  → toSpeicherGrenzPayload          (kompakte Mittelwerte, ohne years/hourly)
 ```
 
 Implementierungsdetails:
@@ -945,6 +1050,7 @@ Implementierungsdetails:
 - Die Produktion übergibt **keine** benutzerdefinierte Batteriespezifikation.
 - Daher wird `DEFAULT_BATTERY_SPEC` verwendet.
 - `backupReserveKwh` ist die einzige batterierelevante Produktions-Überschreibung.
+- Die Produktion setzt `includeHourly: false`.
 - Wärmepumpe und mehrere Dachflächen ändern Last-/PV-Profile, **nicht** Batteriewirkungsgrade oder Leistungsparameter.
 - Die Wirkungsgrade sind für jede simulierte Kapazität **identisch**.
 - Mit der Kapazität variieren nur Leistungsgrenzen und der relative Reserveanteil
@@ -954,6 +1060,7 @@ Implementierungsdetails:
 
 - `packages/pv-core/src/battery.ts`
 - `packages/pv-core/src/batteryPowerLimit.ts`
+- `packages/pv-core/src/physicalKernel.ts`
 - `apps/speicher-physik/src/lib/multiYearSimulation.ts`
 - `apps/speicher-physik/src/lib/calculateSpeicherResult.ts`
 - `apps/speicher-physik/src/lib/speicherChartData.ts`
@@ -982,7 +1089,8 @@ Implementierungsdetails:
 ### Nicht im Modell berücksichtigt
 
 - Netzladung der Batterie
-- dynamische Stromtarife
+- dynamische Stromtarife (Stundenreihen vorbereitet, Tariflogik nicht implementiert)
+- Batterie-Zyklenanalyse / Rainflow / Degradation (Daten vorbereitet, nicht implementiert)
 - gleichzeitiges Laden und Entladen
 - herstellerspezifische Wirkungsgradkennlinien
 - temperaturabhängige Wirkungsgrade oder Kapazität
@@ -1006,7 +1114,8 @@ Aktueller Stand:
   `packages/pv-core/src/battery.ts` (einzige Produktions-Literalquelle).
 - Die Version wird mit Simulationsergebnissen zurückgegeben:
   - `BatterySimulationResult.batteryModelVersion`
-  - `SimulateMultiYearSpeicherGrenzResult.batteryModelVersion`
+  - `PhysicalKernelResult.batteryModelVersion` / `PhysicalKernelResult.meta.modelVersion`
+  - `PhysicalKernelResult.meta.kernelSchemaVersion` (Form des Kernel-Objekts)
   - `SpeicherGrenzPayload.batteryModelVersion`
   - `VerifiedResult.batteryModelVersion` / `CalculateSpeicherResultOutput.verifiedResult.batteryModelVersion`
 - Mehrjahressimulation prüft, dass alle Einzelresultate dieselbe Version tragen.
@@ -1038,9 +1147,13 @@ Reine Dokumentations-Formulierungsänderungen erfordern **keinen** Modellversion
    - keine Korrektur der Form `final SoC − initial SoC`.
 3. Berechnungsergebnisse werden serverseitig nur im In-Memory-`verifiedResultStore` gehalten
    (kein dauerhaftes Persistieren der Modellversion in einer Datenbank).
+   `PhysicalKernelResult` ist auf spätere Persistenz vorbereitet, speichert aber in Phase 3 nichts.
 4. Dedizierte Regressionstests decken nun ab:
    - eingefrorene `DEFAULT_BATTERY_SPEC`
    - exaktes Roundtrip-Produkt
    - energieerhaltende Backup-Reserve-Initialisierung
    - vollständige Leistungs-Tabelle 5–30 kWh
    - `BATTERY_MODEL_VERSION` in Einzel- und Mehrjahresresultaten
+   - Beibehaltung der Jahresledger im Physical Kernel
+   - optionale Stundenreihen (`includeHourly` / `hourlyBatterySizes`)
+   - kompaktes `SpeicherGrenzPayload` ohne Kernel-Jahre/Stundenreihen

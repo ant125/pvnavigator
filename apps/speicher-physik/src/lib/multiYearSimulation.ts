@@ -1,16 +1,22 @@
 import "server-only";
 import { loadPVGISHourlyProfilesByYear } from "../../../../packages/pvgis-adapter";
 import {
-  calculateBatterySimulation,
-  calculateEigenverbrauch,
   DEFAULT_BATTERY_SPEC,
-  BATTERY_MODEL_VERSION,
+  DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH,
+  DEFAULT_MULTI_YEAR_YEARS,
+  DEFAULT_WEATHER_DATABASE,
+  runPhysicalKernel,
   type BatterySpec,
-  type BatterySimulationResult,
+  type PhysicalKernelResult,
 } from "../../../../packages/pv-core";
 import { toPVGISAspect } from "@/lib/toPVGISAspect";
 
-const HOURS_PER_YEAR = 8760;
+export {
+  DEFAULT_MULTI_YEAR_START,
+  DEFAULT_MULTI_YEAR_END,
+  DEFAULT_MULTI_YEAR_YEARS,
+  DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH,
+} from "../../../../packages/pv-core";
 
 /** One roof PV plane for multi-roof (UI rooftop azimuth; converted internally for PVGIS). */
 export type SpeicherPvSurfaceUi = {
@@ -18,90 +24,6 @@ export type SpeicherPvSurfaceUi = {
   tiltDeg: number;
   azimuthDeg: number;
 };
-
-/** Annual sums from `calculateBatterySimulation` used for multi-year averaging */
-export type BatteryLedgerAnnual = Pick<
-  BatterySimulationResult,
-  | "directPvToHouseholdKwh"
-  | "directPvToAuxiliaryKwh"
-  | "batteryToHouseholdKwh"
-  | "batteryToAuxiliaryKwh"
-  | "gridToHouseholdKwh"
-  | "gridToAuxiliaryKwh"
-  | "gridExportKwh"
-  | "auxiliaryConsumptionKwh"
-  | "chargeLossKwh"
-  | "dischargeLossKwh"
-  | "chargeLossPvToBatteryKwh"
-  | "chargeLossChemicalKwh"
-  | "dischargeLossChemicalKwh"
-  | "dischargeLossBatteryToAcKwh"
-  | "socStartKwh"
-  | "socEndKwh"
-  | "socEndPct"
-  | "energyBalanceErrorKwh"
-  | "totalSelfDischargeLossKwh"
->;
-
-function pickBatteryLedger(result: BatterySimulationResult): BatteryLedgerAnnual {
-  return {
-    directPvToHouseholdKwh: result.directPvToHouseholdKwh,
-    directPvToAuxiliaryKwh: result.directPvToAuxiliaryKwh,
-    batteryToHouseholdKwh: result.batteryToHouseholdKwh,
-    batteryToAuxiliaryKwh: result.batteryToAuxiliaryKwh,
-    gridToHouseholdKwh: result.gridToHouseholdKwh,
-    gridToAuxiliaryKwh: result.gridToAuxiliaryKwh,
-    gridExportKwh: result.gridExportKwh,
-    auxiliaryConsumptionKwh: result.auxiliaryConsumptionKwh,
-    chargeLossKwh: result.chargeLossKwh,
-    dischargeLossKwh: result.dischargeLossKwh,
-    chargeLossPvToBatteryKwh: result.chargeLossPvToBatteryKwh,
-    chargeLossChemicalKwh: result.chargeLossChemicalKwh,
-    dischargeLossChemicalKwh: result.dischargeLossChemicalKwh,
-    dischargeLossBatteryToAcKwh: result.dischargeLossBatteryToAcKwh,
-    socStartKwh: result.socStartKwh,
-    socEndKwh: result.socEndKwh,
-    socEndPct: result.socEndPct,
-    energyBalanceErrorKwh: result.energyBalanceErrorKwh,
-    totalSelfDischargeLossKwh: result.totalSelfDischargeLossKwh,
-  };
-}
-
-function averageLedgerField<K extends keyof BatteryLedgerAnnual>(
-  years: number[],
-  batterySizes: number[],
-  yearlyLedger: Record<number, Record<number, BatteryLedgerAnnual>>,
-  field: K
-): Record<number, number> {
-  const out: Record<number, number> = {};
-  for (const size of batterySizes) {
-    let sum = 0;
-    let count = 0;
-    for (const year of years) {
-      const v = yearlyLedger[year]?.[size]?.[field];
-      if (typeof v === "number" && Number.isFinite(v)) {
-        sum += v;
-        count += 1;
-      }
-    }
-    out[size] = count > 0 ? sum / count : 0;
-  }
-  return out;
-}
-
-/** Inclusive start of the physical weather-year reference period (PVGIS-SARAH2). */
-export const DEFAULT_MULTI_YEAR_START = 2006;
-/** Inclusive end of the physical weather-year reference period (PVGIS-SARAH2). */
-export const DEFAULT_MULTI_YEAR_END = 2020;
-
-/** Default weather years: 2006–2020 (15 independent simulations). */
-export const DEFAULT_MULTI_YEAR_YEARS: ReadonlyArray<number> = Array.from(
-  { length: DEFAULT_MULTI_YEAR_END - DEFAULT_MULTI_YEAR_START + 1 },
-  (_, i) => DEFAULT_MULTI_YEAR_START + i
-);
-
-export const DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH: ReadonlyArray<number> =
-  Array.from({ length: 26 }, (_, i) => i + 5);
 
 export type SimulateMultiYearSpeicherGrenzParams = {
   /** Hourly load (8760h) for each simulated PV year — must match `years` rows. */
@@ -129,59 +51,19 @@ export type SimulateMultiYearSpeicherGrenzParams = {
   batterySizes?: ReadonlyArray<number>;
   batterySpec?: BatterySpec;
   backupReserveKwh?: number;
+  /**
+   * Default false. Production SpeicherGrenze must leave this false.
+   * When true, the kernel retains 8760-length series (see `hourlyBatterySizes`).
+   */
+  includeHourly?: boolean;
+  /** If `includeHourly`, collect battery hourly series only for these sizes. */
+  hourlyBatterySizes?: ReadonlyArray<number>;
+  weatherDatabase?: string;
+  createdAt?: string;
 };
 
-export type SimulateMultiYearSpeicherGrenzResult = {
-  batterySizes: number[];
-  yearly: Record<number, Record<number, number>>;
-  average: Record<number, number>;
-  averageBatteryChargedKwh: Record<number, number>;
-  averageBatteryDischargedKwh: Record<number, number>;
-  averageDirectPvToHouseholdKwh: Record<number, number>;
-  averageDirectPvToAuxiliaryKwh: Record<number, number>;
-  averageBatteryToHouseholdKwh: Record<number, number>;
-  averageBatteryToAuxiliaryKwh: Record<number, number>;
-  averageGridToHouseholdKwh: Record<number, number>;
-  averageGridToAuxiliaryKwh: Record<number, number>;
-  averageGridExportKwh: Record<number, number>;
-  averageAuxiliaryConsumptionKwh: Record<number, number>;
-  averageChargeLossKwh: Record<number, number>;
-  averageDischargeLossKwh: Record<number, number>;
-  averageChargeLossPvToBatteryKwh: Record<number, number>;
-  averageChargeLossChemicalKwh: Record<number, number>;
-  averageDischargeLossChemicalKwh: Record<number, number>;
-  averageDischargeLossBatteryToAcKwh: Record<number, number>;
-  averageSocStartKwh: Record<number, number>;
-  averageSocEndKwh: Record<number, number>;
-  averageSocEndPct: Record<number, number>;
-  averageEnergyBalanceErrorKwh: Record<number, number>;
-  averageSelfDischargeLossKwh: Record<number, number>;
-  /** Mean of Σ min(pv, load) over the same years as `average` (no battery). */
-  averageSelfConsumptionWithoutStorageKwh: number;
-  /** Mean of Σ pv over the same years as `average`. */
-  averagePvYieldKwhAnnual: number;
-  /** Mean of Σ load over the same years as `average`. */
-  averageLoadKwhAnnual: number;
-  /** Canonical battery physics model version (all year×size runs must agree). */
-  batteryModelVersion: typeof BATTERY_MODEL_VERSION;
-};
-
-function assertHourlyArray(arr: number[], label: string): void {
-  if (arr.length !== HOURS_PER_YEAR) {
-    throw new Error(
-      `${label} length mismatch: expected ${HOURS_PER_YEAR}, got ${arr.length}`
-    );
-  }
-  for (let i = 0; i < HOURS_PER_YEAR; i++) {
-    const v = arr[i];
-    if (!Number.isFinite(v)) {
-      throw new Error(`${label}[${i}] is not finite`);
-    }
-    if (v < 0) {
-      throw new Error(`${label}[${i}] is negative`);
-    }
-  }
-}
+/** Internal kernel result. Do not send this object to the browser. */
+export type SimulateMultiYearSpeicherGrenzResult = PhysicalKernelResult;
 
 /**
  * Hour-by-hour sum of several 8760h PVGIS profiles (must all be same length).
@@ -314,37 +196,16 @@ function legacySinglePvParams(params: SimulateMultiYearSpeicherGrenzParams): {
   };
 }
 
-function averageFiniteYears(
-  years: readonly number[],
-  yearlyValues: Record<number, number>
-): number {
-  let sum = 0;
-  let count = 0;
-  for (const year of years) {
-    const v = yearlyValues[year];
-    if (typeof v === "number" && Number.isFinite(v)) {
-      sum += v;
-      count += 1;
-    }
-  }
-  return count > 0 ? sum / count : 0;
-}
-
 /**
- * Multi-year orchestration: runs `calculateBatterySimulation` for every
- * (year, batterySize) pair and aggregates `selfConsumptionWithStorage` per
- * battery size as the mean across years. Also averages `totalChargedKwh` and
- * `totalDischargedKwh` from the same runs. From the same load/PV arrays,
- * computes no-storage Eigenverbrauch, PV yield, and load sum, then averages
- * those over the same years. Caller supplies `getLoadForYear` so the load
- * calendar matches each PVGIS `year`.
+ * I/O orchestrator: loads PVGIS profiles (unless injected), then runs the
+ * physical kernel. Returns {@link PhysicalKernelResult} — keep it server-side.
  *
  * PVGIS: one range request per roof surface for the full year span (split +
  * align locally), unless `getPvForYear` is provided.
  */
 export async function simulateMultiYearSpeicherGrenz(
   params: SimulateMultiYearSpeicherGrenzParams
-): Promise<SimulateMultiYearSpeicherGrenzResult> {
+): Promise<PhysicalKernelResult> {
   const years = (params.years ?? DEFAULT_MULTI_YEAR_YEARS).slice();
   const batterySizes = (
     params.batterySizes ?? DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH
@@ -402,18 +263,8 @@ export async function simulateMultiYearSpeicherGrenz(
     }
   }
 
-  const yearly: Record<number, Record<number, number>> = {};
-  const yearlyBatteryChargedKwh: Record<number, Record<number, number>> = {};
-  const yearlyBatteryDischargedKwh: Record<number, Record<number, number>> =
-    {};
-  const yearlyBatteryLedger: Record<
-    number,
-    Record<number, BatteryLedgerAnnual>
-  > = {};
-  const yearlySelfConsumptionWithoutStorage: Record<number, number> = {};
-  const yearlyPvYieldKwh: Record<number, number> = {};
-  const yearlyLoadKwh: Record<number, number> = {};
-
+  const pvMap: Record<number, number[]> = {};
+  const loadMap: Record<number, number[]> = {};
   for (const year of years) {
     let pvProfile: number[];
     if (useInjectedPv) {
@@ -424,247 +275,22 @@ export async function simulateMultiYearSpeicherGrenz(
         throw new Error(`Missing prefetched PV profile for year ${year}`);
       }
     }
-    if (pvProfile.length !== 8760) {
-      throw new Error(
-        `PV profile invalid after normalization: ${pvProfile.length}`
-      );
-    }
-    assertHourlyArray(pvProfile, `pv year ${year}`);
-
-    const loadKwhYear = params.getLoadForYear(year);
-    assertHourlyArray(loadKwhYear, `load year ${year}`);
-
-    let loadSum = 0;
-    let pvSum = 0;
-    for (let h = 0; h < HOURS_PER_YEAR; h++) {
-      loadSum += loadKwhYear[h];
-      pvSum += pvProfile[h];
-    }
-    yearlyLoadKwh[year] = loadSum;
-    yearlyPvYieldKwh[year] = pvSum;
-    yearlySelfConsumptionWithoutStorage[year] = calculateEigenverbrauch(
-      loadKwhYear,
-      pvProfile
-    );
-
-    const sizeMap: Record<number, number> = {};
-    const chargedMap: Record<number, number> = {};
-    const dischargedMap: Record<number, number> = {};
-    const ledgerMap: Record<number, BatteryLedgerAnnual> = {};
-    for (const size of batterySizes) {
-      const result = calculateBatterySimulation(
-        loadKwhYear,
-        pvProfile,
-        size,
-        spec,
-        params.backupReserveKwh ?? 0
-      );
-      if (result.batteryModelVersion !== BATTERY_MODEL_VERSION) {
-        throw new Error(
-          `Battery model version mismatch: expected ${BATTERY_MODEL_VERSION}, got ${result.batteryModelVersion}`
-        );
-      }
-      sizeMap[size] = result.selfConsumptionWithStorage;
-      chargedMap[size] = result.totalChargedKwh;
-      dischargedMap[size] = result.totalDischargedKwh;
-      ledgerMap[size] = pickBatteryLedger(result);
-    }
-    yearly[year] = sizeMap;
-    yearlyBatteryChargedKwh[year] = chargedMap;
-    yearlyBatteryDischargedKwh[year] = dischargedMap;
-    yearlyBatteryLedger[year] = ledgerMap;
+    pvMap[year] = pvProfile;
+    loadMap[year] = params.getLoadForYear(year);
   }
 
-  const average: Record<number, number> = {};
-  const averageBatteryChargedKwh: Record<number, number> = {};
-  const averageBatteryDischargedKwh: Record<number, number> = {};
-  for (const size of batterySizes) {
-    let sum = 0;
-    let count = 0;
-    for (const year of years) {
-      const v = yearly[year]?.[size];
-      if (typeof v === "number" && Number.isFinite(v)) {
-        sum += v;
-        count += 1;
-      }
-    }
-    average[size] = count > 0 ? sum / count : 0;
-
-    let sumCharged = 0;
-    let countCharged = 0;
-    for (const year of years) {
-      const v = yearlyBatteryChargedKwh[year]?.[size];
-      if (typeof v === "number" && Number.isFinite(v)) {
-        sumCharged += v;
-        countCharged += 1;
-      }
-    }
-    averageBatteryChargedKwh[size] =
-      countCharged > 0 ? sumCharged / countCharged : 0;
-
-    let sumDischarged = 0;
-    let countDischarged = 0;
-    for (const year of years) {
-      const v = yearlyBatteryDischargedKwh[year]?.[size];
-      if (typeof v === "number" && Number.isFinite(v)) {
-        sumDischarged += v;
-        countDischarged += 1;
-      }
-    }
-    averageBatteryDischargedKwh[size] =
-      countDischarged > 0 ? sumDischarged / countDischarged : 0;
-  }
-
-  const averageDirectPvToHouseholdKwh = averageLedgerField(
+  return runPhysicalKernel({
     years,
     batterySizes,
-    yearlyBatteryLedger,
-    "directPvToHouseholdKwh"
-  );
-  const averageDirectPvToAuxiliaryKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "directPvToAuxiliaryKwh"
-  );
-  const averageBatteryToHouseholdKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "batteryToHouseholdKwh"
-  );
-  const averageBatteryToAuxiliaryKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "batteryToAuxiliaryKwh"
-  );
-  const averageGridToHouseholdKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "gridToHouseholdKwh"
-  );
-  const averageGridToAuxiliaryKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "gridToAuxiliaryKwh"
-  );
-  const averageGridExportKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "gridExportKwh"
-  );
-  const averageAuxiliaryConsumptionKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "auxiliaryConsumptionKwh"
-  );
-  const averageChargeLossKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "chargeLossKwh"
-  );
-  const averageDischargeLossKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "dischargeLossKwh"
-  );
-  const averageChargeLossPvToBatteryKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "chargeLossPvToBatteryKwh"
-  );
-  const averageChargeLossChemicalKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "chargeLossChemicalKwh"
-  );
-  const averageDischargeLossChemicalKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "dischargeLossChemicalKwh"
-  );
-  const averageDischargeLossBatteryToAcKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "dischargeLossBatteryToAcKwh"
-  );
-  const averageSocStartKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "socStartKwh"
-  );
-  const averageSocEndKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "socEndKwh"
-  );
-  const averageSocEndPct = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "socEndPct"
-  );
-  const averageEnergyBalanceErrorKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "energyBalanceErrorKwh"
-  );
-  const averageSelfDischargeLossKwh = averageLedgerField(
-    years,
-    batterySizes,
-    yearlyBatteryLedger,
-    "totalSelfDischargeLossKwh"
-  );
-
-  const averageSelfConsumptionWithoutStorageKwh = averageFiniteYears(
-    years,
-    yearlySelfConsumptionWithoutStorage
-  );
-  const averagePvYieldKwhAnnual = averageFiniteYears(years, yearlyPvYieldKwh);
-  const averageLoadKwhAnnual = averageFiniteYears(years, yearlyLoadKwh);
-
-  return {
-    batterySizes,
-    yearly,
-    average,
-    averageBatteryChargedKwh,
-    averageBatteryDischargedKwh,
-    averageDirectPvToHouseholdKwh,
-    averageDirectPvToAuxiliaryKwh,
-    averageBatteryToHouseholdKwh,
-    averageBatteryToAuxiliaryKwh,
-    averageGridToHouseholdKwh,
-    averageGridToAuxiliaryKwh,
-    averageGridExportKwh,
-    averageAuxiliaryConsumptionKwh,
-    averageChargeLossKwh,
-    averageDischargeLossKwh,
-    averageChargeLossPvToBatteryKwh,
-    averageChargeLossChemicalKwh,
-    averageDischargeLossChemicalKwh,
-    averageDischargeLossBatteryToAcKwh,
-    averageSocStartKwh,
-    averageSocEndKwh,
-    averageSocEndPct,
-    averageEnergyBalanceErrorKwh,
-    averageSelfDischargeLossKwh,
-    averageSelfConsumptionWithoutStorageKwh,
-    averagePvYieldKwhAnnual,
-    averageLoadKwhAnnual,
-    batteryModelVersion: BATTERY_MODEL_VERSION,
-  };
+    getLoadForYear: (year) => loadMap[year],
+    getPvForYear: (year) => pvMap[year],
+    batterySpec: spec,
+    backupReserveKwh: params.backupReserveKwh,
+    includeHourly: params.includeHourly === true,
+    hourlyBatterySizes: params.hourlyBatterySizes,
+    weatherDatabase:
+      params.weatherDatabase ??
+      (useInjectedPv ? "injected" : DEFAULT_WEATHER_DATABASE),
+    createdAt: params.createdAt,
+  });
 }

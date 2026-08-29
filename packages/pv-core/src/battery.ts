@@ -66,10 +66,47 @@ export const DEFAULT_BATTERY_SPEC: BatterySpec = {
  */
 export const BATTERY_MODEL_VERSION = "1.0.0" as const;
 
+export type BatterySimulationHourlyOptions = {
+  /**
+   * When true, also return per-hour charge / discharge / grid import / export.
+   * Default false: `socHourly` is still always returned (existing API);
+   * the extra 8760-length series are omitted to keep SpeicherGrenze light.
+   */
+  includeHourly?: boolean;
+};
+
 export interface BatterySimulationResult {
   socHourly: number[];
   totalChargedKwh: number;
   totalDischargedKwh: number;
+  /**
+   * Energy actually added to SoC after the charge path (Σ toChargeStored).
+   * Exposed for future Equivalent Full Cycles; not used by SpeicherGrenze.
+   */
+  totalChargedStoredKwh: number;
+  /**
+   * Energy withdrawn from SoC before the discharge path (Σ fromSoc).
+   * Preferred numerator for future cell-level EFC; see cyclesPerYear note.
+   */
+  totalDischargedFromSocKwh: number;
+  /**
+   * Optional hourly series. Present only when `includeHourly: true`.
+   * Units: kWh per 1 h interval. Charge = AC surplus into the charge path
+   * (`toChargeRaw`); discharge = AC delivered to household+aux.
+   */
+  hourlyChargeKwh?: number[];
+  hourlyDischargeKwh?: number[];
+  hourlyGridImportKwh?: number[];
+  hourlyGridExportKwh?: number[];
+  /**
+   * AC-delivered equivalent cycles: `totalDischargedKwh / usableCapacityKwh`.
+   * This is the current model metric and is **not** changed in Phase 3.
+   *
+   * For future cell-level Equivalent Full Cycles, prefer
+   * `totalDischargedFromSocKwh / usableCapacityKwh`: energy leaving the pack
+   * SoC, before η_dis. AC discharge undercounts pack throughput because
+   * `fromSoc = AC / η_dis` and η_dis < 1.
+   */
   cyclesPerYear: number;
   /**
    * Household Eigenverbrauch only: Σ(directPvToHousehold + batteryToHousehold).
@@ -138,7 +175,8 @@ export function calculateBatterySimulation(
   pvKwh: number[],
   usableCapacityKwh: number,
   spec: BatterySpec = DEFAULT_BATTERY_SPEC,
-  backupReserveKwh?: number
+  backupReserveKwh?: number,
+  options?: BatterySimulationHourlyOptions
 ): BatterySimulationResult {
   if (
     loadKwh.length !== HOURS_PER_YEAR ||
@@ -150,7 +188,20 @@ export function calculateBatterySimulation(
 
   const reserveKwh = backupReserveKwh ?? 0;
 
+  const collectHourly = options?.includeHourly === true;
   const socHourly: number[] = [];
+  const hourlyChargeKwh = collectHourly
+    ? new Array<number>(HOURS_PER_YEAR)
+    : undefined;
+  const hourlyDischargeKwh = collectHourly
+    ? new Array<number>(HOURS_PER_YEAR)
+    : undefined;
+  const hourlyGridImportKwh = collectHourly
+    ? new Array<number>(HOURS_PER_YEAR)
+    : undefined;
+  const hourlyGridExportKwh = collectHourly
+    ? new Array<number>(HOURS_PER_YEAR)
+    : undefined;
   let totalCharged = 0;
   let totalDischarged = 0;
   let selfConsumptionWithStorage = 0;
@@ -329,6 +380,13 @@ export function calculateBatterySimulation(
 
     selfConsumptionWithStorage += directPvToHousehold + fromBattH;
     socHourly.push(soc);
+
+    if (collectHourly) {
+      hourlyChargeKwh![h] = toChargeRaw;
+      hourlyDischargeKwh![h] = fromBattH + fromBattA;
+      hourlyGridImportKwh![h] = houseNeedRem + auxNeedRem;
+      hourlyGridExportKwh![h] = pvRem;
+    }
   }
 
   const cyclesPerYear =
@@ -349,6 +407,8 @@ export function calculateBatterySimulation(
     socHourly,
     totalChargedKwh: totalCharged,
     totalDischargedKwh: totalDischarged,
+    totalChargedStoredKwh: sumChargeStoredKwh,
+    totalDischargedFromSocKwh: sumDischargeFromSocKwh,
     cyclesPerYear,
     selfConsumptionWithStorage,
     directPvToHouseholdKwh,
@@ -375,6 +435,13 @@ export function calculateBatterySimulation(
     result.chargeLossChemicalKwh = chargeLossChemicalKwh;
     result.dischargeLossChemicalKwh = dischargeLossChemicalKwh;
     result.dischargeLossBatteryToAcKwh = dischargeLossBatteryToAcKwh;
+  }
+
+  if (collectHourly) {
+    result.hourlyChargeKwh = hourlyChargeKwh;
+    result.hourlyDischargeKwh = hourlyDischargeKwh;
+    result.hourlyGridImportKwh = hourlyGridImportKwh;
+    result.hourlyGridExportKwh = hourlyGridExportKwh;
   }
 
   return result;
