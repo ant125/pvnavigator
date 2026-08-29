@@ -78,9 +78,10 @@ describe("pvgisFetchTimeoutMs", () => {
     expect(pvgisFetchTimeoutMs(2018, 2018)).toBe(10_000);
   });
 
-  it("scales modestly for 2016–2020 and caps at 30s", () => {
+  it("scales for short multi-year ranges and caps at 30s for 2006–2020", () => {
     // 5 years → 10s + 4×4s = 26s
     expect(pvgisFetchTimeoutMs(2016, 2020)).toBe(26_000);
+    // 15 years → 10s + 14×4s = 66s → capped at 30s
     expect(pvgisFetchTimeoutMs(2006, 2020)).toBe(30_000);
   });
 });
@@ -102,7 +103,11 @@ describe("bucketPvgisRowsByUtcYear", () => {
 });
 
 describe("alignMultiYearPvgisRowsByUtcYear — equivalence vs single-year", () => {
-  const YEARS = [2016, 2017, 2018, 2019, 2020] as const;
+  /** Physical reference period 2006–2020 (15 weather years). */
+  const YEARS = Array.from(
+    { length: 2020 - 2006 + 1 },
+    (_, i) => 2006 + i
+  );
 
   /** Year-fingerprinted watts so superposition would be detectable. */
   function yearFingerprintWatts(
@@ -117,7 +122,7 @@ describe("alignMultiYearPvgisRowsByUtcYear — equivalence vs single-year", () =
   }
 
   it(
-    "each year from 2016–2020 multi-year equals its single-year align path",
+    "each year from 2006–2020 multi-year equals its single-year align path",
     () => {
       const perYearRaw = new Map(
         YEARS.map((y) => [y, generateUtcHourlyYear(y, yearFingerprintWatts)])
@@ -126,6 +131,7 @@ describe("alignMultiYearPvgisRowsByUtcYear — equivalence vs single-year", () =
 
       const fromMulti = alignMultiYearPvgisRowsByUtcYear(concatenated);
 
+      expect(Object.keys(fromMulti).map(Number).sort()).toEqual([...YEARS]);
       for (const year of YEARS) {
         expect(fromMulti[year]).toHaveLength(HOURS_PER_NON_LEAP_YEAR);
         const single = alignPvgisRowsToBerlinLocal8760(
@@ -134,7 +140,7 @@ describe("alignMultiYearPvgisRowsByUtcYear — equivalence vs single-year", () =
         profilesClose(fromMulti[year], single, `year ${year}`);
       }
     },
-    30_000
+    60_000
   );
 
   it("includes leap year 2016 and non-leap 2018 with matching energy", () => {
@@ -223,8 +229,11 @@ describe("alignMultiYearPvgisRowsByUtcYear — equivalence vs single-year", () =
   it(
     "multi-surface year summation matches old per-year architecture",
     () => {
-      // Old: 5 separate yearly profiles per surface, then sum
-      // New: one 2016–2020 blob per surface → split → sum year-by-year
+      // Representative span across 2006–2020 (incl. leap/non-leap); full-range
+      // coverage is in the equivalence + 8760 tests above.
+      const sampleYears = [2006, 2008, 2012, 2016, 2020];
+      // Old: separate yearly profiles per surface, then sum
+      // New: one multi-year blob per surface → split → sum year-by-year
       const surfaces = [
         (y: number) =>
           generateUtcHourlyYear(y, (_i, _yy, m, d, h) => 100 + y + m + d + h),
@@ -235,7 +244,7 @@ describe("alignMultiYearPvgisRowsByUtcYear — equivalence vs single-year", () =
       ];
 
       const oldByYear: Record<number, number[]> = {};
-      for (const year of YEARS) {
+      for (const year of sampleYears) {
         const profiles = surfaces.map((gen) =>
           alignPvgisRowsToBerlinLocal8760(gen(year)).map((r) => r.pvKWh)
         );
@@ -244,16 +253,16 @@ describe("alignMultiYearPvgisRowsByUtcYear — equivalence vs single-year", () =
 
       const newByYear: Record<number, number[]> = {};
       const perSurfaceMulti = surfaces.map((gen) => {
-        const concat = YEARS.flatMap((y) => gen(y));
+        const concat = sampleYears.flatMap((y) => gen(y));
         return alignMultiYearPvgisRowsByUtcYear(concat);
       });
-      for (const year of YEARS) {
+      for (const year of sampleYears) {
         newByYear[year] = sumHourly(
           perSurfaceMulti.map((byYear) => byYear[year])
         );
       }
 
-      for (const year of YEARS) {
+      for (const year of sampleYears) {
         profilesClose(oldByYear[year], newByYear[year], `surfaces ${year}`);
       }
     },
@@ -266,11 +275,12 @@ describe("alignMultiYearPvgisRowsByUtcYear — equivalence vs single-year", () =
     );
     const byYear = alignMultiYearPvgisRowsByUtcYear(concat);
     expect(Object.keys(byYear).map(Number).sort()).toEqual([...YEARS]);
+    expect(YEARS).toHaveLength(15);
     for (const year of YEARS) {
       expect(byYear[year]).toHaveLength(8760);
       expect(byYear[year].every((v) => Number.isFinite(v) && v >= 0)).toBe(
         true
       );
     }
-  });
+  }, 30_000);
 });

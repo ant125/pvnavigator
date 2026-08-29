@@ -89,9 +89,16 @@ function averageLedgerField<K extends keyof BatteryLedgerAnnual>(
   return out;
 }
 
-export const DEFAULT_MULTI_YEAR_YEARS: ReadonlyArray<number> = [
-  2016, 2017, 2018, 2019, 2020,
-];
+/** Inclusive start of the physical weather-year reference period (PVGIS-SARAH2). */
+export const DEFAULT_MULTI_YEAR_START = 2006;
+/** Inclusive end of the physical weather-year reference period (PVGIS-SARAH2). */
+export const DEFAULT_MULTI_YEAR_END = 2020;
+
+/** Default weather years: 2006–2020 (15 independent simulations). */
+export const DEFAULT_MULTI_YEAR_YEARS: ReadonlyArray<number> = Array.from(
+  { length: DEFAULT_MULTI_YEAR_END - DEFAULT_MULTI_YEAR_START + 1 },
+  (_, i) => DEFAULT_MULTI_YEAR_START + i
+);
 
 export const DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH: ReadonlyArray<number> =
   Array.from({ length: 26 }, (_, i) => i + 5);

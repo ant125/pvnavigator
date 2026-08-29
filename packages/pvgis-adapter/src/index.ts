@@ -64,7 +64,7 @@ const RETRYABLE_ERROR_CODES = new Set([
 
 /** Single-year default; multi-year range gets a modest increase. */
 const PVGIS_TIMEOUT_MS_SINGLE_YEAR = 10_000;
-/** Cap for multi-year range fetches (e.g. 2016–2020 ≈ 5× hourly payload). */
+/** Cap for multi-year range fetches (e.g. 2006–2020 ≈ 15× hourly payload). */
 const PVGIS_TIMEOUT_MS_MULTI_YEAR_CAP = 30_000;
 /** Extra ms per calendar year beyond the first in a range request. */
 const PVGIS_TIMEOUT_MS_PER_EXTRA_YEAR = 4_000;
@@ -72,7 +72,7 @@ const PVGIS_TIMEOUT_MS_PER_EXTRA_YEAR = 4_000;
 /**
  * Timeout for a PVGIS seriescalc fetch.
  * Single year: 10s (unchanged). Multi-year: 10s + 4s × (years−1), capped at 30s.
- * Example: 2016–2020 → 5 years → 26s.
+ * Example: 2016–2020 → 5 years → 26s; 2006–2020 → 15 years → capped at 30s.
  */
 export function pvgisFetchTimeoutMs(startYear: number, endYear: number): number {
   const span = Math.max(1, endYear - startYear + 1);

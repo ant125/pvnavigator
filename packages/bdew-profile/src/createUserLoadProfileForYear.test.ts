@@ -5,7 +5,11 @@ import {
 } from "./index";
 
 const HOURS_PER_YEAR = 8760;
-const WEATHER_YEARS = [2016, 2017, 2018, 2019, 2020] as const;
+/** Matches speicher-physik DEFAULT_MULTI_YEAR_YEARS (2006–2020). */
+const WEATHER_YEARS = Array.from(
+  { length: 2020 - 2006 + 1 },
+  (_, i) => 2006 + i
+);
 /** Strict relative tolerance for annual energy preservation. */
 const ANNUAL_SUM_REL_TOL = 1e-12;
 

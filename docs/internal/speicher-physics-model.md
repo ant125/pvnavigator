@@ -72,11 +72,11 @@ Diese Verluste betreffen ausschließlich die PV-Anlage. Speicherverluste sind da
 
 - Zeitauflösung: stündlich (8760 Werte pro Jahr nach Kalenderangleichung)
 
-- Mehrjährige Simulation (2016–2020)
+- Mehrjährige Simulation (2006–2020)
 
 ### Schaltjahre
 
-Die Wetterjahre 2016 und 2020 sind Schaltjahre. Nach der Umrechnung der PVGIS-Zeitstempel auf Europe/Berlin wird der lokale 29. Februar entfernt. Dadurch verwenden PV-Erzeugung, Lastprofil und Batteriesimulation für jedes Jahr dasselbe nicht-schaltjährige Raster mit 8760 Stunden.
+Im Zeitraum 2006–2020 sind die Wetterjahre 2008, 2012, 2016 und 2020 Schaltjahre. Nach der Umrechnung der PVGIS-Zeitstempel auf Europe/Berlin wird der lokale 29. Februar entfernt. Dadurch verwenden PV-Erzeugung, Lastprofil und Batteriesimulation für jedes Jahr dasselbe nicht-schaltjährige Raster mit 8760 Stunden.
 
 ### Zeitzone und Sommerzeit
 
@@ -116,7 +116,7 @@ Weitere Annahmen:
 
 - Die PVGIS-Systemverluste von 14 % werden für jede Dachfläche angewendet.
 - Lokale Verschattung wird derzeit nicht modelliert.
-- Alle Dachflächen verwenden die Wetterjahre 2016–2020.
+- Alle Dachflächen verwenden die Wetterjahre 2006–2020.
 
 Es wird **keine** mittlere Dachneigung und **kein** mittlerer Azimut über die Flächen gebildet. Jede Fläche behält ihre eigenen Eingaben für Neigung und Ausrichtung.
 
@@ -134,7 +134,7 @@ Es wird **keine** mittlere Dachneigung und **kein** mittlerer Azimut über die F
 
 Als Haushaltslast dient das BDEW-Standardlastprofil H0 in bereits stündlicher Form mit 8760 Werten. Die hinterlegte Referenzreihe entspricht dem Kalenderjahr 2025 und einer Bezugsmenge von 1 GWh.
 
-Für jedes Wetterjahr von 2016 bis 2020 wird das Profil anhand von Monat und Tagestyp (Werktag, Samstag oder Sonntag) für die jeweilige Kalenderstruktur neu zusammengesetzt. Anschließend wird es so skaliert, dass seine Jahressumme exakt dem eingegebenen Haushaltsverbrauch entspricht.
+Für jedes Wetterjahr von 2006 bis 2020 wird das Profil anhand von Monat und Tagestyp (Werktag, Samstag oder Sonntag) für die jeweilige Kalenderstruktur neu zusammengesetzt. Anschließend wird es so skaliert, dass seine Jahressumme exakt dem eingegebenen Haushaltsverbrauch entspricht.
 
 👉 Wichtig:
 
@@ -186,9 +186,9 @@ Keine Unterscheidung zwischen verschiedenen Wärmepumpentypen
 
 ### Mehrjährige Mittelung
 
-PV-Ertrag, Eigenverbrauch ohne Speicher und die Batteriesimulationen für Speichergrößen von 5 bis 30 kWh werden für dieselben Wetterjahre 2016 bis 2020 berechnet. Die ausgewiesenen Jahresenergiewerte sind arithmetische Mittelwerte dieser fünf Jahre.
+PV-Ertrag, Eigenverbrauch ohne Speicher und die Batteriesimulationen für Speichergrößen von 5 bis 30 kWh werden für dieselben Wetterjahre 2006 bis 2020 berechnet. Die ausgewiesenen Jahresenergiewerte sind arithmetische Mittelwerte dieser fünfzehn Jahre.
 
-Autarkiegrad und Eigenverbrauchsquote sind Quotienten aus diesen Mittelwerten der Energiegrößen — **nicht** Mittelwerte von fünf jährlichen Prozentwerten.
+Autarkiegrad und Eigenverbrauchsquote sind Quotienten aus diesen Mittelwerten der Energiegrößen — **nicht** Mittelwerte von jährlichen Prozentwerten.
 
 Ist eine Wärmepumpe aktiviert, ist ihr Verbrauch Bestandteil der modellierten Haushaltslast.
 
@@ -359,11 +359,11 @@ Nicht explizit separat modelliert:
 
 ## 6. Ergebnis
 
-Die folgenden Kennzahlen beziehen sich auf die **technische Speichergrenze**, nicht auf die größere planerische Anfangskapazität. Jahresenergiewerte sind Mittelwerte der Wetterjahre 2016–2020.
+Die folgenden Kennzahlen beziehen sich auf die **technische Speichergrenze**, nicht auf die größere planerische Anfangskapazität. Jahresenergiewerte sind Mittelwerte der Wetterjahre 2006–2020.
 
 ### PV-Jahresertrag
 
-Mittlere jährliche PV-Erzeugung aller Dachflächen nach den in PVGIS angesetzten Systemverlusten von 14 %. Mittelwert der Wetterjahre 2016–2020.
+Mittlere jährliche PV-Erzeugung aller Dachflächen nach den in PVGIS angesetzten Systemverlusten von 14 %. Mittelwert der Wetterjahre 2006–2020.
 
 ### Spezifischer Ertrag
 
@@ -430,7 +430,7 @@ Der Wert stammt aus dem expliziten Netzeinspeisungs-Ledger der Simulation (Mehrj
 - Der Haushaltsverbrauch enthält eine optionale Wärmepumpe.
 - Der Systemverbrauch des Speichersystems ist ausgeschlossen.
 - Autarkie wird getrennt ohne und mit Speicher berechnet.
-- Das Ergebnis ist der Quotient der Mittelwerte 2016–2020 (nicht das Mittel von fünf Jahres-Prozentwerten).
+- Das Ergebnis ist der Quotient der Mehrjahres-Mittelwerte (nicht das Mittel von jährlichen Prozentwerten).
 
 ### Eigenverbrauchsquote
 
@@ -745,14 +745,14 @@ Das Batteriemodell bilanziert separat:
 
 ### Wetterjahre und Simulationsstruktur
 
-Die Produktions-Mehrjahressimulation verwendet die Wetterjahre **2016, 2017, 2018, 2019 und 2020**.
+Die Produktions-Mehrjahressimulation verwendet die Wetterjahre **2006 bis 2020** (15 historische Wetterjahre).
 
 Implementiertes Verhalten:
 
 - Jedes Wetterjahr wird **separat** simuliert.
 - Jedes Jahr enthält genau **8760** Stundenintervalle (Δt = 1 h).
 - Für jedes Jahr werden alle Speicherkapazitäten von **5 bis 30 kWh** (Schrittweite 1 kWh) simuliert.
-- Die Jahre werden **nicht** zu einer durchgehenden Timeline von 5 × 8760 Stunden zusammengefügt.
+- Die Jahre werden **nicht** zu einer durchgehenden Timeline von N × 8760 Stunden zusammengefügt.
 - Jede Kombination aus Speicherkapazität und Wetterjahr startet eine **neue** Batteriesimulation.
 - Es gibt **keinen** SoC-Übertrag vom 31. Dezember auf den 1. Januar.
 - Es gibt **kein** Warm-up-Jahr.
@@ -764,9 +764,8 @@ Implementiertes Verhalten:
 Für jede nutzbare Kapazität \(C\) gilt:
 
 ```
-EV_mean(C) =
-(EV_2016(C) + EV_2017(C) + EV_2018(C) +
- EV_2019(C) + EV_2020(C)) / 5
+EV_mean(C) = (1/N) × Σ_y EV_y(C)
+wobei N = Anzahl der Wetterjahre (hier N = 15 für 2006–2020).
 ```
 
 Der marginale Eigenverbrauchszuwachs zwischen aufeinanderfolgenden simulierten Kapazitäten:
@@ -781,8 +780,8 @@ Auswahl der technischen Speichergrenze:
 - Der erste marginale Schritt, der **streng unter** 50 kWh/Jahr liegt (`ΔEV < 50`), löst das Plateau aus.
 - Zurückgegeben wird die **vorherige** simulierte Kapazität.
 - Genau **50 kWh/Jahr** löst die Grenze **nicht** aus (`<`, nicht `≤`).
-- Jahreswerte aus dem Ledger (Flüsse, Verluste, diagnostische SoC-Werte) sind **arithmetische Mittel** der fünf Jahresergebnisse.
-- Autarkiegrad und Eigenverbrauchsquote sind Quotienten der gemittelten Energiewerte — **nicht** Mittelwerte von fünf jährlichen Prozentwerten.
+- Jahreswerte aus dem Ledger (Flüsse, Verluste, diagnostische SoC-Werte) sind **arithmetische Mittel** der N Jahresergebnisse.
+- Autarkiegrad und Eigenverbrauchsquote sind Quotienten der gemittelten Energiewerte — **nicht** Mittelwerte von jährlichen Prozentwerten.
 
 ### Anfangs-SoC
 
@@ -978,7 +977,7 @@ Implementierungsdetails:
 - Netzbezug- und Netzeinspeisungs-Ledger
 - mehrere PV-Dachflächen
 - optionale Wärmepumpenlast
-- Wetterjahre 2016–2020
+- Wetterjahre 2006–2020
 
 ### Nicht im Modell berücksichtigt
 
