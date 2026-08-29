@@ -104,7 +104,7 @@ describe("buildQuarterHourPhysicalInputsForYear", () => {
     );
   });
 
-  it("production kernel path remains hourly (this builder is unused there)", () => {
+  it("battery default remains dt=1; production passes TIME_STEP_HOURS_15", () => {
     expect(DEFAULT_TIME_STEP_HOURS).toBe(1);
     expect(TIME_STEP_HOURS_15).toBe(0.25);
   });

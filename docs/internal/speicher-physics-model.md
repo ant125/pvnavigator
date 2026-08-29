@@ -32,15 +32,14 @@ für Photovoltaik-Erzeugung und Batteriespeicher.
 
 ### Zeitauflösung und Kalender
 
-Die **Produktionssimulation** erfolgt stündlich. Jedes modellierte Jahr besteht aus genau 8760 Intervallen mit einer Dauer von jeweils einer Stunde (Δt = 1 h). Ein 15-Minuten-Kern ist noch nicht an `calculateSpeicherResult` / `runPhysicalKernel` angeschlossen.
-
-Vorbereiteter alternativer Eingangspfad (Phase 4C, intern, nicht in Produktion):
+Die **Produktionssimulation** erfolgt in 15-Minuten-Schritten. Jedes modellierte Jahr besteht aus genau 35.040 Intervallen mit einer Dauer von jeweils 15 Minuten (Δt = 0,25 h).
 
 - BDEW-Quelle: natives H25-Viertelstundenprofil (96 Slots/Tag, 35040 Schritte/Nichtschaltjahr). Keine Dynamisierung, keine Feiertags-Umbelegung.
 - PVGIS-Quelle: unverändert stündlich (seriescalc). Nach der bestehenden Berlin-8760-Ausrichtung wird jede Stundenenergie \(E\) gleichmäßig auf vier Viertelstunden \([E/4, E/4, E/4, E/4]\) verteilt. Keine 15-min-PVGIS-API, keine Einstrahlungsinterpolation.
-- Wärmepumpe: dasselbe synthetische Saisonmodell, nur das Zeitraster (96 Slots/Tag). Jahressumme unverändert die eingegebene kWh.
+- Wärmepumpe: dasselbe synthetische Saisonmodell auf 96 Slots/Tag. Jahressumme unverändert die eingegebene kWh.
 - Merge: indexweise, alle Komponenten müssen dieselbe Länge haben (kein Mix 8760 + 35040).
-- API: `buildQuarterHourPhysicalInputsForYear` in `apps/speicher-physik/src/lib/buildQuarterHourPhysicalInputs.ts`.
+- Kernel: `timeStepHours = 0.25`, `BATTERY_MODEL_VERSION = 1.1.0`, `PHYSICAL_KERNEL_SCHEMA_VERSION = 1.1.0`.
+- Stundenhelfer (BDEW hourly, `createHeatPumpComponent` 8760) bleiben für Regression/Rollback.
 
 ---
 
@@ -78,13 +77,14 @@ Diese Verluste betreffen ausschließlich die PV-Anlage. Speicherverluste sind da
 
 - Strahlungsdaten: SARAH2 Satellitendatenbank
 
-- Zeitauflösung: stündlich (8760 Werte pro Jahr nach Kalenderangleichung)
+- Zeitauflösung der Quelle: stündlich (8760 Werte pro Jahr nach Kalenderangleichung)
+- Simulation: 15-Minuten-Schritte (35.040 Werte). Jede Stundenenergie \(E\) wird gleichmäßig auf \([E/4, E/4, E/4, E/4]\) verteilt.
 
 - Mehrjährige Simulation (2006–2020)
 
 ### Schaltjahre
 
-Im Zeitraum 2006–2020 sind die Wetterjahre 2008, 2012, 2016 und 2020 Schaltjahre. Nach der Umrechnung der PVGIS-Zeitstempel auf Europe/Berlin wird der lokale 29. Februar entfernt. Dadurch verwenden PV-Erzeugung, Lastprofil und Batteriesimulation für jedes Jahr dasselbe nicht-schaltjährige Raster mit 8760 Stunden.
+Im Zeitraum 2006–2020 sind die Wetterjahre 2008, 2012, 2016 und 2020 Schaltjahre. Nach der Umrechnung der PVGIS-Zeitstempel auf Europe/Berlin wird der lokale 29. Februar entfernt. Dadurch verwenden PV-Erzeugung, Lastprofil und Batteriesimulation für jedes Jahr dasselbe nicht-schaltjährige Raster (8760 Stundenquellenwerte, anschließend 35.040 Viertelstunden).
 
 ### Zeitzone und Sommerzeit
 
@@ -132,15 +132,15 @@ Es wird **keine** mittlere Dachneigung und **kein** mittlerer Azimut über die F
 
 ### 2.2 Lastprofil (Stromverbrauch)
 
-- Quelle: BDEW Standardlastprofil H0
+- Quelle: BDEW Standardlastprofil H25
 
 - Entwickelt vom Bundesverband der Energie- und Wasserwirtschaft (Deutschland)
 
 - Repräsentiert ein typisches Haushaltsverbrauchsverhalten
 
-### BDEW-Lastprofil H0
+### BDEW-Lastprofil H25
 
-Als Haushaltslast dient das BDEW-Standardlastprofil H0 in bereits stündlicher Form mit 8760 Werten. Die hinterlegte Referenzreihe entspricht dem Kalenderjahr 2025 und einer Bezugsmenge von 1 GWh.
+Als Haushaltslast dient das BDEW-Standardlastprofil H25 in nativer Viertelstundenauflösung mit 35.040 Werten (96 Slots/Tag). Die hinterlegte Referenzreihe entspricht dem Kalenderjahr 2025 und einer Bezugsmenge von 1 GWh. Dynamisierung und Feiertags-Umbelegung werden nicht angewendet.
 
 Für jedes Wetterjahr von 2006 bis 2020 wird das Profil anhand von Monat und Tagestyp (Werktag, Samstag oder Sonntag) für die jeweilige Kalenderstruktur neu zusammengesetzt. Anschließend wird es so skaliert, dass seine Jahressumme exakt dem eingegebenen Haushaltsverbrauch entspricht.
 
@@ -168,7 +168,7 @@ separat modelliert und dem Haushaltsverbrauch hinzugefügt.
 
 Annahmen:
 
-Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche stündliche Lastreihe modelliert. Die Verteilung erfolgt anhand monatlicher saisonaler Gewichtungen: mit höherem relativem Verbrauch im Winter und geringerem Verbrauch im Sommer. Die Jahressumme entspricht dem eingegebenen Wärmepumpenverbrauch.
+Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche Lastreihe in 15-Minuten-Schritten modelliert. Die Verteilung erfolgt anhand monatlicher saisonaler Gewichtungen: mit höherem relativem Verbrauch im Winter und geringerem Verbrauch im Sommer. Die Jahressumme entspricht dem eingegebenen Wärmepumpenverbrauch.
 
 Erhöhter Strombedarf tritt vor allem in den Wintermonaten auf
 
@@ -311,7 +311,7 @@ Keine Priorisierung einzelner Verbraucher
 
 Die Batteriesimulation basiert auf folgenden Annahmen:
 
-- Ladung und Entladung erfolgen stündlich (8760 Stunden pro Jahr)
+- Ladung und Entladung erfolgen in 15-Minuten-Schritten (35.040 Zeitschritte pro Jahr, Δt = 0,25 h)
 
 - Realistische größenabhängige Lade- und Entladeleistungsbegrenzung moderner Hybrid-Heimspeichersysteme (siehe Abschnitt 4)
 
@@ -758,9 +758,9 @@ Die Produktions-Mehrjahressimulation verwendet die Wetterjahre **2006 bis 2020**
 Implementiertes Verhalten:
 
 - Jedes Wetterjahr wird **separat** simuliert.
-- Jedes Jahr enthält genau **8760** Stundenintervalle (Δt = 1 h).
+- Jedes Jahr enthält genau **35040** Viertelstundenintervalle (Δt = 0,25 h).
 - Für jedes Jahr werden alle Speicherkapazitäten von **5 bis 30 kWh** (Schrittweite 1 kWh) simuliert.
-- Die Jahre werden **nicht** zu einer durchgehenden Timeline von N × 8760 Stunden zusammengefügt.
+- Die Jahre werden **nicht** zu einer durchgehenden Timeline von N × 35040 Schritten zusammengefügt.
 - Jede Kombination aus Speicherkapazität und Wetterjahr startet eine **neue** Batteriesimulation.
 - Es gibt **keinen** SoC-Übertrag vom 31. Dezember auf den 1. Januar.
 - Es gibt **kein** Warm-up-Jahr.
@@ -875,8 +875,11 @@ Der kostenlose SpeicherGrenze-Pfad ruft das Kernel mit `includeHourly: false` au
 ```
 PhysicalKernelResult
   meta
-    modelVersion              (= BATTERY_MODEL_VERSION, derzeit 1.0.0)
-    kernelSchemaVersion       (Form des Ergebnisobjekts, derzeit 1.0.0)
+    modelVersion              (= BATTERY_MODEL_VERSION, derzeit 1.1.0)
+    kernelSchemaVersion       (Form des Ergebnisobjekts, derzeit 1.1.0)
+    timeStepHours             (Produktion: 0.25)
+    timeStepMinutes           (Produktion: 15)
+    stepsPerYear              (Produktion: 35040)
     weatherDatabase           (Produktion: PVGIS-SARAH2)
     weatherPeriod             ({ startYear, endYear }, Produktion 2006–2020)
     createdAt                 (ISO-8601)
@@ -905,7 +908,7 @@ Mittelwerte werden weiterhin als arithmetisches Mittel der Jahresergebnisse gebi
 
 ### Optionale Stundenreihen
 
-`calculateBatterySimulation` berechnet intern stündlich SoC, Ladung, Entladung, Netzbezug und Einspeisung. Phase 3 macht die letzten vier Reihen **optional** rückgabefähig:
+`calculateBatterySimulation` berechnet intern je Simulationsschritt SoC, Ladung, Entladung, Netzbezug und Einspeisung. Die letzten vier Reihen sind **optional** rückgabefähig:
 
 | Reihe | Inhalt | Immer berechnet | Im Kernel behalten |
 |---|---|---|---|
@@ -919,11 +922,11 @@ PV- und Lastprofile sind für alle Kapazitäten eines Wetterjahres identisch. We
 
 Produktion (SpeicherGrenze): `includeHourly = false`.
 
-Für spätere Analysen: `includeHourly = true` und optional `hourlyBatterySizes` (z. B. nur die technische Speichergrenze), damit nicht 15 × 26 × 8760 Stunden gehalten werden.
+Für spätere Analysen: `includeHourly = true` und optional `hourlyBatterySizes` (z. B. nur die technische Speichergrenze), damit nicht 15 × 26 × 35040 Schritte gehalten werden.
 
 ### Speicherbedarf (Groabschätzung, Float64)
 
-Eine Stundenreihe: 8760 × 8 Byte ≈ 70 kB.
+Eine 15-min-Reihe: 35040 × 8 Byte ≈ 280 kB.
 
 | Variante | Größenordnung |
 |---|---|
@@ -960,7 +963,7 @@ Registrierung und Datenbank sind nicht Teil von Phase 3. `PhysicalKernelResult` 
 
 | Parameter | Produktionswert | Einheit | Bedeutung |
 |---|---:|---|---|
-| Zeitauflösung | 1 | Stunde | 8760 Intervalle pro modelliertem Jahr |
+| Zeitauflösung | 0,25 | Stunde | 35040 Intervalle pro modelliertem Jahr |
 | Nutzbare Kapazität | 5–30 | kWh | Simulierter Bereich, Schrittweite 1 kWh |
 | Nominale Rohkapazität | nicht modelliert | – | Eingabe ist die nutzbare Kapazität |
 | Depth of Discharge | 1.0 | Anteil | 100 % der angegebenen nutzbaren Kapazität |
@@ -972,13 +975,13 @@ Registrierung und Datenbank sind nicht Teil von Phase 3. `PhysicalKernelResult` 
 | Kombinierter Entladewirkungsgrad | 0.9702 | – | 0.99 × 0.98 |
 | Nomineller Roundtrip-Wirkungsgrad | 0.94128804 | – | Produkt aller vier Wandlungsstufen |
 | Selbstentladung | 0.01 | pro Monat | 1 % pro Monat, abhängig vom aktuellen SoC |
-| Systemverbrauch Standby | 15 | W | Konstant in jedem Stundenintervall |
-| Standby-Jahresenergie | 131.4 | kWh/a | 15 W × 8760 h |
+| Systemverbrauch Standby | 15 | W | Konstant in jedem Simulationsschritt |
+| Standby-Jahresenergie | 131.4 | kWh/a | 15 W × 8760 h (unabhängig vom Zeitschritt) |
 | Efficiency model | `hybrid` | – | Getrennte Lade- und Entladestufen |
 | Anfangs-SoC ohne Reserve | 0 | kWh | Kaltstart jedes Wetterjahres |
 | Anfangs-SoC mit Reserve \(R\) | \(\mathrm{minSoc} \times C\) | kWh | `minSoc = clamp(R/C, 0, maxSoc)`; geschützte Startenergie |
 | Standard-Notstromreserve | 0 | kWh | Optional über das Formular veränderbar |
-| Modellversion | `1.0.0` | – | `BATTERY_MODEL_VERSION` in `packages/pv-core/src/battery.ts` |
+| Modellversion | `1.1.0` | – | `BATTERY_MODEL_VERSION` in `packages/pv-core/src/battery.ts` |
 
 ### Roundtrip-Produkt (nur Wandlung)
 
@@ -1118,7 +1121,7 @@ Implementierungsdetails:
 
 Aktueller Stand:
 
-- Kanonische Konstante: `BATTERY_MODEL_VERSION = "1.0.0"` in
+- Kanonische Konstante: `BATTERY_MODEL_VERSION = "1.1.0"` in
   `packages/pv-core/src/battery.ts` (einzige Produktions-Literalquelle).
 - Die Version wird mit Simulationsergebnissen zurückgegeben:
   - `BatterySimulationResult.batteryModelVersion`

@@ -58,8 +58,8 @@ describe("frozen DEFAULT_BATTERY_SPEC production model 1.0.0", () => {
 });
 
 describe("BATTERY_MODEL_VERSION", () => {
-  it("is the single canonical 1.0.0 literal and is returned by DEFAULT simulations", () => {
-    expect(BATTERY_MODEL_VERSION).toBe("1.0.0");
+  it("is the single canonical 1.1.0 literal and is returned by DEFAULT simulations", () => {
+    expect(BATTERY_MODEL_VERSION).toBe("1.1.0");
     const result = calculateBatterySimulation(
       constantProfile(0),
       constantProfile(0),
@@ -68,7 +68,7 @@ describe("BATTERY_MODEL_VERSION", () => {
       0
     );
     expect(result.batteryModelVersion).toBe(BATTERY_MODEL_VERSION);
-    expect(result.batteryModelVersion).toBe("1.0.0");
+    expect(result.batteryModelVersion).toBe("1.1.0");
   });
 });
 

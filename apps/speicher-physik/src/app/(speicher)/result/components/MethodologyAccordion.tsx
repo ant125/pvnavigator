@@ -44,14 +44,14 @@ export function MethodologyAccordion({
         {/* Item 1: Hourly Consumption Model */}
         <MiniAccordionItem
           id="hourly"
-          title="Stündliches Verbrauchsmodell"
+          title="15-Minuten-Verbrauchsmodell"
           isOpen={openItem === "hourly"}
           onToggle={() => toggleItem("hourly")}
         >
           <ul className="space-y-1.5 text-slate-400">
             <li className="flex items-start gap-2">
               <span className="text-slate-600 mt-0.5">•</span>
-              <span>Die Berechnung basiert auf einer stündlichen Simulation (8.760 Stunden).</span>
+              <span>Die Berechnung basiert auf einer Simulation in 15-Minuten-Schritten (35.040 Zeitschritte je Jahr).</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-slate-600 mt-0.5">•</span>
@@ -97,7 +97,7 @@ export function MethodologyAccordion({
           <ul className="space-y-1.5 text-slate-400">
             <li className="flex items-start gap-2">
               <span className="text-slate-600 mt-0.5">•</span>
-              <span>PV-Erzeugung und Haushaltsverbrauch werden Stunde für Stunde abgeglichen.</span>
+              <span>PV-Erzeugung und Haushaltsverbrauch werden in 15-Minuten-Schritten abgeglichen. PVGIS liefert stündliche Erzeugungswerte; diese werden energieerhaltend auf 15-Minuten-Schritte verteilt.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-slate-600 mt-0.5">•</span>

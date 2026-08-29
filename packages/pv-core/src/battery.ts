@@ -9,9 +9,8 @@ import {
 } from "./batteryPowerLimit";
 
 /**
- * Production default: one simulation step = 1 hour.
- * Battery physics is timestep-aware; callers that omit `timeStepHours` keep
- * this value. Do not change the default until the 15-minute production cutover.
+ * Default when callers omit `timeStepHours`: one simulation step = 1 hour.
+ * Production SpeicherGrenze passes 0.25 explicitly via the physical kernel.
  */
 export const DEFAULT_TIME_STEP_HOURS = 1;
 
@@ -67,10 +66,15 @@ export const DEFAULT_BATTERY_SPEC: BatterySpec = {
 
 /**
  * Frozen production battery physics model identifier.
- * Bump only when changing efficiencies, power limits, flow priority,
- * SoC boundary treatment, self-discharge method, or loss ledger definitions.
+ * Bump when changing efficiencies, power limits, flow priority,
+ * SoC boundary treatment, self-discharge method, loss ledger definitions,
+ * or the production simulation timestep.
+ *
+ * 1.1.0: production SpeicherGrenze uses Δt = 0.25 h (35040 steps/year).
+ * Power limits and self-discharge compound per quarter-hour step.
+ * Efficiencies and dispatch priority are unchanged from 1.0.0.
  */
-export const BATTERY_MODEL_VERSION = "1.0.0" as const;
+export const BATTERY_MODEL_VERSION = "1.1.0" as const;
 
 export type BatterySimulationHourlyOptions = {
   /**
@@ -84,7 +88,8 @@ export type BatterySimulationHourlyOptions = {
   includeHourly?: boolean;
   /**
    * Duration of one simulation step in hours. Default {@link DEFAULT_TIME_STEP_HOURS} (1).
-   * Production SpeicherGrenze must leave this at 1 until the 15-minute cutover.
+   * Production SpeicherGrenze passes {@link TIME_STEP_HOURS_15} (0.25).
+   * Omit to keep {@link DEFAULT_TIME_STEP_HOURS} (1) for hourly regression.
    */
   timeStepHours?: number;
 };
@@ -146,7 +151,8 @@ export interface BatterySimulationResult {
   /**
    * Auxiliary demand over the run:
    * `nSteps × (auxiliaryPowerW / 1000) × timeStepHours`.
-   * At production `timeStepHours = 1` and 8760 steps this is 8760 × (W / 1000).
+   * At `timeStepHours = 1` and 8760 steps this is 8760 × (W / 1000).
+   * At production `timeStepHours = 0.25` and 35040 steps the annual energy is the same.
    */
   auxiliaryConsumptionKwh: number;
   /** Σ(toChargeRaw − toChargeStored) — charge-path inefficiency */
@@ -190,7 +196,7 @@ export interface BatterySimulationResult {
  * Dispatch: PV → household → auxiliary → battery charge → export;
  * deficits: battery → household, then battery → auxiliary; then grid (split).
  *
- * Production still uses 8760 steps at {@link DEFAULT_TIME_STEP_HOURS} (1 h).
+ * Production uses 35040 steps at 0.25 h; hourly 8760 / 1 h remains valid.
  * Year-length invariants live in the physical kernel / orchestrator, not here.
  */
 export function calculateBatterySimulation(

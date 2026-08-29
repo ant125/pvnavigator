@@ -40,8 +40,10 @@ export {
   STEPS_PER_HOUR_15,
   STEPS_PER_DAY_15,
   STEPS_PER_NON_LEAP_YEAR_15,
+  STEPS_PER_NON_LEAP_YEAR_HOURLY,
   expandHourlyEnergyToQuarterHours,
   expandHourlyEnergyToQuarterHoursByYear,
+  expectedStepsPerYearForTimeStepHours,
 } from "./quarterHourGrid";
 
 export {

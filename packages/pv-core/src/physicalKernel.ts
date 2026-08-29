@@ -18,8 +18,7 @@ import {
   type BatterySimulationResult,
 } from "./battery";
 import { calculateEigenverbrauch } from "./eigenverbrauch";
-
-const HOURS_PER_YEAR = 8760;
+import { expectedStepsPerYearForTimeStepHours } from "./quarterHourGrid";
 
 /** Inclusive start of the physical weather-year reference period (PVGIS-SARAH2). */
 export const DEFAULT_MULTI_YEAR_START = 2006;
@@ -39,8 +38,10 @@ export const DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH: ReadonlyArray<number> =
  * Shape version of PhysicalKernelResult (independent of battery physics).
  * Bump when adding/removing/renaming kernel fields, not when changing
  * efficiencies or dispatch (that is BATTERY_MODEL_VERSION).
+ *
+ * 1.1.0: meta.timeStepHours / timeStepMinutes / stepsPerYear added.
  */
-export const PHYSICAL_KERNEL_SCHEMA_VERSION = "1.0.0" as const;
+export const PHYSICAL_KERNEL_SCHEMA_VERSION = "1.1.0" as const;
 
 /** Production PVGIS radiation database used by the orchestrator. */
 export const DEFAULT_WEATHER_DATABASE = "PVGIS-SARAH2" as const;
@@ -150,6 +151,12 @@ export type PhysicalKernelMeta = {
   includeHourly: boolean;
   /** Sizes that actually received hourly series (empty when includeHourly is false). */
   hourlyBatterySizes: number[];
+  /** Simulation step duration in hours (production: 0.25). */
+  timeStepHours: number;
+  /** Simulation step duration in minutes (production: 15). */
+  timeStepMinutes: number;
+  /** Steps per weather year (production: 35040). */
+  stepsPerYear: number;
 };
 
 /**
@@ -209,13 +216,13 @@ export type RunPhysicalKernelParams = {
   backupReserveKwh?: number;
   /**
    * Duration of one battery simulation step in hours.
-   * Default {@link DEFAULT_TIME_STEP_HOURS} (1). Production must leave this at 1.
-   * Year-length (8760) is still enforced here; timestep-agnostic length lives
-   * only inside `calculateBatterySimulation`.
+   * Default {@link DEFAULT_TIME_STEP_HOURS} (1) for hourly regression.
+   * Production SpeicherGrenze passes {@link TIME_STEP_HOURS_15} (0.25).
+   * Year length must match: dt=1 → 8760, dt=0.25 → 35040.
    */
   timeStepHours?: number;
   /**
-   * When false (default), no 8760-length arrays are retained on the result.
+   * When false (default), no per-step arrays are retained on the result.
    * SpeicherGrenze production path must leave this false.
    * `hourly*` series are per simulation step, not necessarily per clock hour.
    */
@@ -230,13 +237,17 @@ export type RunPhysicalKernelParams = {
   createdAt?: string;
 };
 
-function assertHourlyArray(arr: number[], label: string): void {
-  if (arr.length !== HOURS_PER_YEAR) {
+function assertYearSeries(
+  arr: number[],
+  label: string,
+  expectedLength: number
+): void {
+  if (arr.length !== expectedLength) {
     throw new Error(
-      `${label} length mismatch: expected ${HOURS_PER_YEAR}, got ${arr.length}`
+      `${label} length mismatch: expected ${expectedLength}, got ${arr.length}`
     );
   }
-  for (let i = 0; i < HOURS_PER_YEAR; i++) {
+  for (let i = 0; i < expectedLength; i++) {
     const v = arr[i];
     if (!Number.isFinite(v)) {
       throw new Error(`${label}[${i}] is not finite`);
@@ -410,6 +421,8 @@ export function runPhysicalKernel(
   ).slice();
   const spec = params.batterySpec ?? DEFAULT_BATTERY_SPEC;
   const timeStepHours = params.timeStepHours ?? DEFAULT_TIME_STEP_HOURS;
+  const stepsPerYear = expectedStepsPerYearForTimeStepHours(timeStepHours);
+  const timeStepMinutes = timeStepHours * 60;
   const includeHourly = params.includeHourly === true;
   const hourlySizeSet = new Set(
     (params.hourlyBatterySizes ?? (includeHourly ? batterySizes : [])).slice()
@@ -436,15 +449,14 @@ export function runPhysicalKernel(
 
   for (const year of years) {
     const pvProfile = params.getPvForYear(year);
-    if (pvProfile.length !== HOURS_PER_YEAR) {
+    const loadKwhYear = params.getLoadForYear(year);
+    if (pvProfile.length !== loadKwhYear.length) {
       throw new Error(
-        `PV profile invalid after normalization: ${pvProfile.length}`
+        `pv/load length mismatch for year ${year}: pv=${pvProfile.length}, load=${loadKwhYear.length}`
       );
     }
-    assertHourlyArray(pvProfile, `pv year ${year}`);
-
-    const loadKwhYear = params.getLoadForYear(year);
-    assertHourlyArray(loadKwhYear, `load year ${year}`);
+    assertYearSeries(pvProfile, `pv year ${year}`, stepsPerYear);
+    assertYearSeries(loadKwhYear, `load year ${year}`, stepsPerYear);
 
     const loadSum = sumFinite(loadKwhYear);
     const pvSum = sumFinite(pvProfile);
@@ -532,6 +544,9 @@ export function runPhysicalKernel(
       createdAt: params.createdAt ?? new Date().toISOString(),
       includeHourly,
       hourlyBatterySizes,
+      timeStepHours,
+      timeStepMinutes,
+      stepsPerYear,
     },
     batterySizes,
     yearly,

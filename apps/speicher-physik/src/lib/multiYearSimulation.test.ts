@@ -72,7 +72,7 @@ describe("simulateMultiYearSpeicherGrenz battery model version", () => {
       longitude: 0,
     });
     expect(result.batteryModelVersion).toBe(BATTERY_MODEL_VERSION);
-    expect(result.batteryModelVersion).toBe("1.0.0");
+    expect(result.batteryModelVersion).toBe("1.1.0");
   });
 });
 

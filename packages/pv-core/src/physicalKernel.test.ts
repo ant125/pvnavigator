@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   BATTERY_MODEL_VERSION,
+  TIME_STEP_HOURS_15,
   calculateEigenverbrauch,
+  expandHourlyEnergyToQuarterHours,
+  STEPS_PER_NON_LEAP_YEAR_15,
 } from "./index";
 import {
   DEFAULT_MULTI_YEAR_YEARS,
@@ -37,17 +40,58 @@ function pvForYear(year: number): number[] {
 }
 
 describe("runPhysicalKernel", () => {
-  it("still requires 8760 arrays (15-min pipeline is not wired to production)", () => {
-    const qh = new Array(35040).fill(0.1);
+  it("A: accepts 35040 arrays at dt=0.25", () => {
+    const qhLoad = expandHourlyEnergyToQuarterHours(loadForYear(2018));
+    const qhPv = expandHourlyEnergyToQuarterHours(pvForYear(2018));
+    const kernel = runPhysicalKernel({
+      years: [2018],
+      batterySizes: [5],
+      getLoadForYear: () => qhLoad,
+      getPvForYear: () => qhPv,
+      timeStepHours: TIME_STEP_HOURS_15,
+    });
+    expect(kernel.meta.timeStepHours).toBe(0.25);
+    expect(kernel.meta.timeStepMinutes).toBe(15);
+    expect(kernel.meta.stepsPerYear).toBe(STEPS_PER_NON_LEAP_YEAR_15);
+    expect(kernel.years[0].loadKwh).toBeCloseTo(
+      loadForYear(2018).reduce((a, b) => a + b, 0),
+      8
+    );
+  });
+
+  it("B: rejects 35040 + dt=1 and 8760 + dt=0.25", () => {
+    const qh = new Array(STEPS_PER_NON_LEAP_YEAR_15).fill(0.1);
+    const hourly = new Array(HOURS).fill(0.1);
     expect(() =>
       runPhysicalKernel({
         years: [2018],
         batterySizes: [5],
         getLoadForYear: () => qh,
         getPvForYear: () => qh,
-        timeStepHours: 0.25,
+        timeStepHours: 1,
       })
     ).toThrow(/35040/);
+    expect(() =>
+      runPhysicalKernel({
+        years: [2018],
+        batterySizes: [5],
+        getLoadForYear: () => hourly,
+        getPvForYear: () => hourly,
+        timeStepHours: TIME_STEP_HOURS_15,
+      })
+    ).toThrow(/8760/);
+  });
+
+  it("defaults meta timestep to 1 h / 8760 when omitted", () => {
+    const kernel = runPhysicalKernel({
+      years: [2018],
+      batterySizes: [5],
+      getLoadForYear: loadForYear,
+      getPvForYear: pvForYear,
+    });
+    expect(kernel.meta.timeStepHours).toBe(1);
+    expect(kernel.meta.timeStepMinutes).toBe(60);
+    expect(kernel.meta.stepsPerYear).toBe(HOURS);
   });
 
   it("keeps a full yearly ledger for every weather year × battery size", () => {
@@ -223,5 +267,96 @@ describe("runPhysicalKernel", () => {
     expect(explicit.averageEnergyBalanceErrorKwh[5]).toBe(
       omitted.averageEnergyBalanceErrorKwh[5]
     );
+  });
+
+  it("C/D: annual energy identities hold on the quarter-hour grid", () => {
+    const qhLoad = expandHourlyEnergyToQuarterHours(loadForYear(2018));
+    const qhPv = expandHourlyEnergyToQuarterHours(pvForYear(2018));
+    const kernel = runPhysicalKernel({
+      years: [2018],
+      batterySizes: [10],
+      getLoadForYear: () => qhLoad,
+      getPvForYear: () => qhPv,
+      timeStepHours: TIME_STEP_HOURS_15,
+    });
+    const y = kernel.years[0];
+    const b = y.batteries[0];
+    expect(y.loadKwh).toBeCloseTo(
+      qhLoad.reduce((a, v) => a + v, 0),
+      8
+    );
+    expect(y.pvYieldKwh).toBeCloseTo(
+      qhPv.reduce((a, v) => a + v, 0),
+      8
+    );
+    expect(
+      Math.abs(
+        y.loadKwh -
+          (b.directPvToHouseholdKwh +
+            b.batteryToHouseholdKwh +
+            b.gridToHouseholdKwh)
+      )
+    ).toBeLessThan(1e-8);
+    expect(Math.abs(b.energyBalanceErrorKwh)).toBeLessThan(1e-6);
+  });
+
+  it("E/F: SoC is sequential across 35040 steps and does not carry between years", () => {
+    const qhLoad = expandHourlyEnergyToQuarterHours(loadForYear(2016));
+    const qhPv2016 = expandHourlyEnergyToQuarterHours(pvForYear(2016));
+    const qhPv2018 = expandHourlyEnergyToQuarterHours(pvForYear(2018));
+    const kernel = runPhysicalKernel({
+      years: [2016, 2018],
+      batterySizes: [8],
+      getLoadForYear: () => qhLoad,
+      getPvForYear: (year) => (year === 2018 ? qhPv2018 : qhPv2016),
+      timeStepHours: TIME_STEP_HOURS_15,
+      includeHourly: true,
+      hourlyBatterySizes: [8],
+    });
+    for (const y of kernel.years) {
+      const soc = findKernelYearBattery(y, 8)!.hourly!.soc;
+      expect(soc).toHaveLength(STEPS_PER_NON_LEAP_YEAR_15);
+      let minSoc = 1;
+      let maxSoc = 0;
+      for (let i = 0; i < soc.length; i++) {
+        if (soc[i] < minSoc) minSoc = soc[i];
+        if (soc[i] > maxSoc) maxSoc = soc[i];
+      }
+      expect(minSoc).toBeGreaterThanOrEqual(0);
+      expect(maxSoc).toBeLessThanOrEqual(1);
+      expect(y.batteries[0].socStartKwh).toBe(0);
+    }
+    expect(kernel.years[0].batteries[0].socStartKwh).toBe(
+      kernel.years[1].batteries[0].socStartKwh
+    );
+  });
+
+  it("G: 15-year aggregation on dt=0.25 is the arithmetic mean of yearly EV", () => {
+    const years = [...DEFAULT_MULTI_YEAR_YEARS];
+    const kernel = runPhysicalKernel({
+      years,
+      batterySizes: [5],
+      getLoadForYear: (year) =>
+        expandHourlyEnergyToQuarterHours(loadForYear(year)),
+      getPvForYear: (year) => expandHourlyEnergyToQuarterHours(pvForYear(year)),
+      timeStepHours: TIME_STEP_HOURS_15,
+    });
+    const mean = years.reduce((s, y) => s + kernel.yearly[y][5], 0) / years.length;
+    expect(kernel.average[5]).toBeCloseTo(mean, 12);
+    expect(kernel.years).toHaveLength(15);
+  });
+
+  it("H: includeHourly false keeps the compact payload (no 35040 series)", () => {
+    const kernel = runPhysicalKernel({
+      years: [2018],
+      batterySizes: [5],
+      getLoadForYear: () => expandHourlyEnergyToQuarterHours(loadForYear(2018)),
+      getPvForYear: () => expandHourlyEnergyToQuarterHours(pvForYear(2018)),
+      timeStepHours: TIME_STEP_HOURS_15,
+    });
+    expect(kernel.meta.includeHourly).toBe(false);
+    expect(JSON.stringify(kernel).includes("hourlyPvKwh")).toBe(false);
+    expect(kernel.years[0].hourlyPvKwh).toBeUndefined();
+    expect(kernel.years[0].batteries[0].hourly).toBeUndefined();
   });
 });

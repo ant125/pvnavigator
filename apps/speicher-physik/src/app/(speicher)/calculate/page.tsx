@@ -2127,8 +2127,9 @@ export default function SpeicherCalculatePage() {
                       Herstellergarantie.
                     </p>
                     <p className={REPORT_NOTE}>
-                      Die Berechnung basiert auf einer stündlichen Simulation
-                      (8760 Stunden pro Jahr). Die 75-%-Planungsannahme
+                      Die Berechnung basiert auf einer Simulation in
+                      15-Minuten-Schritten (35.040 Zeitschritte pro Jahr). Die
+                      75-%-Planungsannahme
                       beeinflusst die Simulation nicht, sondern ausschließlich
                       die planerische Kaufempfehlung.
                     </p>

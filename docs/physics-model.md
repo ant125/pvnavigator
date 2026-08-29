@@ -12,7 +12,9 @@ für Photovoltaik-Erzeugung und Batteriespeicher.
 
 ### Zeitauflösung und Kalender
 
-Die Simulation erfolgt stündlich. Jedes modellierte Jahr besteht aus genau 8760 Intervallen mit einer Dauer von jeweils einer Stunde (Δt = 1 h). Ein 15- oder 30-Minuten-Modell wird nicht verwendet.
+Die Simulation erfolgt in 15-Minuten-Schritten. Jedes modellierte Jahr besteht aus genau 35.040 Intervallen mit einer Dauer von jeweils 15 Minuten (Δt = 0,25 h).
+
+PVGIS liefert stündliche Erzeugungswerte; diese werden energieerhaltend auf 15-Minuten-Schritte verteilt. Es wird keine 15-Minuten-PVGIS-API verwendet.
 
 ---
 
@@ -50,13 +52,15 @@ Diese Verluste betreffen ausschließlich die PV-Anlage. Speicherverluste sind da
 
 - Strahlungsdaten: SARAH2 Satellitendatenbank
 
-- Zeitauflösung: stündlich (8760 Werte pro Jahr nach Kalenderangleichung)
+- Zeitauflösung der Quelle: stündlich (8760 Werte pro Jahr nach Kalenderangleichung)
+
+- Simulation: 15-Minuten-Schritte (35.040 Werte). Jede Stundenenergie \(E\) wird gleichmäßig auf \([E/4, E/4, E/4, E/4]\) verteilt.
 
 - Mehrjährige Simulation (2006–2020)
 
 ### Schaltjahre
 
-Im Zeitraum 2006–2020 sind die Wetterjahre 2008, 2012, 2016 und 2020 Schaltjahre. Nach der Umrechnung der PVGIS-Zeitstempel auf Europe/Berlin wird der lokale 29. Februar entfernt. Dadurch verwenden PV-Erzeugung, Lastprofil und Batteriesimulation für jedes Jahr dasselbe nicht-schaltjährige Raster mit 8760 Stunden.
+Im Zeitraum 2006–2020 sind die Wetterjahre 2008, 2012, 2016 und 2020 Schaltjahre. Nach der Umrechnung der PVGIS-Zeitstempel auf Europe/Berlin wird der lokale 29. Februar entfernt. Dadurch verwenden PV-Erzeugung, Lastprofil und Batteriesimulation für jedes Jahr dasselbe nicht-schaltjährige Raster (8760 Stundenquellenwerte, anschließend 35.040 Viertelstunden).
 
 ### Zeitzone und Sommerzeit
 
@@ -88,7 +92,7 @@ Für jede eingegebene Dachfläche werden PV-Leistung, Neigung und Ausrichtung se
 
 PVGIS berechnet für jede Dachfläche und jedes Wetterjahr eine eigene stündliche Erzeugungsreihe. Der im Formular verwendete Azimut von 0° bis 359° wird dabei in die von PVGIS erwartete Ausrichtung umgerechnet.
 
-Nach der zeitlichen Ausrichtung auf das gemeinsame Raster mit 8760 Stunden werden die Erzeugungsreihen aller Dachflächen stundenweise addiert. Erst die zusammengefasste PV-Erzeugung wird anschließend mit dem Lastprofil und dem Batteriespeicher simuliert.
+Nach der zeitlichen Ausrichtung auf das gemeinsame Raster mit 8760 Stunden werden die Erzeugungsreihen aller Dachflächen stundenweise addiert. Anschließend wird die zusammengefasste Stundenenergie energieerhaltend auf 15-Minuten-Schritte verteilt. Erst diese Viertelstundenreihe wird mit dem Lastprofil und dem Batteriespeicher simuliert.
 
 Der gesamte PV-Jahresertrag und die installierte Gesamtleistung ergeben sich aus allen Dachflächen. Der spezifische Ertrag wird als gesamter PV-Jahresertrag geteilt durch die Summe der installierten kWp berechnet.
 
@@ -112,7 +116,7 @@ Es wird **keine** mittlere Dachneigung und **kein** mittlerer Azimut über die F
 
 ### BDEW-Lastprofil H0
 
-Als Haushaltslast dient das BDEW-Standardlastprofil H0 in bereits stündlicher Form mit 8760 Werten. Die hinterlegte Referenzreihe entspricht dem Kalenderjahr 2025 und einer Bezugsmenge von 1 GWh.
+Als Haushaltslast dient das BDEW-Standardlastprofil H25 in nativer Viertelstundenauflösung mit 35.040 Werten (96 Slots/Tag). Die hinterlegte Referenzreihe entspricht dem Kalenderjahr 2025 und einer Bezugsmenge von 1 GWh. Dynamisierung und Feiertags-Umbelegung werden nicht angewendet.
 
 Für jedes Wetterjahr von 2006 bis 2020 wird das Profil anhand von Monat und Tagestyp (Werktag, Samstag oder Sonntag) für die jeweilige Kalenderstruktur neu zusammengesetzt. Anschließend wird es so skaliert, dass seine Jahressumme exakt dem eingegebenen Haushaltsverbrauch entspricht.
 
@@ -140,7 +144,7 @@ separat modelliert und dem Haushaltsverbrauch hinzugefügt.
 
 Annahmen:
 
-Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche stündliche Lastreihe modelliert. Die Verteilung erfolgt anhand monatlicher saisonaler Gewichtungen: mit höherem relativem Verbrauch im Winter und geringerem Verbrauch im Sommer. Die Jahressumme entspricht dem eingegebenen Wärmepumpenverbrauch.
+Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche Lastreihe in 15-Minuten-Schritten modelliert. Die Verteilung erfolgt anhand monatlicher saisonaler Gewichtungen: mit höherem relativem Verbrauch im Winter und geringerem Verbrauch im Sommer. Die Jahressumme entspricht dem eingegebenen Wärmepumpenverbrauch.
 
 Erhöhter Strombedarf tritt vor allem in den Wintermonaten auf
 
@@ -280,7 +284,7 @@ Keine Priorisierung einzelner Verbraucher
 
 Die Batteriesimulation basiert auf folgenden Annahmen:
 
-- Ladung und Entladung erfolgen stündlich (8760 Stunden pro Jahr)
+- Ladung und Entladung erfolgen in 15-Minuten-Schritten (35.040 Zeitschritte pro Jahr, Δt = 0,25 h)
 
 - Realistische größenabhängige Lade- und Entladeleistungsbegrenzung moderner Hybrid-Heimspeichersysteme (siehe Abschnitt 4)
 
@@ -382,7 +386,7 @@ Die Summe wird aus den ungerundeten Komponenten gebildet und erst danach gerunde
 
 ### Systemverbrauch Standby
 
-Konstanter modellierter Eigenbedarf des Speichersystems von 15 W. Dies entspricht bei 8760 Stunden rund 131 kWh pro Jahr. Der Bedarf kann durch PV, Batterie oder Netz gedeckt werden.
+Konstanter modellierter Eigenbedarf des Speichersystems von 15 W. Dies entspricht rund 131 kWh pro Jahr (15 W durchgängig). Der Bedarf kann durch PV, Batterie oder Netz gedeckt werden.
 
 Der Systemverbrauch wird separat bilanziert und ist nicht Bestandteil des Haushaltsverbrauchs, Eigenverbrauchs oder Autarkiegrads.
 
@@ -549,7 +553,7 @@ Die Analyse unterscheidet drei Begriffe:
    Kapazität** (gleichbedeutend mit einer **25 %-Alterungsreserve**). Der
    Planungshorizont beträgt etwa **10 Jahre**. Das ist eine allgemeine
    Planungsannahme, **keine** Prognose der tatsächlichen Batteriedegradation,
-   **kein** Ergebnis der stündlichen oder mehrjährigen physikalischen Simulation
+   **kein** Ergebnis der 15-Minuten- oder mehrjährigen physikalischen Simulation
    und **keine** Garantie für ein bestimmtes Speichersystem. Alle technischen
    Kennzahlen werden weiterhin mit der technischen Speichergrenze berechnet.
 

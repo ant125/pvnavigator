@@ -166,21 +166,21 @@ export type ComparisonModeId = typeof COMPARISON_MODES[number]["id"];
 
 /**
  * Methodology explanation points - used on Landing Page and Result Page.
- * The "8760 hours" concept must be explained clearly.
+ * The 15-minute / 35.040-step year must be explained clearly.
  */
 export const METHODOLOGY = {
   // Simulation period
   simulationPeriod: {
-    hours: 8760,
-    explanation: "8.760 Stunden entsprechen einem vollen Jahr (365 Tage × 24 Stunden)",
+    hours: 35040,
+    explanation: "35.040 Viertelstunden entsprechen einem vollen Nichtschaltjahr (365 Tage × 96 Schritte)",
   },
   
   // Calculation steps (used in TransparencySection)
   calculationSteps: [
-    "Stündliche Simulation über ein volles Jahr (8.760 Stunden = 1 Jahr)",
-    "Haushaltsverbrauch basierend auf BDEW-Standardlastprofil H0",
-    "Stündlicher Abgleich: Überschuss (→ Speicher/Netz) oder Defizit (→ Speicher/Netzbezug)",
-    "Speichersimulation: Laden, Entladen und Verluste – Stunde für Stunde",
+    "Simulation in 15-Minuten-Schritten über ein volles Jahr (35.040 Zeitschritte = 1 Jahr)",
+    "Haushaltsverbrauch basierend auf BDEW-Standardlastprofil H25",
+    "Abgleich in 15-Minuten-Schritten: Überschuss (→ Speicher/Netz) oder Defizit (→ Speicher/Netzbezug)",
+    "Speichersimulation: Laden, Entladen und Verluste in 15-Minuten-Schritten",
     "Herstellerdaten: Zyklen, Wirkungsgrad und kalendarische Lebensdauer",
     "Strompreisentwicklung: Szenarien über bis zu 15 Jahre",
   ],

@@ -217,7 +217,7 @@ function HeroSection() {
         <div className="mt-7 grid items-start gap-10 lg:mt-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           <div className="space-y-5">
             <p className="text-base leading-snug text-ink-secondary">
-              Wir simulieren Ihr Haus Stunde für Stunde über ein ganzes Jahr.
+              Wir simulieren Ihr Haus in 15-Minuten-Schritten über ein ganzes Jahr.
               PV-Erzeugung am Standort, Ihr Stromverbrauch und optional Wärmepumpe
               oder Notstromreserve werden gemeinsam ausgewertet. So erkennen wir,
               ab welcher Speichergröße zusätzlicher Eigenverbrauch nur noch langsam
@@ -394,9 +394,10 @@ function WhatWeActuallyCalculateSection() {
         title="Was wir tatsächlich berechnen"
         intro={
           <p className="text-sm leading-relaxed text-ink-secondary">
-            Wir simulieren jede Stunde eines gesamten Kalenderjahres (8.760
-            Stunden). Grundlage sind die PV-Erzeugung am Standort (PVGIS) sowie
-            ein realistischer Haushaltsverbrauch nach BDEW H0, optional ergänzt
+            Wir simulieren in 15-Minuten-Schritten ein gesamtes Kalenderjahr
+            (35.040 Zeitschritte). Grundlage sind stündliche PVGIS-Erzeugungswerte,
+            die energieerhaltend auf 15-Minuten-Schritte verteilt werden, sowie
+            ein realistischer Haushaltsverbrauch nach BDEW H25, optional ergänzt
             um ein Wärmepumpenprofil.
           </p>
         }
@@ -446,10 +447,10 @@ function TransparencySection() {
   ];
 
   const systemCalculations = [
-    "stündliche PV-Erzeugung über 8760 Stunden (PVGIS)",
-    "Haushaltslastgang (BDEW H0, optional mit Wärmepumpenprofil)",
-    "stündlicher PV-Überschuss und Strombedarf",
-    "Speichersimulation Stunde für Stunde (Laden, Entladen und Verluste)",
+    "PVGIS liefert stündliche Erzeugungswerte; diese werden energieerhaltend auf 15-Minuten-Schritte verteilt.",
+    "Haushaltslastgang (BDEW H25, 15-Minuten-Schritte, optional mit Wärmepumpenprofil)",
+    "PV-Überschuss und Strombedarf in 15-Minuten-Schritten",
+    "Speichersimulation in 15-Minuten-Schritten (Laden, Entladen und Verluste)",
     "technische Speichergrenze",
     "planerische Kaufempfehlung als separate Planungsgröße",
     "Eigenverbrauch und Autarkie auf Basis der technischen Speichergrenze",
@@ -555,7 +556,7 @@ function ConsumptionPatternsSection() {
     {
       title: "Haushalt mit Wärmepumpe",
       description:
-        "Separater Stromverbrauch der Wärmepumpe mit saisonalem Verlauf und höherem Bedarf im Winter. Dadurch verändert sich der stündliche Lastgang und damit auch die berechnete SpeicherGrenze.",
+        "Separater Stromverbrauch der Wärmepumpe mit saisonalem Verlauf und höherem Bedarf im Winter. Dadurch verändert sich der Lastgang in 15-Minuten-Schritten und damit auch die berechnete SpeicherGrenze.",
       icon: Thermometer,
     },
     {
@@ -584,7 +585,7 @@ function ConsumptionPatternsSection() {
               Zusammenspiel zwischen PV-Erzeugung und Stromverbrauch ab.
             </p>
             <p>
-              Der Haushaltsverbrauch wird stündlich modelliert. Eine Wärmepumpe
+              Der Haushaltsverbrauch wird in 15-Minuten-Schritten modelliert. Eine Wärmepumpe
               kann als zusätzliches Verbrauchsprofil berücksichtigt werden.
             </p>
             <p>
@@ -617,7 +618,7 @@ function ConsumptionPatternsSection() {
       <div className={`${LANDING_SHEET} mx-auto mt-8 max-w-2xl text-center`}>
         <p className="text-sm leading-relaxed text-ink-secondary">
           Kein generischer Referenzhaushalt für die Auslegung: Haushaltsverbrauch
-          und optional Wärmepumpe werden stündlich mit der PV-Erzeugung am
+          und optional Wärmepumpe werden in 15-Minuten-Schritten mit der PV-Erzeugung am
           Standort abgeglichen. Eine aktivierte Notstromreserve wird in der
           Speichersimulation als reservierte Kapazität berücksichtigt.
         </p>

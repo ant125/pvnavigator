@@ -1,10 +1,15 @@
 import "server-only";
-import { loadPVGISHourlyProfilesByYear } from "../../../../packages/pvgis-adapter";
+import {
+  expandAlignedPvgisHourlyToQuarterHours,
+  loadPVGISHourlyProfilesByYear,
+} from "../../../../packages/pvgis-adapter";
 import {
   DEFAULT_BATTERY_SPEC,
   DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH,
   DEFAULT_MULTI_YEAR_YEARS,
   DEFAULT_WEATHER_DATABASE,
+  STEPS_PER_NON_LEAP_YEAR_15,
+  TIME_STEP_HOURS_15,
   runPhysicalKernel,
   type BatterySpec,
   type PhysicalKernelResult,
@@ -26,11 +31,15 @@ export type SpeicherPvSurfaceUi = {
 };
 
 export type SimulateMultiYearSpeicherGrenzParams = {
-  /** Hourly load (8760h) for each simulated PV year — must match `years` rows. */
+  /**
+   * Load series for each weather year. Length must match `timeStepHours`
+   * (8760 at dt=1, 35040 at dt=0.25).
+   */
   getLoadForYear: (year: number) => number[];
   /**
-   * Optional synthetic/hourly PV injector (8760h). When set, skips PVGIS fetches
-   * (used by unit tests). Production callers omit this and use lat/lon + surfaces.
+   * Optional PV injector. When set, skips PVGIS fetches (unit tests).
+   * Hourly 8760 arrays are expanded when `timeStepHours` is 0.25.
+   * Production callers omit this and use lat/lon + surfaces.
    */
   getPvForYear?: (year: number) => number[] | Promise<number[]>;
   latitude: number;
@@ -53,11 +62,16 @@ export type SimulateMultiYearSpeicherGrenzParams = {
   backupReserveKwh?: number;
   /**
    * Default false. Production SpeicherGrenze must leave this false.
-   * When true, the kernel retains 8760-length series (see `hourlyBatterySizes`).
+   * When true, the kernel retains per-step series (see `hourlyBatterySizes`).
    */
   includeHourly?: boolean;
   /** If `includeHourly`, collect battery hourly series only for these sizes. */
   hourlyBatterySizes?: ReadonlyArray<number>;
+  /**
+   * Production: {@link TIME_STEP_HOURS_15} (0.25). Tests that inject 8760
+   * arrays omit this (kernel default 1 h) or pass 1 explicitly.
+   */
+  timeStepHours?: number;
   weatherDatabase?: string;
   createdAt?: string;
 };
@@ -98,9 +112,8 @@ export function sumHourlyProfiles(
  * hourly PV (8760 h) year-by-year (UI azimuth each).
  *
  * Request count = number of surfaces (not surfaces × years).
- * Production stays on this hourly sum. For 15-min inputs, expand the
- * combined yearly arrays with `expandAlignedPvgisHourlyByYear` (sum
- * surfaces hourly first, then split — lower memory than expand-then-sum).
+ * Production then expands the combined hourly arrays to 35040
+ * (sum surfaces hourly first, then split — lower memory than expand-then-sum).
  */
 export async function loadCombinedHourlyPvByYear(
   latitude: number,
@@ -199,12 +212,22 @@ function legacySinglePvParams(params: SimulateMultiYearSpeicherGrenzParams): {
   };
 }
 
+function adaptPvToTimeStep(
+  profile: number[],
+  timeStepHours: number
+): number[] {
+  if (timeStepHours !== TIME_STEP_HOURS_15) return profile;
+  if (profile.length === STEPS_PER_NON_LEAP_YEAR_15) return profile;
+  return expandAlignedPvgisHourlyToQuarterHours(profile);
+}
+
 /**
  * I/O orchestrator: loads PVGIS profiles (unless injected), then runs the
  * physical kernel. Returns {@link PhysicalKernelResult} — keep it server-side.
  *
  * PVGIS: one range request per roof surface for the full year span (split +
- * align locally), unless `getPvForYear` is provided.
+ * align locally), unless `getPvForYear` is provided. When `timeStepHours` is
+ * 0.25, aligned hourly PV is expanded with energy-conserving E/4 splits.
  */
 export async function simulateMultiYearSpeicherGrenz(
   params: SimulateMultiYearSpeicherGrenzParams
@@ -214,6 +237,7 @@ export async function simulateMultiYearSpeicherGrenz(
     params.batterySizes ?? DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH
   ).slice();
   const spec = params.batterySpec ?? DEFAULT_BATTERY_SPEC;
+  const timeStepHours = params.timeStepHours;
   const useInjectedPv = typeof params.getPvForYear === "function";
 
   if (years.length === 0) {
@@ -278,7 +302,7 @@ export async function simulateMultiYearSpeicherGrenz(
         throw new Error(`Missing prefetched PV profile for year ${year}`);
       }
     }
-    pvMap[year] = pvProfile;
+    pvMap[year] = adaptPvToTimeStep(pvProfile, timeStepHours ?? 1);
     loadMap[year] = params.getLoadForYear(year);
   }
 
@@ -289,6 +313,7 @@ export async function simulateMultiYearSpeicherGrenz(
     getPvForYear: (year) => pvMap[year],
     batterySpec: spec,
     backupReserveKwh: params.backupReserveKwh,
+    timeStepHours,
     includeHourly: params.includeHourly === true,
     hourlyBatterySizes: params.hourlyBatterySizes,
     weatherDatabase:

@@ -1,23 +1,27 @@
 import "server-only";
 
-import { createUserLoadProfileForYear } from "../../../../packages/bdew-profile";
+import { createUserLoadProfile15MinForYear } from "../../../../packages/bdew-profile";
 import { simulateMultiYearSpeicherGrenz } from "@/lib/multiYearSimulation";
-import { createHeatPumpComponent } from "@/load/heatpump";
+import { createHeatPumpComponent15Min } from "@/load/heatpump";
 import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
 import type { PvSurfaceInput } from "@/app/(speicher)/types/speicher";
 import {
   BATTERY_MODEL_VERSION,
+  TIME_STEP_HOURS_15,
   type PhysicalKernelResult,
 } from "../../../../packages/pv-core";
 
-/** Production load: hourly BDEW (8760). Quarter-hour builder is not used here. */
+/** Production load: native BDEW H25 15-min + optional 15-min Wärmepumpe. */
 function buildMergedLoadForYear(
   year: number,
   annualConsumptionKWh: number,
   heatPumpEnabled: boolean | undefined,
   heatPumpConsumptionKWh: number | undefined
 ): number[] {
-  const houseLoad = createUserLoadProfileForYear(annualConsumptionKWh, year);
+  const houseLoad = createUserLoadProfile15MinForYear(
+    annualConsumptionKWh,
+    year
+  );
 
   const components: LoadComponent[] = [
     {
@@ -32,7 +36,7 @@ function buildMergedLoadForYear(
     typeof heatPumpConsumptionKWh === "number" &&
     heatPumpConsumptionKWh > 0
   ) {
-    components.push(createHeatPumpComponent(heatPumpConsumptionKWh));
+    components.push(createHeatPumpComponent15Min(heatPumpConsumptionKWh));
   }
 
   return mergeLoadProfiles(components);
@@ -190,6 +194,7 @@ export async function calculateSpeicherResult(
     pvSurfaces: pvSurfaces,
     backupReserveKwh: reserveKwh,
     includeHourly: false,
+    timeStepHours: TIME_STEP_HOURS_15,
   });
 
   const verifiedResult: CalculateSpeicherResultOutput["verifiedResult"] = {

@@ -7,6 +7,7 @@ import {
   TIME_STEP_MINUTES_15,
   expandHourlyEnergyToQuarterHours,
   expandHourlyEnergyToQuarterHoursByYear,
+  expectedStepsPerYearForTimeStepHours,
 } from "./quarterHourGrid";
 
 const HOURS_PER_NON_LEAP_YEAR = 8760;
@@ -36,6 +37,11 @@ describe("quarter-hour grid constants", () => {
     expect(STEPS_PER_NON_LEAP_YEAR_15).toBe(365 * STEPS_PER_DAY_15);
     expect(STEPS_PER_NON_LEAP_YEAR_15).toBe(
       HOURS_PER_NON_LEAP_YEAR * STEPS_PER_HOUR_15
+    );
+    expect(expectedStepsPerYearForTimeStepHours(1)).toBe(8760);
+    expect(expectedStepsPerYearForTimeStepHours(TIME_STEP_HOURS_15)).toBe(35040);
+    expect(() => expectedStepsPerYearForTimeStepHours(0.5)).toThrow(
+      /unsupported timeStepHours/
     );
   });
 });

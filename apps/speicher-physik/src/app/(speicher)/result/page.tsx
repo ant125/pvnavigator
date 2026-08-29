@@ -169,9 +169,9 @@ function CalculationBasisSection({
       </div>
 
       <p className="text-sm text-slate-500 leading-relaxed">
-        Die PV-Erzeugung wird stündlich (8760 Stunden je Wetterjahr) modelliert
-        und über 15 Wetterjahre (2006–2020) gemittelt, um Erzeugung und Verbrauch
-        zeitlich vergleichen zu können.
+        Die PV-Erzeugung stammt aus stündlichen PVGIS-Werten und wird
+        energieerhaltend auf 15-Minuten-Schritte (35.040 je Wetterjahr) verteilt.
+        Die Simulation mittelt über 15 Wetterjahre (2006–2020).
       </p>
     </section>
   );

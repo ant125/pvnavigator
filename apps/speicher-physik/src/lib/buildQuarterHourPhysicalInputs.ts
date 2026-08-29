@@ -1,8 +1,9 @@
 /**
  * Phase 4C — alternate 15-minute physical input pipeline for one weather year.
  *
- * Not wired to calculateSpeicherResult / runPhysicalKernel production.
- * Production still uses 8760 arrays and timeStepHours = 1.
+ * Used by production via the same 15-min load/PV helpers in
+ * calculateSpeicherResult / simulateMultiYearSpeicherGrenz.
+ * Hourly helpers remain for regression.
  *
  * Sources:
  * - household: native BDEW H25 15-min (`createUserLoadProfile15MinForYear`)

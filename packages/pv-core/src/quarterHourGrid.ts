@@ -2,8 +2,8 @@
  * Shared 15-minute time-grid constants and energy-conserving hourly →
  * quarter-hour expansion.
  *
- * Production SpeicherGrenze still uses 8760 steps at Δt = 1 h.
- * These helpers are the Phase 4C input pipeline (not the production kernel).
+ * Production SpeicherGrenze uses 35040 steps at Δt = 0.25 h.
+ * Hourly 8760 / Δt = 1 remains supported for regression.
  *
  * PVGIS remains an hourly source. Expansion only splits already-aligned
  * hourly energy; it does not call a 15-min PVGIS API or interpolate irradiance.
@@ -26,6 +26,23 @@ export const STEPS_PER_DAY_15 = 96;
  * (365 × {@link STEPS_PER_DAY_15}).
  */
 export const STEPS_PER_NON_LEAP_YEAR_15 = 35040;
+
+/** Fixed non-leap hourly grid (PVGIS after Berlin alignment). */
+export const STEPS_PER_NON_LEAP_YEAR_HOURLY = 8760;
+
+/**
+ * Year length required by the physical kernel for a supported timestep.
+ * Only 1 h (8760) and 0.25 h (35040) are allowed.
+ */
+export function expectedStepsPerYearForTimeStepHours(
+  timeStepHours: number
+): number {
+  if (timeStepHours === 1) return STEPS_PER_NON_LEAP_YEAR_HOURLY;
+  if (timeStepHours === TIME_STEP_HOURS_15) return STEPS_PER_NON_LEAP_YEAR_15;
+  throw new Error(
+    `unsupported timeStepHours ${timeStepHours} (supported: 1 and ${TIME_STEP_HOURS_15})`
+  );
+}
 
 /**
  * Split each hourly energy value E into four equal quarter-hours [E/4, E/4, E/4, E/4].
