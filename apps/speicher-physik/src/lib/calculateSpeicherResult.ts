@@ -1,10 +1,21 @@
 import "server-only";
 
 import { createUserLoadProfile15MinForYear } from "../../../../packages/bdew-profile";
-import { simulateMultiYearSpeicherGrenz } from "@/lib/multiYearSimulation";
+import {
+  adaptPvToTimeStep,
+  DEFAULT_MULTI_YEAR_YEARS,
+  DEFAULT_WEATHER_DATABASE,
+  loadHourlyPvByYear,
+  simulateMultiYearSpeicherGrenz,
+} from "@/lib/multiYearSimulation";
 import { createHeatPumpComponent15Min } from "@/load/heatpump";
 import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
 import type { PvSurfaceInput } from "@/app/(speicher)/types/speicher";
+import { buildSpeicherChartData } from "@/lib/speicherChartData";
+import { deriveRecommendedTechnicalSize } from "@/lib/speicherRecommendation";
+import { runWpuqHouseholdRobustness } from "@/lib/wpuqRobustness";
+import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
+import type { CalculationProgressHandler } from "@/lib/calculationProgress";
 import {
   BATTERY_MODEL_VERSION,
   TIME_STEP_HOURS_15,
@@ -112,6 +123,15 @@ export type CalculateSpeicherResultInput = {
   heatPumpEnabled?: boolean;
   heatPumpConsumptionKWh?: number;
   backupReserveKwh?: number;
+  /**
+   * Test-only: skip PVGIS. Production omits this so PV is fetched once
+   * and reused for BDEW plus the 27 WPuQ robustness runs.
+   */
+  getPvForYear?: (year: number) => number[] | Promise<number[]>;
+  years?: readonly number[];
+  batterySizes?: readonly number[];
+  /** Optional progress reporting. Does not change results. */
+  onProgress?: CalculationProgressHandler;
 };
 
 export type CalculateSpeicherResultOutput = {
@@ -126,6 +146,7 @@ export type CalculateSpeicherResultOutput = {
     batteryModelVersion: typeof BATTERY_MODEL_VERSION;
   };
   speicherGrenz: SpeicherGrenzPayload;
+  robustness: WpuqRobustnessPayload;
 };
 
 /**
@@ -180,21 +201,83 @@ export async function calculateSpeicherResult(
   });
 
   const reserveKwh = input.backupReserveKwh ?? 0;
+  const years = (input.years ?? DEFAULT_MULTI_YEAR_YEARS).slice();
+  const report = input.onProgress;
+
+  let getPvForYear = input.getPvForYear;
+  if (!getPvForYear) {
+    const hourlyByYear = await loadHourlyPvByYear({
+      latitude: input.latitude,
+      longitude: input.longitude,
+      years,
+      pvSurfaces,
+    });
+    const pv15ByYear: Record<number, number[]> = {};
+    for (const year of years) {
+      const hourly = hourlyByYear[year];
+      if (!hourly) {
+        throw new Error(`Missing prefetched PV profile for year ${year}`);
+      }
+      pv15ByYear[year] = adaptPvToTimeStep(hourly, TIME_STEP_HOURS_15);
+    }
+    getPvForYear = (year: number) => {
+      const profile = pv15ByYear[year];
+      if (!profile) {
+        throw new Error(`Missing expanded PV profile for year ${year}`);
+      }
+      return profile;
+    };
+  }
+  await report?.({ stage: "pvgis" });
+
+  const loadByYear: Record<number, number[]> = {};
+  for (const year of years) {
+    loadByYear[year] = buildMergedLoadForYear(
+      year,
+      input.annualConsumptionKWh,
+      input.heatPumpEnabled,
+      input.heatPumpConsumptionKWh
+    );
+  }
+  await report?.({ stage: "consumption" });
 
   const kernel = await simulateMultiYearSpeicherGrenz({
-    getLoadForYear: (year) =>
-      buildMergedLoadForYear(
-        year,
-        input.annualConsumptionKWh,
-        input.heatPumpEnabled,
-        input.heatPumpConsumptionKWh
-      ),
+    getLoadForYear: (year) => loadByYear[year],
+    getPvForYear,
     latitude: input.latitude,
     longitude: input.longitude,
     pvSurfaces: pvSurfaces,
+    years,
+    batterySizes: input.batterySizes,
     backupReserveKwh: reserveKwh,
     includeHourly: false,
     timeStepHours: TIME_STEP_HOURS_15,
+    weatherDatabase: DEFAULT_WEATHER_DATABASE,
+  });
+  await report?.({ stage: "physics" });
+
+  const bdewChart = buildSpeicherChartData({
+    selfConsumptionWithoutStorage:
+      kernel.averageSelfConsumptionWithoutStorageKwh,
+    batterySizes: kernel.batterySizes,
+    average: kernel.average,
+  });
+  const bdewTechnicalSizeKwh = deriveRecommendedTechnicalSize({
+    data: bdewChart.data,
+  });
+
+  const robustness = await runWpuqHouseholdRobustness({
+    householdAnnualKwh: input.annualConsumptionKWh,
+    heatPumpEnabled: input.heatPumpEnabled,
+    heatPumpConsumptionKWh: input.heatPumpConsumptionKWh,
+    getPvForYear,
+    bdewTechnicalSizeKwh,
+    years,
+    batterySizes: input.batterySizes,
+    backupReserveKwh: reserveKwh,
+    onHouseholdComplete: async (completed, total) => {
+      await report?.({ stage: "smartmeter", completed, total });
+    },
   });
 
   const verifiedResult: CalculateSpeicherResultOutput["verifiedResult"] = {
@@ -212,5 +295,6 @@ export async function calculateSpeicherResult(
   return {
     verifiedResult,
     speicherGrenz: toSpeicherGrenzPayload(kernel),
+    robustness,
   };
 }

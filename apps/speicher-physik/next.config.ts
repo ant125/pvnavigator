@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
     "@pv-core/calculations",
     "@pv-methodology/registry",
   ],
+  outputFileTracingIncludes: {
+    "/calculate": ["./data/wpuq/**/*"],
+    "/api/calculate": ["./data/wpuq/**/*"],
+  },
 };
 
 export default nextConfig;

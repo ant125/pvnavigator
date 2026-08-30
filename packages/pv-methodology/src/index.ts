@@ -43,3 +43,15 @@ export {
   type PublicMethodologySection,
   type PublicMethodologySectionIcon,
 } from "./publicPresentation";
+
+export {
+  METHODOLOGY_PAGE_TITLE,
+  METHODOLOGY_PAGE_SUBTITLE,
+  METHODOLOGY_SECTION_TITLE,
+  QUELLEN_SECTION_TITLE,
+  QUELLEN_SECTION_INTRO,
+  METHODOLOGY_CHAPTERS,
+  type MethodologyCallout,
+  type MethodologyChapter,
+  type MethodologyTable,
+} from "./methodologyChapters";

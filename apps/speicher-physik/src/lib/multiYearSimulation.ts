@@ -21,6 +21,7 @@ export {
   DEFAULT_MULTI_YEAR_END,
   DEFAULT_MULTI_YEAR_YEARS,
   DEFAULT_MULTI_YEAR_BATTERY_SIZES_KWH,
+  DEFAULT_WEATHER_DATABASE,
 } from "../../../../packages/pv-core";
 
 /** One roof PV plane for multi-roof (UI rooftop azimuth; converted internally for PVGIS). */
@@ -182,7 +183,11 @@ export async function loadCombinedHourlyPvForYear(
   return byYear[year];
 }
 
-function legacySinglePvParams(params: SimulateMultiYearSpeicherGrenzParams): {
+function legacySinglePvParams(params: {
+  pvSystemKwP?: number;
+  tiltDeg?: number;
+  azimuthDeg?: number;
+}): {
   pvSystemKwP: number;
   tiltDeg: number;
   azimuthPvAspectDeg: number;
@@ -212,13 +217,70 @@ function legacySinglePvParams(params: SimulateMultiYearSpeicherGrenzParams): {
   };
 }
 
-function adaptPvToTimeStep(
+export function adaptPvToTimeStep(
   profile: number[],
   timeStepHours: number
 ): number[] {
   if (timeStepHours !== TIME_STEP_HOURS_15) return profile;
   if (profile.length === STEPS_PER_NON_LEAP_YEAR_15) return profile;
   return expandAlignedPvgisHourlyToQuarterHours(profile);
+}
+
+/**
+ * One PVGIS fetch covering `years` (one range request per roof surface).
+ * Returns aligned hourly (8760) arrays. Callers that run several load
+ * shapes against the same roof should prefetch once and inject via
+ * `getPvForYear` — do not fetch PVGIS per household.
+ */
+export async function loadHourlyPvByYear(params: {
+  latitude: number;
+  longitude: number;
+  years: readonly number[];
+  pvSurfaces?: readonly SpeicherPvSurfaceUi[] | null;
+  pvSystemKwP?: number;
+  tiltDeg?: number;
+  azimuthDeg?: number;
+}): Promise<Record<number, number[]>> {
+  const years = params.years.slice();
+  const multiSurfaces =
+    params.pvSurfaces && params.pvSurfaces.length > 0
+      ? params.pvSurfaces.slice()
+      : null;
+
+  if (multiSurfaces !== null && multiSurfaces.length > 0) {
+    return loadCombinedHourlyPvByYear(
+      params.latitude,
+      params.longitude,
+      years,
+      multiSurfaces
+    );
+  }
+
+  const { pvSystemKwP, tiltDeg, azimuthPvAspectDeg } = legacySinglePvParams({
+    pvSystemKwP: params.pvSystemKwP,
+    tiltDeg: params.tiltDeg,
+    azimuthDeg: params.azimuthDeg,
+  });
+  const startYear = Math.min(...years);
+  const endYear = Math.max(...years);
+  const byYear = await loadPVGISHourlyProfilesByYear({
+    latitude: params.latitude,
+    longitude: params.longitude,
+    systemSizeKwP: pvSystemKwP,
+    tiltDeg: tiltDeg,
+    azimuthDeg: azimuthPvAspectDeg,
+    startYear,
+    endYear,
+  });
+  const pvByYear: Record<number, number[]> = {};
+  for (const year of years) {
+    const profile = byYear[year];
+    if (!profile) {
+      throw new Error(`PVGIS multi-year response missing year ${year}`);
+    }
+    pvByYear[year] = profile;
+  }
+  return pvByYear;
 }
 
 /**
@@ -250,44 +312,18 @@ export async function simulateMultiYearSpeicherGrenz(
     throw new Error("batterySizes must contain only positive finite numbers");
   }
 
-  const multiSurfaces =
-    params.pvSurfaces && params.pvSurfaces.length > 0
-      ? params.pvSurfaces.slice()
-      : null;
-
   /** Prefetched combined PV profiles (one range request per surface). */
   let pvByYear: Record<number, number[]> | null = null;
   if (!useInjectedPv) {
-    if (multiSurfaces !== null && multiSurfaces.length > 0) {
-      pvByYear = await loadCombinedHourlyPvByYear(
-        params.latitude,
-        params.longitude,
-        years,
-        multiSurfaces
-      );
-    } else {
-      const { pvSystemKwP, tiltDeg, azimuthPvAspectDeg } =
-        legacySinglePvParams(params);
-      const startYear = Math.min(...years);
-      const endYear = Math.max(...years);
-      const byYear = await loadPVGISHourlyProfilesByYear({
-        latitude: params.latitude,
-        longitude: params.longitude,
-        systemSizeKwP: pvSystemKwP,
-        tiltDeg: tiltDeg,
-        azimuthDeg: azimuthPvAspectDeg,
-        startYear,
-        endYear,
-      });
-      pvByYear = {};
-      for (const year of years) {
-        const profile = byYear[year];
-        if (!profile) {
-          throw new Error(`PVGIS multi-year response missing year ${year}`);
-        }
-        pvByYear[year] = profile;
-      }
-    }
+    pvByYear = await loadHourlyPvByYear({
+      latitude: params.latitude,
+      longitude: params.longitude,
+      years,
+      pvSurfaces: params.pvSurfaces,
+      pvSystemKwP: params.pvSystemKwP,
+      tiltDeg: params.tiltDeg,
+      azimuthDeg: params.azimuthDeg,
+    });
   }
 
   const pvMap: Record<number, number[]> = {};

@@ -5,12 +5,25 @@ import Link from "next/link";
 import { SpeicherInput, type PvSurfaceInput } from "../types/speicher";
 import { validateInput, type SpeicherFieldErrors, type SpeicherFieldErrorKey } from "../utils/validateInput";
 import {
-  calculateHouseholdConsumptionAction,
   type SpeicherGrenzPayload,
   type VerifiedResult,
+  type WpuqRobustnessPayload,
 } from "./actions";
 import { deriveSpeicherBusinessMetrics } from "@/lib/deriveSpeicherBusinessMetrics";
 import SpeicherChart from "@/components/SpeicherChart";
+import {
+  ReportQuellenSection,
+  WpuqRobustnessSection,
+} from "./WpuqRobustnessSection";
+import { CalculationProgressList } from "./CalculationProgressList";
+import {
+  CALCULATION_COMPLETE_PAUSE_MS,
+  INITIAL_CALCULATION_PROGRESS,
+  SMART_METER_HOUSEHOLD_COUNT,
+  applyCalculationProgress,
+  formatCalculationDurationDe,
+} from "@/lib/calculationProgress";
+import { runHouseholdCalculationStream } from "./runHouseholdCalculationStream";
 
 /**
  * Speicher Calculator Page
@@ -95,13 +108,6 @@ function fieldInputClassName(hasError: boolean): string {
     hasError ? "border-danger" : "border-field-border focus:border-accent"
   }`;
 }
-
-const LOADING_STEPS = [
-  "Standort wird analysiert",
-  "Lastprofil wird berechnet",
-  "PV-Daten werden geladen",
-  "Speicher wird optimiert",
-] as const;
 
 const BACKUP_RESERVE_RADIO_OPTIONS: ReadonlyArray<{
   kwh: number;
@@ -443,7 +449,15 @@ function sumSurfaceKwP(surfaces: PvSurfaceInput[]): number {
 
 export default function SpeicherCalculatePage() {
   const [step, setStep] = useState<Step>("input");
-  const [loadingStepIndex, setLoadingStepIndex] = useState(0);
+  const [calculationProgress, setCalculationProgress] = useState(
+    INITIAL_CALCULATION_PROGRESS
+  );
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [calculationComplete, setCalculationComplete] = useState(false);
+  const [calculationDurationMs, setCalculationDurationMs] = useState<
+    number | null
+  >(null);
+  const calculationStartedAtRef = useRef<number | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<SpeicherFieldErrors>({});
   const [verifiedResult, setVerifiedResult] = useState<VerifiedResult | null>(
@@ -451,6 +465,9 @@ export default function SpeicherCalculatePage() {
   );
   const [speicherGrenz, setSpeicherGrenz] =
     useState<SpeicherGrenzPayload | null>(null);
+  const [robustness, setRobustness] = useState<WpuqRobustnessPayload | null>(
+    null
+  );
   const [calculationLink, setCalculationLink] = useState<string>("/result");
   const [displayAddress, setDisplayAddress] = useState<string | null>(null);
   const errorBoxRef = useRef<HTMLDivElement | null>(null);
@@ -563,15 +580,13 @@ export default function SpeicherCalculatePage() {
     typeof value === "number" ? `${value.toFixed(0)} kWh` : PLACEHOLDER;
 
   useEffect(() => {
-    if (step !== "calculating") return;
-    setLoadingStepIndex(0);
+    if (step !== "calculating" || calculationComplete) return;
+    const startedAt = calculationStartedAtRef.current ?? Date.now();
     const timer = setInterval(() => {
-      setLoadingStepIndex((i) =>
-        i < LOADING_STEPS.length - 1 ? i + 1 : i
-      );
-    }, 800);
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
     return () => clearInterval(timer);
-  }, [step]);
+  }, [step, calculationComplete]);
 
   useEffect(() => {
     if (step !== "calculating" && step !== "results") return;
@@ -628,6 +643,11 @@ export default function SpeicherCalculatePage() {
 
     setErrors([]);
     setFieldErrors({});
+    setCalculationProgress(INITIAL_CALCULATION_PROGRESS);
+    setElapsedSeconds(0);
+    setCalculationComplete(false);
+    setCalculationDurationMs(null);
+    calculationStartedAtRef.current = Date.now();
     setStep("calculating");
 
     try {
@@ -638,25 +658,41 @@ export default function SpeicherCalculatePage() {
       }));
       const totalKwP = sumSurfaceKwP(pvSurfaces);
 
-      const response = await calculateHouseholdConsumptionAction({
-        annualConsumptionKWh: formData.annualConsumptionKwh as number,
-        pvSystemKwP: totalKwP,
-        street: formData.street as string,
-        houseNumber: formData.houseNumber as string,
-        postalCode: formData.postalCode as string,
-        city: formData.city as string,
-        tiltDeg: pvSurfaces[0].tiltDeg,
-        azimuthDeg: pvSurfaces[0].azimuthDeg,
-        pvSurfaces,
-        heatPumpEnabled: formData.heatPumpEnabled === true,
-        heatPumpConsumptionKWh: formData.heatPumpConsumptionKwh,
-        backupReserveKwh: formData.backupReserveKwh,
-      });
+      const response = await runHouseholdCalculationStream(
+        {
+          annualConsumptionKWh: formData.annualConsumptionKwh as number,
+          pvSystemKwP: totalKwP,
+          street: formData.street as string,
+          houseNumber: formData.houseNumber as string,
+          postalCode: formData.postalCode as string,
+          city: formData.city as string,
+          tiltDeg: pvSurfaces[0].tiltDeg,
+          azimuthDeg: pvSurfaces[0].azimuthDeg,
+          pvSurfaces,
+          heatPumpEnabled: formData.heatPumpEnabled === true,
+          heatPumpConsumptionKWh: formData.heatPumpConsumptionKwh,
+          backupReserveKwh: formData.backupReserveKwh,
+        },
+        (event) => {
+          setCalculationProgress((prev) => applyCalculationProgress(prev, event));
+        }
+      );
+
+      const startedAt = calculationStartedAtRef.current ?? Date.now();
+      const durationMs = Date.now() - startedAt;
+      setCalculationDurationMs(durationMs);
+      setElapsedSeconds(Math.floor(durationMs / 1000));
+      setCalculationComplete(true);
 
       setVerifiedResult(response.verifiedResult);
       setSpeicherGrenz(response.speicherGrenz);
+      setRobustness(response.robustness);
       setDisplayAddress(response.displayAddress);
       setCalculationLink("/result");
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, CALCULATION_COMPLETE_PAUSE_MS)
+      );
       setStep("results");
     } catch (err) {
       const message =
@@ -669,6 +705,9 @@ export default function SpeicherCalculatePage() {
       } else {
         setFieldErrors({});
       }
+      setCalculationComplete(false);
+      setCalculationDurationMs(null);
+      calculationStartedAtRef.current = null;
       setStep("input");
     }
   };
@@ -680,8 +719,13 @@ export default function SpeicherCalculatePage() {
     setStep("input");
     setVerifiedResult(null);
     setSpeicherGrenz(null);
+    setRobustness(null);
     setDisplayAddress(null);
     setCalculationLink("/result");
+    setCalculationComplete(false);
+    setCalculationDurationMs(null);
+    calculationStartedAtRef.current = null;
+    setElapsedSeconds(0);
     setErrors([]);
     setFieldErrors({});
   };
@@ -1285,7 +1329,7 @@ export default function SpeicherCalculatePage() {
                   href="/methodik-quellen"
                   className="text-sm font-medium text-accent hover:text-accent-hover transition-colors"
                 >
-                  → Methodik & Quellen
+                  → Methodik
                 </Link>
               </p>
             </div>
@@ -1302,59 +1346,13 @@ export default function SpeicherCalculatePage() {
       {step === "calculating" && (
         <div
           ref={calculatingStepRef}
-          className="max-w-2xl mx-auto scroll-mt-20 px-4 sm:px-6 lg:px-8"
+          className="mx-auto flex w-full max-w-frame scroll-mt-20 justify-center px-4 py-10 sm:px-6 lg:px-8"
         >
-          <div className="flex flex-col items-center py-20">
-            {/* Spinner */}
-            <div className="relative mb-6">
-              <div className="w-16 h-16 border-4 border-line rounded-full" />
-              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-accent rounded-full border-t-transparent animate-spin" />
-            </div>
-            <h2 className="text-xl font-semibold text-ink mb-2">
-              Berechnung läuft...
-            </h2>
-            <p className="text-ink-secondary text-sm text-center max-w-md px-4 mb-6">
-              Wir analysieren Ihre Daten… Das dauert nur wenige Sekunden.
-            </p>
-            <ul className="flex flex-col gap-2 w-full max-w-sm px-4">
-              {LOADING_STEPS.map((label, i) => {
-                if (i < loadingStepIndex) {
-                  return (
-                    <li
-                      key={label}
-                      className="text-sm flex items-center gap-2 justify-center text-success"
-                    >
-                      <span aria-hidden>✔</span>
-                      <span>{label}</span>
-                    </li>
-                  );
-                }
-                if (i === loadingStepIndex) {
-                  return (
-                    <li
-                      key={label}
-                      className="text-sm flex items-center gap-2 justify-center font-medium text-ink"
-                    >
-                      <span
-                        className="inline-block w-3.5 h-3.5 shrink-0 border-2 border-accent border-t-transparent rounded-full animate-spin"
-                        aria-hidden
-                      />
-                      <span>{label}</span>
-                    </li>
-                  );
-                }
-                return (
-                  <li
-                    key={label}
-                    className="text-sm flex items-center gap-2 justify-center text-ink-muted"
-                  >
-                    <span className="w-3.5 shrink-0" aria-hidden />
-                    <span>{label}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          <CalculationProgressList
+            progress={calculationProgress}
+            elapsedSeconds={elapsedSeconds}
+            complete={calculationComplete}
+          />
         </div>
       )}
 
@@ -1388,6 +1386,9 @@ export default function SpeicherCalculatePage() {
 
             {/* Recommended Size */}
             <section className={REPORT_SECTION}>
+              <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
+                Berechnung nach BDEW H25
+              </h2>
               {recommendedTechnicalSize > 0 ? (
                 /*
                   One composition instead of a headline grid stacked on a second
@@ -1448,14 +1449,6 @@ export default function SpeicherCalculatePage() {
                       technischen Kennzahlen werden weiterhin mit der
                       technischen Speichergrenze von{" "}
                       {recommendedTechnicalSize} kWh berechnet.
-                    </p>
-                    <p className="text-xs leading-relaxed">
-                      <Link
-                        href="/technische-details"
-                        className="font-medium text-accent-text underline underline-offset-2 hover:text-accent-hover"
-                      >
-                        Erläuterung der Planungsannahme und Herstellerbeispiele
-                      </Link>
                     </p>
                     {planningExceedsSimulatedRange && (
                       <p className="rounded-md border border-warning/40 bg-warning-soft px-4 py-3 text-sm leading-relaxed text-warning">
@@ -1556,7 +1549,7 @@ export default function SpeicherCalculatePage() {
               <>
                 <section className={REPORT_SECTION}>
                     <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
-                      Ausgangsdaten
+                      Ihre Eingabedaten
                     </h2>
 
                     {/*
@@ -2003,6 +1996,17 @@ export default function SpeicherCalculatePage() {
               </>
             )}
 
+            {robustness ? (
+              <WpuqRobustnessSection
+                robustness={robustness}
+                bdew={{
+                  eigenverbrauchKwh: recommendedEV ?? null,
+                  eigenverbrauchsquotePct: eigenverbrauchsquoteMitSpeicherPct,
+                  autarkiePct: autarkieMitPct,
+                }}
+              />
+            ) : null}
+
             {/*
               Written conclusion: prose argument on the left, compact key figures
               on the right (same split pattern as the recommendation section).
@@ -2171,6 +2175,8 @@ export default function SpeicherCalculatePage() {
               )}
             </section>
 
+            <ReportQuellenSection />
+
             {/* Disclaimer — closing footnote of the report, not a section */}
             <div className="mt-8 border-t border-line-soft pt-6 lg:mt-10">
               <p className="max-w-reading text-xs leading-relaxed text-ink-muted">
@@ -2183,6 +2189,27 @@ export default function SpeicherCalculatePage() {
                 etc.). Für eine detaillierte Analyse empfehlen wir eine
                 individuelle Beratung.
               </p>
+              {calculationDurationMs !== null ? (
+                <div className="mt-6 max-w-reading text-xs leading-relaxed text-ink-muted">
+                  <p className="font-medium text-ink-secondary">
+                    Berechnungsdauer
+                  </p>
+                  <p className="mt-0.5 tabular-nums">
+                    {formatCalculationDurationDe(calculationDurationMs)}{" "}
+                    Sekunden
+                  </p>
+                  <p className="mt-2">inkl.</p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                    <li>PVGIS-Wetterdaten</li>
+                    <li>Batteriesimulation</li>
+                    <li>
+                      Validierung mit{" "}
+                      {robustness?.cohortSize ?? SMART_METER_HOUSEHOLD_COUNT}{" "}
+                      Referenzhaushalten
+                    </li>
+                  </ul>
+                </div>
+              ) : null}
             </div>
           </div>
 

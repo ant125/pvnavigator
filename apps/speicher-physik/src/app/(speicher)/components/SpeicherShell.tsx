@@ -49,9 +49,13 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
               </Link>
               <Link
                 href="/methodik-quellen"
-                className="text-sm text-ink-secondary hover:text-ink transition-colors"
+                className={`text-sm transition-colors ${
+                  pathname === "/methodik-quellen"
+                    ? "font-medium text-ink"
+                    : "text-ink-secondary hover:text-ink"
+                }`}
               >
-                Methodik & Quellen
+                Methodik
               </Link>
             </nav>
 
@@ -81,7 +85,7 @@ export function SpeicherShell({ children }: { children: ReactNode }) {
                 href="/methodik-quellen"
                 className="text-ink-secondary hover:text-ink transition-colors"
               >
-                Methodik & Quellen
+                Methodik
               </Link>
               <Link
                 href="/technische-details"

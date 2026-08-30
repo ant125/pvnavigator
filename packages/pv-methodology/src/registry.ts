@@ -256,6 +256,20 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     addedAt: "2026-08-29",
     updatedAt: "2026-08-29",
   },
+  {
+    id: "wpuq-scientific-data",
+    category: "research",
+    title: "WPuQ Smart-Meter-Datensatz",
+    organization: "Schlemminger et al., Scientific Data (2022)",
+    description:
+      "Wissenschaftliche Publikation zu gemessenen Smart-Meter-Lastgängen deutscher Einfamilienhäuser. PVNavigator nutzt 27 vollständige NO_PV-Haushalte des Messjahres 2019 für die Robustheitsprüfung der Speicherempfehlung.",
+    url: "https://www.nature.com/articles/s41597-022-01156-1",
+    official: true,
+    sourceType: "research",
+    version: "Sci Data 9, 56 (2022)",
+    addedAt: "2026-08-30",
+    updatedAt: "2026-08-30",
+  },
 
   // standards: intentionally empty until production logic cites VDI/DIN
   // economics: intentionally empty until tariff / cost assumptions are registered

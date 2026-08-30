@@ -1,0 +1,203 @@
+import "server-only";
+
+import {
+  TIME_STEP_HOURS_15,
+  type PhysicalKernelResult,
+} from "../../../../packages/pv-core";
+import { createHeatPumpComponent15Min } from "@/load/heatpump";
+import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
+import {
+  DEFAULT_WEATHER_DATABASE,
+  simulateMultiYearSpeicherGrenz,
+} from "@/lib/multiYearSimulation";
+import { buildSpeicherChartData } from "@/lib/speicherChartData";
+import { deriveRecommendedTechnicalSize } from "@/lib/speicherRecommendation";
+import {
+  loadWpuqCohort,
+  scaleProfileToAnnualKwh,
+  WPUQ_COHORT_SIZE,
+} from "@/lib/wpuqCohort";
+import {
+  buildWpuqRobustnessPayload,
+  type WpuqHouseKpis,
+  type WpuqRobustnessPayload,
+} from "@/lib/wpuqRobustnessStats";
+
+export type { WpuqHouseKpis, WpuqRobustnessPayload };
+
+const HOUSE_SIM_CONCURRENCY = 2;
+
+function sum(arr: ArrayLike<number>): number {
+  let s = 0;
+  for (let i = 0; i < arr.length; i++) s += arr[i];
+  return s;
+}
+
+function technicalSizeFromKernel(kernel: PhysicalKernelResult): number {
+  const chart = buildSpeicherChartData({
+    selfConsumptionWithoutStorage: kernel.averageSelfConsumptionWithoutStorageKwh,
+    batterySizes: kernel.batterySizes,
+    average: kernel.average,
+  });
+  return deriveRecommendedTechnicalSize({ data: chart.data });
+}
+
+function kpisAtTechnicalSize(
+  houseId: string,
+  kernel: PhysicalKernelResult
+): WpuqHouseKpis {
+  const size = technicalSizeFromKernel(kernel);
+  const load = kernel.averageLoadKwhAnnual;
+  const pv = kernel.averagePvYieldKwhAnnual;
+  const ev0 = kernel.averageSelfConsumptionWithoutStorageKwh;
+
+  const ev = size === 0 ? ev0 : kernel.average[size];
+  const netzbezug =
+    size === 0 ? load - ev : kernel.averageGridToHouseholdKwh[size];
+  const einspeisung =
+    size === 0 ? pv - ev : kernel.averageGridExportKwh[size];
+
+  return {
+    houseId,
+    technicalSpeichergrenzeKwh: size,
+    eigenverbrauchKwh: ev,
+    eigenverbrauchsquotePct: pv > 0 ? (ev / pv) * 100 : 0,
+    autarkiePct: load > 0 ? (ev / load) * 100 : 0,
+    netzbezugKwh: netzbezug,
+    einspeisungKwh: einspeisung,
+  };
+}
+
+function mergeHouseLoad(params: {
+  householdProfile: number[];
+  householdAnnualKwh: number;
+  heatPumpEnabled: boolean | undefined;
+  heatPumpConsumptionKWh: number | undefined;
+}): number[] {
+  const components: LoadComponent[] = [
+    {
+      name: "house",
+      yearlyConsumption: params.householdAnnualKwh,
+      profile: params.householdProfile,
+    },
+  ];
+  if (
+    params.heatPumpEnabled === true &&
+    typeof params.heatPumpConsumptionKWh === "number" &&
+    params.heatPumpConsumptionKWh > 0
+  ) {
+    components.push(createHeatPumpComponent15Min(params.heatPumpConsumptionKWh));
+  }
+  return mergeLoadProfiles(components);
+}
+
+async function mapPool<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  async function worker() {
+    while (true) {
+      const i = next++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i]);
+    }
+  }
+  const n = Math.max(1, Math.min(concurrency, items.length));
+  await Promise.all(Array.from({ length: n }, () => worker()));
+  return results;
+}
+
+export type RunWpuqHouseholdRobustnessParams = {
+  householdAnnualKwh: number;
+  heatPumpEnabled?: boolean;
+  heatPumpConsumptionKWh?: number;
+  getPvForYear: (year: number) => number[] | Promise<number[]>;
+  bdewTechnicalSizeKwh: number;
+  years?: readonly number[];
+  batterySizes?: readonly number[];
+  backupReserveKwh?: number;
+  /** Called after each finished household kernel. Does not change results. */
+  onHouseholdComplete?: (
+    completed: number,
+    total: number
+  ) => void | Promise<void>;
+};
+
+/**
+ * Repeat the production simulation for each of the 27 WPuQ household shapes.
+ * Only the household load shape changes; PV, roof, weather years, battery
+ * model and physics are identical to the BDEW run.
+ */
+export async function runWpuqHouseholdRobustness(
+  params: RunWpuqHouseholdRobustnessParams
+): Promise<WpuqRobustnessPayload> {
+  const cohort = loadWpuqCohort();
+  if (cohort.profiles.length !== WPUQ_COHORT_SIZE) {
+    throw new Error(
+      `WPuQ robustness expects ${WPUQ_COHORT_SIZE} households, got ${cohort.profiles.length}`
+    );
+  }
+
+  const target = params.householdAnnualKwh;
+  let completed = 0;
+  let progressQueue = Promise.resolve();
+  const reportCompleted = (count: number) => {
+    progressQueue = progressQueue.then(() =>
+      Promise.resolve(
+        params.onHouseholdComplete?.(count, WPUQ_COHORT_SIZE)
+      )
+    );
+    return progressQueue;
+  };
+  await reportCompleted(0);
+
+  const houses = await mapPool(cohort.profiles, HOUSE_SIM_CONCURRENCY, async (profile) => {
+    const scaled = scaleProfileToAnnualKwh(
+      profile.intervalEnergyKwh,
+      target,
+      profile.houseId
+    );
+    const scaledSum = sum(scaled);
+    if (Math.abs(scaledSum - target) > 1e-6 * Math.max(1, target)) {
+      throw new Error(
+        `${profile.houseId}: scaled household annual ${scaledSum} ≠ ${target}`
+      );
+    }
+
+    const merged = mergeHouseLoad({
+      householdProfile: scaled,
+      householdAnnualKwh: target,
+      heatPumpEnabled: params.heatPumpEnabled,
+      heatPumpConsumptionKWh: params.heatPumpConsumptionKWh,
+    });
+
+    const kernel = await simulateMultiYearSpeicherGrenz({
+      getLoadForYear: () => merged,
+      getPvForYear: params.getPvForYear,
+      latitude: 0,
+      longitude: 0,
+      years: params.years,
+      batterySizes: params.batterySizes,
+      backupReserveKwh: params.backupReserveKwh,
+      includeHourly: false,
+      timeStepHours: TIME_STEP_HOURS_15,
+      weatherDatabase: DEFAULT_WEATHER_DATABASE,
+    });
+
+    const kpis = kpisAtTechnicalSize(profile.houseId, kernel);
+    completed += 1;
+    await reportCompleted(completed);
+    return kpis;
+  });
+
+  await progressQueue;
+
+  return buildWpuqRobustnessPayload({
+    houses,
+    householdAnnualKwh: target,
+    bdewTechnicalSizeKwh: params.bdewTechnicalSizeKwh,
+  });
+}

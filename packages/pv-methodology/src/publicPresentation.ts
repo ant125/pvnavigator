@@ -1,4 +1,8 @@
 import { getMethodologyCategory } from "./categories";
+import {
+  METHODOLOGY_PAGE_SUBTITLE,
+  METHODOLOGY_PAGE_TITLE,
+} from "./methodologyChapters";
 import { getMethodologySourceById } from "./registry";
 import type { MethodologySource } from "./types";
 
@@ -43,11 +47,8 @@ export type PublicMethodologySectionIcon =
   | "research";
 
 export const PUBLIC_METHODOLOGY_INTRO = {
-  headline: "Keine Blackbox.",
-  paragraphs: [
-    "Alle Berechnungen von PVNavigator basieren auf dokumentierten Datenquellen und nachvollziehbaren technischen Annahmen.",
-    "Auf dieser Seite veröffentlichen wir sämtliche offiziellen Quellen, auf denen unsere Simulationsmethodik basiert.",
-  ],
+  headline: METHODOLOGY_PAGE_TITLE,
+  paragraphs: [METHODOLOGY_PAGE_SUBTITLE],
 } as const;
 
 export const PUBLIC_METHODOLOGY_VERSIONING = {
