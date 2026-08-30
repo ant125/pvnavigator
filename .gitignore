@@ -44,9 +44,10 @@ yarn-error.log*
 next-env.d.ts
 .pydeps/
 
-# WPuQ research raw data (large HDF5; never commit)
-research/wpuq/raw/*
-!research/wpuq/raw/.gitkeep
+# Research raw datasets (local only; never commit)
+research/**/raw/*
+!research/**/raw/.gitkeep
+research/**/.DS_Store
 research/**/*.hdf5
 research/**/*.h5
 research/wpuq/.venv/
