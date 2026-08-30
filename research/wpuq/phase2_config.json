@@ -1,0 +1,24 @@
+{
+  "annual_load_kwh": 5000,
+  "year": 2019,
+  "pv": {
+    "system_size_kwp": 10,
+    "tilt_deg": 35,
+    "ui_azimuth_deg": 180,
+    "location_name": "Hamelin vicinity (WPuQ district, Lower Saxony)",
+    "latitude": 52.1036,
+    "longitude": 9.3556,
+    "pvgis_weather_year": 2019,
+    "weather_database": "PVGIS-SARAH2",
+    "note": "Single shared 35040-step PV series for BDEW and all real houses. Location is near the WPuQ measurement district; year matches load year. Tilt 35° / South per Phase 2 brief (production live 4D uses 30° Köln — documented difference)."
+  },
+  "timestep_hours": 0.25,
+  "steps_expected": 35040,
+  "normalize_tolerance_kwh": 1e-6,
+  "energy_balance_tolerance_kwh": 1e-6,
+  "heatpump_research_thresholds_w": {
+    "standby_max_w": 100,
+    "heating_rod_min_w": 4000,
+    "note": "From Schlemminger et al. Sci Data 2022 interpretive thresholds; research classification only."
+  }
+}

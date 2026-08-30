@@ -1,0 +1,14 @@
+{
+  "system_size_kwp": 10,
+  "tilt_deg": 35,
+  "ui_azimuth_deg": 180,
+  "location_name": "Hamelin vicinity (WPuQ district, Lower Saxony)",
+  "latitude": 52.1036,
+  "longitude": 9.3556,
+  "pvgis_weather_year": 2019,
+  "weather_database": "PVGIS-SARAH2",
+  "note": "Single shared 35040-step PV series for BDEW and all real houses. Location is near the WPuQ measurement district; year matches load year. Tilt 35° / South per Phase 2 brief (production live 4D uses 30° Köln — documented difference).",
+  "steps": 35040,
+  "annual_yield_kwh": 10288.666600000157,
+  "pvgis_aspect_deg": 0
+}

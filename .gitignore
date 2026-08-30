@@ -43,3 +43,23 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .pydeps/
+
+# WPuQ research raw data (large HDF5; never commit)
+research/wpuq/raw/*
+!research/wpuq/raw/.gitkeep
+research/**/*.hdf5
+research/**/*.h5
+research/wpuq/.venv/
+research/wpuq/**/__pycache__/
+research/wpuq/**/.pytest_cache/
+research/wpuq/**/.mypy_cache/
+research/wpuq/**/.cache/
+research/wpuq/**/*.pyc
+# Regenerable bulky normalized interval arrays (from raw HDF5)
+research/wpuq/processed/profiles_2019_normalized/*
+!research/wpuq/processed/profiles_2019_normalized/.gitkeep
+research/wpuq/processed/bdew_h25_5000_2019.json
+research/wpuq/processed/production_hp_4000_2019.json
+research/wpuq/processed/profiles_hp_2019_normalized/*
+!research/wpuq/processed/profiles_hp_2019_normalized/.gitkeep
+research/wpuq/processed/hp_phase3_arrays.npz

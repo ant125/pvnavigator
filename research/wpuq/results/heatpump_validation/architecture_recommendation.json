@@ -1,0 +1,40 @@
+{
+  "interval_wise_mean_after_renorm": {
+    "operating_interval_share": 0.71081621,
+    "peak_power_w": 3531.91444148,
+    "median_operating_power_w": 522.3957321,
+    "share_heating_rod_energy": 0.0,
+    "note": "Mean across asynchronously cycling houses smears compressor bursts into a smoother always-on-ish profile."
+  },
+  "interval_wise_median_after_renorm": {
+    "operating_interval_share": 0.52591324,
+    "peak_power_w": 5571.78110085,
+    "median_operating_power_w": 660.05527781,
+    "share_heating_rod_energy": 0.01416327,
+    "sum_before_renorm_kwh": 2154.73665243,
+    "note": "Interval-wise median is often near standby when houses cycle out of phase; re-scaling then distorts peaks. Prefer a real representative house."
+  },
+  "production_operating_interval_share": 1.0,
+  "correlation_measured_annual_vs_winter_share": -0.32316692,
+  "correlation_measured_annual_vs_summer_share": 0.05239873,
+  "correlation_measured_annual_vs_raw_peak_w": 0.21566473,
+  "cluster_k2_sizes": [
+    16,
+    14
+  ],
+  "split_appears_meaningful": true,
+  "winter_share_iqr": 0.15490678,
+  "summer_share_iqr": 0.02206351,
+  "recommendation": {
+    "replace_synthetic": true,
+    "reason_short": "The production model is piecewise-constant by month: it has no compressor cycling, no heating rod, no diurnal pattern, too little winter share and too much summer share versus the WPuQ 2019 usable HEATPUMP cohort.",
+    "preferred_architecture": "clustered_then_representative",
+    "architectures": {
+      "A_interval_wise_median": "Not recommended as a load series: asynchronous cycling collapses toward standby; after re-normalization the shape is an artefact.",
+      "B_clustered_profiles": "Recommended core: k=2 (or 3) on monthly shares, then one real house (or cluster-mean of daily duration, not interval-wise mean) per cluster, scaled to the user annual HP kWh.",
+      "C_single_representative": "Acceptable default if product can only ship one series: the house nearest the cohort median monthly-share vector, scaled to user kWh. Preserves realistic cycling and rod events.",
+      "D_by_annual_kwh": "Not justified by this cohort: annual kWh vs winter/summer share correlation is weak. Shape differences look like system/building type, not size."
+    },
+    "production_migration": "Keep createHeatPumpComponent15Min as a fallback; add a research-validated measured-derived 35040-step profile in a package (not apps/), registered in pv-methodology, scaled to the entered annual HP kWh. Do not average interval-wise across houses."
+  }
+}

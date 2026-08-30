@@ -1,0 +1,53 @@
+{
+  "closest_to_median_autarkie_at_10kwh": {
+    "house_id": "SFH22",
+    "autarkie_10_pct": 80.83184546084505,
+    "cohort_median_autarkie_10_pct": 80.83184546084505
+  },
+  "lowest_autarkie_at_10kwh": {
+    "house_id": "SFH34",
+    "autarkie_10_pct": 57.51123864296797
+  },
+  "highest_autarkie_at_10kwh": {
+    "house_id": "SFH10",
+    "autarkie_10_pct": 85.08504158103942
+  },
+  "closest_to_median_technical_speichergrenze": {
+    "house_id": "SFH3",
+    "technical_speichergrenze_kwh": 10,
+    "cohort_median_kwh": 10
+  },
+  "outliers_notes": {
+    "autarkie_10_p05": 68.37538092444751,
+    "autarkie_10_median": 80.83184546084505,
+    "autarkie_10_p95": 83.6768803994837,
+    "houses_outside_p05_p95_autarkie_10": [
+      {
+        "house_id": "SFH10",
+        "autarkie_10_pct": 85.08504158103942
+      },
+      {
+        "house_id": "SFH14",
+        "autarkie_10_pct": 65.26235627977177
+      },
+      {
+        "house_id": "SFH19",
+        "autarkie_10_pct": 83.77399406052317
+      },
+      {
+        "house_id": "SFH34",
+        "autarkie_10_pct": 57.51123864296797
+      }
+    ],
+    "bdew_autarkie_10_vs_median_delta_pp": 5.280743269356591
+  },
+  "bdew_reference": {
+    "profile_id": "BDEW_H25",
+    "technical_speichergrenze_kwh": 10,
+    "autarkie_0_pct": 43.33273859244206,
+    "autarkie_10_pct": 86.11258873020164,
+    "eigenverbrauchsquote_0_pct": 21.058481277079593,
+    "eigenverbrauchsquote_10_pct": 41.8482744548274
+  },
+  "selection_metric": "autarkie_pct at battery=10 kWh unless noted"
+}

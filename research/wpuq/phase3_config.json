@@ -1,0 +1,28 @@
+{
+  "phase": 3,
+  "year": 2019,
+  "target_annual_kwh": 4000,
+  "timezone": "Europe/Berlin",
+  "steps_expected": 35040,
+  "timestep_hours": 0.25,
+  "normalize_tolerance_kwh": 1e-6,
+  "standby_max_w": 100,
+  "heating_rod_min_w": 4000,
+  "pv_window_hours_local": [9, 16],
+  "night_window_hours_local": [22, 6],
+  "typical_calendar_days": {
+    "winter": "2019-01-15",
+    "spring": "2019-04-15",
+    "summer": "2019-07-15",
+    "autumn": "2019-10-15"
+  },
+  "cluster_k_values": [2, 3],
+  "cluster_random_seed": 42,
+  "note": "Research only. Calls unmodified createHeatPumpComponent15Min(4000). Does not change production Wärmepumpe logic.",
+  "production_seasonal_model": {
+    "source": "apps/speicher-physik/src/load/heatpump.ts seasonalMultiplier (0-indexed months)",
+    "high_1_65": ["Jan", "Feb", "Mar", "Nov", "Dec"],
+    "mid_1_00": ["Apr", "May", "Sep", "Oct"],
+    "low_0_42": ["Jun", "Jul", "Aug"]
+  }
+}

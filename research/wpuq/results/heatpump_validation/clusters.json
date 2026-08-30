@@ -1,0 +1,273 @@
+{
+  "k2": {
+    "k": 2,
+    "inertia": 0.20914951,
+    "labels": {
+      "SFH3": 0,
+      "SFH4": 1,
+      "SFH5": 0,
+      "SFH7": 0,
+      "SFH8": 0,
+      "SFH9": 0,
+      "SFH10": 0,
+      "SFH11": 1,
+      "SFH12": 0,
+      "SFH14": 1,
+      "SFH15": 0,
+      "SFH16": 1,
+      "SFH18": 0,
+      "SFH19": 0,
+      "SFH20": 0,
+      "SFH21": 1,
+      "SFH22": 0,
+      "SFH23": 1,
+      "SFH26": 1,
+      "SFH27": 1,
+      "SFH28": 1,
+      "SFH29": 1,
+      "SFH30": 1,
+      "SFH32": 0,
+      "SFH33": 1,
+      "SFH34": 0,
+      "SFH35": 1,
+      "SFH36": 1,
+      "SFH38": 0,
+      "SFH39": 0
+    },
+    "clusters": {
+      "cluster_0": {
+        "size": 16,
+        "house_ids": [
+          "SFH3",
+          "SFH5",
+          "SFH7",
+          "SFH8",
+          "SFH9",
+          "SFH10",
+          "SFH12",
+          "SFH15",
+          "SFH18",
+          "SFH19",
+          "SFH20",
+          "SFH22",
+          "SFH32",
+          "SFH34",
+          "SFH38",
+          "SFH39"
+        ],
+        "centroid_monthly_shares": [
+          0.20481452,
+          0.12215987,
+          0.11459679,
+          0.06830002,
+          0.05543979,
+          0.01634457,
+          0.01930638,
+          0.01666136,
+          0.02851779,
+          0.06399295,
+          0.13091605,
+          0.15894991
+        ],
+        "centroid_seasonal_shares": {
+          "winter": 0.4859243,
+          "spring": 0.2383366,
+          "summer": 0.05231232,
+          "autumn": 0.22342678
+        },
+        "mean_measured_annual_kwh": 5648.31760309,
+        "median_measured_annual_kwh": 4763.52718254
+      },
+      "cluster_1": {
+        "size": 14,
+        "house_ids": [
+          "SFH4",
+          "SFH11",
+          "SFH14",
+          "SFH16",
+          "SFH21",
+          "SFH23",
+          "SFH26",
+          "SFH27",
+          "SFH28",
+          "SFH29",
+          "SFH30",
+          "SFH33",
+          "SFH35",
+          "SFH36"
+        ],
+        "centroid_monthly_shares": [
+          0.34113762,
+          0.16751845,
+          0.089402,
+          0.04682654,
+          0.04060041,
+          0.00984739,
+          0.01066794,
+          0.00932274,
+          0.01600592,
+          0.04326627,
+          0.09657706,
+          0.12882764
+        ],
+        "centroid_seasonal_shares": {
+          "winter": 0.63748372,
+          "spring": 0.17682895,
+          "summer": 0.02983808,
+          "autumn": 0.15584925
+        },
+        "mean_measured_annual_kwh": 4245.07809814,
+        "median_measured_annual_kwh": 3513.97399591
+      }
+    }
+  },
+  "k3": {
+    "k": 3,
+    "inertia": 0.16863977,
+    "labels": {
+      "SFH3": 2,
+      "SFH4": 0,
+      "SFH5": 2,
+      "SFH7": 2,
+      "SFH8": 2,
+      "SFH9": 2,
+      "SFH10": 2,
+      "SFH11": 1,
+      "SFH12": 2,
+      "SFH14": 0,
+      "SFH15": 2,
+      "SFH16": 0,
+      "SFH18": 2,
+      "SFH19": 2,
+      "SFH20": 2,
+      "SFH21": 0,
+      "SFH22": 2,
+      "SFH23": 1,
+      "SFH26": 0,
+      "SFH27": 0,
+      "SFH28": 0,
+      "SFH29": 1,
+      "SFH30": 1,
+      "SFH32": 2,
+      "SFH33": 0,
+      "SFH34": 2,
+      "SFH35": 1,
+      "SFH36": 1,
+      "SFH38": 2,
+      "SFH39": 2
+    },
+    "clusters": {
+      "cluster_0": {
+        "size": 8,
+        "house_ids": [
+          "SFH4",
+          "SFH14",
+          "SFH16",
+          "SFH21",
+          "SFH26",
+          "SFH27",
+          "SFH28",
+          "SFH33"
+        ],
+        "centroid_monthly_shares": [
+          0.30914356,
+          0.19310414,
+          0.0920801,
+          0.05041808,
+          0.04650477,
+          0.00841067,
+          0.01098332,
+          0.01076994,
+          0.02054558,
+          0.05041425,
+          0.09776163,
+          0.10986397
+        ],
+        "centroid_seasonal_shares": {
+          "winter": 0.61211166,
+          "spring": 0.18900295,
+          "summer": 0.03016392,
+          "autumn": 0.16872146
+        },
+        "mean_measured_annual_kwh": 5195.53281998,
+        "median_measured_annual_kwh": 4833.48503362
+      },
+      "cluster_1": {
+        "size": 6,
+        "house_ids": [
+          "SFH11",
+          "SFH23",
+          "SFH29",
+          "SFH30",
+          "SFH35",
+          "SFH36"
+        ],
+        "centroid_monthly_shares": [
+          0.38379638,
+          0.1334042,
+          0.0858312,
+          0.04203783,
+          0.03272793,
+          0.01176303,
+          0.01024743,
+          0.00739315,
+          0.00995304,
+          0.03373564,
+          0.09499763,
+          0.15411254
+        ],
+        "centroid_seasonal_shares": {
+          "winter": 0.67131312,
+          "spring": 0.16059695,
+          "summer": 0.02940362,
+          "autumn": 0.13868631
+        },
+        "mean_measured_annual_kwh": 2977.80513569,
+        "median_measured_annual_kwh": 2360.85401108
+      },
+      "cluster_2": {
+        "size": 16,
+        "house_ids": [
+          "SFH3",
+          "SFH5",
+          "SFH7",
+          "SFH8",
+          "SFH9",
+          "SFH10",
+          "SFH12",
+          "SFH15",
+          "SFH18",
+          "SFH19",
+          "SFH20",
+          "SFH22",
+          "SFH32",
+          "SFH34",
+          "SFH38",
+          "SFH39"
+        ],
+        "centroid_monthly_shares": [
+          0.20481452,
+          0.12215987,
+          0.11459679,
+          0.06830002,
+          0.05543979,
+          0.01634457,
+          0.01930638,
+          0.01666136,
+          0.02851779,
+          0.06399295,
+          0.13091605,
+          0.15894991
+        ],
+        "centroid_seasonal_shares": {
+          "winter": 0.4859243,
+          "spring": 0.2383366,
+          "summer": 0.05231232,
+          "autumn": 0.22342678
+        },
+        "mean_measured_annual_kwh": 5648.31760309,
+        "median_measured_annual_kwh": 4763.52718254
+      }
+    }
+  }
+}

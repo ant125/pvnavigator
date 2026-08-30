@@ -1,0 +1,34 @@
+{
+  "$comment": "Completeness classification thresholds for WPuQ Phase 1. Edit these values; re-run scripts/build_inventory.py.",
+  "interval_seconds": 900,
+  "power_column": "P_TOT",
+  "power_column_with_pv_contamination": "P_TOT_WITH_PV",
+  "energy_wh_per_watt_mean_interval": 0.25,
+  "classification": {
+    "COMPLETE": {
+      "min_availability_pct": 99.0,
+      "description": "Almost full calendar coverage; only tiny residual gaps."
+    },
+    "USABLE_WITH_SMALL_GAPS": {
+      "min_availability_pct": 95.0,
+      "max_availability_pct_exclusive": 99.0,
+      "description": "High coverage with limited gaps; suitable for first benchmarks if gaps are short."
+    },
+    "INCOMPLETE": {
+      "min_availability_pct": 50.0,
+      "max_availability_pct_exclusive": 95.0,
+      "description": "Substantial missing data; annual totals are biased low if summed only over finite samples."
+    },
+    "EXCLUDE": {
+      "max_availability_pct_exclusive": 50.0,
+      "description": "Too sparse for annual statistics or profile validation."
+    }
+  },
+  "usable_for_benchmark_classes": ["COMPLETE", "USABLE_WITH_SMALL_GAPS"],
+  "notes": [
+    "Availability = finite P_TOT samples / expected 15-min intervals for the calendar year in the file.",
+    "Expected intervals: 35040 (non-leap) or 35136 (leap). Feb 29 is retained in 2020 files.",
+    "NaN gaps are never filled. Annual kWh uses only finite samples and incomplete years are flagged.",
+    "Scientific Data paper used >90% availability as a descriptive quality cue and excluded houses missing ≥1 full month from 2019 annual averages. Our Phase 1 classes are stricter/explicit for benchmark selection."
+  ]
+}

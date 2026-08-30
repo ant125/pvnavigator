@@ -1,0 +1,7328 @@
+{
+  "dataset": "WPuQ 15-minute electrical load profiles",
+  "raw_dir": "/Users/rudenko/Yandex.Disk.localized/Cursor/pvnavigator/research/wpuq/raw",
+  "files_found": [
+    "2018_data_15min.hdf5",
+    "2019_data_15min.hdf5",
+    "2020_data_15min.hdf5"
+  ],
+  "files": [
+    {
+      "file": "2018_data_15min.hdf5",
+      "year": 2018,
+      "size_bytes": 470832656,
+      "top_level_groups": [
+        "MISC",
+        "NO_PV",
+        "WITH_PV"
+      ],
+      "houses": {
+        "SFH3": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH3/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH3/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH4": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH4/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH4/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH5": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH5/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH5/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH6": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH6/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH6/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH7": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH7/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH7/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH8": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH8/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH8/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH9": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH9/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH9/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH10": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH10/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH10/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH11": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH11/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH11/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH12": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH12/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH12/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH14": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH14/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH14/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH16": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH16/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH16/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH17": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH17/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH17/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH18": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH18/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH18/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH19": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH19/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH19/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH20": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH20/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH20/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH21": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH21/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH21/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH22": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH22/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH22/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH23": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH23/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH23/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH24": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH24/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH24/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH25": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH25/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH25/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH27": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH27/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH27/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH28": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH28/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH28/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH29": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH29/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH29/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH30": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH30/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH30/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH31": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH31/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH31/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH32": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH32/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH32/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH34": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH34/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH34/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH35": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH35/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH35/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH36": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH36/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH36/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH37": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH37/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH37/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH38": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH38/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH38/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH39": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH39/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH39/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH40": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH40/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH40/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH13": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH13/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH13/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH15": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH15/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH15/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH26": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH26/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH26/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH33": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH33/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH33/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        }
+      },
+      "misc": {
+        "ES1": {
+          "children": {
+            "TRANSFORMER/table": {
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "PV1": {
+          "children": {
+            "PV/INVERTER/EAST/table": {
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "I_DC1",
+                "I_DC2",
+                "I_1",
+                "I_2",
+                "I_3",
+                "I_TOT",
+                "E_DC1",
+                "E_DC2",
+                "E_TOT",
+                "P_DC1",
+                "P_DC2",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT",
+                "U_DC1",
+                "U_DC2",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            },
+            "PV/INVERTER/SOUTH/table": {
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "I_DC1",
+                "I_1",
+                "I_2",
+                "I_3",
+                "I_TOT",
+                "E_TOT",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT",
+                "U_DC1",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            },
+            "PV/INVERTER/WEST/table": {
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "I_DC1",
+                "I_DC2",
+                "I_1",
+                "I_2",
+                "I_3",
+                "I_TOT",
+                "E_DC1",
+                "E_DC2",
+                "E_TOT",
+                "P_DC1",
+                "P_DC2",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT",
+                "U_DC1",
+                "U_DC2",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        }
+      },
+      "notes": [
+        "Non-leap year: 35040 quarter-hour steps expected (matches PVNavigator production grid length)."
+      ],
+      "column_set_groups": [
+        {
+          "pv_group": "NO_PV",
+          "feed": "HEATPUMP",
+          "columns": [
+            "index",
+            "S_TOT",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT"
+          ],
+          "houses": [
+            "SFH4",
+            "SFH5",
+            "SFH6",
+            "SFH7",
+            "SFH8",
+            "SFH9",
+            "SFH10",
+            "SFH11",
+            "SFH12",
+            "SFH14",
+            "SFH16",
+            "SFH17",
+            "SFH18",
+            "SFH19",
+            "SFH20",
+            "SFH21",
+            "SFH22",
+            "SFH23",
+            "SFH24",
+            "SFH25",
+            "SFH27",
+            "SFH28",
+            "SFH29",
+            "SFH30",
+            "SFH31",
+            "SFH32",
+            "SFH34",
+            "SFH35",
+            "SFH36",
+            "SFH37",
+            "SFH38",
+            "SFH39",
+            "SFH40"
+          ],
+          "house_count": 33
+        },
+        {
+          "pv_group": "NO_PV",
+          "feed": "HEATPUMP",
+          "columns": [
+            "index",
+            "S_TOT",
+            "PF_TOT",
+            "P_TOT",
+            "Q_TOT"
+          ],
+          "houses": [
+            "SFH3"
+          ],
+          "house_count": 1
+        },
+        {
+          "pv_group": "NO_PV",
+          "feed": "HOUSEHOLD",
+          "columns": [
+            "index",
+            "S_1",
+            "S_2",
+            "S_3",
+            "S_TOT",
+            "I_1",
+            "I_2",
+            "I_3",
+            "PF_1",
+            "PF_2",
+            "PF_3",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT",
+            "U_1",
+            "U_2",
+            "U_3"
+          ],
+          "houses": [
+            "SFH3",
+            "SFH4",
+            "SFH5",
+            "SFH6",
+            "SFH7",
+            "SFH8",
+            "SFH9",
+            "SFH10",
+            "SFH11",
+            "SFH12",
+            "SFH14",
+            "SFH16",
+            "SFH17",
+            "SFH18",
+            "SFH19",
+            "SFH20",
+            "SFH21",
+            "SFH22",
+            "SFH23",
+            "SFH24",
+            "SFH25",
+            "SFH27",
+            "SFH28",
+            "SFH29",
+            "SFH30",
+            "SFH31",
+            "SFH32",
+            "SFH34",
+            "SFH35",
+            "SFH36",
+            "SFH37",
+            "SFH38",
+            "SFH39",
+            "SFH40"
+          ],
+          "house_count": 34
+        },
+        {
+          "pv_group": "WITH_PV",
+          "feed": "HEATPUMP",
+          "columns": [
+            "index",
+            "S_TOT",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT"
+          ],
+          "houses": [
+            "SFH13",
+            "SFH15",
+            "SFH26",
+            "SFH33"
+          ],
+          "house_count": 4
+        },
+        {
+          "pv_group": "WITH_PV",
+          "feed": "HOUSEHOLD",
+          "columns": [
+            "index",
+            "S_1",
+            "S_2",
+            "S_3",
+            "S_TOT",
+            "I_1",
+            "I_2",
+            "I_3",
+            "PF_1",
+            "PF_2",
+            "PF_3",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT_WITH_PV",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT",
+            "U_1",
+            "U_2",
+            "U_3"
+          ],
+          "houses": [
+            "SFH13",
+            "SFH15",
+            "SFH26",
+            "SFH33"
+          ],
+          "house_count": 4
+        }
+      ],
+      "unique_household_row_counts": [
+        35040
+      ],
+      "is_leap_year": false
+    },
+    {
+      "file": "2019_data_15min.hdf5",
+      "year": 2019,
+      "size_bytes": 459112136,
+      "top_level_groups": [
+        "MISC",
+        "NO_PV",
+        "WITH_PV"
+      ],
+      "houses": {
+        "SFH3": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH3/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH3/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH4": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH4/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH4/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH5": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH5/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH5/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH6": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH6/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH6/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH7": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH7/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH7/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH8": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH8/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH8/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH9": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH9/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH9/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH10": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH10/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH10/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH11": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH11/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH11/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH12": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH12/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH12/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH14": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH14/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH14/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH16": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH16/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH16/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH17": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH17/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH17/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH18": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH18/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH18/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH19": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH19/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH19/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH20": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH20/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH20/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH21": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH21/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH21/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH22": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH22/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH22/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH23": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH23/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH23/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH25": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH25/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH25/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH27": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH27/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH27/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH28": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH28/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH28/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH29": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH29/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH29/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH30": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH30/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH30/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH31": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH31/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH31/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH32": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH32/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH32/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH34": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH34/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH34/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH35": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH35/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH35/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH36": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH36/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH36/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH37": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH37/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH37/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH38": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH38/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH38/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH39": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH39/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH39/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH40": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH40/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH40/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH13": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH13/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH13/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH15": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH15/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH15/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH26": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH26/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH26/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH33": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH33/HEATPUMP/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH33/HOUSEHOLD/table",
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        }
+      },
+      "misc": {
+        "ES1": {
+          "children": {
+            "TRANSFORMER/table": {
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "PV1": {
+          "children": {
+            "PV/INVERTER/EAST/table": {
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "I_DC1",
+                "I_DC2",
+                "I_1",
+                "I_2",
+                "I_3",
+                "I_TOT",
+                "E_DC1",
+                "E_DC2",
+                "E_TOT",
+                "P_DC1",
+                "P_DC2",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT",
+                "U_DC1",
+                "U_DC2",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            },
+            "PV/INVERTER/SOUTH/table": {
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "I_DC1",
+                "I_1",
+                "I_2",
+                "I_3",
+                "I_TOT",
+                "E_TOT",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT",
+                "U_DC1",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            },
+            "PV/INVERTER/WEST/table": {
+              "shape": [
+                35040
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "I_DC1",
+                "I_DC2",
+                "I_1",
+                "I_2",
+                "I_3",
+                "I_TOT",
+                "E_DC1",
+                "E_DC2",
+                "E_TOT",
+                "P_DC1",
+                "P_DC2",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT",
+                "U_DC1",
+                "U_DC2",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        }
+      },
+      "notes": [
+        "Non-leap year: 35040 quarter-hour steps expected (matches PVNavigator production grid length)."
+      ],
+      "column_set_groups": [
+        {
+          "pv_group": "NO_PV",
+          "feed": "HEATPUMP",
+          "columns": [
+            "index",
+            "S_TOT",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT"
+          ],
+          "houses": [
+            "SFH4",
+            "SFH5",
+            "SFH6",
+            "SFH7",
+            "SFH8",
+            "SFH9",
+            "SFH10",
+            "SFH11",
+            "SFH12",
+            "SFH14",
+            "SFH16",
+            "SFH17",
+            "SFH18",
+            "SFH19",
+            "SFH20",
+            "SFH21",
+            "SFH22",
+            "SFH23",
+            "SFH25",
+            "SFH27",
+            "SFH28",
+            "SFH29",
+            "SFH30",
+            "SFH31",
+            "SFH32",
+            "SFH34",
+            "SFH35",
+            "SFH36",
+            "SFH37",
+            "SFH38",
+            "SFH39",
+            "SFH40"
+          ],
+          "house_count": 32
+        },
+        {
+          "pv_group": "NO_PV",
+          "feed": "HEATPUMP",
+          "columns": [
+            "index",
+            "S_TOT",
+            "PF_TOT",
+            "P_TOT",
+            "Q_TOT"
+          ],
+          "houses": [
+            "SFH3"
+          ],
+          "house_count": 1
+        },
+        {
+          "pv_group": "NO_PV",
+          "feed": "HOUSEHOLD",
+          "columns": [
+            "index",
+            "S_1",
+            "S_2",
+            "S_3",
+            "S_TOT",
+            "I_1",
+            "I_2",
+            "I_3",
+            "PF_1",
+            "PF_2",
+            "PF_3",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT",
+            "U_1",
+            "U_2",
+            "U_3"
+          ],
+          "houses": [
+            "SFH3",
+            "SFH4",
+            "SFH5",
+            "SFH6",
+            "SFH7",
+            "SFH8",
+            "SFH9",
+            "SFH10",
+            "SFH11",
+            "SFH12",
+            "SFH14",
+            "SFH16",
+            "SFH17",
+            "SFH18",
+            "SFH19",
+            "SFH20",
+            "SFH21",
+            "SFH22",
+            "SFH23",
+            "SFH25",
+            "SFH27",
+            "SFH28",
+            "SFH29",
+            "SFH30",
+            "SFH31",
+            "SFH32",
+            "SFH34",
+            "SFH35",
+            "SFH36",
+            "SFH37",
+            "SFH38",
+            "SFH39",
+            "SFH40"
+          ],
+          "house_count": 33
+        },
+        {
+          "pv_group": "WITH_PV",
+          "feed": "HEATPUMP",
+          "columns": [
+            "index",
+            "S_TOT",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT"
+          ],
+          "houses": [
+            "SFH13",
+            "SFH15",
+            "SFH26",
+            "SFH33"
+          ],
+          "house_count": 4
+        },
+        {
+          "pv_group": "WITH_PV",
+          "feed": "HOUSEHOLD",
+          "columns": [
+            "index",
+            "S_1",
+            "S_2",
+            "S_3",
+            "S_TOT",
+            "I_1",
+            "I_2",
+            "I_3",
+            "PF_1",
+            "PF_2",
+            "PF_3",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT_WITH_PV",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT",
+            "U_1",
+            "U_2",
+            "U_3"
+          ],
+          "houses": [
+            "SFH13",
+            "SFH15",
+            "SFH26",
+            "SFH33"
+          ],
+          "house_count": 4
+        }
+      ],
+      "unique_household_row_counts": [
+        35040
+      ],
+      "is_leap_year": false
+    },
+    {
+      "file": "2020_data_15min.hdf5",
+      "year": 2020,
+      "size_bytes": 447784216,
+      "top_level_groups": [
+        "MISC",
+        "NO_PV",
+        "WITH_PV"
+      ],
+      "houses": {
+        "SFH3": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH3/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH3/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH4": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH4/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH4/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH5": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH5/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH5/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH6": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH6/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH6/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH7": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH7/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH7/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH8": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH8/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH8/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH9": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH9/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH9/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH10": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH10/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH10/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH11": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH11/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH11/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH12": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH12/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH12/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH14": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH14/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH14/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH16": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH16/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH16/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH17": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH17/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH17/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH18": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH18/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH18/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH19": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH19/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH19/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH20": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH20/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH20/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH21": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH21/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH21/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH22": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH22/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH22/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH23": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH23/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH23/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH27": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH27/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH27/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH28": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH28/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH28/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH29": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH29/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH29/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH30": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH30/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH30/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH31": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH31/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH31/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH32": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH32/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH32/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH34": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH34/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH34/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH35": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH35/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH35/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH36": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH36/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH36/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH37": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH37/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH37/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH38": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH38/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH38/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH39": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH39/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH39/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH40": {
+          "pv_group": "NO_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "NO_PV/SFH40/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "NO_PV/SFH40/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH13": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH13/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH13/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH15": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH15/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH15/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH26": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH26/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH26/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "SFH33": {
+          "pv_group": "WITH_PV",
+          "feeds": {
+            "HEATPUMP": {
+              "present": true,
+              "path": "WITH_PV/SFH33/HEATPUMP/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT"
+              ]
+            },
+            "HOUSEHOLD": {
+              "present": true,
+              "path": "WITH_PV/SFH33/HOUSEHOLD/table",
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT_WITH_PV",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        }
+      },
+      "misc": {
+        "ES1": {
+          "children": {
+            "TRANSFORMER/table": {
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_1",
+                "S_2",
+                "S_3",
+                "S_TOT",
+                "I_1",
+                "I_2",
+                "I_3",
+                "PF_1",
+                "PF_2",
+                "PF_3",
+                "PF_TOT",
+                "P_1",
+                "P_2",
+                "P_3",
+                "P_TOT",
+                "Q_1",
+                "Q_2",
+                "Q_3",
+                "Q_TOT",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        },
+        "PV1": {
+          "children": {
+            "PV/INVERTER/EAST/table": {
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "I_DC1",
+                "I_DC2",
+                "I_1",
+                "I_2",
+                "I_3",
+                "I_TOT",
+                "E_DC1",
+                "E_DC2",
+                "E_TOT",
+                "P_DC1",
+                "P_DC2",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT",
+                "U_DC1",
+                "U_DC2",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            },
+            "PV/INVERTER/SOUTH/table": {
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "I_DC1",
+                "I_1",
+                "I_2",
+                "I_3",
+                "I_TOT",
+                "E_TOT",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT",
+                "U_DC1",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            },
+            "PV/INVERTER/WEST/table": {
+              "shape": [
+                35136
+              ],
+              "columns": [
+                "index",
+                "S_TOT",
+                "I_DC1",
+                "I_DC2",
+                "I_1",
+                "I_2",
+                "I_3",
+                "I_TOT",
+                "E_DC1",
+                "E_DC2",
+                "E_TOT",
+                "P_DC1",
+                "P_DC2",
+                "PF_TOT",
+                "P_TOT",
+                "Q_TOT",
+                "U_DC1",
+                "U_DC2",
+                "U_1",
+                "U_2",
+                "U_3"
+              ]
+            }
+          }
+        }
+      },
+      "notes": [
+        "Leap year: file retains Feb 29 (35136 quarter-hour steps expected)."
+      ],
+      "column_set_groups": [
+        {
+          "pv_group": "NO_PV",
+          "feed": "HEATPUMP",
+          "columns": [
+            "index",
+            "S_TOT",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT"
+          ],
+          "houses": [
+            "SFH4",
+            "SFH5",
+            "SFH6",
+            "SFH7",
+            "SFH8",
+            "SFH9",
+            "SFH10",
+            "SFH11",
+            "SFH12",
+            "SFH14",
+            "SFH16",
+            "SFH17",
+            "SFH18",
+            "SFH19",
+            "SFH20",
+            "SFH21",
+            "SFH22",
+            "SFH23",
+            "SFH27",
+            "SFH28",
+            "SFH29",
+            "SFH30",
+            "SFH31",
+            "SFH32",
+            "SFH34",
+            "SFH35",
+            "SFH36",
+            "SFH37",
+            "SFH38",
+            "SFH39",
+            "SFH40"
+          ],
+          "house_count": 31
+        },
+        {
+          "pv_group": "NO_PV",
+          "feed": "HEATPUMP",
+          "columns": [
+            "index",
+            "S_TOT",
+            "PF_TOT",
+            "P_TOT",
+            "Q_TOT"
+          ],
+          "houses": [
+            "SFH3"
+          ],
+          "house_count": 1
+        },
+        {
+          "pv_group": "NO_PV",
+          "feed": "HOUSEHOLD",
+          "columns": [
+            "index",
+            "S_1",
+            "S_2",
+            "S_3",
+            "S_TOT",
+            "I_1",
+            "I_2",
+            "I_3",
+            "PF_1",
+            "PF_2",
+            "PF_3",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT",
+            "U_1",
+            "U_2",
+            "U_3"
+          ],
+          "houses": [
+            "SFH3",
+            "SFH4",
+            "SFH5",
+            "SFH6",
+            "SFH7",
+            "SFH8",
+            "SFH9",
+            "SFH10",
+            "SFH11",
+            "SFH12",
+            "SFH14",
+            "SFH16",
+            "SFH17",
+            "SFH18",
+            "SFH19",
+            "SFH20",
+            "SFH21",
+            "SFH22",
+            "SFH23",
+            "SFH27",
+            "SFH28",
+            "SFH29",
+            "SFH30",
+            "SFH31",
+            "SFH32",
+            "SFH34",
+            "SFH35",
+            "SFH36",
+            "SFH37",
+            "SFH38",
+            "SFH39",
+            "SFH40"
+          ],
+          "house_count": 32
+        },
+        {
+          "pv_group": "WITH_PV",
+          "feed": "HEATPUMP",
+          "columns": [
+            "index",
+            "S_TOT",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT"
+          ],
+          "houses": [
+            "SFH13",
+            "SFH15",
+            "SFH26",
+            "SFH33"
+          ],
+          "house_count": 4
+        },
+        {
+          "pv_group": "WITH_PV",
+          "feed": "HOUSEHOLD",
+          "columns": [
+            "index",
+            "S_1",
+            "S_2",
+            "S_3",
+            "S_TOT",
+            "I_1",
+            "I_2",
+            "I_3",
+            "PF_1",
+            "PF_2",
+            "PF_3",
+            "PF_TOT",
+            "P_1",
+            "P_2",
+            "P_3",
+            "P_TOT_WITH_PV",
+            "P_TOT",
+            "Q_1",
+            "Q_2",
+            "Q_3",
+            "Q_TOT",
+            "U_1",
+            "U_2",
+            "U_3"
+          ],
+          "houses": [
+            "SFH13",
+            "SFH15",
+            "SFH26",
+            "SFH33"
+          ],
+          "house_count": 4
+        }
+      ],
+      "unique_household_row_counts": [
+        35136
+      ],
+      "is_leap_year": true
+    }
+  ]
+}

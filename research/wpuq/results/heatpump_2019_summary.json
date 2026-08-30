@@ -1,0 +1,94 @@
+{
+  "phase": 2,
+  "year": 2019,
+  "usable_classes": [
+    "COMPLETE",
+    "USABLE_WITH_SMALL_GAPS"
+  ],
+  "cohort_size": 30,
+  "house_ids": [
+    "SFH3",
+    "SFH4",
+    "SFH5",
+    "SFH7",
+    "SFH8",
+    "SFH9",
+    "SFH10",
+    "SFH11",
+    "SFH12",
+    "SFH14",
+    "SFH15",
+    "SFH16",
+    "SFH18",
+    "SFH19",
+    "SFH20",
+    "SFH21",
+    "SFH22",
+    "SFH23",
+    "SFH26",
+    "SFH27",
+    "SFH28",
+    "SFH29",
+    "SFH30",
+    "SFH32",
+    "SFH33",
+    "SFH34",
+    "SFH35",
+    "SFH36",
+    "SFH38",
+    "SFH39"
+  ],
+  "thresholds_w": {
+    "standby_lt": 100.0,
+    "heating_rod_gt": 4000.0,
+    "note": "From Schlemminger et al. Sci Data 2022 interpretive thresholds; research classification only."
+  },
+  "annual_kwh_distribution": {
+    "count": 30,
+    "min": 1431.144,
+    "p05": 1756.11105,
+    "p25": 2602.8435,
+    "median": 4011.74,
+    "mean": 4993.472599999999,
+    "p75": 6644.985500000001,
+    "p95": 10074.717549999998,
+    "max": 14840.16,
+    "std": 3071.8704759909565
+  },
+  "peak_15min_avg_power_w_distribution": {
+    "count": 30,
+    "min": 3332.268,
+    "p05": 5718.0184,
+    "p25": 6011.6355,
+    "median": 6598.1990000000005,
+    "mean": 7932.713999999999,
+    "p75": 10551.76325,
+    "p95": 12654.431849999997,
+    "max": 13504.849,
+    "std": 2692.0833288613367
+  },
+  "median_operating_power_w_distribution": {
+    "count": 30,
+    "min": 156.304,
+    "p05": 283.78000000000003,
+    "p25": 689.0505,
+    "median": 948.225,
+    "mean": 1133.2073333333333,
+    "p75": 1496.53925,
+    "p95": 2532.0765999999985,
+    "max": 2973.776,
+    "std": 684.112569710343
+  },
+  "mean_seasonal_shares": {
+    "winter": 0.5565747000000001,
+    "spring": 0.20956866666666668,
+    "summer": 0.04179556666666666,
+    "autumn": 0.19206106666666667
+  },
+  "mean_mode_shares": {
+    "standby_lt_100w": 0.6015972333333333,
+    "compressor_100w_to_4kw": 0.36494006666666656,
+    "heating_rod_gt_4kw": 0.03346269999999999
+  },
+  "production_note": "Research only. Does not replace createHeatPumpComponent15Min or production W\u00e4rmepumpe logic."
+}

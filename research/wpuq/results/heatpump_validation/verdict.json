@@ -1,0 +1,96 @@
+{
+  "overall": "optimistic",
+  "headline_metric_counts": {
+    "optimistic": 6,
+    "conservative": 0,
+    "neutral_within_iqr": 2
+  },
+  "headline_metrics": {
+    "season_winter_share": {
+      "production": 0.36238073,
+      "cohort_median": 0.55120769,
+      "cohort_p25": 0.48808859,
+      "cohort_p75": 0.64299537,
+      "delta_vs_median": -0.18882696,
+      "relative_delta_vs_median": -0.34256953,
+      "verdict": "optimistic",
+      "higher_is_optimistic": false
+    },
+    "season_summer_share": {
+      "production": 0.09441015,
+      "cohort_median": 0.02990343,
+      "cohort_p25": 0.02165647,
+      "cohort_p75": 0.04371999,
+      "delta_vs_median": 0.06450672,
+      "relative_delta_vs_median": 2.15716819,
+      "verdict": "optimistic",
+      "higher_is_optimistic": true
+    },
+    "pv_window_share": {
+      "production": 0.29166667,
+      "cohort_median": 0.28618657,
+      "cohort_p25": 0.25037238,
+      "cohort_p75": 0.32182671,
+      "delta_vs_median": 0.0054801,
+      "relative_delta_vs_median": 0.0191487,
+      "verdict": "neutral_within_iqr",
+      "higher_is_optimistic": true
+    },
+    "night_window_share": {
+      "production": 0.33333333,
+      "cohort_median": 0.3142991,
+      "cohort_p25": 0.2687979,
+      "cohort_p75": 0.36528463,
+      "delta_vs_median": 0.01903423,
+      "relative_delta_vs_median": 0.06056088,
+      "verdict": "neutral_within_iqr",
+      "higher_is_optimistic": false
+    },
+    "peak_power_w_normalized": {
+      "production": 671.07542888,
+      "cohort_median": 8250.89831598,
+      "cohort_p25": 4406.04815752,
+      "cohort_p75": 10855.78028533,
+      "delta_vs_median": -7579.8228871,
+      "relative_delta_vs_median": -0.91866638,
+      "verdict": "optimistic",
+      "higher_is_optimistic": false
+    },
+    "operating_interval_share_normalized": {
+      "production": 1.0,
+      "cohort_median": 0.32161815,
+      "cohort_p25": 0.25863299,
+      "cohort_p75": 0.43924087,
+      "delta_vs_median": 0.67838185,
+      "relative_delta_vs_median": 2.10927725,
+      "verdict": "optimistic",
+      "higher_is_optimistic": true
+    },
+    "share_heating_rod_energy_normalized": {
+      "production": 0.0,
+      "cohort_median": 0.11344199,
+      "cohort_p25": 0.00143884,
+      "cohort_p75": 0.25560198,
+      "delta_vs_median": -0.11344199,
+      "relative_delta_vs_median": -1.0,
+      "verdict": "optimistic",
+      "higher_is_optimistic": false
+    },
+    "daily_kwh_p95": {
+      "production": 16.10581029,
+      "cohort_median": 30.68957616,
+      "cohort_p25": 26.68603953,
+      "cohort_p75": 44.33453977,
+      "delta_vs_median": -14.58376587,
+      "relative_delta_vs_median": -0.47520258,
+      "verdict": "optimistic",
+      "higher_is_optimistic": false
+    }
+  },
+  "interpretation": "Production overstates coincidence with PV and/or understates winter concentration, peaks, and heating-rod bursts relative to WPuQ.",
+  "rmse_monthly_shares_vs_cohort_median": 0.04520315,
+  "rmse_hourly_shares_vs_cohort_median": 0.00320711,
+  "closest_house_monthly_to_production": "SFH8",
+  "closest_house_hourly_to_production": "SFH5",
+  "representative_house_nearest_median_monthly": "SFH38"
+}
