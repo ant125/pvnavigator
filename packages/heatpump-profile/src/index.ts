@@ -3,7 +3,8 @@
  *
  * Pure module: no `fs`. Runtime never reads research zips or raw datasets.
  * Selection goes through the catalogue; scaling is uniform electrical energy
- * only. Not wired into SpeicherGrenze production yet.
+ * only. SpeicherGrenze Luft/Wasser production calls
+ * {@link createHeatPumpProfile15Min}.
  *
  * Do not import in client components.
  */

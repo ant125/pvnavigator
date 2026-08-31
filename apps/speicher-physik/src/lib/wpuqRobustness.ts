@@ -4,8 +4,7 @@ import {
   TIME_STEP_HOURS_15,
   type PhysicalKernelResult,
 } from "../../../../packages/pv-core";
-import { createHeatPumpComponent15Min } from "@/load/heatpump";
-import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
+import { mergeHouseholdWithHeatPump, type LoadComponent } from "@/load/merge";
 import {
   DEFAULT_WEATHER_DATABASE,
   simulateMultiYearSpeicherGrenz,
@@ -71,24 +70,13 @@ function kpisAtTechnicalSize(
 function mergeHouseLoad(params: {
   householdProfile: number[];
   householdAnnualKwh: number;
-  heatPumpEnabled: boolean | undefined;
-  heatPumpConsumptionKWh: number | undefined;
+  heatPumpComponent: LoadComponent | null;
 }): number[] {
-  const components: LoadComponent[] = [
-    {
-      name: "house",
-      yearlyConsumption: params.householdAnnualKwh,
-      profile: params.householdProfile,
-    },
-  ];
-  if (
-    params.heatPumpEnabled === true &&
-    typeof params.heatPumpConsumptionKWh === "number" &&
-    params.heatPumpConsumptionKWh > 0
-  ) {
-    components.push(createHeatPumpComponent15Min(params.heatPumpConsumptionKWh));
-  }
-  return mergeLoadProfiles(components);
+  return mergeHouseholdWithHeatPump({
+    householdProfile: params.householdProfile,
+    householdAnnualKwh: params.householdAnnualKwh,
+    heatPump: params.heatPumpComponent,
+  });
 }
 
 async function mapPool<T, R>(
@@ -112,8 +100,12 @@ async function mapPool<T, R>(
 
 export type RunWpuqHouseholdRobustnessParams = {
   householdAnnualKwh: number;
-  heatPumpEnabled?: boolean;
-  heatPumpConsumptionKWh?: number;
+  /**
+   * Customer-scenario heat-pump component, or null when HP is off.
+   * Must be the same series used in the BDEW primary calculation.
+   * Robustness only changes the household load shape.
+   */
+  heatPumpComponent?: LoadComponent | null;
   getPvForYear: (year: number) => number[] | Promise<number[]>;
   bdewTechnicalSizeKwh: number;
   years?: readonly number[];
@@ -129,7 +121,8 @@ export type RunWpuqHouseholdRobustnessParams = {
 /**
  * Repeat the production simulation for each of the 27 WPuQ household shapes.
  * Only the household load shape changes; PV, roof, weather years, battery
- * model and physics are identical to the BDEW run.
+ * model, physics, and the selected heat-pump component are identical to the
+ * BDEW run.
  */
 export async function runWpuqHouseholdRobustness(
   params: RunWpuqHouseholdRobustnessParams
@@ -170,8 +163,7 @@ export async function runWpuqHouseholdRobustness(
     const merged = mergeHouseLoad({
       householdProfile: scaled,
       householdAnnualKwh: target,
-      heatPumpEnabled: params.heatPumpEnabled,
-      heatPumpConsumptionKWh: params.heatPumpConsumptionKWh,
+      heatPumpComponent: params.heatPumpComponent ?? null,
     });
 
     const kernel = await simulateMultiYearSpeicherGrenz({

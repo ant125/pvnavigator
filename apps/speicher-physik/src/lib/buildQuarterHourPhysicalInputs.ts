@@ -9,7 +9,8 @@
  * - household: native BDEW H25 15-min (`createUserLoadProfile15MinForYear`)
  * - PVGIS: remains hourly; after Berlin 8760 alignment each hour E is split
  *   uniformly into [E/4, E/4, E/4, E/4]
- * - Wärmepumpe: same synthetic seasonal multipliers, native 96 slots/day
+ * - Wärmepumpe: `@heatpump-profile/loader` Luft/Wasser prototypes, scaled
+ *   to user kWh. Legacy inputs default to unknown + heating+DHW.
  *
  * All output arrays have length 35040 (non-leap year).
  */
@@ -20,8 +21,13 @@ import {
   TIME_STEP_HOURS_15,
 } from "../../../../packages/pv-core";
 import { expandAlignedPvgisHourlyToQuarterHours } from "../../../../packages/pvgis-adapter";
-import { createHeatPumpComponent15Min } from "@/load/heatpump";
-import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
+import { mergeHouseholdWithHeatPump, type LoadComponent } from "@/load/merge";
+import {
+  buildHeatPumpLoadComponent,
+  type HeatPumpCalculationMeta,
+  type HeatPumpDhwService,
+  type HeatPumpTechnologyProduction,
+} from "@/load/resolveHeatPumpLoadComponent";
 
 export type QuarterHourPhysicalInputs = {
   year: number;
@@ -31,6 +37,7 @@ export type QuarterHourPhysicalInputs = {
   heatPumpLoadKwh: number[] | null;
   mergedLoadKwh: number[];
   pvKwh: number[];
+  heatPumpMeta: HeatPumpCalculationMeta | null;
 };
 
 export function buildQuarterHourPhysicalInputsForYear(params: {
@@ -40,6 +47,8 @@ export function buildQuarterHourPhysicalInputsForYear(params: {
   hourlyPvKwh: readonly number[];
   heatPumpEnabled?: boolean;
   heatPumpConsumptionKWh?: number;
+  heatPumpTechnology?: HeatPumpTechnologyProduction;
+  heatPumpDhwService?: HeatPumpDhwService;
 }): QuarterHourPhysicalInputs {
   const householdLoadKwh = createUserLoadProfile15MinForYear(
     params.annualConsumptionKWh,
@@ -47,26 +56,29 @@ export function buildQuarterHourPhysicalInputsForYear(params: {
   );
   const pvKwh = expandAlignedPvgisHourlyToQuarterHours(params.hourlyPvKwh);
 
-  const components: LoadComponent[] = [
-    {
-      name: "house",
-      yearlyConsumption: params.annualConsumptionKWh,
-      profile: householdLoadKwh,
-    },
-  ];
-
-  let heatPumpLoadKwh: number[] | null = null;
+  let heatPump: LoadComponent | null = null;
+  let heatPumpMeta: HeatPumpCalculationMeta | null = null;
   if (
     params.heatPumpEnabled === true &&
     typeof params.heatPumpConsumptionKWh === "number" &&
     params.heatPumpConsumptionKWh > 0
   ) {
-    const hp = createHeatPumpComponent15Min(params.heatPumpConsumptionKWh);
-    heatPumpLoadKwh = hp.profile;
-    components.push(hp);
+    const resolved = buildHeatPumpLoadComponent({
+      annualElectricalKwh: params.heatPumpConsumptionKWh,
+      year: params.year,
+      technology: params.heatPumpTechnology,
+      dhwService: params.heatPumpDhwService,
+    });
+    heatPump = resolved.component;
+    heatPumpMeta = resolved.meta;
   }
 
-  const mergedLoadKwh = mergeLoadProfiles(components);
+  const heatPumpLoadKwh = heatPump?.profile ?? null;
+  const mergedLoadKwh = mergeHouseholdWithHeatPump({
+    householdProfile: householdLoadKwh,
+    householdAnnualKwh: params.annualConsumptionKWh,
+    heatPump,
+  });
 
   if (
     householdLoadKwh.length !== STEPS_PER_NON_LEAP_YEAR_15 ||
@@ -88,5 +100,6 @@ export function buildQuarterHourPhysicalInputsForYear(params: {
     heatPumpLoadKwh,
     mergedLoadKwh,
     pvKwh,
+    heatPumpMeta,
   };
 }

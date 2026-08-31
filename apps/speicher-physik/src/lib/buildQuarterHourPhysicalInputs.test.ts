@@ -47,6 +47,7 @@ describe("buildQuarterHourPhysicalInputsForYear", () => {
       annual * REL_TOL
     );
     expect(inputs.heatPumpLoadKwh).toBeNull();
+    expect(inputs.heatPumpMeta).toBeNull();
     expect(inputs.timeStepHours).toBe(TIME_STEP_HOURS_15);
     expect(inputs.stepsPerYear).toBe(35040);
   });
@@ -89,6 +90,8 @@ describe("buildQuarterHourPhysicalInputsForYear", () => {
     expect(qh.heatPumpLoadKwh).toHaveLength(35040);
     expect(qh.mergedLoadKwh).toHaveLength(35040);
     expect(qh.pvKwh).toHaveLength(35040);
+    expect(qh.heatPumpMeta?.profileId).toBe("lw-heating-dhw-thermbuild-n2-v1");
+    expect(qh.heatPumpMeta?.usedLegacyDefaults).toBe(true);
 
     expect(Math.abs(sum(qh.householdLoadKwh) - sum(houseHourly))).toBeLessThanOrEqual(
       houseAnnual * REL_TOL
@@ -102,6 +105,36 @@ describe("buildQuarterHourPhysicalInputsForYear", () => {
     expect(Math.abs(sum(qh.pvKwh) - sum(hourlyPv))).toBeLessThanOrEqual(
       sum(hourlyPv) * REL_TOL + 1e-12
     );
+  });
+
+  it("A/B: explicit Luft/Wasser DHW service selects O5 vs N2", () => {
+    const year = 2018;
+    const hourlyPv = syntheticHourlyPv(year);
+    const heatingOnly = buildQuarterHourPhysicalInputsForYear({
+      year,
+      annualConsumptionKWh: 4000,
+      hourlyPvKwh: hourlyPv,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKWh: 3000,
+      heatPumpTechnology: "luftwasser",
+      heatPumpDhwService: "space_heat_only",
+    });
+    const heatingAndDhw = buildQuarterHourPhysicalInputsForYear({
+      year,
+      annualConsumptionKWh: 4000,
+      hourlyPvKwh: hourlyPv,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKWh: 3000,
+      heatPumpTechnology: "luftwasser",
+      heatPumpDhwService: "space_heat_and_dhw",
+    });
+    expect(heatingOnly.heatPumpMeta?.profileId).toBe(
+      "lw-heating-only-thermbuild-o5-v1"
+    );
+    expect(heatingAndDhw.heatPumpMeta?.profileId).toBe(
+      "lw-heating-dhw-thermbuild-n2-v1"
+    );
+    expect(heatingOnly.heatPumpLoadKwh).not.toEqual(heatingAndDhw.heatPumpLoadKwh);
   });
 
   it("battery default remains dt=1; production passes TIME_STEP_HOURS_15", () => {

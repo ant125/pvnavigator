@@ -8,8 +8,13 @@ import {
   loadHourlyPvByYear,
   simulateMultiYearSpeicherGrenz,
 } from "@/lib/multiYearSimulation";
-import { createHeatPumpComponent15Min } from "@/load/heatpump";
-import { mergeLoadProfiles, type LoadComponent } from "@/load/merge";
+import {
+  buildHeatPumpLoadComponent,
+  type HeatPumpCalculationMeta,
+  type HeatPumpDhwService,
+  type HeatPumpTechnologyProduction,
+} from "@/load/resolveHeatPumpLoadComponent";
+import { mergeHouseholdWithHeatPump, type LoadComponent } from "@/load/merge";
 import type { PvSurfaceInput } from "@/app/(speicher)/types/speicher";
 import { buildSpeicherChartData } from "@/lib/speicherChartData";
 import { deriveRecommendedTechnicalSize } from "@/lib/speicherRecommendation";
@@ -26,31 +31,46 @@ import {
 function buildMergedLoadForYear(
   year: number,
   annualConsumptionKWh: number,
-  heatPumpEnabled: boolean | undefined,
-  heatPumpConsumptionKWh: number | undefined
+  heatPump: LoadComponent | null
 ): number[] {
   const houseLoad = createUserLoadProfile15MinForYear(
     annualConsumptionKWh,
     year
   );
 
-  const components: LoadComponent[] = [
-    {
-      name: "house",
-      yearlyConsumption: annualConsumptionKWh,
-      profile: houseLoad,
-    },
-  ];
+  return mergeHouseholdWithHeatPump({
+    householdProfile: houseLoad,
+    householdAnnualKwh: annualConsumptionKWh,
+    heatPump,
+  });
+}
 
+/**
+ * Select the heat-pump component once per scenario. The same series is
+ * reused for every weather year and for all 27 WPuQ robustness households.
+ */
+function resolveProductionHeatPump(params: {
+  heatPumpEnabled: boolean | undefined;
+  heatPumpConsumptionKWh: number | undefined;
+  heatPumpTechnology: HeatPumpTechnologyProduction | undefined;
+  heatPumpDhwService: HeatPumpDhwService | undefined;
+  year: number;
+}): { component: LoadComponent; meta: HeatPumpCalculationMeta } | null {
   if (
-    heatPumpEnabled === true &&
-    typeof heatPumpConsumptionKWh === "number" &&
-    heatPumpConsumptionKWh > 0
+    params.heatPumpEnabled !== true ||
+    typeof params.heatPumpConsumptionKWh !== "number" ||
+    params.heatPumpConsumptionKWh <= 0
   ) {
-    components.push(createHeatPumpComponent15Min(heatPumpConsumptionKWh));
+    return null;
   }
 
-  return mergeLoadProfiles(components);
+  const result = buildHeatPumpLoadComponent({
+    annualElectricalKwh: params.heatPumpConsumptionKWh,
+    year: params.year,
+    technology: params.heatPumpTechnology,
+    dhwService: params.heatPumpDhwService,
+  });
+  return { component: result.component, meta: result.meta };
 }
 
 function normalizePvSurfacesForSpeicherAction(params: {
@@ -122,6 +142,17 @@ export type CalculateSpeicherResultInput = {
   pvSurfaces?: readonly PvSurfaceInput[] | undefined;
   heatPumpEnabled?: boolean;
   heatPumpConsumptionKWh?: number;
+  /**
+   * Production technology class. Absent on legacy inputs → `"unknown"`
+   * (resolves to Luft/Wasser in `@heatpump-profile/loader`).
+   * Wasser/Wasser is not a production option in this phase.
+   */
+  heatPumpTechnology?: HeatPumpTechnologyProduction;
+  /**
+   * Whether the heat pump supplies DHW. Absent on legacy inputs →
+   * `"space_heat_and_dhw"` (safer residential default).
+   */
+  heatPumpDhwService?: HeatPumpDhwService;
   backupReserveKwh?: number;
   /**
    * Test-only: skip PVGIS. Production omits this so PV is fetched once
@@ -147,6 +178,11 @@ export type CalculateSpeicherResultOutput = {
   };
   speicherGrenz: SpeicherGrenzPayload;
   robustness: WpuqRobustnessPayload;
+  /**
+   * Internal heat-pump selection metadata for later Methodik / report work.
+   * Null when no heat-pump component was added. Not customer-facing copy.
+   */
+  heatPump: HeatPumpCalculationMeta | null;
 };
 
 /**
@@ -230,13 +266,21 @@ export async function calculateSpeicherResult(
   }
   await report?.({ stage: "pvgis" });
 
+  const heatPump = resolveProductionHeatPump({
+    heatPumpEnabled: input.heatPumpEnabled,
+    heatPumpConsumptionKWh: input.heatPumpConsumptionKWh,
+    heatPumpTechnology: input.heatPumpTechnology,
+    heatPumpDhwService: input.heatPumpDhwService,
+    year: years[0] ?? 2019,
+  });
+  const heatPumpComponent = heatPump?.component ?? null;
+
   const loadByYear: Record<number, number[]> = {};
   for (const year of years) {
     loadByYear[year] = buildMergedLoadForYear(
       year,
       input.annualConsumptionKWh,
-      input.heatPumpEnabled,
-      input.heatPumpConsumptionKWh
+      heatPumpComponent
     );
   }
   await report?.({ stage: "consumption" });
@@ -268,8 +312,7 @@ export async function calculateSpeicherResult(
 
   const robustness = await runWpuqHouseholdRobustness({
     householdAnnualKwh: input.annualConsumptionKWh,
-    heatPumpEnabled: input.heatPumpEnabled,
-    heatPumpConsumptionKWh: input.heatPumpConsumptionKWh,
+    heatPumpComponent,
     getPvForYear,
     bdewTechnicalSizeKwh,
     years,
@@ -296,5 +339,6 @@ export async function calculateSpeicherResult(
     verifiedResult,
     speicherGrenz: toSpeicherGrenzPayload(kernel),
     robustness,
+    heatPump: heatPump?.meta ?? null,
   };
 }

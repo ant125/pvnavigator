@@ -9,6 +9,10 @@ export default defineConfig({
     alias: {
       "server-only": path.resolve(__dirname, "src/test/server-only-stub.ts"),
       "@": path.resolve(__dirname, "src"),
+      "@heatpump-profile/loader": path.resolve(
+        __dirname,
+        "../../packages/heatpump-profile/src/index.ts"
+      ),
     },
   },
 });

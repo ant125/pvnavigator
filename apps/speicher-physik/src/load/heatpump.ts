@@ -1,9 +1,13 @@
 /**
- * Seasonal heat-pump electricity profile.
+ * Synthetic seasonal heat-pump electricity profile.
  *
- * Hourly production path: 8760 steps (unchanged).
- * Alternate 15-min path: 35040 steps with the same monthly multipliers
- * and the same annual kWh. Not wired to calculateSpeicherResult.
+ * Production Luft/Wasser uses `@heatpump-profile/loader`
+ * (`createHeatPumpProfile15Min`). Keep these functions as the explicit
+ * fallback only when that package cannot resolve a supported profile.
+ * Do not call them as the default Luft/Wasser path.
+ *
+ * Hourly: 8760 steps. 15-min: 35040 steps. Same monthly multipliers
+ * and the same annual kWh.
  */
 
 import {
@@ -97,7 +101,7 @@ export function createHeatPumpComponent(annualKWh: number): LoadComponent {
 
 /**
  * Same seasonal model as {@link createHeatPumpComponent}, native 96 slots/day.
- * Not used by SpeicherGrenze production (still hourly).
+ * Explicit SpeicherGrenze fallback only — not the Luft/Wasser default.
  */
 export function createHeatPumpComponent15Min(annualKWh: number): LoadComponent {
   const profile = scaleWeightsToAnnual(
