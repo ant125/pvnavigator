@@ -1,35 +1,16 @@
 "use client";
 
 import type { CalculationProgressState } from "@/lib/calculationProgress";
-import { SMART_METER_HOUSEHOLD_COUNT } from "@/lib/calculationProgress";
+import {
+  SMART_METER_HOUSEHOLD_COUNT,
+  getCalculationProgressStages,
+  isCalculationStageDone,
+} from "@/lib/calculationProgress";
 
 const STAGE_5_LABEL = "Validierung mit realen Referenzhaushalten";
 
 /** Matches DEFAULT_MULTI_YEAR_YEARS (2006–2020). Presentation only. */
 const WEATHER_YEAR_COUNT = 15;
-
-const STAGES = [
-  {
-    id: "location",
-    done: "Standort analysiert",
-    active: "Standort wird analysiert",
-  },
-  {
-    id: "pvgis",
-    done: "PVGIS-Wetterdaten geladen",
-    active: "PVGIS-Wetterdaten werden geladen",
-  },
-  {
-    id: "consumption",
-    done: "Stromverbrauch modelliert",
-    active: "Stromverbrauch wird modelliert",
-  },
-  {
-    id: "physics",
-    done: "Speicherphysik berechnet",
-    active: "Speicherphysik wird berechnet",
-  },
-] as const;
 
 function formatElapsed(seconds: number): string {
   return seconds === 1 ? "1 Sekunde" : `${seconds} Sekunden`;
@@ -62,13 +43,17 @@ type CalculationProgressListProps = {
   progress: CalculationProgressState;
   elapsedSeconds: number;
   complete?: boolean;
+  /** Luft/Wasser only. Presentation row; no extra backend event. */
+  includeHeatPumpProfile?: boolean;
 };
 
 export function CalculationProgressList({
   progress,
   elapsedSeconds,
   complete = false,
+  includeHeatPumpProfile = false,
 }: CalculationProgressListProps) {
+  const stages = getCalculationProgressStages(includeHeatPumpProfile);
   const stage5Active = progress.physics && !complete;
   const showValidationCopy = stage5Active || complete;
   const householdTotal =
@@ -113,16 +98,16 @@ export function CalculationProgressList({
       </header>
 
       <ol className="list-none border-t border-line-soft pt-4">
-        {STAGES.map((stage) => {
-          const done = complete || progress[stage.id];
+        {stages.map((stage, index) => {
+          const done = isCalculationStageDone(stage.id, progress, complete);
           const previousDone =
-            stage.id === "location"
+            index === 0
               ? true
-              : stage.id === "pvgis"
-                ? progress.location
-                : stage.id === "consumption"
-                  ? progress.pvgis
-                  : progress.consumption;
+              : isCalculationStageDone(
+                  stages[index - 1].id,
+                  progress,
+                  complete
+                );
           const active = !done && previousDone;
           const state = done ? "done" : active ? "active" : "pending";
 

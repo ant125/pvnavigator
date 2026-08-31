@@ -25,7 +25,7 @@ export const METHODOLOGY_CATEGORIES: readonly MethodologyCategory[] = [
     id: "load_profiles",
     title: "Lastprofile",
     description:
-      "Standardisierte Verbrauchsprofile für Haushaltslasten in Deutschland.",
+      "Standardisierte Verbrauchsprofile für Haushaltslasten in Deutschland sowie gemessene Wärmepumpen-Referenzprofile.",
   },
   {
     id: "battery_simulation",

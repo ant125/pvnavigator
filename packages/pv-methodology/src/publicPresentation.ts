@@ -111,6 +111,7 @@ export function getPublicMethodologySections(): PublicMethodologySection[] {
 
   const pvgis = requireSource("pvgis-jrc");
   const bdew = requireSource("bdew-h25");
+  const thermbuild = requireSource("thermbuild-fordatis-486");
   const htw = requireSource("htw-berlin-unabhaengigkeitsrechner");
   const ise = requireSource("fraunhofer-ise");
 
@@ -149,7 +150,7 @@ export function getPublicMethodologySections(): PublicMethodologySection[] {
       title: load.title,
       icon: "load",
       description:
-        "Der Haushaltsverbrauch folgt dem aktuellen BDEW-Standardlastprofil.",
+        "Der Haushaltsverbrauch folgt dem aktuellen BDEW-Standardlastprofil. Eine optionale Luft/Wasser-Wärmepumpe wird über ein gemessenes ThermBuild-Referenzprofil abgebildet.",
       entries: [
         {
           id: "public-bdew-h25",
@@ -164,6 +165,23 @@ export function getPublicMethodologySections(): PublicMethodologySection[] {
           ],
           links: linksFrom(["bdew-h25"], {
             "bdew-h25": "BDEW Standardlastprofile Strom",
+          }),
+        },
+        {
+          id: "public-thermbuild",
+          title: "ThermBuild Wärmepumpenmessungen",
+          organization: thermbuild.organization,
+          description:
+            "Für Luft/Wasser-Wärmepumpen verwendet die Simulation gemessene elektrische Lastprofile in 15-Minuten-Auflösung aus der ThermBuild-Messkampagne. Das Profil ist ein repräsentatives ingenieurtechnisches Referenzprofil und wird gleichmäßig auf den angegebenen Jahresstromverbrauch der Wärmepumpe skaliert. Es bildet nicht die individuelle Wärmepumpe des Nutzers ab.",
+          bullets: [
+            "Quelle: ThermBuild-Messkampagne, Fraunhofer",
+            "Elektrisches Lastprofil, 15-Minuten-Auflösung",
+            "Gleichmäßige Skalierung auf den Jahresstromverbrauch",
+            "Referenzprofil, nicht der Lastgang der Nutzer-Wärmepumpe",
+          ],
+          links: linksFrom(["thermbuild-fordatis-486"], {
+            "thermbuild-fordatis-486":
+              "ThermBuild TwinHouse Wärmepumpenmessungen",
           }),
         },
       ],

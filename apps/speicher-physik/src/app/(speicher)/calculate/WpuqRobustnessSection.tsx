@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
-import { getReportMethodologySources } from "@/lib/reportMethodologySources";
+import {
+  getReportMethodologySources,
+  type ReportHeatPumpCitation,
+} from "@/lib/reportMethodologySources";
 
 type BdewReportValues = {
   eigenverbrauchKwh: number | null;
@@ -48,8 +51,12 @@ function formatBdewPct(value: number | null): string {
     : "—";
 }
 
-export function ReportQuellenSection() {
-  const sources = getReportMethodologySources();
+export function ReportQuellenSection({
+  heatPump,
+}: {
+  heatPump?: ReportHeatPumpCitation;
+}) {
+  const sources = getReportMethodologySources(heatPump);
 
   return (
     <section

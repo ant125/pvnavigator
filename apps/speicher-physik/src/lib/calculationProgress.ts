@@ -48,6 +48,78 @@ export const INITIAL_CALCULATION_PROGRESS: CalculationProgressState = {
   smartmeterTotal: SMART_METER_HOUSEHOLD_COUNT,
 };
 
+export type CalculationProgressStageId =
+  | "location"
+  | "pvgis"
+  | "heatpump"
+  | "consumption"
+  | "physics";
+
+export type CalculationProgressStage = {
+  id: CalculationProgressStageId;
+  done: string;
+  active: string;
+};
+
+const LOCATION_STAGE: CalculationProgressStage = {
+  id: "location",
+  done: "Standort analysiert",
+  active: "Standort wird analysiert",
+};
+
+const PVGIS_STAGE: CalculationProgressStage = {
+  id: "pvgis",
+  done: "PVGIS-Wetterdaten geladen",
+  active: "PVGIS-Wetterdaten werden geladen",
+};
+
+const HEAT_PUMP_STAGE: CalculationProgressStage = {
+  id: "heatpump",
+  done: "ThermBuild-Wärmepumpenprofil geladen",
+  active: "ThermBuild-Wärmepumpenprofil wird geladen",
+};
+
+const CONSUMPTION_STAGE: CalculationProgressStage = {
+  id: "consumption",
+  done: "Stromverbrauch modelliert",
+  active: "Stromverbrauch wird modelliert",
+};
+
+const PHYSICS_STAGE: CalculationProgressStage = {
+  id: "physics",
+  done: "Speicherphysik berechnet",
+  active: "Speicherphysik wird berechnet",
+};
+
+/**
+ * Loading-screen stages. The ThermBuild row is presentation-only and
+ * appears only for Luft/Wasser. It does not add a backend progress event.
+ */
+export function getCalculationProgressStages(
+  includeHeatPumpProfile: boolean
+): readonly CalculationProgressStage[] {
+  if (!includeHeatPumpProfile) {
+    return [LOCATION_STAGE, PVGIS_STAGE, CONSUMPTION_STAGE, PHYSICS_STAGE];
+  }
+  return [
+    LOCATION_STAGE,
+    PVGIS_STAGE,
+    HEAT_PUMP_STAGE,
+    CONSUMPTION_STAGE,
+    PHYSICS_STAGE,
+  ];
+}
+
+export function isCalculationStageDone(
+  stageId: CalculationProgressStageId,
+  progress: CalculationProgressState,
+  complete: boolean
+): boolean {
+  if (complete) return true;
+  if (stageId === "heatpump") return progress.consumption;
+  return progress[stageId];
+}
+
 export function applyCalculationProgress(
   prev: CalculationProgressState,
   event: CalculationProgressEvent

@@ -556,7 +556,7 @@ function ConsumptionPatternsSection() {
     {
       title: "Haushalt mit Wärmepumpe",
       description:
-        "Separater Stromverbrauch der Wärmepumpe mit saisonalem Verlauf und höherem Bedarf im Winter. Dadurch verändert sich der Lastgang in 15-Minuten-Schritten und damit auch die berechnete SpeicherGrenze.",
+        "Separater Stromverbrauch der Wärmepumpe als zusätzliches Lastprofil. Dadurch verändert sich der Lastgang in 15-Minuten-Schritten und damit auch die berechnete SpeicherGrenze.",
       icon: Thermometer,
     },
     {

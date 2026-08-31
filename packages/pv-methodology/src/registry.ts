@@ -88,7 +88,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     title: "ThermBuild TwinHouse Wärmepumpenmessungen",
     organization: "Fraunhofer IBP / Fordatis",
     description:
-      "Laborgemessene 15-Minuten-Stromaufnahme von Luft/Wasser-Wärmepumpen (TwinHouse, Fraunhofer IBP). PVNavigator skaliert die Klassenprototypen Heizen ohne WW (O5) und Heizen plus WW (N2) auf den angegebenen Jahresstromverbrauch der Wärmepumpe. Der Haushaltsstrom bleibt BDEW H25.",
+      "Gemessene 15-Minuten-Stromaufnahme von Luft/Wasser-Wärmepumpen aus der ThermBuild-Messkampagne (Fraunhofer IBP). PVNavigator verwendet das Profil als repräsentatives ingenieurtechnisches Referenzprofil und skaliert es gleichmäßig auf den angegebenen Jahresstromverbrauch der Wärmepumpe. Es handelt sich nicht um den Lastgang der Nutzer-Wärmepumpe. Der Haushaltsstrom bleibt BDEW H25.",
     url: "https://fordatis.fraunhofer.de/handle/fordatis/486",
     official: true,
     sourceType: "dataset",

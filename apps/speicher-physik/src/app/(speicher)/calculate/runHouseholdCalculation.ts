@@ -12,12 +12,19 @@ import {
 import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
 import type { CalculationProgressHandler } from "@/lib/calculationProgress";
 import type { PvSurfaceInput } from "../types/speicher";
+import type {
+  HeatPumpCalculationMeta,
+  HeatPumpDhwService,
+  HeatPumpTechnologyProduction,
+} from "@/load/resolveHeatPumpLoadComponent";
 
 export type HouseholdCalculationPayload = {
   verifiedResult: VerifiedResult;
   speicherGrenz: SpeicherGrenzPayload;
   robustness: WpuqRobustnessPayload;
   displayAddress: string;
+  /** Resolved calculation metadata. Null when no heat-pump component was added. */
+  heatPump: HeatPumpCalculationMeta | null;
 };
 
 function getGeocodeStatus(error: unknown): string | null {
@@ -88,6 +95,8 @@ export type HouseholdCalculationInput = {
   pvSurfaces?: readonly PvSurfaceInput[] | undefined;
   heatPumpEnabled?: boolean;
   heatPumpConsumptionKWh?: number;
+  heatPumpTechnology?: HeatPumpTechnologyProduction;
+  heatPumpDhwService?: HeatPumpDhwService;
   backupReserveKwh?: number;
 };
 
@@ -127,7 +136,7 @@ export async function runHouseholdCalculation(
 
   await onProgress?.({ stage: "location" });
 
-  const { verifiedResult, speicherGrenz, robustness } =
+  const { verifiedResult, speicherGrenz, robustness, heatPump } =
     await calculateSpeicherResult({
       annualConsumptionKWh: params.annualConsumptionKWh,
       pvSystemKwP: params.pvSystemKwP,
@@ -138,6 +147,8 @@ export async function runHouseholdCalculation(
       pvSurfaces: params.pvSurfaces,
       heatPumpEnabled: params.heatPumpEnabled,
       heatPumpConsumptionKWh: params.heatPumpConsumptionKWh,
+      heatPumpTechnology: params.heatPumpTechnology,
+      heatPumpDhwService: params.heatPumpDhwService,
       backupReserveKwh: params.backupReserveKwh,
       onProgress,
     });
@@ -147,5 +158,6 @@ export async function runHouseholdCalculation(
     speicherGrenz,
     robustness,
     displayAddress,
+    heatPump,
   };
 }

@@ -118,3 +118,128 @@ describe("validateInput field errors", () => {
     expect(result.fieldErrors.annualConsumptionKwh).toBeDefined();
   });
 });
+
+const VALID_FORM_BASE = {
+  pvSurfaces: [{ systemSizeKwP: 10, tiltDeg: 30, azimuthDeg: 180 }],
+  street: "Marienplatz",
+  houseNumber: "1",
+  postalCode: "80331",
+  city: "München",
+  annualConsumptionKwh: 4500,
+} as const;
+
+describe("validateInput heat pump (new UI)", () => {
+  it("allows Nein without type, DHW, or consumption", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      heatPumpEnabled: false,
+    });
+
+    expect(result.isValid).toBe(true);
+    expect(result.fieldErrors.heatPumpTechnology).toBeUndefined();
+    expect(result.fieldErrors.heatPumpDhwService).toBeUndefined();
+  });
+
+  it("allows omitted heat-pump fields (legacy saved calculations)", () => {
+    const result = validateInput({ ...VALID_FORM_BASE });
+
+    expect(result.isValid).toBe(true);
+  });
+
+  it("requires type when a heat pump is enabled", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKwh: 5000,
+    });
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      SPEICHER_FIELD_INLINE_MESSAGES.heatPumpTechnology
+    );
+    expect(result.fieldErrors.heatPumpTechnology).toBe(
+      SPEICHER_FIELD_INLINE_MESSAGES.heatPumpTechnology
+    );
+  });
+
+  it("requires DHW once Luft/Wasser is selected", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKwh: 5000,
+      heatPumpTechnology: "luftwasser",
+    });
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      SPEICHER_FIELD_INLINE_MESSAGES.heatPumpDhwService
+    );
+    expect(result.fieldErrors.heatPumpDhwService).toBe(
+      SPEICHER_FIELD_INLINE_MESSAGES.heatPumpDhwService
+    );
+  });
+
+  it("does not assume a DHW default", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKwh: 5000,
+      heatPumpTechnology: "luftwasser",
+    });
+
+    expect(result.fieldErrors.heatPumpDhwService).toBeDefined();
+  });
+
+  it("accepts Luft/Wasser with Heizung und Warmwasser", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKwh: 5000,
+      heatPumpTechnology: "luftwasser",
+      heatPumpDhwService: "space_heat_and_dhw",
+    });
+
+    expect(result.isValid).toBe(true);
+  });
+
+  it("accepts Luft/Wasser with nur Heizung", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKwh: 5000,
+      heatPumpTechnology: "luftwasser",
+      heatPumpDhwService: "space_heat_only",
+    });
+
+    expect(result.isValid).toBe(true);
+  });
+
+  it("rejects Wasser/Wasser", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKwh: 5000,
+      heatPumpTechnology: "wasserwasser" as never,
+      heatPumpDhwService: "space_heat_and_dhw",
+    });
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      SPEICHER_FIELD_INLINE_MESSAGES.heatPumpTechnology
+    );
+  });
+
+  it("still requires annual heat-pump consumption when enabled", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      heatPumpEnabled: true,
+      heatPumpTechnology: "luftwasser",
+      heatPumpDhwService: "space_heat_and_dhw",
+    });
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      SPEICHER_FIELD_INLINE_MESSAGES.heatPumpConsumptionKwh
+    );
+  });
+});

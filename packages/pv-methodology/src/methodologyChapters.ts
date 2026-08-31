@@ -179,8 +179,20 @@ export const METHODOLOGY_CHAPTERS: readonly MethodologyChapter[] = [
     number: 6,
     title: "Wärmepumpe",
     paragraphs: [
-      "PVNavigator verwendet derzeit ein ingenieurtechnisches Wärmepumpenmodell. Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche Lastreihe mit saisonaler Gewichtung abgebildet: höherer Verbrauch im Winter, geringerer Verbrauch im Sommer.",
-      "Reale 15-Minuten-Wärmepumpenmessungen aus dem WPuQ-Projekt wurden bereits ausgewertet. Sie werden geprüft, ob und wo sie für eine künftige Produktionsnutzung wissenschaftlich geeignet sind. In der aktuellen Berechnung sind sie nicht eingesetzt.",
+      "Für Luft/Wasser-Wärmepumpen verwendet die Simulation gemessene elektrische Lastprofile in 15-Minuten-Auflösung. Die Profile stammen aus der ThermBuild-Messkampagne (Fraunhofer).",
+      "Das gemessene Profil ist nicht der Lastgang der Wärmepumpe des Nutzers. Es dient als repräsentatives ingenieurtechnisches Referenzprofil.",
+      "Das Referenzprofil wird gleichmäßig auf den angegebenen Jahresstromverbrauch der Wärmepumpe skaliert. Die zeitliche Struktur bleibt erhalten; die Amplitude folgt dem eingegebenen Jahreswert.",
+      "Wasser/Wasser-Wärmepumpen sind in der aktuellen Berechnung nicht enthalten. Der Haushaltsstrom bleibt unabhängig von der Wärmepumpe BDEW H25.",
+    ],
+    bullets: [
+      "Technologie: Luft/Wasser",
+      "Datengrundlage: ThermBuild-Messkampagne (Fraunhofer)",
+      "Auflösung: elektrisches Lastprofil, 15 Minuten",
+      "Skalierung: gleichmäßig auf den Jahresstromverbrauch",
+      "Bedeutung: repräsentatives Referenzprofil, nicht die Nutzer-Wärmepumpe",
+    ],
+    notes: [
+      "Die offizielle Quelle der ThermBuild-Messungen ist im Abschnitt Quellen verzeichnet.",
     ],
   },
 ];

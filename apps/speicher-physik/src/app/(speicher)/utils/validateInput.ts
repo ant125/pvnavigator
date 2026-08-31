@@ -17,6 +17,11 @@ export const SPEICHER_FIELD_INLINE_MESSAGES = {
   street: "Bitte geben Sie eine Straße ein.",
   houseNumber: "Bitte geben Sie eine Hausnummer ein.",
   annualConsumptionKwh: "Bitte geben Sie einen gültigen Hausverbrauch ein.",
+  heatPumpTechnology: "Bitte wählen Sie den Typ der Wärmepumpe.",
+  heatPumpDhwService:
+    "Bitte wählen Sie, wofür die Wärmepumpe verwendet wird.",
+  heatPumpConsumptionKwh:
+    "Bitte geben Sie den jährlichen Stromverbrauch der Wärmepumpe ein.",
 } as const;
 
 export type SpeicherFieldErrorKey = keyof typeof SPEICHER_FIELD_INLINE_MESSAGES;
@@ -154,6 +159,8 @@ export function validateInput(input: Partial<SpeicherInput>): {
       SPEICHER_FIELD_INLINE_MESSAGES.annualConsumptionKwh;
   }
 
+  // New UI: type and DHW must be chosen before calculate. Legacy API
+  // requests that omit these fields still resolve in the production adapter.
   if (input.heatPumpEnabled) {
     const hp = input.heatPumpConsumptionKwh;
     if (
@@ -161,9 +168,22 @@ export function validateInput(input: Partial<SpeicherInput>): {
       !Number.isFinite(hp) ||
       hp <= 0
     ) {
-      errors.push(
-        "Bitte geben Sie den jährlichen Stromverbrauch der Wärmepumpe ein."
-      );
+      errors.push(SPEICHER_FIELD_INLINE_MESSAGES.heatPumpConsumptionKwh);
+      fieldErrors.heatPumpConsumptionKwh =
+        SPEICHER_FIELD_INLINE_MESSAGES.heatPumpConsumptionKwh;
+    }
+
+    if (input.heatPumpTechnology !== "luftwasser") {
+      errors.push(SPEICHER_FIELD_INLINE_MESSAGES.heatPumpTechnology);
+      fieldErrors.heatPumpTechnology =
+        SPEICHER_FIELD_INLINE_MESSAGES.heatPumpTechnology;
+    } else if (
+      input.heatPumpDhwService !== "space_heat_only" &&
+      input.heatPumpDhwService !== "space_heat_and_dhw"
+    ) {
+      errors.push(SPEICHER_FIELD_INLINE_MESSAGES.heatPumpDhwService);
+      fieldErrors.heatPumpDhwService =
+        SPEICHER_FIELD_INLINE_MESSAGES.heatPumpDhwService;
     }
   }
 

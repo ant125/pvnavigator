@@ -138,15 +138,13 @@ wie gut das Standardlastprofil dem tatsächlichen Verbrauchsverhalten entspricht
 
 ### 2.3 Wärmepumpe
 
-Falls eine Wärmepumpe aktiviert ist, wird der zusätzliche Stromverbrauch
-
-separat modelliert und dem Haushaltsverbrauch hinzugefügt.
+Falls eine Luft/Wasser-Wärmepumpe aktiviert ist, wird der zusätzliche Stromverbrauch separat modelliert und dem Haushaltsverbrauch hinzugefügt.
 
 Annahmen:
 
-Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche Lastreihe in 15-Minuten-Schritten modelliert. Die Verteilung erfolgt anhand monatlicher saisonaler Gewichtungen: mit höherem relativem Verbrauch im Winter und geringerem Verbrauch im Sommer. Die Jahressumme entspricht dem eingegebenen Wärmepumpenverbrauch.
+Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche Lastreihe in 15-Minuten-Schritten modelliert. Für Luft/Wasser verwendet die Simulation ein gemessenes elektrisches Referenzprofil. Das Profil wird gleichmäßig auf den angegebenen Jahresstromverbrauch skaliert. Es handelt sich nicht um den Lastgang der Wärmepumpe des Nutzers.
 
-Erhöhter Strombedarf tritt vor allem in den Wintermonaten auf
+Wasser/Wasser-Wärmepumpen sind in der aktuellen Berechnung nicht enthalten.
 
 👉 Wichtig:
 
@@ -162,9 +160,9 @@ Kein dynamisches Temperaturmodell
 
 Keine Abbildung von realen Steuerstrategien
 
-Keine Unterscheidung zwischen verschiedenen Wärmepumpentypen
+Das Referenzprofil bildet nicht die individuelle Wärmepumpe des Nutzers ab.
 
-👉 Die Modellierung stellt eine vereinfachte, aber realistische Näherung dar.
+Die methodische Dokumentation und die offizielle Quelle stehen unter Methodik & Quellen.
 
 ---
 

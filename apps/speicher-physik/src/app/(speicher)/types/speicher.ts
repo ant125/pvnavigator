@@ -54,6 +54,20 @@ export interface SpeicherInput {
   /** Optional: annual heat pump electricity consumption (kWh) */
   heatPumpConsumptionKwh?: number;
 
+  /**
+   * Production technology. The new UI only allows Luft/Wasser.
+   * Wasser/Wasser is shown disabled and must not be stored.
+   * Absent on legacy saved calculations.
+   */
+  heatPumpTechnology?: "luftwasser";
+
+  /**
+   * Whether the heat pump also supplies domestic hot water.
+   * Required by the new UI when a heat pump is enabled; absent on legacy
+   * saved calculations.
+   */
+  heatPumpDhwService?: "space_heat_only" | "space_heat_and_dhw";
+
   /** Optional: energy held as backup reserve (Notstrom), not used in daily cycling (kWh) */
   backupReserveKwh?: number;
   

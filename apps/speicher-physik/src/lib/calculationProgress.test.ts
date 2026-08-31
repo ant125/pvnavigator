@@ -3,6 +3,8 @@ import {
   INITIAL_CALCULATION_PROGRESS,
   applyCalculationProgress,
   formatCalculationDurationDe,
+  getCalculationProgressStages,
+  isCalculationStageDone,
 } from "./calculationProgress";
 
 describe("applyCalculationProgress", () => {
@@ -28,6 +30,30 @@ describe("applyCalculationProgress", () => {
     });
     expect(state.smartmeterCompleted).toBe(18);
     expect(state.smartmeterTotal).toBe(27);
+  });
+});
+
+describe("getCalculationProgressStages", () => {
+  it("omits ThermBuild unless a Luft/Wasser heat pump is selected", () => {
+    expect(getCalculationProgressStages(false).map((stage) => stage.id)).toEqual(
+      ["location", "pvgis", "consumption", "physics"]
+    );
+    expect(getCalculationProgressStages(true).map((stage) => stage.id)).toEqual(
+      ["location", "pvgis", "heatpump", "consumption", "physics"]
+    );
+  });
+
+  it("marks the ThermBuild row done with the consumption event", () => {
+    let state = INITIAL_CALCULATION_PROGRESS;
+    state = applyCalculationProgress(state, { stage: "location" });
+    state = applyCalculationProgress(state, { stage: "pvgis" });
+
+    expect(isCalculationStageDone("heatpump", state, false)).toBe(false);
+    expect(isCalculationStageDone("consumption", state, false)).toBe(false);
+
+    state = applyCalculationProgress(state, { stage: "consumption" });
+    expect(isCalculationStageDone("heatpump", state, false)).toBe(true);
+    expect(isCalculationStageDone("consumption", state, false)).toBe(true);
   });
 });
 
