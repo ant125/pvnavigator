@@ -120,3 +120,13 @@ This app must remain lightweight and independent of core logic.
 
 This file defines the canonical structure.
 Changes must respect this architecture.
+
+---
+
+## Related physics documents
+
+| Document | Role |
+|---|---|
+| [`docs/internal/speicher-physics-model.md`](internal/speicher-physics-model.md) | Canonical implemented physics of SpeicherGrenze |
+| [Load Profile Scaling Principle](internal/speicher-physics-model.md#load-profile-scaling-principle) | Annual kWh sets energy volume; the selected profile sets only the 15-minute temporal shape |
+| [`docs/physics-model.md`](physics-model.md) | Public, simplified methodology (`/technische-details`) |

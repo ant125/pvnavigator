@@ -11,11 +11,55 @@
 | Rolle | Dokument |
 |---|---|
 | Interne kanonische technische Spezifikation | dieses File (`docs/internal/speicher-physics-model.md`) |
+| Lastprofil-Skalierung (Engineering-Prinzip) | [Load Profile Scaling Principle](#load-profile-scaling-principle) in diesem File |
 | Öffentliche, vereinfachte Methodik | `docs/physics-model.md` (gerendert unter `/technische-details`) |
 | Offizielle Quellen (SSOT) | `packages/pv-methodology` → `/methodik-quellen` |
+| Architecture canon | `docs/ARCHITECTURE.md` |
 
 - Implementiertes Verhalten ist letztlich durch den referenzierten Produktions-Quellcode definiert.
 - Abweichungen zwischen Code und Dokumentation sind als Defekte zu behandeln und zu auditieren.
+
+---
+
+## Core modelling principles
+
+The calculation engine of SpeicherGrenze is built on a small number of architectural principles.
+
+Every new dataset, simulation model and calculation component should follow these principles unless there is an explicit engineering decision to change them.
+
+### 1. Separate energy volume from temporal distribution
+
+Annual energy consumption is always defined by the user.
+
+Reference datasets define only when energy is consumed.
+
+These two concepts are intentionally independent.
+
+### 2. Measured data defines behaviour
+
+Measured datasets are used to reproduce realistic temporal behaviour.
+
+They are not used because of their original annual energy.
+
+### 3. Deterministic calculations
+
+For identical inputs, SpeicherGrenze must always produce identical outputs.
+
+No randomisation or hidden optimisation is allowed inside the calculation engine.
+
+### 4. Single Source of Truth
+
+Every physical model, dataset and methodology must have exactly one authoritative implementation.
+
+Duplicated modelling logic should be avoided.
+
+### 5. Architecture grows by extension
+
+New datasets should extend the existing architecture.
+
+They should not require redesigning the calculation engine or replacing existing modelling principles.
+
+These principles form the foundation of the SpeicherGrenze calculation engine and should remain stable as the project evolves.
 
 ---
 
@@ -37,7 +81,7 @@ Die **Produktionssimulation** erfolgt in 15-Minuten-Schritten. Jedes modellierte
 
 - BDEW-Quelle: natives H25-Viertelstundenprofil (96 Slots/Tag, 35040 Schritte/Nichtschaltjahr). Keine Dynamisierung, keine Feiertags-Umbelegung.
 - PVGIS-Quelle: unverändert stündlich (seriescalc). Nach der bestehenden Berlin-8760-Ausrichtung wird jede Stundenenergie \(E\) gleichmäßig auf vier Viertelstunden \([E/4, E/4, E/4, E/4]\) verteilt. Keine 15-min-PVGIS-API, keine Einstrahlungsinterpolation.
-- Wärmepumpe: Luft/Wasser über gemessene 15-Minuten-Referenzprofile (ThermBuild), gleichmäßig auf die eingegebene Jahres-kWh skaliert. Wasser/Wasser ist nicht in der Produktion.
+- Wärmepumpe: Luft/Wasser über gemessene 15-Minuten-Referenzprofile (ThermBuild), gleichmäßig auf die eingegebene Jahres-kWh skaliert. Wasser/Wasser ist nicht in der Produktion. Gemeinsames Skalierungsprinzip: [Load Profile Scaling Principle](#load-profile-scaling-principle).
 - Merge: indexweise, alle Komponenten müssen dieselbe Länge haben (kein Mix 8760 + 35040).
 - Kernel: `timeStepHours = 0.25`, `BATTERY_MODEL_VERSION = 1.1.0`, `PHYSICAL_KERNEL_SCHEMA_VERSION = 1.1.0`.
 - Stundenhelfer (BDEW hourly, `createHeatPumpComponent` 8760) bleiben für Regression/Rollback.
@@ -145,6 +189,8 @@ Als Haushaltslast dient das BDEW-Standardlastprofil H25 in nativer Viertelstunde
 
 Für jedes Wetterjahr von 2006 bis 2020 wird das Profil anhand von Monat und Tagestyp (Werktag, Samstag oder Sonntag) für die jeweilige Kalenderstruktur neu zusammengesetzt. Anschließend wird es so skaliert, dass seine Jahressumme exakt dem eingegebenen Haushaltsverbrauch entspricht.
 
+Gemeinsames Skalierungsprinzip für BDEW, WPuQ und ThermBuild: [Load Profile Scaling Principle](#load-profile-scaling-principle).
+
 👉 Wichtig:
 
 Dieses Profil ist ein statistisches Durchschnittsprofil und kein individuelles Messprofil.
@@ -167,7 +213,7 @@ Falls eine Luft/Wasser-Wärmepumpe aktiviert ist, wird der zusätzliche Stromver
 
 Annahmen:
 
-Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche Lastreihe in 15-Minuten-Schritten modelliert. Für Luft/Wasser verwendet die Produktion gemessene elektrische Referenzprofile aus der ThermBuild-Messkampagne. Das Profil wird gleichmäßig auf den angegebenen Jahresstromverbrauch skaliert. Es handelt sich nicht um den Lastgang der Wärmepumpe des Nutzers.
+Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche Lastreihe in 15-Minuten-Schritten modelliert. Für Luft/Wasser verwendet die Produktion gemessene elektrische Referenzprofile aus der ThermBuild-Messkampagne. Das Profil wird gleichmäßig auf den angegebenen Jahresstromverbrauch skaliert. Es handelt sich nicht um den Lastgang der Wärmepumpe des Nutzers. Siehe [Load Profile Scaling Principle](#load-profile-scaling-principle).
 
 Wasser/Wasser-Wärmepumpen sind in der aktuellen Berechnung nicht enthalten.
 
@@ -200,6 +246,107 @@ Autarkiegrad und Eigenverbrauchsquote sind Quotienten aus diesen Mittelwerten de
 Ist eine Wärmepumpe aktiviert, ist ihr Verbrauch Bestandteil der modellierten Haushaltslast.
 
 Alle physikalischen Kennzahlen beziehen sich auf die **technische Speichergrenze**. Die planerische Anfangskapazität (75 %-Restkapazitäts-Anpassung) dient nur der Kaufempfehlung und wird **nicht** zur Berechnung der physikalischen Kennzahlen verwendet.
+
+---
+
+## Load Profile Scaling Principle
+
+This is an engineering design decision of SpeicherGrenze, not a dataset-specific accident.
+
+BDEW H25, WPuQ household profiles, and ThermBuild heat-pump profiles are **not** used because of their absolute annual energy. They are used because of their **temporal shape**.
+
+The user's annual energy consumption always determines the total annual energy. The selected profile determines only **when** this energy is consumed throughout the year.
+
+> **Engineering principle:** Annual consumption determines the energy volume. The selected profile determines the temporal distribution.
+
+### Common scaling rule
+
+All production and robustness load sources follow the same modelling philosophy:
+
+1. Take the original 15-minute yearly profile.
+2. Preserve its relative temporal shape.
+3. Apply **one** uniform annual scaling factor to every interval.
+4. Ensure the resulting 35,040-step profile sums exactly to the user's requested annual kWh (within floating-point error).
+
+```text
+scaleFactor = userAnnualKwh / sum(sourceProfile)
+result[i]   = sourceProfile[i] × scaleFactor
+```
+
+Each `result[i]` is interval energy in kWh. Timing, cycling, zeros, and relative peaks are unchanged; only amplitude changes.
+
+Runtime entry points:
+
+- Household BDEW: `createUserLoadProfile15MinForYear` in `packages/bdew-profile`
+- WPuQ robustness: `scaleProfileToAnnualKwh` in `apps/speicher-physik/src/lib/wpuqCohort.ts`
+- Heat pump: `scaleUniformEnergy` via `createHeatPumpProfile15Min` in `packages/heatpump-profile`
+
+### Profile-specific notes
+
+**BDEW H25** is the production household reference profile. It is stored as yearly weights on a 1 GWh reference scale, remapped onto the requested weather-year calendar (weekday / Saturday / Sunday templates; no Dynamisierung; no weekday-holiday remap), then scaled so the 35,040 steps sum to the user's annual household consumption. The remapped-year sum is used as the divisor, not a second hard-coded 1 GWh factor.
+
+**WPuQ** supplies 27 measured real household profiles (2019 COMPLETE NO_PV). They are used **only** for robustness validation, not as a user-selectable production load. Research preprocessing first normalizes each house to a packed 5000 kWh year so shape can be compared independently of measured volume. Production then scales those packed profiles to the customer's annual household consumption with the same uniform factor. Original measured annual kWh is research metadata; the production pack does not retain it.
+
+**ThermBuild** supplies measured Luft/Wasser heat-pump electrical profiles. Production stores them as unit-weight yearly shapes (`sum(weights) = 1`). Runtime scales those weights directly to the user's annual electrical heat-pump consumption: `profile[i] = weight[i] × userHpKwh`. `measuredAnnualElectricalKwh` is provenance, not the runtime scale divisor. The measured campaign year is not weekday-remapped onto the weather calendar.
+
+### Accepted limitation
+
+Uniform scaling preserves timing but also scales peak loads. A measured household of 2500 kWh scaled to 7500 kWh makes every 15-minute interval three times larger. The same applies to a measured heat pump.
+
+This is an accepted modelling assumption in the current version of SpeicherGrenze.
+
+The profiles are **temporal templates**. They are **not** equipment-sizing models. They do not represent a larger household, a larger heat-pump compressor, or a weather-adjusted COP. They redistribute the user-stated annual kWh in time.
+
+### Future work
+
+Possible future improvements include equipment-dependent scaling, weather-dependent heat-pump reshaping, and occupancy-dependent household reshaping. Those are future modelling improvements. They are intentionally outside the current architecture.
+
+### Architectural rationale
+
+This modelling principle intentionally separates two independent concepts.
+
+The user specifies **how much** energy is consumed during a year.
+
+The selected load profile specifies **when** that energy is consumed.
+
+Those two dimensions are intentionally independent.
+
+The separation allows SpeicherGrenze to:
+
+- compare different households using the same annual energy;
+- compare different heat-pump technologies using the same annual electrical consumption;
+- perform robustness validation using measured real households without changing customer input;
+- integrate future datasets without redesigning the calculation engine.
+
+This separation is one of the fundamental design principles of SpeicherGrenze.
+
+### Invariant
+
+Every load profile integrated into SpeicherGrenze must satisfy all of the following conditions.
+
+1. The original measured or reference temporal shape must be preserved.
+2. The profile must be scalable to any valid annual energy consumption using a single uniform scaling factor.
+3. After scaling, the resulting 35,040-step profile must sum exactly (within floating-point tolerance) to the requested annual energy.
+
+These rules apply equally to:
+
+- BDEW household profiles
+- WPuQ reference households
+- ThermBuild heat-pump profiles
+- future EV charging profiles
+- future domestic hot water profiles
+- future industrial or commercial load datasets
+- every future load-profile dataset integrated into SpeicherGrenze
+
+This invariant is intentionally independent of the underlying dataset.
+
+Regardless of where the data originates, the modelling principle must remain identical:
+
+Annual energy determines the energy volume.
+
+The selected profile determines only the temporal distribution of that energy.
+
+This invariant is considered part of the core architecture of SpeicherGrenze and should not be changed without an explicit modelling decision.
 
 ---
 
@@ -1093,6 +1240,7 @@ Implementierungsdetails:
 - mehrere PV-Dachflächen
 - optionale Wärmepumpenlast
 - Wetterjahre 2006–2020
+- einheitliche Jahresskalierung der Lastprofile (BDEW, WPuQ-Robustheit, ThermBuild)
 
 ### Nicht im Modell berücksichtigt
 
@@ -1111,6 +1259,7 @@ Implementierungsdetails:
 - vollständiges Insel-/Notstrom-Umschaltverhalten
 - zyklische jährliche SoC-Konvergenz
 - SoC-Übertrag von Jahr zu Jahr
+- geräte-, wetter- oder occupancy-abhängige Umformung von Lastprofilen (nur uniforme Jahresskalierung; siehe [Load Profile Scaling Principle](#load-profile-scaling-principle))
 
 ---
 
