@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, type RefObject } from "react";
+import { useState, useEffect, useRef, useCallback, type RefObject } from "react";
 import Link from "next/link";
 import { SpeicherInput, type PvSurfaceInput } from "../types/speicher";
 import { validateInput, type SpeicherFieldErrors, type SpeicherFieldErrorKey } from "../utils/validateInput";
@@ -28,6 +28,7 @@ import {
   type ReportHeatPumpCitation,
 } from "@/lib/reportMethodologySources";
 import { runHouseholdCalculationStream } from "./runHouseholdCalculationStream";
+import { useReportHeaderCta } from "../components/headerCtaContext";
 
 /**
  * Speicher Calculator Page
@@ -102,9 +103,6 @@ const FORM_SUBMIT_ZONE =
 
 const BTN_PRIMARY =
   "inline-flex items-center justify-center rounded-md bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-hover";
-
-const BTN_SECONDARY =
-  "inline-flex items-center justify-center rounded-md border border-line bg-surface px-6 py-3 font-medium text-ink transition-colors hover:bg-surface-muted";
 
 /** Field focus is carried by the global :focus-visible outline plus an accent border. */
 function fieldInputClassName(hasError: boolean): string {
@@ -752,7 +750,7 @@ export default function SpeicherCalculatePage() {
   /**
    * Reset and start over
    */
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setStep("input");
     setVerifiedResult(null);
     setSpeicherGrenz(null);
@@ -766,7 +764,9 @@ export default function SpeicherCalculatePage() {
     setElapsedSeconds(0);
     setErrors([]);
     setFieldErrors({});
-  };
+  }, []);
+
+  useReportHeaderCta(handleReset, step === "results");
 
   const totalKwPConfigured = sumSurfaceKwP(surfaces);
 
@@ -837,8 +837,7 @@ export default function SpeicherCalculatePage() {
                 Geben Sie Ihre Daten ein und erhalten Sie eine erste Einschätzung.
               </p>
               <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-accent-text">
-                Ersteinschätzung · 8760h-Simulation · Daten werden nicht
-                gespeichert
+                Ersteinschätzung · Reale Referenzdaten · Unabhängige Analyse
               </p>
             </div>
 
@@ -2469,10 +2468,7 @@ export default function SpeicherCalculatePage() {
           </div>
 
           {/* Actions — page controls on the canvas, aligned to the sheet edges */}
-          <div className="max-w-sheet mx-auto mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <button onClick={handleReset} className={BTN_SECONDARY}>
-              Neue Berechnung
-            </button>
+          <div className="max-w-sheet mx-auto mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
             <Link href={calculationLink} className={BTN_PRIMARY}>
               Detaillierte Analyse ansehen
             </Link>
