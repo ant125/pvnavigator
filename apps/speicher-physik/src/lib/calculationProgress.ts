@@ -3,6 +3,7 @@
  * Reporting only — does not affect physics or results.
  */
 export const SMART_METER_HOUSEHOLD_COUNT = 27;
+export const WW_ROBUSTNESS_PROFILE_COUNT = 24;
 
 /** Brief pause on the completed loading screen before opening the report. */
 export const CALCULATION_COMPLETE_PAUSE_MS = 900;
@@ -24,6 +25,11 @@ export type CalculationProgressEvent =
       stage: "smartmeter";
       completed: number;
       total: number;
+    }
+  | {
+      stage: "wwprofiles";
+      completed: number;
+      total: number;
     };
 
 export type CalculationProgressHandler = (
@@ -37,6 +43,8 @@ export type CalculationProgressState = {
   physics: boolean;
   smartmeterCompleted: number;
   smartmeterTotal: number;
+  wwCompleted: number;
+  wwTotal: number;
 };
 
 export const INITIAL_CALCULATION_PROGRESS: CalculationProgressState = {
@@ -46,6 +54,8 @@ export const INITIAL_CALCULATION_PROGRESS: CalculationProgressState = {
   physics: false,
   smartmeterCompleted: 0,
   smartmeterTotal: SMART_METER_HOUSEHOLD_COUNT,
+  wwCompleted: 0,
+  wwTotal: 0,
 };
 
 export type CalculationProgressStageId =
@@ -133,6 +143,12 @@ export function isCalculationStageDone(
   return progress[stageId];
 }
 
+export function shouldShowWwValidationStage(
+  includeHeatPumpProfile: HeatPumpProgressKind
+): boolean {
+  return includeHeatPumpProfile === "wasserwasser";
+}
+
 export function applyCalculationProgress(
   prev: CalculationProgressState,
   event: CalculationProgressEvent
@@ -145,5 +161,41 @@ export function applyCalculationProgress(
       smartmeterTotal: event.total,
     };
   }
+  if (event.stage === "wwprofiles") {
+    const householdTotal =
+      prev.smartmeterTotal > 0
+        ? prev.smartmeterTotal
+        : SMART_METER_HOUSEHOLD_COUNT;
+    return {
+      ...prev,
+      physics: true,
+      smartmeterCompleted: Math.max(prev.smartmeterCompleted, householdTotal),
+      smartmeterTotal: householdTotal,
+      wwCompleted: event.completed,
+      wwTotal: event.total,
+    };
+  }
   return { ...prev, [event.stage]: true };
+}
+
+/** Household reference check has finished (real counter, not a timer). */
+export function isHouseholdValidationComplete(
+  progress: CalculationProgressState,
+  complete: boolean
+): boolean {
+  if (complete) return true;
+  const total =
+    progress.smartmeterTotal > 0
+      ? progress.smartmeterTotal
+      : SMART_METER_HOUSEHOLD_COUNT;
+  return progress.physics && progress.smartmeterCompleted >= total;
+}
+
+/** Wasser/Wasser reference check has finished (real counter, not a timer). */
+export function isWwValidationComplete(
+  progress: CalculationProgressState,
+  complete: boolean
+): boolean {
+  if (complete) return true;
+  return progress.wwTotal > 0 && progress.wwCompleted >= progress.wwTotal;
 }

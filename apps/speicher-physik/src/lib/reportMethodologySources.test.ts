@@ -136,6 +136,33 @@ describe("getReportDurationInclusions", () => {
       "Validierung mit 27 Referenzhaushalten",
     ]);
   });
+
+  it("adds the WW profile check only when a WW cohort size is present", () => {
+    expect(
+      getReportDurationInclusions({
+        heatPump: WPUQ_HEATPUMP_CITATION,
+        cohortSize: 27,
+        wwCohortSize: 24,
+      })
+    ).toEqual([
+      "PVGIS-Wetterdaten",
+      "Batteriesimulation",
+      "gemessenes Wärmepumpenprofil",
+      "Validierung mit 27 Referenzhaushalten",
+      "Validierung mit 24 Wasser/Wasser-Profilen",
+    ]);
+    expect(
+      getReportDurationInclusions({
+        heatPump: THERMBUILD_CITATION,
+        cohortSize: 27,
+        wwCohortSize: null,
+      })
+    ).not.toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/Wasser\/Wasser-Profilen/),
+      ])
+    );
+  });
 });
 
 describe("Methodik Wärmepumpe", () => {

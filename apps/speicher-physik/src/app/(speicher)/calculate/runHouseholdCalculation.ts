@@ -23,7 +23,7 @@ export type HouseholdCalculationPayload = {
   verifiedResult: VerifiedResult;
   speicherGrenz: SpeicherGrenzPayload;
   robustness: WpuqRobustnessPayload;
-  /** Null unless production technology is Wasser/Wasser. Not shown in UI yet. */
+  /** Null unless production technology is Wasser/Wasser. */
   wasserWasserRobustness: WwRobustnessPayload | null;
   displayAddress: string;
   /** Resolved calculation metadata. Null when no heat-pump component was added. */

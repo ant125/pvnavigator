@@ -78,6 +78,7 @@ describe("customer WPuQ robustness pipeline", () => {
         "consumption",
       ]);
       expect(progressStages.filter((s) => s === "physics")).toEqual(["physics"]);
+      expect(progressStages.filter((s) => s === "wwprofiles")).toEqual([]);
       expect(smartmeterCounts).toEqual(
         Array.from({ length: WPUQ_COHORT_SIZE + 1 }, (_, i) => i)
       );

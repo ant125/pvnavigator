@@ -8,6 +8,7 @@ import {
   type SpeicherGrenzPayload,
   type VerifiedResult,
   type WpuqRobustnessPayload,
+  type WwRobustnessPayload,
 } from "./actions";
 import { deriveSpeicherBusinessMetrics } from "@/lib/deriveSpeicherBusinessMetrics";
 import SpeicherChart from "@/components/SpeicherChart";
@@ -488,6 +489,8 @@ export default function SpeicherCalculatePage() {
   const [robustness, setRobustness] = useState<WpuqRobustnessPayload | null>(
     null
   );
+  const [wasserWasserRobustness, setWasserWasserRobustness] =
+    useState<WwRobustnessPayload | null>(null);
   const [calculationLink, setCalculationLink] = useState<string>("/result");
   const [displayAddress, setDisplayAddress] = useState<string | null>(null);
   const [heatPumpCitation, setHeatPumpCitation] =
@@ -671,6 +674,7 @@ export default function SpeicherCalculatePage() {
     setCalculationDurationMs(null);
     calculationStartedAtRef.current = Date.now();
     setHeatPumpCitation(null);
+    setWasserWasserRobustness(null);
     setStep("calculating");
 
     try {
@@ -719,6 +723,7 @@ export default function SpeicherCalculatePage() {
       setVerifiedResult(response.verifiedResult);
       setSpeicherGrenz(response.speicherGrenz);
       setRobustness(response.robustness);
+      setWasserWasserRobustness(response.wasserWasserRobustness);
       setDisplayAddress(response.displayAddress);
       setHeatPumpCitation(
         response.heatPump
@@ -2277,8 +2282,9 @@ export default function SpeicherCalculatePage() {
             {robustness ? (
               <WpuqRobustnessSection
                 robustness={robustness}
+                wasserWasserRobustness={wasserWasserRobustness}
                 bdew={{
-                  eigenverbrauchKwh: recommendedEV ?? null,
+                  technicalSpeichergrenzeKwh: recommendedTechnicalSize,
                   eigenverbrauchsquotePct: eigenverbrauchsquoteMitSpeicherPct,
                   autarkiePct: autarkieMitPct,
                 }}
@@ -2482,6 +2488,7 @@ export default function SpeicherCalculatePage() {
                       heatPump: heatPumpCitation,
                       cohortSize:
                         robustness?.cohortSize ?? SMART_METER_HOUSEHOLD_COUNT,
+                      wwCohortSize: wasserWasserRobustness?.cohortSize ?? null,
                     }).map((item) => (
                       <li key={item}>{item}</li>
                     ))}

@@ -114,6 +114,7 @@ export function getReportMethodologySources(
 export function getReportDurationInclusions(params: {
   heatPump?: ReportHeatPumpCitation;
   cohortSize: number;
+  wwCohortSize?: number | null;
 }): string[] {
   const items = ["PVGIS-Wetterdaten", "Batteriesimulation"];
   if (params.heatPump != null) {
@@ -124,5 +125,10 @@ export function getReportDurationInclusions(params: {
     );
   }
   items.push(`Validierung mit ${params.cohortSize} Referenzhaushalten`);
+  if (typeof params.wwCohortSize === "number" && params.wwCohortSize > 0) {
+    items.push(
+      `Validierung mit ${params.wwCohortSize} Wasser/Wasser-Profilen`
+    );
+  }
   return items;
 }

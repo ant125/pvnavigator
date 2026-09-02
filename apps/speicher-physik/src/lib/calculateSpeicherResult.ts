@@ -172,7 +172,6 @@ export type CalculateSpeicherResultOutput = {
   /**
    * Wasser/Wasser HP shape sensitivity (24 measured houses). Null when the
    * production run is not Wasser/Wasser. Independent of household robustness.
-   * Stored for a later UI phase — not shown in the report yet.
    */
   wasserWasserRobustness: WwRobustnessPayload | null;
   /**
@@ -347,6 +346,9 @@ export async function calculateSpeicherResult(
         years,
         batterySizes: input.batterySizes,
         backupReserveKwh: reserveKwh,
+        onProfileComplete: async (completed, total) => {
+          await report?.({ stage: "wwprofiles", completed, total });
+        },
       })
     : null;
 

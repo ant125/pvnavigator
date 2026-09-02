@@ -68,6 +68,9 @@ describe("customer Wasser/Wasser robustness pipeline", () => {
         return pv;
       };
 
+      const progressStages: string[] = [];
+      const wwCounts: number[] = [];
+
       const result = await calculateSpeicherResult({
         annualConsumptionKWh: houseAnnual,
         pvSystemKwP: 10,
@@ -82,6 +85,12 @@ describe("customer Wasser/Wasser robustness pipeline", () => {
         getPvForYear,
         years: [2019],
         batterySizes: [5, 10, 15],
+        onProgress: (event) => {
+          progressStages.push(event.stage);
+          if (event.stage === "wwprofiles") {
+            wwCounts.push(event.completed);
+          }
+        },
       });
 
       // Production path unchanged: SFH38 catalogue profile.
@@ -124,6 +133,13 @@ describe("customer Wasser/Wasser robustness pipeline", () => {
 
       // Primary + 27 household + 24 WW = 52 PV year lookups with injected PV.
       expect(pvCalls).toBe(1 + WPUQ_COHORT_SIZE + WPUQ_WW_ROBUSTNESS_SIZE);
+
+      expect(wwCounts).toEqual(
+        Array.from({ length: WPUQ_WW_ROBUSTNESS_SIZE + 1 }, (_, i) => i)
+      );
+      expect(progressStages.indexOf("smartmeter")).toBeLessThan(
+        progressStages.indexOf("wwprofiles")
+      );
 
       // Scaling invariant on the packed weights (same math the runner uses).
       const cohort = loadWpuqWwRobustnessCohort();
