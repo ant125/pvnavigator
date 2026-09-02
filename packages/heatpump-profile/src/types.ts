@@ -31,6 +31,15 @@ export type HeatPumpTechnologyInput = HeatPumpTechnology | "unknown";
  */
 export type HeatPumpDhwService = "space_heat_only" | "space_heat_and_dhw";
 
+/**
+ * Production catalogue quality.
+ *
+ * `field-cohort-representative` is reserved for a single selected field
+ * series that is the catalogue default for its (technology, dhwService)
+ * pair. Research robustness envelopes currently reuse this string; that
+ * reuse is not a catalogue decision and must be reviewed before any
+ * robustness house becomes a production row.
+ */
 export type HeatPumpProfileQuality =
   | "lab-prototype"
   | "field-cohort-representative"
@@ -76,6 +85,20 @@ export type ResolvedHeatPumpProfile = {
   resolvedTechnology: HeatPumpTechnology;
 };
 
+/** Seasonal electrical energy shares. Keys sum to 1 within rounding. */
+export type HeatPumpSeasonalShares = {
+  winter: number;
+  spring: number;
+  summer: number;
+  autumn: number;
+};
+
+/**
+ * Immutable production envelope written by the research generators.
+ *
+ * Shared engineering fields are required. Dataset-specific provenance
+ * (`rotation`, zip vs HDF5 locators, raw annual kWh) stays optional.
+ */
 export type HeatPumpProfileEnvelope = {
   schemaVersion: number;
   profileId: string;
@@ -90,7 +113,18 @@ export type HeatPumpProfileEnvelope = {
   license: string;
   generatorVersion: string;
   sourceWindow: string;
+  calendarAlignment: string;
+  seasonalShares: HeatPumpSeasonalShares;
   fillSummary: HeatPumpFillSummary;
+  sourceDataset?: string;
+  sourceBuilding?: string;
+  sourceChannel?: string;
+  rotation?: string;
+  rawAnnualElectricalKwh?: number;
+  sourceZip?: string;
+  sourceMember?: string;
+  sourceFile?: string;
+  sourcePath?: string;
 };
 
 export type HeatPumpFillSummary = {

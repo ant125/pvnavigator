@@ -33,6 +33,8 @@ describe("loadHeatPumpProfile", () => {
     expect(envelope.license).toBe(entry.license);
     expect(envelope.technology).toBe(entry.technology);
     expect(envelope.dhwService).toBe(entry.dhwService);
+    expect(envelope.calendarAlignment.length).toBeGreaterThan(0);
+    expect(envelope.seasonalShares.winter).toBeGreaterThanOrEqual(0);
     for (const w of envelope.weights) {
       expect(Number.isFinite(w)).toBe(true);
       expect(w).toBeGreaterThanOrEqual(0);
@@ -45,6 +47,21 @@ describe("loadHeatPumpProfile", () => {
     expect(envelope.quality).toBe("lab-prototype");
     expect(envelope.timeStepHours).toBe(0.25);
     expect(envelope.schemaVersion).toBe(1);
+    expect(envelope.calendarAlignment).toMatch(/consecutive_days/);
+    expect(envelope.seasonalShares).toEqual(
+      expect.objectContaining({
+        winter: expect.any(Number),
+        spring: expect.any(Number),
+        summer: expect.any(Number),
+        autumn: expect.any(Number),
+      })
+    );
+    const shareSum =
+      envelope.seasonalShares.winter +
+      envelope.seasonalShares.spring +
+      envelope.seasonalShares.summer +
+      envelope.seasonalShares.autumn;
+    expect(Math.abs(shareSum - 1)).toBeLessThanOrEqual(1e-5);
   });
 
   it("throws when no asset is bundled for the catalogue row", () => {

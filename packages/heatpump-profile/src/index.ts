@@ -43,6 +43,7 @@ export type {
   HeatPumpProfileEnvelope,
   HeatPumpProfileMeta,
   HeatPumpProfileQuality,
+  HeatPumpSeasonalShares,
   HeatPumpTechnology,
   HeatPumpTechnologyInput,
   ResolvedHeatPumpProfile,

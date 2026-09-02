@@ -96,6 +96,20 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     addedAt: "2026-08-31",
     updatedAt: "2026-08-31",
   },
+  {
+    id: "wpuq-wasserwasser-heatpump",
+    category: "load_profiles",
+    title: "WPuQ Wasser/Wasser-Wärmepumpenmessungen",
+    organization: "Schlemminger et al., Scientific Data (2022)",
+    description:
+      "Gemessene 15-Minuten-Stromaufnahme von Wasser/Wasser-Wärmepumpen in bewohnten deutschen Einfamilienhäusern (WPuQ-Projekt, eigener HEATPUMP-Zähler, kaltes Nahwärmenetz). Das Profil ist als Wasser/Wasser-Referenzprofil für SpeicherGrenze vorgesehen und wird gleichmäßig auf den angegebenen Jahresstromverbrauch der Wärmepumpe skaliert. Es handelt sich nicht um den Lastgang der Nutzer-Wärmepumpe. Der Haushaltsstrom bleibt BDEW H25. Getrennt von der WPuQ-Haushalts-Robustheit (`wpuq-scientific-data`).",
+    url: "https://www.nature.com/articles/s41597-022-01156-1",
+    official: true,
+    sourceType: "dataset",
+    version: "Sci Data 9, 56 (2022) / 2019 HEATPUMP P_TOT",
+    addedAt: "2026-09-02",
+    updatedAt: "2026-09-02",
+  },
 
   // ── Battery simulation (own methodology) ─────────────────────────────────
   {

@@ -77,6 +77,26 @@ SEASONS = {
     "autumn": (9, 10, 11),
 }
 
+# Shared production envelope keys. Dataset-specific provenance is extra.
+SHARED_REQUIRED_ENVELOPE_KEYS = (
+    "schemaVersion",
+    "profileId",
+    "technology",
+    "dhwService",
+    "timeStepHours",
+    "steps",
+    "weights",
+    "measuredAnnualElectricalKwh",
+    "quality",
+    "methodologySourceId",
+    "license",
+    "generatorVersion",
+    "sourceWindow",
+    "calendarAlignment",
+    "seasonalShares",
+    "fillSummary",
+)
+
 # Published research seasonal shares (NaN as 0, 1 decimal percent).
 RESEARCH_SEASONAL_SHARES_PCT_1DP = {
     "BSE1": {"winter": 50.7, "spring": 26.4, "summer": 1.7, "autumn": 21.3},
@@ -635,22 +655,7 @@ def validate_profile(
                 f"!= filled {filled_shares[season]}"
             )
 
-    required_meta = (
-        "schemaVersion",
-        "profileId",
-        "technology",
-        "dhwService",
-        "timeStepHours",
-        "steps",
-        "weights",
-        "measuredAnnualElectricalKwh",
-        "quality",
-        "methodologySourceId",
-        "license",
-        "generatorVersion",
-        "sourceWindow",
-        "fillSummary",
-    )
+    required_meta = SHARED_REQUIRED_ENVELOPE_KEYS
     # Presence is checked on the envelope in write_envelope.
 
     if errors:
@@ -676,23 +681,26 @@ def validate_profile(
     }
 
 
+def assert_seasonal_shares(shares: Any, spec: ProfileSpec) -> None:
+    if not isinstance(shares, dict):
+        raise GeneratorError(f"{spec.profile_id}: seasonalShares is not an object")
+    missing = [name for name in SEASONS if name not in shares]
+    if missing:
+        raise GeneratorError(f"{spec.profile_id}: seasonalShares missing {missing}")
+    total = 0.0
+    for name in SEASONS:
+        value = shares[name]
+        if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0.0:
+            raise GeneratorError(f"{spec.profile_id}: seasonalShares.{name} is invalid")
+        total += float(value)
+    if abs(total - 1.0) > 1e-5:
+        raise GeneratorError(
+            f"{spec.profile_id}: seasonalShares sum to {total!r}, expected 1.0"
+        )
+
+
 def assert_metadata_complete(envelope: dict[str, Any], spec: ProfileSpec) -> None:
-    required = (
-        "schemaVersion",
-        "profileId",
-        "technology",
-        "dhwService",
-        "timeStepHours",
-        "steps",
-        "weights",
-        "measuredAnnualElectricalKwh",
-        "quality",
-        "methodologySourceId",
-        "license",
-        "generatorVersion",
-        "sourceWindow",
-        "fillSummary",
-    )
+    required = SHARED_REQUIRED_ENVELOPE_KEYS
     missing = [k for k in required if k not in envelope or envelope[k] in (None, "")]
     if missing:
         raise GeneratorError(f"{spec.profile_id}: missing metadata {missing}")
@@ -704,6 +712,11 @@ def assert_metadata_complete(envelope: dict[str, Any], spec: ProfileSpec) -> Non
         raise GeneratorError("steps/weights length mismatch")
     if envelope["methodologySourceId"] != METHODOLOGY_SOURCE_ID:
         raise GeneratorError("methodologySourceId mismatch")
+    if not isinstance(envelope["calendarAlignment"], str) or not envelope[
+        "calendarAlignment"
+    ].strip():
+        raise GeneratorError("calendarAlignment is empty")
+    assert_seasonal_shares(envelope["seasonalShares"], spec)
     if "http://" in json.dumps(envelope, default=str) or "https://" in json.dumps(
         envelope, default=str
     ):

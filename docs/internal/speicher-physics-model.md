@@ -289,6 +289,28 @@ Runtime entry points:
 
 **ThermBuild** supplies measured Luft/Wasser heat-pump electrical profiles. Production stores them as unit-weight yearly shapes (`sum(weights) = 1`). Runtime scales those weights directly to the user's annual electrical heat-pump consumption: `profile[i] = weight[i] × userHpKwh`. `measuredAnnualElectricalKwh` is provenance, not the runtime scale divisor. The measured campaign year is not weekday-remapped onto the weather calendar.
 
+### Heat-pump envelope and identifiers (contract)
+
+Heat-pump production identifiers use one grammar:
+
+`{tech}-{dhw}-{dataset}-{optionalYear}-{building}-v{n}`
+
+Examples:
+
+- `lw-heating-only-thermbuild-o5-v1`
+- `lw-heating-dhw-thermbuild-n2-v1`
+- `ww-heating-dhw-wpuq-2019-sfh38-v1` (generated research asset; **not** a production catalogue default)
+
+Shared production envelope fields (typed in `packages/heatpump-profile`): `schemaVersion`, `profileId`, `technology`, `dhwService`, `timeStepHours`, `steps`, `weights`, `measuredAnnualElectricalKwh`, `quality`, `methodologySourceId`, `license`, `generatorVersion`, `sourceWindow`, `calendarAlignment`, `seasonalShares`, `fillSummary`. Dataset-specific provenance (rotation, zip vs HDF5 locators, raw annual kWh) remains optional.
+
+Methodology ids are separate:
+
+- `thermbuild-fordatis-486` — production Luft/Wasser heat-pump profiles (`load_profiles`)
+- `wpuq-wasserwasser-heatpump` — WPuQ Wasser/Wasser heat-pump production source (`load_profiles`); not yet a catalogue default
+- `wpuq-scientific-data` — WPuQ household robustness only (`research`)
+
+Wasser/Wasser remains unavailable in the calculator until a later integration step. Robustness houses stay under `research/wpuq/processed/robustness/` and must not be catalogued as `field-cohort-representative` without explicit review.
+
 ### Accepted limitation
 
 Uniform scaling preserves timing but also scales peak loads. A measured household of 2500 kWh scaled to 7500 kWh makes every 15-minute interval three times larger. The same applies to a measured heat pump.

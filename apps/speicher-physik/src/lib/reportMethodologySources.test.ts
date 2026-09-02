@@ -138,4 +138,21 @@ describe("Methodik Wärmepumpe", () => {
       ])
     );
   });
+
+  it("registers WPuQ heat-pump production separately from household robustness", () => {
+    const household = getMethodologySourceById("wpuq-scientific-data");
+    const heatPump = getMethodologySourceById("wpuq-wasserwasser-heatpump");
+    expect(household?.category).toBe("research");
+    expect(heatPump?.category).toBe("load_profiles");
+    expect(heatPump?.sourceType).toBe("dataset");
+    expect(heatPump?.url).toBe(household?.url);
+    expect(heatPump?.description).toMatch(/Wasser\/Wasser/);
+    expect(heatPump?.description).toMatch(/HEATPUMP/);
+    expect(JSON.stringify(getPublicMethodologySections())).not.toMatch(
+      /wpuq-wasserwasser-heatpump/
+    );
+    expect(getReportMethodologySources().map((source) => source.id)).not.toContain(
+      "wpuq-wasserwasser-heatpump"
+    );
+  });
 });

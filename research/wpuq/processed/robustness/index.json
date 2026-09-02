@@ -1,0 +1,251 @@
+{
+  "nHouses": 24,
+  "independentMeasuredHouses": true,
+  "averaged": false,
+  "clustered": false,
+  "synthetic": false,
+  "sourceWindow": "2019-01-01/2019-12-31",
+  "generatorVersion": "wpuq-hp-extract-1",
+  "houses": [
+    {
+      "houseId": "SFH3",
+      "profileId": "ww-wpuq-2019-sfh03-v1",
+      "annualElectricalKwh": 2456.2869693766,
+      "winterShare": 0.48187,
+      "summerShare": 0.060135,
+      "peakPower": 6718.49119575288,
+      "operatingShare": 0.22026255707762557,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH4",
+      "profileId": "ww-wpuq-2019-sfh04-v1",
+      "annualElectricalKwh": 5223.8070464448,
+      "winterShare": 0.657719,
+      "summerShare": 0.030064,
+      "peakPower": 8157.477218967011,
+      "operatingShare": 0.3384703196347032,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH7",
+      "profileId": "ww-wpuq-2019-sfh07-v1",
+      "annualElectricalKwh": 3565.0455060753,
+      "winterShare": 0.552856,
+      "summerShare": 0.027647,
+      "peakPower": 6477.906689453123,
+      "operatingShare": 0.24275114155251143,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH8",
+      "profileId": "ww-wpuq-2019-sfh08-v1",
+      "annualElectricalKwh": 5461.1648286217,
+      "winterShare": 0.377185,
+      "summerShare": 0.103373,
+      "peakPower": 5803.715207248262,
+      "operatingShare": 0.5579337899543378,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH9",
+      "profileId": "ww-wpuq-2019-sfh09-v1",
+      "annualElectricalKwh": 7068.2142459296,
+      "winterShare": 0.449627,
+      "summerShare": 0.053991,
+      "peakPower": 3332.2680013020763,
+      "operatingShare": 0.8799086757990867,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH10",
+      "profileId": "ww-wpuq-2019-sfh10-v1",
+      "annualElectricalKwh": 4065.8895364495,
+      "winterShare": 0.504486,
+      "summerShare": 0.025807,
+      "peakPower": 13504.848546006937,
+      "operatingShare": 0.41863584474885845,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH11",
+      "profileId": "ww-wpuq-2019-sfh11-v1",
+      "annualElectricalKwh": 6491.0418777985,
+      "winterShare": 0.720744,
+      "summerShare": 0.032378,
+      "peakPower": 8407.471652560762,
+      "operatingShare": 0.2942922374429224,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH12",
+      "profileId": "ww-wpuq-2019-sfh12-v1",
+      "annualElectricalKwh": 2773.0515375291,
+      "winterShare": 0.5133,
+      "summerShare": 0.031991,
+      "peakPower": 6938.50110850864,
+      "operatingShare": 0.19697488584474887,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH15",
+      "profileId": "ww-wpuq-2019-sfh15-v1",
+      "annualElectricalKwh": 3957.5895589808,
+      "winterShare": 0.456268,
+      "summerShare": 0.093865,
+      "peakPower": 5989.713221571182,
+      "operatingShare": 0.2555365296803653,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH16",
+      "profileId": "ww-wpuq-2019-sfh16-v1",
+      "annualElectricalKwh": 3382.674888183,
+      "winterShare": 0.643887,
+      "summerShare": 0.027,
+      "peakPower": 13242.189407009611,
+      "operatingShare": 0.29163812785388127,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH18",
+      "profileId": "ww-wpuq-2019-sfh18-v1",
+      "annualElectricalKwh": 1974.2129151146,
+      "winterShare": 0.475795,
+      "summerShare": 0.039878,
+      "peakPower": 6305.82513020834,
+      "operatingShare": 0.20470890410958903,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH19",
+      "profileId": "ww-wpuq-2019-sfh19-v1",
+      "annualElectricalKwh": 2131.1932542449,
+      "winterShare": 0.576295,
+      "summerShare": 0.017648,
+      "peakPower": 5647.9029839409695,
+      "operatingShare": 0.29440639269406393,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH23",
+      "profileId": "ww-wpuq-2019-sfh23-v1",
+      "annualElectricalKwh": 1577.6636661418,
+      "winterShare": 0.665104,
+      "summerShare": 0.027799,
+      "peakPower": 5919.819227430556,
+      "operatingShare": 0.24163812785388128,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH26",
+      "profileId": "ww-wpuq-2019-sfh26-v1",
+      "annualElectricalKwh": 2548.9759285057,
+      "winterShare": 0.640321,
+      "summerShare": 0.020538,
+      "peakPower": 11266.526669703586,
+      "operatingShare": 0.1613013698630137,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH27",
+      "profileId": "ww-wpuq-2019-sfh27-v1",
+      "annualElectricalKwh": 2726.346393931,
+      "winterShare": 0.633045,
+      "summerShare": 0.019096,
+      "peakPower": 6043.308430989589,
+      "operatingShare": 0.45136986301369864,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH28",
+      "profileId": "ww-wpuq-2019-sfh28-v1",
+      "annualElectricalKwh": 7936.2885844788,
+      "winterShare": 0.589156,
+      "summerShare": 0.017892,
+      "peakPower": 8033.197683376736,
+      "operatingShare": 0.38832762557077627,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH29",
+      "profileId": "ww-wpuq-2019-sfh29-v1",
+      "annualElectricalKwh": 3645.2731036352,
+      "winterShare": 0.70865,
+      "summerShare": 0.010686,
+      "peakPower": 5831.84001193576,
+      "operatingShare": 0.3277111872146119,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH30",
+      "profileId": "ww-wpuq-2019-sfh30-v1",
+      "annualElectricalKwh": 2160.0320620231,
+      "winterShare": 0.677001,
+      "summerShare": 0.049734,
+      "peakPower": 7599.492670355903,
+      "operatingShare": 0.17325913242009133,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH32",
+      "profileId": "ww-wpuq-2019-sfh32-v1",
+      "annualElectricalKwh": 2814.9768536382,
+      "winterShare": 0.482623,
+      "summerShare": 0.045001,
+      "peakPower": 7302.327564832898,
+      "operatingShare": 0.41957762557077627,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH33",
+      "profileId": "ww-wpuq-2019-sfh33-v1",
+      "annualElectricalKwh": 4443.1630207868,
+      "winterShare": 0.677592,
+      "summerShare": 0.015692,
+      "peakPower": 11742.383528645802,
+      "operatingShare": 0.2531963470319635,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH35",
+      "profileId": "ww-wpuq-2019-sfh35-v1",
+      "annualElectricalKwh": 1431.1441444016,
+      "winterShare": 0.599853,
+      "summerShare": 0.025013,
+      "peakPower": 5926.376204427075,
+      "operatingShare": 0.17582762557077625,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH36",
+      "profileId": "ww-wpuq-2019-sfh36-v1",
+      "annualElectricalKwh": 2561.6759601291,
+      "winterShare": 0.656525,
+      "summerShare": 0.030812,
+      "peakPower": 6001.077528211808,
+      "operatingShare": 0.30202625570776254,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH38",
+      "profileId": "ww-wpuq-2019-sfh38-v1",
+      "annualElectricalKwh": 5662.0994371035,
+      "winterShare": 0.541975,
+      "summerShare": 0.034247,
+      "peakPower": 11936.061555989492,
+      "operatingShare": 0.577939497716895,
+      "quality": "field-cohort-representative"
+    },
+    {
+      "houseId": "SFH39",
+      "profileId": "ww-wpuq-2019-sfh39-v1",
+      "annualElectricalKwh": 6696.3002557069,
+      "winterShare": 0.574306,
+      "summerShare": 0.006058,
+      "peakPower": 6331.497444661459,
+      "operatingShare": 0.2704052511415525,
+      "quality": "field-cohort-representative"
+    }
+  ]
+}

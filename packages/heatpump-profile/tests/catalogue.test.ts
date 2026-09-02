@@ -63,4 +63,10 @@ describe("heat-pump catalogue", () => {
       findDefaultHeatPumpProfile("wasserwasser", "space_heat_and_dhw")
     ).toBeUndefined();
   });
+
+  it("does not catalogue the WPuQ Wasser/Wasser research asset yet", () => {
+    const ids = HEAT_PUMP_CATALOGUE.map((e) => e.profileId);
+    expect(ids).not.toContain("ww-heating-dhw-wpuq-2019-sfh38-v1");
+    expect(ids.some((id) => id.includes("wpuq"))).toBe(false);
+  });
 });

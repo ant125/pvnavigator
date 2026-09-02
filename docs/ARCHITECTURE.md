@@ -56,6 +56,7 @@ pvnavigator/
 │   ├── pvgis-adapter/          # PVGIS normalization
 │   ├── bdew-profile/           # Load profiles
 │   ├── geocoding/              # Address / geocoding
+│   ├── heatpump-profile/       # Measured heat-pump electrical profiles
 │   └── pv-methodology/         # Methodik & Quellen registry (SSOT for sources)
 
 ---
@@ -120,6 +121,34 @@ This app must remain lightweight and independent of core logic.
 
 This file defines the canonical structure.
 Changes must respect this architecture.
+
+---
+
+## Heat-pump profiles
+
+`packages/heatpump-profile` is the production package for measured heat-pump
+electrical series. Selection is `(technology, dhwService)` plus optional
+`profileId`. Runtime scales unit weights uniformly to the user annual kWh.
+
+Profile-id grammar:
+
+`{tech}-{dhw}-{dataset}-{optionalYear}-{building}-v{n}`
+
+Shared envelope contract: `schemaVersion`, `profileId`, `technology`,
+`dhwService`, `timeStepHours`, `steps`, `weights`,
+`measuredAnnualElectricalKwh`, `quality`, `methodologySourceId`, `license`,
+`generatorVersion`, `sourceWindow`, `calendarAlignment`, `seasonalShares`,
+`fillSummary`. Dataset-specific provenance stays optional.
+
+Methodology ids:
+
+- `thermbuild-fordatis-486` — production Luft/Wasser
+- `wpuq-wasserwasser-heatpump` — WPuQ Wasser/Wasser heat-pump source (registered; **not** a catalogue default)
+- `wpuq-scientific-data` — WPuQ household robustness only
+
+Wasser/Wasser is not production-supported in the calculator until a later
+integration. Robustness JSON under `research/wpuq/processed/robustness/` is
+not part of the production catalogue.
 
 ---
 

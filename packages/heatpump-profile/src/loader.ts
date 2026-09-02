@@ -8,6 +8,8 @@ import {
 } from "./types";
 
 const WEIGHT_SUM_TOLERANCE = 1e-12;
+const SEASONAL_SHARE_SUM_TOLERANCE = 1e-5;
+const SEASONAL_SHARE_KEYS = ["winter", "spring", "summer", "autumn"] as const;
 
 /**
  * Immutable production envelopes, keyed by catalogue profileId.
@@ -122,6 +124,37 @@ function assertEnvelopeMatchesCatalogue(
   ) {
     throw new Error(
       `heat-pump envelope ${entry.profileId}: measuredAnnualElectricalKwh is invalid`
+    );
+  }
+
+  if (
+    typeof envelope.calendarAlignment !== "string" ||
+    envelope.calendarAlignment.trim() === ""
+  ) {
+    throw new Error(
+      `heat-pump envelope ${entry.profileId}: calendarAlignment is missing`
+    );
+  }
+
+  const shares = envelope.seasonalShares;
+  if (!shares || typeof shares !== "object") {
+    throw new Error(
+      `heat-pump envelope ${entry.profileId}: seasonalShares is missing`
+    );
+  }
+  let shareSum = 0;
+  for (const key of SEASONAL_SHARE_KEYS) {
+    const value = shares[key];
+    if (!Number.isFinite(value) || value < 0 || value > 1) {
+      throw new Error(
+        `heat-pump envelope ${entry.profileId}: seasonalShares.${key} is invalid`
+      );
+    }
+    shareSum += value;
+  }
+  if (Math.abs(shareSum - 1) > SEASONAL_SHARE_SUM_TOLERANCE) {
+    throw new Error(
+      `heat-pump envelope ${entry.profileId}: seasonalShares sum=${shareSum}, expected 1`
     );
   }
 }
