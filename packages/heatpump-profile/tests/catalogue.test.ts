@@ -7,29 +7,48 @@ import {
 } from "../src/catalogue";
 
 describe("heat-pump catalogue", () => {
-  it("lists exactly the two Luft/Wasser production prototypes", () => {
+  it("lists the production Luft/Wasser prototypes and one Wasser/Wasser default", () => {
     const ids = HEAT_PUMP_CATALOGUE.map((e) => e.profileId);
     expect(ids).toEqual([
       "lw-heating-only-thermbuild-o5-v1",
       "lw-heating-dhw-thermbuild-n2-v1",
+      "ww-heating-dhw-wpuq-2019-sfh38-v1",
     ]);
   });
 
   it("exposes required metadata on every row", () => {
     for (const entry of getHeatPumpCatalogue()) {
       expect(entry.profileId).toMatch(/-v1$/);
-      expect(entry.technology).toBe("luftwasser");
+      expect(["luftwasser", "wasserwasser"]).toContain(entry.technology);
       expect(["space_heat_only", "space_heat_and_dhw"]).toContain(
         entry.dhwService
       );
-      expect(entry.quality).toBe("lab-prototype");
-      expect(entry.methodologySourceId).toBe("thermbuild-fordatis-486");
-      expect(entry.license).toBe("CC-BY-SA-4.0");
+      expect(["lab-prototype", "field-cohort-representative"]).toContain(
+        entry.quality
+      );
+      expect(entry.methodologySourceId.length).toBeGreaterThan(0);
+      expect(entry.license.length).toBeGreaterThan(0);
       expect(entry.defaultFor).toEqual({
         technology: entry.technology,
         dhwService: entry.dhwService,
       });
     }
+  });
+
+  it("catalogues Wasser/Wasser heating+DHW as the WPuQ field representative", () => {
+    const entry = getHeatPumpCatalogueEntry("ww-heating-dhw-wpuq-2019-sfh38-v1");
+    expect(entry).toEqual({
+      profileId: "ww-heating-dhw-wpuq-2019-sfh38-v1",
+      technology: "wasserwasser",
+      dhwService: "space_heat_and_dhw",
+      quality: "field-cohort-representative",
+      methodologySourceId: "wpuq-wasserwasser-heatpump",
+      license: "CC-BY-4.0",
+      defaultFor: {
+        technology: "wasserwasser",
+        dhwService: "space_heat_and_dhw",
+      },
+    });
   });
 
   it("has unique profileIds", () => {
@@ -60,13 +79,18 @@ describe("heat-pump catalogue", () => {
       findDefaultHeatPumpProfile("luftwasser", "space_heat_and_dhw")?.profileId
     ).toBe("lw-heating-dhw-thermbuild-n2-v1");
     expect(
-      findDefaultHeatPumpProfile("wasserwasser", "space_heat_and_dhw")
+      findDefaultHeatPumpProfile("wasserwasser", "space_heat_and_dhw")?.profileId
+    ).toBe("ww-heating-dhw-wpuq-2019-sfh38-v1");
+    expect(
+      findDefaultHeatPumpProfile("wasserwasser", "space_heat_only")
     ).toBeUndefined();
   });
 
-  it("does not catalogue the WPuQ Wasser/Wasser research asset yet", () => {
+  it("does not catalogue WPuQ robustness houses", () => {
     const ids = HEAT_PUMP_CATALOGUE.map((e) => e.profileId);
-    expect(ids).not.toContain("ww-heating-dhw-wpuq-2019-sfh38-v1");
-    expect(ids.some((id) => id.includes("wpuq"))).toBe(false);
+    expect(ids.filter((id) => id.includes("wpuq"))).toEqual([
+      "ww-heating-dhw-wpuq-2019-sfh38-v1",
+    ]);
+    expect(ids.some((id) => id.startsWith("ww-wpuq-"))).toBe(false);
   });
 });

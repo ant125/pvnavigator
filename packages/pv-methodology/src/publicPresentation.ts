@@ -112,6 +112,7 @@ export function getPublicMethodologySections(): PublicMethodologySection[] {
   const pvgis = requireSource("pvgis-jrc");
   const bdew = requireSource("bdew-h25");
   const thermbuild = requireSource("thermbuild-fordatis-486");
+  const wpuqHeatPump = requireSource("wpuq-wasserwasser-heatpump");
   const htw = requireSource("htw-berlin-unabhaengigkeitsrechner");
   const ise = requireSource("fraunhofer-ise");
 
@@ -150,7 +151,7 @@ export function getPublicMethodologySections(): PublicMethodologySection[] {
       title: load.title,
       icon: "load",
       description:
-        "Der Haushaltsverbrauch folgt dem aktuellen BDEW-Standardlastprofil. Eine optionale Luft/Wasser-Wärmepumpe wird über ein gemessenes ThermBuild-Referenzprofil abgebildet.",
+        "Der Haushaltsverbrauch folgt dem aktuellen BDEW-Standardlastprofil. Optionale Wärmepumpen werden über gemessene elektrische Referenzprofile abgebildet (ThermBuild für Luft/Wasser, WPuQ für Wasser/Wasser).",
       entries: [
         {
           id: "public-bdew-h25",
@@ -182,6 +183,24 @@ export function getPublicMethodologySections(): PublicMethodologySection[] {
           links: linksFrom(["thermbuild-fordatis-486"], {
             "thermbuild-fordatis-486":
               "ThermBuild TwinHouse Wärmepumpenmessungen",
+          }),
+        },
+        {
+          id: "public-wpuq-wasserwasser",
+          title: "WPuQ Wasser/Wasser-Wärmepumpenmessungen",
+          organization: wpuqHeatPump.organization,
+          description:
+            "Die Simulation verwendet ein gemessenes 15-Minuten-Referenzprofil einer Wasser/Wasser-Wärmepumpe aus dem WPuQ-Projekt. Die Messung stammt aus bewohnten Einfamilienhäusern mit einem eigenen Wärmepumpenzähler. Ihr angegebener Jahresstromverbrauch bestimmt die Energiemenge. Das Referenzprofil bestimmt deren zeitliche Verteilung über das Jahr.",
+          bullets: [
+            "Quelle: gemessene elektrische Profile bewohnter Einfamilienhäuser (WPuQ)",
+            "Eigener Wärmepumpenzähler",
+            "Elektrisches Lastprofil, 15-Minuten-Auflösung",
+            "Jahresstromverbrauch bestimmt die Energiemenge (wie viel)",
+            "Referenzprofil bestimmt die zeitliche Verteilung (wann)",
+          ],
+          links: linksFrom(["wpuq-wasserwasser-heatpump"], {
+            "wpuq-wasserwasser-heatpump":
+              "WPuQ Wasser/Wasser-Wärmepumpenmessungen",
           }),
         },
       ],

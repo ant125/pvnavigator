@@ -73,10 +73,16 @@ const PVGIS_STAGE: CalculationProgressStage = {
   active: "PVGIS-Wetterdaten werden geladen",
 };
 
-const HEAT_PUMP_STAGE: CalculationProgressStage = {
+const HEAT_PUMP_STAGE_LUFTWASSER: CalculationProgressStage = {
   id: "heatpump",
   done: "ThermBuild-Wärmepumpenprofil geladen",
   active: "ThermBuild-Wärmepumpenprofil wird geladen",
+};
+
+const HEAT_PUMP_STAGE_WASSERWASSER: CalculationProgressStage = {
+  id: "heatpump",
+  done: "Wasser/Wasser-Wärmepumpenprofil geladen",
+  active: "Wasser/Wasser-Wärmepumpenprofil wird geladen",
 };
 
 const CONSUMPTION_STAGE: CalculationProgressStage = {
@@ -92,19 +98,26 @@ const PHYSICS_STAGE: CalculationProgressStage = {
 };
 
 /**
- * Loading-screen stages. The ThermBuild row is presentation-only and
- * appears only for Luft/Wasser. It does not add a backend progress event.
+ * Loading-screen stages. The heat-pump row is presentation-only and
+ * appears for Luft/Wasser or Wasser/Wasser. It does not add a backend
+ * progress event.
  */
+export type HeatPumpProgressKind = false | "luftwasser" | "wasserwasser";
+
 export function getCalculationProgressStages(
-  includeHeatPumpProfile: boolean
+  includeHeatPumpProfile: HeatPumpProgressKind = false
 ): readonly CalculationProgressStage[] {
   if (!includeHeatPumpProfile) {
     return [LOCATION_STAGE, PVGIS_STAGE, CONSUMPTION_STAGE, PHYSICS_STAGE];
   }
+  const heatPumpStage =
+    includeHeatPumpProfile === "wasserwasser"
+      ? HEAT_PUMP_STAGE_WASSERWASSER
+      : HEAT_PUMP_STAGE_LUFTWASSER;
   return [
     LOCATION_STAGE,
     PVGIS_STAGE,
-    HEAT_PUMP_STAGE,
+    heatPumpStage,
     CONSUMPTION_STAGE,
     PHYSICS_STAGE,
   ];

@@ -34,13 +34,29 @@ describe("applyCalculationProgress", () => {
 });
 
 describe("getCalculationProgressStages", () => {
-  it("omits ThermBuild unless a Luft/Wasser heat pump is selected", () => {
+  it("omits the heat-pump row unless a production heat pump is selected", () => {
     expect(getCalculationProgressStages(false).map((stage) => stage.id)).toEqual(
       ["location", "pvgis", "consumption", "physics"]
     );
-    expect(getCalculationProgressStages(true).map((stage) => stage.id)).toEqual(
-      ["location", "pvgis", "heatpump", "consumption", "physics"]
+    expect(
+      getCalculationProgressStages("luftwasser").map((stage) => stage.id)
+    ).toEqual(["location", "pvgis", "heatpump", "consumption", "physics"]);
+    expect(
+      getCalculationProgressStages("wasserwasser").map((stage) => stage.id)
+    ).toEqual(["location", "pvgis", "heatpump", "consumption", "physics"]);
+  });
+
+  it("uses ThermBuild wording for Luft/Wasser and Wasser/Wasser wording for WW", () => {
+    const luft = getCalculationProgressStages("luftwasser").find(
+      (stage) => stage.id === "heatpump"
     );
+    const wasser = getCalculationProgressStages("wasserwasser").find(
+      (stage) => stage.id === "heatpump"
+    );
+    expect(luft?.active).toBe("ThermBuild-Wärmepumpenprofil wird geladen");
+    expect(wasser?.active).toBe("Wasser/Wasser-Wärmepumpenprofil wird geladen");
+    expect(wasser?.active).not.toMatch(/WPuQ/i);
+    expect(wasser?.done).not.toMatch(/WPuQ/i);
   });
 
   it("marks the ThermBuild row done with the consumption event", () => {

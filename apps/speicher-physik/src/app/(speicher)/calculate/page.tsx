@@ -129,8 +129,10 @@ const FORM_RADIO_OPTION =
 
 const FORM_RADIO_HINT = "mt-0.5 block text-xs leading-relaxed text-ink-muted";
 
-const FORM_UNAVAILABLE_BADGE =
-  "inline-flex items-center rounded border border-line px-1.5 py-px text-[10px] font-medium text-ink-muted";
+const HEAT_PUMP_TECHNOLOGY_LABELS = {
+  luftwasser: "Luft/Wasser",
+  wasserwasser: "Wasser/Wasser",
+} as const;
 
 const HEAT_PUMP_DHW_LABELS = {
   space_heat_and_dhw: "Heizung und Warmwasser",
@@ -1312,24 +1314,33 @@ export default function SpeicherCalculatePage() {
                             </span>
                           </span>
                         </label>
-                        <label className="flex items-start gap-2 text-sm text-ink-muted">
+                        <label className={FORM_RADIO_OPTION}>
                           <input
                             type="radio"
-                            disabled
-                            checked={false}
-                            tabIndex={-1}
-                            aria-disabled="true"
-                            className="mt-0.5 h-4 w-4 shrink-0 cursor-not-allowed border-field-border accent-accent"
+                            name="heatPumpTechnology"
+                            checked={
+                              formData.heatPumpTechnology === "wasserwasser"
+                            }
+                            onChange={() => {
+                              clearFieldError("heatPumpTechnology");
+                              clearFieldError("heatPumpDhwService");
+                              setFormData({
+                                ...formData,
+                                heatPumpTechnology: "wasserwasser",
+                                heatPumpDhwService:
+                                  formData.heatPumpDhwService ===
+                                  "space_heat_only"
+                                    ? undefined
+                                    : formData.heatPumpDhwService,
+                              });
+                            }}
+                            className="mt-0.5 h-4 w-4 shrink-0 border-field-border accent-accent"
                           />
                           <span>
-                            <span className="inline-flex flex-wrap items-center gap-2">
-                              Wasser/Wasser
-                              <span className={FORM_UNAVAILABLE_BADGE}>
-                                Demnächst verfügbar
-                              </span>
-                            </span>
+                            Wasser/Wasser
                             <span className={FORM_RADIO_HINT}>
-                              Nutzt Grundwasser als Wärmequelle.
+                              Nutzt Grundwasser bzw. ein kaltes Nahwärmenetz
+                              als Wärmequelle.
                             </span>
                           </span>
                         </label>
@@ -1353,7 +1364,8 @@ export default function SpeicherCalculatePage() {
                       </p>
                     )}
 
-                    {formData.heatPumpTechnology === "luftwasser" && (
+                    {(formData.heatPumpTechnology === "luftwasser" ||
+                      formData.heatPumpTechnology === "wasserwasser") && (
                       <fieldset
                         aria-invalid={
                           fieldErrors.heatPumpDhwService ? true : undefined
@@ -1368,25 +1380,27 @@ export default function SpeicherCalculatePage() {
                           Wofür wird die Wärmepumpe verwendet?
                         </legend>
                         <div className="mt-3 flex flex-col gap-2">
-                          <label className={FORM_RADIO_LABEL}>
-                            <input
-                              type="radio"
-                              name="heatPumpDhwService"
-                              checked={
-                                formData.heatPumpDhwService ===
-                                "space_heat_only"
-                              }
-                              onChange={() => {
-                                clearFieldError("heatPumpDhwService");
-                                setFormData({
-                                  ...formData,
-                                  heatPumpDhwService: "space_heat_only",
-                                });
-                              }}
-                              className="h-4 w-4 shrink-0 border-field-border accent-accent"
-                            />
-                            Nur Heizung
-                          </label>
+                          {formData.heatPumpTechnology === "luftwasser" && (
+                            <label className={FORM_RADIO_LABEL}>
+                              <input
+                                type="radio"
+                                name="heatPumpDhwService"
+                                checked={
+                                  formData.heatPumpDhwService ===
+                                  "space_heat_only"
+                                }
+                                onChange={() => {
+                                  clearFieldError("heatPumpDhwService");
+                                  setFormData({
+                                    ...formData,
+                                    heatPumpDhwService: "space_heat_only",
+                                  });
+                                }}
+                                className="h-4 w-4 shrink-0 border-field-border accent-accent"
+                              />
+                              Nur Heizung
+                            </label>
+                          )}
                           <label className={FORM_RADIO_LABEL}>
                             <input
                               type="radio"
@@ -1580,7 +1594,10 @@ export default function SpeicherCalculatePage() {
             complete={calculationComplete}
             includeHeatPumpProfile={
               formData.heatPumpEnabled === true &&
-              formData.heatPumpTechnology === "luftwasser"
+              (formData.heatPumpTechnology === "luftwasser" ||
+                formData.heatPumpTechnology === "wasserwasser")
+                ? formData.heatPumpTechnology
+                : false
             }
           />
         </div>
@@ -1870,12 +1887,19 @@ export default function SpeicherCalculatePage() {
                               {formData.heatPumpConsumptionKwh} kWh/Jahr
                             </dd>
                           </div>
-                          {formData.heatPumpTechnology === "luftwasser" && (
+                          {(formData.heatPumpTechnology === "luftwasser" ||
+                            formData.heatPumpTechnology === "wasserwasser") && (
                             <div className={REPORT_DATA_ITEM}>
                               <dt className={REPORT_DATA_LABEL}>
-                                Typ der Wärmepumpe:
+                                Typ:
                               </dt>
-                              <dd className={REPORT_DATA_VALUE}>Luft/Wasser</dd>
+                              <dd className={REPORT_DATA_VALUE}>
+                                {
+                                  HEAT_PUMP_TECHNOLOGY_LABELS[
+                                    formData.heatPumpTechnology
+                                  ]
+                                }
+                              </dd>
                             </div>
                           )}
                           {formData.heatPumpDhwService && (

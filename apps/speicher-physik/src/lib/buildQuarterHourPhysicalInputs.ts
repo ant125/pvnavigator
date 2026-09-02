@@ -9,8 +9,9 @@
  * - household: native BDEW H25 15-min (`createUserLoadProfile15MinForYear`)
  * - PVGIS: remains hourly; after Berlin 8760 alignment each hour E is split
  *   uniformly into [E/4, E/4, E/4, E/4]
- * - Wärmepumpe: `@heatpump-profile/loader` Luft/Wasser prototypes, scaled
- *   to user kWh. Legacy inputs default to unknown + heating+DHW.
+ * - Wärmepumpe: `@heatpump-profile/loader` Luft/Wasser and Wasser/Wasser
+ *   prototypes, scaled to user kWh. Legacy inputs default to unknown +
+ *   heating+DHW.
  *
  * All output arrays have length 35040 (non-leap year).
  */

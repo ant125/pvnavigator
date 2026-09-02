@@ -1,10 +1,10 @@
 /**
  * Synthetic seasonal heat-pump electricity profile.
  *
- * Production Luft/Wasser uses `@heatpump-profile/loader`
+ * Production Luft/Wasser and Wasser/Wasser use `@heatpump-profile/loader`
  * (`createHeatPumpProfile15Min`). Keep these functions as the explicit
  * fallback only when that package cannot resolve a supported profile.
- * Do not call them as the default Luft/Wasser path.
+ * Do not call them as the default measured path.
  *
  * Hourly: 8760 steps. 15-min: 35040 steps. Same monthly multipliers
  * and the same annual kWh.

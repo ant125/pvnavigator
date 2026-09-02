@@ -55,11 +55,10 @@ export interface SpeicherInput {
   heatPumpConsumptionKwh?: number;
 
   /**
-   * Production technology. The new UI only allows Luft/Wasser.
-   * Wasser/Wasser is shown disabled and must not be stored.
-   * Absent on legacy saved calculations.
+   * Production technology. The new UI allows Luft/Wasser and Wasser/Wasser
+   * (heating + DHW only for Wasser/Wasser). Absent on legacy saved calculations.
    */
-  heatPumpTechnology?: "luftwasser";
+  heatPumpTechnology?: "luftwasser" | "wasserwasser";
 
   /**
    * Whether the heat pump also supplies domestic hot water.

@@ -137,6 +137,28 @@ describe("buildQuarterHourPhysicalInputsForYear", () => {
     expect(heatingOnly.heatPumpLoadKwh).not.toEqual(heatingAndDhw.heatPumpLoadKwh);
   });
 
+  it("Wasser/Wasser + heating + DHW selects the WPuQ production profile", () => {
+    const year = 2018;
+    const hourlyPv = syntheticHourlyPv(year);
+    const ww = buildQuarterHourPhysicalInputsForYear({
+      year,
+      annualConsumptionKWh: 4000,
+      hourlyPvKwh: hourlyPv,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKWh: 3000,
+      heatPumpTechnology: "wasserwasser",
+      heatPumpDhwService: "space_heat_and_dhw",
+    });
+    expect(ww.heatPumpMeta?.profileId).toBe(
+      "ww-heating-dhw-wpuq-2019-sfh38-v1"
+    );
+    expect(ww.heatPumpMeta?.resolvedTechnology).toBe("wasserwasser");
+    expect(ww.heatPumpMeta?.methodologySourceId).toBe(
+      "wpuq-wasserwasser-heatpump"
+    );
+    expect(ww.heatPumpMeta?.usedSyntheticFallback).toBe(false);
+  });
+
   it("battery default remains dt=1; production passes TIME_STEP_HOURS_15", () => {
     expect(DEFAULT_TIME_STEP_HOURS).toBe(1);
     expect(TIME_STEP_HOURS_15).toBe(0.25);

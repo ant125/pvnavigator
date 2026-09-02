@@ -143,12 +143,12 @@ Shared envelope contract: `schemaVersion`, `profileId`, `technology`,
 Methodology ids:
 
 - `thermbuild-fordatis-486` — production Luft/Wasser
-- `wpuq-wasserwasser-heatpump` — WPuQ Wasser/Wasser heat-pump source (registered; **not** a catalogue default)
+- `wpuq-wasserwasser-heatpump` — production Wasser/Wasser heat-pump profile
 - `wpuq-scientific-data` — WPuQ household robustness only
 
-Wasser/Wasser is not production-supported in the calculator until a later
-integration. Robustness JSON under `research/wpuq/processed/robustness/` is
-not part of the production catalogue.
+Wasser/Wasser heating + DHW resolves to `ww-heating-dhw-wpuq-2019-sfh38-v1`.
+Wasser/Wasser heating-only is unsupported. Robustness JSON under
+`research/wpuq/processed/robustness/` is not part of the production catalogue.
 
 ---
 

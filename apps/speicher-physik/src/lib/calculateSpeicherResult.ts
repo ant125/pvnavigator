@@ -145,7 +145,6 @@ export type CalculateSpeicherResultInput = {
   /**
    * Production technology class. Absent on legacy inputs → `"unknown"`
    * (resolves to Luft/Wasser in `@heatpump-profile/loader`).
-   * Wasser/Wasser is not a production option in this phase.
    */
   heatPumpTechnology?: HeatPumpTechnologyProduction;
   /**

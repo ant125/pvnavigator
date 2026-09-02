@@ -20,6 +20,7 @@ describe("loadHeatPumpProfile", () => {
   it.each([
     "lw-heating-only-thermbuild-o5-v1",
     "lw-heating-dhw-thermbuild-n2-v1",
+    "ww-heating-dhw-wpuq-2019-sfh38-v1",
   ] as const)("%s: loads the immutable envelope without scaling", (profileId) => {
     const entry = requireEntry(profileId);
     const envelope = loadHeatPumpProfile(entry);

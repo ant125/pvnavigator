@@ -50,6 +50,32 @@ describe("buildHeatPumpLoadComponent (ThermBuild production)", () => {
     expect(result.meta.usedSyntheticFallback).toBe(false);
   });
 
+  it("Wasser/Wasser + heating + DHW selects the WPuQ production profile", () => {
+    const annual = 5000;
+    const result = buildHeatPumpLoadComponent({
+      technology: "wasserwasser",
+      dhwService: "space_heat_and_dhw",
+      annualElectricalKwh: annual,
+      year: YEAR,
+    });
+    expect(result.meta.profileId).toBe("ww-heating-dhw-wpuq-2019-sfh38-v1");
+    expect(result.meta.requestedTechnology).toBe("wasserwasser");
+    expect(result.meta.resolvedTechnology).toBe("wasserwasser");
+    expect(result.meta.dhwService).toBe("space_heat_and_dhw");
+    expect(result.meta.quality).toBe("field-cohort-representative");
+    expect(result.meta.methodologySourceId).toBe("wpuq-wasserwasser-heatpump");
+    expect(result.meta.license).toBe("CC-BY-4.0");
+    expect(result.meta.fallback).toBe(false);
+    expect(result.meta.usedSyntheticFallback).toBe(false);
+    expect(result.meta.measuredSourceClass).toBe(
+      "wpuq-field-cohort-representative"
+    );
+    expect(result.component.profile).toHaveLength(STEPS_PER_NON_LEAP_YEAR_15);
+    expect(Math.abs(sum(result.component.profile) - annual)).toBeLessThanOrEqual(
+      annual * REL_TOL
+    );
+  });
+
   it("C: unknown + heating + DHW resolves to Luft/Wasser with explicit fallback", () => {
     const result = buildHeatPumpLoadComponent({
       technology: "unknown",
@@ -166,11 +192,13 @@ describe("buildHeatPumpLoadComponent (ThermBuild production)", () => {
     );
   });
 
-  it("registers ThermBuild in the methodology registry", () => {
-    const source = getMethodologySourceById("thermbuild-fordatis-486");
-    expect(source).toBeDefined();
-    expect(source?.url).toBe("https://fordatis.fraunhofer.de/handle/fordatis/486");
-    expect(source?.official).toBe(true);
+  it("registers WPuQ Wasser/Wasser separately from ThermBuild", () => {
+    const thermbuild = getMethodologySourceById("thermbuild-fordatis-486");
+    const wpuqHp = getMethodologySourceById("wpuq-wasserwasser-heatpump");
+    expect(thermbuild).toBeDefined();
+    expect(wpuqHp?.category).toBe("load_profiles");
+    expect(wpuqHp?.url).toBe("https://www.nature.com/articles/s41597-022-01156-1");
+    expect(wpuqHp?.official).toBe(true);
   });
 
   it("rejects non-positive annual electrical kWh", () => {
@@ -182,14 +210,15 @@ describe("buildHeatPumpLoadComponent (ThermBuild production)", () => {
     ).toThrow(/annualElectricalKwh/);
   });
 
-  it("rejects Wasser/Wasser (not a production option in this phase)", () => {
+  it("rejects Wasser/Wasser heating-only (no catalogue default)", () => {
     expect(() =>
       buildHeatPumpLoadComponent({
         annualElectricalKwh: 4000,
         year: YEAR,
-        technology: "wasserwasser" as never,
+        technology: "wasserwasser",
+        dhwService: "space_heat_only",
       })
-    ).toThrow(/Unsupported heat-pump technology/);
+    ).toThrow(/No heat-pump catalogue default/);
   });
 
   it("rejects an unsupported dhwService", () => {

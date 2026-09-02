@@ -13,6 +13,10 @@ const THERMBUILD_CITATION = {
   methodologySourceId: "thermbuild-fordatis-486",
 } as const;
 
+const WPUQ_HEATPUMP_CITATION = {
+  methodologySourceId: "wpuq-wasserwasser-heatpump",
+} as const;
+
 describe("getReportMethodologySources", () => {
   it("cites WPuQ via the Scientific Data publication, not Zenodo", () => {
     const wpuq = getReportMethodologySources().find(
@@ -68,6 +72,27 @@ describe("getReportMethodologySources", () => {
       "thermbuild-fordatis-486"
     );
   });
+
+  it("includes the WPuQ Wasser/Wasser source only when that profile was used", () => {
+    const without = getReportMethodologySources();
+    const luftwasser = getReportMethodologySources(THERMBUILD_CITATION);
+    const wasserwasser = getReportMethodologySources(WPUQ_HEATPUMP_CITATION);
+    const registry = getMethodologySourceById("wpuq-wasserwasser-heatpump");
+
+    expect(without.map((source) => source.id)).not.toContain(
+      "wpuq-wasserwasser-heatpump"
+    );
+    expect(luftwasser.map((source) => source.id)).not.toContain(
+      "wpuq-wasserwasser-heatpump"
+    );
+    const ww = wasserwasser.find(
+      (source) => source.id === "wpuq-wasserwasser-heatpump"
+    );
+    expect(ww).toBeDefined();
+    expect(ww?.url).toBe(registry?.url);
+    expect(JSON.stringify(ww)).not.toMatch(/SFH38/i);
+    expect(JSON.stringify(ww)).not.toMatch(/laboratory/i);
+  });
 });
 
 describe("getReportDurationInclusions", () => {
@@ -97,6 +122,20 @@ describe("getReportDurationInclusions", () => {
       "Validierung mit 27 Referenzhaushalten",
     ]);
   });
+
+  it("adds gemessenes Wärmepumpenprofil for a Wasser/Wasser run", () => {
+    expect(
+      getReportDurationInclusions({
+        heatPump: WPUQ_HEATPUMP_CITATION,
+        cohortSize: 27,
+      })
+    ).toEqual([
+      "PVGIS-Wetterdaten",
+      "Batteriesimulation",
+      "gemessenes Wärmepumpenprofil",
+      "Validierung mit 27 Referenzhaushalten",
+    ]);
+  });
 });
 
 describe("Methodik Wärmepumpe", () => {
@@ -116,7 +155,12 @@ describe("Methodik Wärmepumpe", () => {
     expect(text).toMatch(/Referenzprofil/);
     expect(text).toMatch(/skaliert/);
     expect(text).not.toMatch(/saisonale Gewichtung/);
-    expect(text).not.toMatch(/WPuQ-Projekt/);
+    expect(text).toMatch(/Wasser\/Wasser/);
+    expect(text).toMatch(/WPuQ/);
+    expect(text).toMatch(/bewohnten Einfamilienhäusern/);
+    expect(text).toMatch(/Wärmepumpenzähler/);
+    expect(text).not.toMatch(/SFH38/);
+    expect(text).not.toMatch(/Robustheit/);
     expect(text).not.toMatch(/https:\/\//);
   });
 
@@ -139,6 +183,27 @@ describe("Methodik Wärmepumpe", () => {
     );
   });
 
+  it("lists the official WPuQ Wasser/Wasser source in Quellen", () => {
+    const load = getPublicMethodologySections().find(
+      (section) => section.id === "load_profiles"
+    );
+    const wpuqHp = load?.entries.find(
+      (entry) => entry.id === "public-wpuq-wasserwasser"
+    );
+    expect(wpuqHp).toBeDefined();
+    expect(wpuqHp?.description).toMatch(/Wasser\/Wasser/);
+    expect(wpuqHp?.description).toMatch(/WPuQ/);
+    expect(wpuqHp?.description).not.toMatch(/SFH38/);
+    expect(wpuqHp?.links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceId: "wpuq-wasserwasser-heatpump",
+          url: "https://www.nature.com/articles/s41597-022-01156-1",
+        }),
+      ])
+    );
+  });
+
   it("registers WPuQ heat-pump production separately from household robustness", () => {
     const household = getMethodologySourceById("wpuq-scientific-data");
     const heatPump = getMethodologySourceById("wpuq-wasserwasser-heatpump");
@@ -148,9 +213,6 @@ describe("Methodik Wärmepumpe", () => {
     expect(heatPump?.url).toBe(household?.url);
     expect(heatPump?.description).toMatch(/Wasser\/Wasser/);
     expect(heatPump?.description).toMatch(/HEATPUMP/);
-    expect(JSON.stringify(getPublicMethodologySections())).not.toMatch(
-      /wpuq-wasserwasser-heatpump/
-    );
     expect(getReportMethodologySources().map((source) => source.id)).not.toContain(
       "wpuq-wasserwasser-heatpump"
     );

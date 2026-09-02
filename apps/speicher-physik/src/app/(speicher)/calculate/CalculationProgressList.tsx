@@ -5,6 +5,7 @@ import {
   SMART_METER_HOUSEHOLD_COUNT,
   getCalculationProgressStages,
   isCalculationStageDone,
+  type HeatPumpProgressKind,
 } from "@/lib/calculationProgress";
 
 const STAGE_5_LABEL = "Validierung mit realen Referenzhaushalten";
@@ -43,8 +44,8 @@ type CalculationProgressListProps = {
   progress: CalculationProgressState;
   elapsedSeconds: number;
   complete?: boolean;
-  /** Luft/Wasser only. Presentation row; no extra backend event. */
-  includeHeatPumpProfile?: boolean;
+  /** Production heat-pump row; presentation only, no extra backend event. */
+  includeHeatPumpProfile?: HeatPumpProgressKind;
 };
 
 export function CalculationProgressList({

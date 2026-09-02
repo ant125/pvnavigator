@@ -81,7 +81,7 @@ Die **Produktionssimulation** erfolgt in 15-Minuten-Schritten. Jedes modellierte
 
 - BDEW-Quelle: natives H25-Viertelstundenprofil (96 Slots/Tag, 35040 Schritte/Nichtschaltjahr). Keine Dynamisierung, keine Feiertags-Umbelegung.
 - PVGIS-Quelle: unverändert stündlich (seriescalc). Nach der bestehenden Berlin-8760-Ausrichtung wird jede Stundenenergie \(E\) gleichmäßig auf vier Viertelstunden \([E/4, E/4, E/4, E/4]\) verteilt. Keine 15-min-PVGIS-API, keine Einstrahlungsinterpolation.
-- Wärmepumpe: Luft/Wasser über gemessene 15-Minuten-Referenzprofile (ThermBuild), gleichmäßig auf die eingegebene Jahres-kWh skaliert. Wasser/Wasser ist nicht in der Produktion. Gemeinsames Skalierungsprinzip: [Load Profile Scaling Principle](#load-profile-scaling-principle).
+- Wärmepumpe: Luft/Wasser über gemessene 15-Minuten-Referenzprofile (ThermBuild), Wasser/Wasser über das gemessene WPuQ-Referenzprofil, jeweils gleichmäßig auf die eingegebene Jahres-kWh skaliert. Gemeinsames Skalierungsprinzip: [Load Profile Scaling Principle](#load-profile-scaling-principle).
 - Merge: indexweise, alle Komponenten müssen dieselbe Länge haben (kein Mix 8760 + 35040).
 - Kernel: `timeStepHours = 0.25`, `BATTERY_MODEL_VERSION = 1.1.0`, `PHYSICAL_KERNEL_SCHEMA_VERSION = 1.1.0`.
 - Stundenhelfer (BDEW hourly, `createHeatPumpComponent` 8760) bleiben für Regression/Rollback.
@@ -209,13 +209,13 @@ wie gut das Standardlastprofil dem tatsächlichen Verbrauchsverhalten entspricht
 
 ### 2.3 Wärmepumpe
 
-Falls eine Luft/Wasser-Wärmepumpe aktiviert ist, wird der zusätzliche Stromverbrauch separat modelliert und dem Haushaltsverbrauch hinzugefügt.
+Falls eine Wärmepumpe aktiviert ist, wird der zusätzliche Stromverbrauch separat modelliert und dem Haushaltsverbrauch hinzugefügt.
 
 Annahmen:
 
-Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche Lastreihe in 15-Minuten-Schritten modelliert. Für Luft/Wasser verwendet die Produktion gemessene elektrische Referenzprofile aus der ThermBuild-Messkampagne. Das Profil wird gleichmäßig auf den angegebenen Jahresstromverbrauch skaliert. Es handelt sich nicht um den Lastgang der Wärmepumpe des Nutzers. Siehe [Load Profile Scaling Principle](#load-profile-scaling-principle).
+Der eingegebene Jahresstromverbrauch der Wärmepumpe wird als zusätzliche Lastreihe in 15-Minuten-Schritten modelliert. Für Luft/Wasser verwendet die Produktion gemessene elektrische Referenzprofile aus der ThermBuild-Messkampagne. Für Wasser/Wasser verwendet die Produktion ein gemessenes elektrisches Referenzprofil aus dem WPuQ-Projekt (bewohnte Einfamilienhäuser, eigener Wärmepumpenzähler). Das Profil wird gleichmäßig auf den angegebenen Jahresstromverbrauch skaliert. Es handelt sich nicht um den Lastgang der Wärmepumpe des Nutzers. Siehe [Load Profile Scaling Principle](#load-profile-scaling-principle).
 
-Wasser/Wasser-Wärmepumpen sind in der aktuellen Berechnung nicht enthalten.
+Wasser/Wasser ist nur für Heizung und Warmwasser verfügbar.
 
 👉 Wichtig:
 
@@ -233,7 +233,7 @@ Keine Abbildung von realen Steuerstrategien
 
 Das Referenzprofil bildet nicht die individuelle Wärmepumpe des Nutzers ab.
 
-Offizielle Quelle und öffentliche Formulierung: Methodik & Quellen (`thermbuild-fordatis-486`).
+Offizielle Quellen und öffentliche Formulierung: Methodik & Quellen (`thermbuild-fordatis-486`, `wpuq-wasserwasser-heatpump`).
 
 ---
 
@@ -289,6 +289,8 @@ Runtime entry points:
 
 **ThermBuild** supplies measured Luft/Wasser heat-pump electrical profiles. Production stores them as unit-weight yearly shapes (`sum(weights) = 1`). Runtime scales those weights directly to the user's annual electrical heat-pump consumption: `profile[i] = weight[i] × userHpKwh`. `measuredAnnualElectricalKwh` is provenance, not the runtime scale divisor. The measured campaign year is not weekday-remapped onto the weather calendar.
 
+**WPuQ Wasser/Wasser** supplies the production heat-pump electrical profile for Wasser/Wasser heating + DHW. The same unit-weight scaling applies. Wasser/Wasser heating-only has no catalogue default.
+
 ### Heat-pump envelope and identifiers (contract)
 
 Heat-pump production identifiers use one grammar:
@@ -299,17 +301,17 @@ Examples:
 
 - `lw-heating-only-thermbuild-o5-v1`
 - `lw-heating-dhw-thermbuild-n2-v1`
-- `ww-heating-dhw-wpuq-2019-sfh38-v1` (generated research asset; **not** a production catalogue default)
+- `ww-heating-dhw-wpuq-2019-sfh38-v1` (production Wasser/Wasser default)
 
 Shared production envelope fields (typed in `packages/heatpump-profile`): `schemaVersion`, `profileId`, `technology`, `dhwService`, `timeStepHours`, `steps`, `weights`, `measuredAnnualElectricalKwh`, `quality`, `methodologySourceId`, `license`, `generatorVersion`, `sourceWindow`, `calendarAlignment`, `seasonalShares`, `fillSummary`. Dataset-specific provenance (rotation, zip vs HDF5 locators, raw annual kWh) remains optional.
 
 Methodology ids are separate:
 
 - `thermbuild-fordatis-486` — production Luft/Wasser heat-pump profiles (`load_profiles`)
-- `wpuq-wasserwasser-heatpump` — WPuQ Wasser/Wasser heat-pump production source (`load_profiles`); not yet a catalogue default
+- `wpuq-wasserwasser-heatpump` — production Wasser/Wasser heat-pump profile (`load_profiles`)
 - `wpuq-scientific-data` — WPuQ household robustness only (`research`)
 
-Wasser/Wasser remains unavailable in the calculator until a later integration step. Robustness houses stay under `research/wpuq/processed/robustness/` and must not be catalogued as `field-cohort-representative` without explicit review.
+Wasser/Wasser heating + DHW is the production default `ww-heating-dhw-wpuq-2019-sfh38-v1`. Wasser/Wasser heating-only is unsupported. Robustness houses stay under `research/wpuq/processed/robustness/` and are not catalogued.
 
 ### Accepted limitation
 

@@ -1,9 +1,9 @@
 /**
  * SpeicherGrenze heat-pump load adapter.
  *
- * Production Luft/Wasser uses `@heatpump-profile/loader`. The synthetic
- * seasonal model in `./heatpump` is kept only as an explicit fallback when
- * that package cannot resolve a supported production profile.
+ * Production Luft/Wasser and Wasser/Wasser use `@heatpump-profile/loader`.
+ * The synthetic seasonal model in `./heatpump` is kept only as an explicit
+ * fallback when that package cannot resolve a supported production profile.
  *
  * Legacy calculations that only send `heatPumpEnabled` + annual kWh resolve
  * as technology `"unknown"` and DHW service `"space_heat_and_dhw"`:
@@ -24,8 +24,11 @@ import {
 import { createHeatPumpComponent15Min } from "./heatpump";
 import type { LoadComponent } from "./merge";
 
-/** Production technology input for this phase. Wasser/Wasser is not exposed. */
-export type HeatPumpTechnologyProduction = "luftwasser" | "unknown";
+/** Production technology input. `"unknown"` is the legacy Luft/Wasser fallback. */
+export type HeatPumpTechnologyProduction =
+  | "luftwasser"
+  | "wasserwasser"
+  | "unknown";
 
 export type {
   HeatPumpDhwService,
@@ -46,6 +49,7 @@ export const DEFAULT_HEAT_PUMP_DHW_SERVICE: HeatPumpDhwService =
 
 const SUPPORTED_TECHNOLOGIES = new Set<HeatPumpTechnologyProduction>([
   "luftwasser",
+  "wasserwasser",
   "unknown",
 ]);
 
@@ -59,6 +63,7 @@ const ANNUAL_SUM_REL_TOL = 1e-9;
 
 export type HeatPumpMeasuredSourceClass =
   | "thermbuild-lab-prototype"
+  | "wpuq-field-cohort-representative"
   | "synthetic-seasonal";
 
 export type HeatPumpCalculationFallback =
@@ -121,10 +126,11 @@ export function resolveHeatPumpSelectionDefaults(input: {
 /**
  * Build the 15-minute heat-pump load component for SpeicherGrenze.
  *
- * Luft/Wasser (including `"unknown"` → Luft/Wasser) must resolve from the
- * measured catalogue. Unexpected resolution errors fail loudly. Do not use
+ * Luft/Wasser (including `"unknown"` → Luft/Wasser) and Wasser/Wasser
+ * heating+DHW must resolve from the measured catalogue. Unexpected
+ * resolution errors fail loudly. Do not use
  * {@link buildSyntheticHeatPumpFallbackComponent} as a silent substitute
- * for a supported ThermBuild profile.
+ * for a supported production profile.
  */
 export function buildHeatPumpLoadComponent(
   input: BuildHeatPumpLoadComponentInput
@@ -160,7 +166,9 @@ export function buildHeatPumpLoadComponent(
       quality: resolved.quality,
       methodologySourceId: result.meta.methodologySourceId,
       fallback: result.meta.fallback,
-      measuredSourceClass: "thermbuild-lab-prototype",
+      measuredSourceClass: measuredSourceClassFor(
+        result.meta.methodologySourceId
+      ),
       usedSyntheticFallback: false,
       year,
       scaleFactor: result.meta.scaleFactor,
@@ -211,6 +219,20 @@ export function buildSyntheticHeatPumpFallbackComponent(params: {
   };
 }
 
+function measuredSourceClassFor(
+  methodologySourceId: string
+): HeatPumpMeasuredSourceClass {
+  if (methodologySourceId === "thermbuild-fordatis-486") {
+    return "thermbuild-lab-prototype";
+  }
+  if (methodologySourceId === "wpuq-wasserwasser-heatpump") {
+    return "wpuq-field-cohort-representative";
+  }
+  throw new Error(
+    `Unsupported heat-pump methodology source: ${methodologySourceId}`
+  );
+}
+
 function validateHeatPumpInputs(
   annualElectricalKwh: number,
   technology: HeatPumpTechnologyProduction,
@@ -223,7 +245,7 @@ function validateHeatPumpInputs(
   }
   if (!SUPPORTED_TECHNOLOGIES.has(technology)) {
     throw new Error(
-      `Unsupported heat-pump technology for this phase: ${String(technology)}`
+      `Unsupported heat-pump technology: ${String(technology)}`
     );
   }
   if (!SUPPORTED_DHW.has(dhwService)) {

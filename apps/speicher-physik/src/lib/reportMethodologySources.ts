@@ -18,6 +18,7 @@ export type ReportHeatPumpCitation = {
 } | null;
 
 const THERMBUILD_SOURCE_ID = "thermbuild-fordatis-486";
+const WPUQ_HEATPUMP_SOURCE_ID = "wpuq-wasserwasser-heatpump";
 
 const BASE_REPORT_SOURCE_IDS = [
   "pvgis-jrc",
@@ -28,7 +29,8 @@ const BASE_REPORT_SOURCE_IDS = [
 
 type ReportSourceId =
   | (typeof BASE_REPORT_SOURCE_IDS)[number]
-  | typeof THERMBUILD_SOURCE_ID;
+  | typeof THERMBUILD_SOURCE_ID
+  | typeof WPUQ_HEATPUMP_SOURCE_ID;
 
 const REPORT_LINK_LABEL: Record<ReportSourceId, string> = {
   "pvgis-jrc": "PVGIS (EU JRC)",
@@ -36,6 +38,7 @@ const REPORT_LINK_LABEL: Record<ReportSourceId, string> = {
   "bdew-h25": "BDEW Standardlastprofile Strom",
   "wpuq-scientific-data": "WPuQ Scientific Data",
   "thermbuild-fordatis-486": "ThermBuild (Fordatis)",
+  "wpuq-wasserwasser-heatpump": "WPuQ Wasser/Wasser-Wärmepumpe",
 };
 
 const REPORT_TITLE: Partial<Record<ReportSourceId, string>> = {
@@ -57,6 +60,21 @@ export function usedThermBuildHeatPumpProfile(
   return heatPump?.methodologySourceId === THERMBUILD_SOURCE_ID;
 }
 
+export function usedWasserWasserHeatPumpProfile(
+  heatPump: ReportHeatPumpCitation | undefined
+): boolean {
+  return heatPump?.methodologySourceId === WPUQ_HEATPUMP_SOURCE_ID;
+}
+
+function usedMeasuredHeatPumpProfile(
+  heatPump: ReportHeatPumpCitation | undefined
+): boolean {
+  return (
+    usedThermBuildHeatPumpProfile(heatPump) ||
+    usedWasserWasserHeatPumpProfile(heatPump)
+  );
+}
+
 function toReportSource(id: ReportSourceId): ReportSourceItem {
   const source = getMethodologySourceById(id);
   if (!source) {
@@ -74,7 +92,7 @@ function toReportSource(id: ReportSourceId): ReportSourceItem {
 
 /**
  * Compact report citations. URLs come only from the methodology registry.
- * ThermBuild is included only when the calculation resolved that source id.
+ * Heat-pump sources are included only when the calculation resolved that id.
  */
 export function getReportMethodologySources(
   heatPump?: ReportHeatPumpCitation
@@ -82,6 +100,9 @@ export function getReportMethodologySources(
   const sources = BASE_REPORT_SOURCE_IDS.map((id) => toReportSource(id));
   if (usedThermBuildHeatPumpProfile(heatPump)) {
     sources.push(toReportSource(THERMBUILD_SOURCE_ID));
+  }
+  if (usedWasserWasserHeatPumpProfile(heatPump)) {
+    sources.push(toReportSource(WPUQ_HEATPUMP_SOURCE_ID));
   }
   return sources;
 }
@@ -97,7 +118,7 @@ export function getReportDurationInclusions(params: {
   const items = ["PVGIS-Wetterdaten", "Batteriesimulation"];
   if (params.heatPump != null) {
     items.push(
-      usedThermBuildHeatPumpProfile(params.heatPump)
+      usedMeasuredHeatPumpProfile(params.heatPump)
         ? "gemessenes Wärmepumpenprofil"
         : "Wärmepumpenprofil"
     );

@@ -33,6 +33,18 @@ export const HEAT_PUMP_CATALOGUE: readonly HeatPumpCatalogueEntry[] = [
       dhwService: "space_heat_and_dhw",
     },
   },
+  {
+    profileId: "ww-heating-dhw-wpuq-2019-sfh38-v1",
+    technology: "wasserwasser",
+    dhwService: "space_heat_and_dhw",
+    quality: "field-cohort-representative",
+    methodologySourceId: "wpuq-wasserwasser-heatpump",
+    license: "CC-BY-4.0",
+    defaultFor: {
+      technology: "wasserwasser",
+      dhwService: "space_heat_and_dhw",
+    },
+  },
 ];
 
 const BY_ID = new Map(

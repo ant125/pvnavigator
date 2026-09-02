@@ -77,11 +77,25 @@ describe("resolveHeatPumpProfile", () => {
     ).toThrow(/luftwasser, not wasserwasser/);
   });
 
-  it("throws when no catalogue default exists (Wasser/Wasser)", () => {
+  it("selects the WPuQ Wasser/Wasser heating+DHW production default", () => {
+    const resolved = resolveHeatPumpProfile({
+      technology: "wasserwasser",
+      dhwService: "space_heat_and_dhw",
+    });
+    expect(resolved.entry.profileId).toBe(
+      "ww-heating-dhw-wpuq-2019-sfh38-v1"
+    );
+    expect(resolved.entry.technology).toBe("wasserwasser");
+    expect(resolved.fallback).toBe(false);
+    expect(resolved.resolvedTechnology).toBe("wasserwasser");
+    expect(resolved.requestedTechnology).toBe("wasserwasser");
+  });
+
+  it("throws when Wasser/Wasser heating-only is requested", () => {
     expect(() =>
       resolveHeatPumpProfile({
         technology: "wasserwasser",
-        dhwService: "space_heat_and_dhw",
+        dhwService: "space_heat_only",
       })
     ).toThrow(/No heat-pump catalogue default/);
   });

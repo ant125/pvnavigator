@@ -1,5 +1,6 @@
 import heatingAndDhwJson from "../data/luftwasser/lw-heating-dhw-thermbuild-n2-v1.json";
 import heatingOnlyJson from "../data/luftwasser/lw-heating-only-thermbuild-o5-v1.json";
+import wasserWasserHeatingAndDhwJson from "../data/wasserwasser/ww-heating-dhw-wpuq-2019-sfh38-v1.json";
 import type { HeatPumpCatalogueEntry, HeatPumpProfileEnvelope } from "./types";
 import {
   HEAT_PUMP_ENVELOPE_SCHEMA_VERSION,
@@ -22,6 +23,8 @@ const PRODUCTION_ASSETS: Readonly<Record<string, HeatPumpProfileEnvelope>> = {
     heatingOnlyJson as HeatPumpProfileEnvelope,
   "lw-heating-dhw-thermbuild-n2-v1":
     heatingAndDhwJson as HeatPumpProfileEnvelope,
+  "ww-heating-dhw-wpuq-2019-sfh38-v1":
+    wasserWasserHeatingAndDhwJson as HeatPumpProfileEnvelope,
 };
 
 /**

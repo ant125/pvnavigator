@@ -214,18 +214,33 @@ describe("validateInput heat pump (new UI)", () => {
     expect(result.isValid).toBe(true);
   });
 
-  it("rejects Wasser/Wasser", () => {
+  it("accepts Wasser/Wasser with Heizung und Warmwasser", () => {
     const result = validateInput({
       ...VALID_FORM_BASE,
       heatPumpEnabled: true,
       heatPumpConsumptionKwh: 5000,
-      heatPumpTechnology: "wasserwasser" as never,
+      heatPumpTechnology: "wasserwasser",
       heatPumpDhwService: "space_heat_and_dhw",
+    });
+
+    expect(result.isValid).toBe(true);
+  });
+
+  it("rejects Wasser/Wasser with nur Heizung", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKwh: 5000,
+      heatPumpTechnology: "wasserwasser",
+      heatPumpDhwService: "space_heat_only",
     });
 
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain(
-      SPEICHER_FIELD_INLINE_MESSAGES.heatPumpTechnology
+      SPEICHER_FIELD_INLINE_MESSAGES.heatPumpDhwService
+    );
+    expect(result.fieldErrors.heatPumpDhwService).toBe(
+      SPEICHER_FIELD_INLINE_MESSAGES.heatPumpDhwService
     );
   });
 

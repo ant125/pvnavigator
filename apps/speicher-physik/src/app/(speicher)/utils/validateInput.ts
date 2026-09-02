@@ -173,10 +173,19 @@ export function validateInput(input: Partial<SpeicherInput>): {
         SPEICHER_FIELD_INLINE_MESSAGES.heatPumpConsumptionKwh;
     }
 
-    if (input.heatPumpTechnology !== "luftwasser") {
+    if (
+      input.heatPumpTechnology !== "luftwasser" &&
+      input.heatPumpTechnology !== "wasserwasser"
+    ) {
       errors.push(SPEICHER_FIELD_INLINE_MESSAGES.heatPumpTechnology);
       fieldErrors.heatPumpTechnology =
         SPEICHER_FIELD_INLINE_MESSAGES.heatPumpTechnology;
+    } else if (input.heatPumpTechnology === "wasserwasser") {
+      if (input.heatPumpDhwService !== "space_heat_and_dhw") {
+        errors.push(SPEICHER_FIELD_INLINE_MESSAGES.heatPumpDhwService);
+        fieldErrors.heatPumpDhwService =
+          SPEICHER_FIELD_INLINE_MESSAGES.heatPumpDhwService;
+      }
     } else if (
       input.heatPumpDhwService !== "space_heat_only" &&
       input.heatPumpDhwService !== "space_heat_and_dhw"

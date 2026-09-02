@@ -141,6 +141,47 @@ describe("createHeatPumpProfile15Min", () => {
     expect(nonLeap.meta.leapDayOmitted).toBe(false);
   });
 
+  it("builds Wasser/Wasser from the production WPuQ envelope with uniform scaling", () => {
+    const annual = 5000;
+    const { profile, meta } = createHeatPumpProfile15Min({
+      technology: "wasserwasser",
+      annualElectricalKwh: annual,
+      dhwService: "space_heat_and_dhw",
+      year: 2018,
+    });
+    const entry = getHeatPumpCatalogueEntry(
+      "ww-heating-dhw-wpuq-2019-sfh38-v1"
+    );
+    if (!entry) throw new Error("missing catalogue row");
+    const envelope = loadHeatPumpProfile(entry);
+
+    expect(meta.resolvedProfile.profileId).toBe(
+      "ww-heating-dhw-wpuq-2019-sfh38-v1"
+    );
+    expect(meta.methodologySourceId).toBe("wpuq-wasserwasser-heatpump");
+    expect(meta.license).toBe("CC-BY-4.0");
+    expect(meta.fallback).toBe(false);
+    expect(profile).toHaveLength(HEAT_PUMP_STEPS_PER_NON_LEAP_YEAR);
+    expect(Math.abs(sum(profile) - annual)).toBeLessThanOrEqual(
+      annual * ANNUAL_SUM_REL_TOL
+    );
+    expect(meta.scaleFactor).toBe(annual / sum(envelope.weights));
+    for (let i = 0; i < envelope.weights.length; i++) {
+      expect(profile[i]).toBe(envelope.weights[i] * meta.scaleFactor);
+    }
+  });
+
+  it("rejects Wasser/Wasser heating-only", () => {
+    expect(() =>
+      createHeatPumpProfile15Min({
+        technology: "wasserwasser",
+        annualElectricalKwh: 4000,
+        dhwService: "space_heat_only",
+        year: 2018,
+      })
+    ).toThrow(/No heat-pump catalogue default/);
+  });
+
   it("rejects non-positive annual electrical energy", () => {
     expect(() =>
       createHeatPumpProfile15Min({
