@@ -1,16 +1,15 @@
 import "server-only";
 
-import {
-  TIME_STEP_HOURS_15,
-  type PhysicalKernelResult,
-} from "../../../../packages/pv-core";
+import { TIME_STEP_HOURS_15 } from "../../../../packages/pv-core";
 import { mergeHouseholdWithHeatPump, type LoadComponent } from "@/load/merge";
 import {
   DEFAULT_WEATHER_DATABASE,
   simulateMultiYearSpeicherGrenz,
 } from "@/lib/multiYearSimulation";
-import { buildSpeicherChartData } from "@/lib/speicherChartData";
-import { deriveRecommendedTechnicalSize } from "@/lib/speicherRecommendation";
+import {
+  kpisAtTechnicalSize,
+  mapPool,
+} from "@/lib/robustnessSimHelpers";
 import {
   loadWpuqCohort,
   scaleProfileToAnnualKwh,
@@ -32,41 +31,6 @@ function sum(arr: ArrayLike<number>): number {
   return s;
 }
 
-function technicalSizeFromKernel(kernel: PhysicalKernelResult): number {
-  const chart = buildSpeicherChartData({
-    selfConsumptionWithoutStorage: kernel.averageSelfConsumptionWithoutStorageKwh,
-    batterySizes: kernel.batterySizes,
-    average: kernel.average,
-  });
-  return deriveRecommendedTechnicalSize({ data: chart.data });
-}
-
-function kpisAtTechnicalSize(
-  houseId: string,
-  kernel: PhysicalKernelResult
-): WpuqHouseKpis {
-  const size = technicalSizeFromKernel(kernel);
-  const load = kernel.averageLoadKwhAnnual;
-  const pv = kernel.averagePvYieldKwhAnnual;
-  const ev0 = kernel.averageSelfConsumptionWithoutStorageKwh;
-
-  const ev = size === 0 ? ev0 : kernel.average[size];
-  const netzbezug =
-    size === 0 ? load - ev : kernel.averageGridToHouseholdKwh[size];
-  const einspeisung =
-    size === 0 ? pv - ev : kernel.averageGridExportKwh[size];
-
-  return {
-    houseId,
-    technicalSpeichergrenzeKwh: size,
-    eigenverbrauchKwh: ev,
-    eigenverbrauchsquotePct: pv > 0 ? (ev / pv) * 100 : 0,
-    autarkiePct: load > 0 ? (ev / load) * 100 : 0,
-    netzbezugKwh: netzbezug,
-    einspeisungKwh: einspeisung,
-  };
-}
-
 function mergeHouseLoad(params: {
   householdProfile: number[];
   householdAnnualKwh: number;
@@ -77,25 +41,6 @@ function mergeHouseLoad(params: {
     householdAnnualKwh: params.householdAnnualKwh,
     heatPump: params.heatPumpComponent,
   });
-}
-
-async function mapPool<T, R>(
-  items: readonly T[],
-  concurrency: number,
-  fn: (item: T) => Promise<R>
-): Promise<R[]> {
-  const results = new Array<R>(items.length);
-  let next = 0;
-  async function worker() {
-    while (true) {
-      const i = next++;
-      if (i >= items.length) return;
-      results[i] = await fn(items[i]);
-    }
-  }
-  const n = Math.max(1, Math.min(concurrency, items.length));
-  await Promise.all(Array.from({ length: n }, () => worker()));
-  return results;
 }
 
 export type RunWpuqHouseholdRobustnessParams = {
@@ -179,7 +124,11 @@ export async function runWpuqHouseholdRobustness(
       weatherDatabase: DEFAULT_WEATHER_DATABASE,
     });
 
-    const kpis = kpisAtTechnicalSize(profile.houseId, kernel);
+    const metrics = kpisAtTechnicalSize(kernel);
+    const kpis: WpuqHouseKpis = {
+      houseId: profile.houseId,
+      ...metrics,
+    };
     completed += 1;
     await reportCompleted(completed);
     return kpis;

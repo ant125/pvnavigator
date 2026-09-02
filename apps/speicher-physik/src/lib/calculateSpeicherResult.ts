@@ -20,6 +20,8 @@ import { buildSpeicherChartData } from "@/lib/speicherChartData";
 import { deriveRecommendedTechnicalSize } from "@/lib/speicherRecommendation";
 import { runWpuqHouseholdRobustness } from "@/lib/wpuqRobustness";
 import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
+import { runWpuqWasserWasserRobustness } from "@/lib/wpuqWwRobustness";
+import type { WwRobustnessPayload } from "@/lib/wpuqWwRobustnessStats";
 import type { CalculationProgressHandler } from "@/lib/calculationProgress";
 import {
   BATTERY_MODEL_VERSION,
@@ -27,22 +29,12 @@ import {
   type PhysicalKernelResult,
 } from "../../../../packages/pv-core";
 
-/** Production load: native BDEW H25 15-min + optional 15-min Wärmepumpe. */
-function buildMergedLoadForYear(
+/** BDEW H25 15-min household series for one weather year (no heat pump). */
+function buildHouseholdLoadForYear(
   year: number,
-  annualConsumptionKWh: number,
-  heatPump: LoadComponent | null
+  annualConsumptionKWh: number
 ): number[] {
-  const houseLoad = createUserLoadProfile15MinForYear(
-    annualConsumptionKWh,
-    year
-  );
-
-  return mergeHouseholdWithHeatPump({
-    householdProfile: houseLoad,
-    householdAnnualKwh: annualConsumptionKWh,
-    heatPump,
-  });
+  return createUserLoadProfile15MinForYear(annualConsumptionKWh, year);
 }
 
 /**
@@ -178,6 +170,12 @@ export type CalculateSpeicherResultOutput = {
   speicherGrenz: SpeicherGrenzPayload;
   robustness: WpuqRobustnessPayload;
   /**
+   * Wasser/Wasser HP shape sensitivity (24 measured houses). Null when the
+   * production run is not Wasser/Wasser. Independent of household robustness.
+   * Stored for a later UI phase — not shown in the report yet.
+   */
+  wasserWasserRobustness: WwRobustnessPayload | null;
+  /**
    * Internal heat-pump selection metadata for later Methodik / report work.
    * Null when no heat-pump component was added. Not customer-facing copy.
    */
@@ -274,13 +272,19 @@ export async function calculateSpeicherResult(
   });
   const heatPumpComponent = heatPump?.component ?? null;
 
+  const householdByYear: Record<number, number[]> = {};
   const loadByYear: Record<number, number[]> = {};
   for (const year of years) {
-    loadByYear[year] = buildMergedLoadForYear(
+    const household = buildHouseholdLoadForYear(
       year,
-      input.annualConsumptionKWh,
-      heatPumpComponent
+      input.annualConsumptionKWh
     );
+    householdByYear[year] = household;
+    loadByYear[year] = mergeHouseholdWithHeatPump({
+      householdProfile: household,
+      householdAnnualKwh: input.annualConsumptionKWh,
+      heatPump: heatPumpComponent,
+    });
   }
   await report?.({ stage: "consumption" });
 
@@ -322,6 +326,30 @@ export async function calculateSpeicherResult(
     },
   });
 
+  const runWwRobustness =
+    heatPump?.meta.resolvedTechnology === "wasserwasser" &&
+    typeof input.heatPumpConsumptionKWh === "number" &&
+    input.heatPumpConsumptionKWh > 0;
+
+  const wasserWasserRobustness = runWwRobustness
+    ? await runWpuqWasserWasserRobustness({
+        householdAnnualKwh: input.annualConsumptionKWh,
+        heatPumpAnnualKwh: input.heatPumpConsumptionKWh!,
+        getHouseholdForYear: (year) => {
+          const household = householdByYear[year];
+          if (!household) {
+            throw new Error(`Missing household profile for year ${year}`);
+          }
+          return household;
+        },
+        getPvForYear,
+        productionTechnicalSizeKwh: bdewTechnicalSizeKwh,
+        years,
+        batterySizes: input.batterySizes,
+        backupReserveKwh: reserveKwh,
+      })
+    : null;
+
   const verifiedResult: CalculateSpeicherResultOutput["verifiedResult"] = {
     energy: {
       year: {
@@ -338,6 +366,7 @@ export async function calculateSpeicherResult(
     verifiedResult,
     speicherGrenz: toSpeicherGrenzPayload(kernel),
     robustness,
+    wasserWasserRobustness,
     heatPump: heatPump?.meta ?? null,
   };
 }

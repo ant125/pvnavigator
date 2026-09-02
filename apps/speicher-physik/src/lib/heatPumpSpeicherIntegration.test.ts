@@ -64,6 +64,7 @@ describe("SpeicherGrenze heat-pump integration", () => {
       );
       expect(result.robustness.cohortSize).toBe(WPUQ_COHORT_SIZE);
       expect(result.robustness.householdAnnualKwh).toBe(houseAnnual);
+      expect(result.wasserWasserRobustness).toBeNull();
     },
     60_000
   );

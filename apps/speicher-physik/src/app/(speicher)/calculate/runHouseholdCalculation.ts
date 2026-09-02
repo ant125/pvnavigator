@@ -10,6 +10,7 @@ import {
   type SpeicherGrenzPayload,
 } from "@/lib/calculateSpeicherResult";
 import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
+import type { WwRobustnessPayload } from "@/lib/wpuqWwRobustnessStats";
 import type { CalculationProgressHandler } from "@/lib/calculationProgress";
 import type { PvSurfaceInput } from "../types/speicher";
 import type {
@@ -22,6 +23,8 @@ export type HouseholdCalculationPayload = {
   verifiedResult: VerifiedResult;
   speicherGrenz: SpeicherGrenzPayload;
   robustness: WpuqRobustnessPayload;
+  /** Null unless production technology is Wasser/Wasser. Not shown in UI yet. */
+  wasserWasserRobustness: WwRobustnessPayload | null;
   displayAddress: string;
   /** Resolved calculation metadata. Null when no heat-pump component was added. */
   heatPump: HeatPumpCalculationMeta | null;
@@ -136,7 +139,7 @@ export async function runHouseholdCalculation(
 
   await onProgress?.({ stage: "location" });
 
-  const { verifiedResult, speicherGrenz, robustness, heatPump } =
+  const { verifiedResult, speicherGrenz, robustness, wasserWasserRobustness, heatPump } =
     await calculateSpeicherResult({
       annualConsumptionKWh: params.annualConsumptionKWh,
       pvSystemKwP: params.pvSystemKwP,
@@ -157,6 +160,7 @@ export async function runHouseholdCalculation(
     verifiedResult: setVerifiedResult(verifiedResult),
     speicherGrenz,
     robustness,
+    wasserWasserRobustness,
     displayAddress,
     heatPump,
   };

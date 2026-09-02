@@ -12,6 +12,7 @@ import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
 
 export type { VerifiedResult, SpeicherGrenzPayload, WpuqRobustnessPayload };
 export type { HouseholdCalculationPayload };
+export type { WwRobustnessPayload } from "@/lib/wpuqWwRobustnessStats";
 
 export async function calculateHouseholdConsumptionAction(
   params: HouseholdCalculationInput

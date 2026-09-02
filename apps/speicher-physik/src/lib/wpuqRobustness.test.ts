@@ -66,6 +66,7 @@ describe("customer WPuQ robustness pipeline", () => {
       expect(result.robustness.ranges.eigenverbrauchKwh.min).toBeLessThanOrEqual(
         result.robustness.ranges.eigenverbrauchKwh.max
       );
+      expect(result.wasserWasserRobustness).toBeNull();
       expect(result.speicherGrenz.averageLoadKwhAnnual).toBeCloseTo(annual, 6);
       expect(result.speicherGrenz.averagePvYieldKwhAnnual).toBeCloseTo(
         pv.reduce((s, x) => s + x, 0),
