@@ -29,6 +29,12 @@ export type DeriveSpeicherBusinessMetricsInput = {
   annualConsumptionKwh: number | undefined;
   heatPumpEnabled: boolean | undefined;
   heatPumpConsumptionKwh: number | undefined;
+  /**
+   * When EV is enabled, the fallback annual load must include home charging.
+   * Pass the explicit multi-year mean — do not use a single weather year.
+   */
+  evEnabled?: boolean;
+  evAverageHomeChargedKwh?: number;
   backupReserveKwh: number | undefined;
   /** From sumSurfaceKwP(surfaces) — computed in page, passed in. */
   totalKwPConfigured: number;
@@ -143,11 +149,19 @@ export function deriveSpeicherBusinessMetrics(
       ? speicherGrenz.averageAuxiliaryConsumptionKwh[physicalKpiLookupSize]
       : undefined;
 
+  const evFallbackHomeChargedKwh =
+    input.evEnabled === true &&
+    typeof input.evAverageHomeChargedKwh === "number" &&
+    Number.isFinite(input.evAverageHomeChargedKwh)
+      ? input.evAverageHomeChargedKwh
+      : 0;
+
   const formTotalConsumption =
     (input.annualConsumptionKwh ?? 0) +
     (input.heatPumpEnabled === true
       ? input.heatPumpConsumptionKwh ?? 0
-      : 0);
+      : 0) +
+    evFallbackHomeChargedKwh;
 
   /** Prefer multi-year modeled load mean when available (same years as EV KPIs). */
   const modeledLoadAnnual = speicherGrenz?.averageLoadKwhAnnual;
@@ -158,7 +172,7 @@ export function deriveSpeicherBusinessMetrics(
       ? modeledLoadAnnual
       : formTotalConsumption;
 
-  /** Form-entered house (+ HP) total — kept for display of user inputs. */
+  /** Form-entered house (+ HP) total, plus explicit EV home-charging mean. */
   const totalConsumption = formTotalConsumption;
 
   const eigenverbrauchOhneSpeicher =

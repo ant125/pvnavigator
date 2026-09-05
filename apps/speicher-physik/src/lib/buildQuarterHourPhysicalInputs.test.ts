@@ -14,6 +14,7 @@ import {
 import { createHeatPumpComponent } from "@/load/heatpump";
 import { mergeLoadProfiles } from "@/load/merge";
 import { buildQuarterHourPhysicalInputsForYear } from "./buildQuarterHourPhysicalInputs";
+import { commuterEvInput } from "@/test/evFixtures";
 
 const HOURS_PER_YEAR = 8760;
 const REL_TOL = 1e-12;
@@ -48,6 +49,8 @@ describe("buildQuarterHourPhysicalInputsForYear", () => {
     );
     expect(inputs.heatPumpLoadKwh).toBeNull();
     expect(inputs.heatPumpMeta).toBeNull();
+    expect(inputs.evLoadKwh).toBeNull();
+    expect(inputs.evMeta).toBeNull();
     expect(inputs.timeStepHours).toBe(TIME_STEP_HOURS_15);
     expect(inputs.stepsPerYear).toBe(35040);
   });
@@ -157,6 +160,35 @@ describe("buildQuarterHourPhysicalInputsForYear", () => {
       "wpuq-wasserwasser-heatpump"
     );
     expect(ww.heatPumpMeta?.usedSyntheticFallback).toBe(false);
+  });
+
+  it("optional EV uses the same extras merge as household + HP", () => {
+    const year = 2018;
+    const houseAnnual = 4000;
+    const hpAnnual = 2000;
+    const qh = buildQuarterHourPhysicalInputsForYear({
+      year,
+      annualConsumptionKWh: houseAnnual,
+      hourlyPvKwh: syntheticHourlyPv(year),
+      heatPumpEnabled: true,
+      heatPumpConsumptionKWh: hpAnnual,
+      ev: commuterEvInput(),
+    });
+    expect(qh.evLoadKwh).toHaveLength(STEPS_PER_NON_LEAP_YEAR_15);
+    expect(qh.evMeta?.year).toBe(year);
+    expect(qh.mergedLoadKwh).toHaveLength(STEPS_PER_NON_LEAP_YEAR_15);
+    for (let i = 0; i < qh.mergedLoadKwh.length; i++) {
+      expect(qh.mergedLoadKwh[i]).toBeCloseTo(
+        qh.householdLoadKwh[i] +
+          qh.heatPumpLoadKwh![i] +
+          qh.evLoadKwh![i],
+        12
+      );
+    }
+    expect(sum(qh.mergedLoadKwh)).toBeCloseTo(
+      houseAnnual + hpAnnual + qh.evMeta!.homeChargedKwh,
+      6
+    );
   });
 
   it("battery default remains dt=1; production passes TIME_STEP_HOURS_15", () => {

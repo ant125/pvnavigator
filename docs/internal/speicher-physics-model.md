@@ -251,7 +251,7 @@ SpeicherGrenze EV v1 models an electric vehicle as an additional household load 
 
 `pv-core` continues to see only the final merged load profile. The physical kernel remains unchanged. The EV vehicle battery is not a second storage device inside `pv-core`.
 
-This section is the frozen EV v1 methodology. It is not yet the implemented production behaviour.
+This section is the frozen EV v1 methodology. The profile model is implemented in `@ev-profile/loader` and is integrated into the server-side SpeicherGrenze load pipeline: a home-charging profile is generated separately for each weather year, merged with the household and optional heat-pump loads, and included in the existing robustness calculations. The customer form/UI and report/PDF presentation are not yet implemented.
 
 **Terminology.** In mathematical result formulas later in this document (`EV₀`, `EV(C)`, `EV_mean`, `ΔEV`), `EV` historically denotes Eigenverbrauch. In this section, EV denotes Electric Vehicle. Vehicle-energy ledger symbols use `Edrive`, `Ehome`, `Evehicle`, and related names — not `EV`.
 

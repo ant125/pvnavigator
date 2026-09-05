@@ -12,6 +12,7 @@
   "dependencies": {
     "@geocoding/core": "*",
     "@pv-methodology/registry": "*",
+    "@ev-profile/loader": "*",
     "@heatpump-profile/loader": "*",
     "@tailwindcss/typography": "^0.5.19",
     "lucide-react": "^1.14.0",

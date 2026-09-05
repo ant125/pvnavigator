@@ -423,7 +423,49 @@ describe("deriveSpeicherBusinessMetrics", () => {
     expect(result.totalConsumption).toBe(6000);
   });
 
-  it("14. lookup size 0 — all physical KPI lookups undefined", () => {
+  it("14. EV fallback annual load uses the explicit multi-year home-charging mean", () => {
+    const result = deriveSpeicherBusinessMetrics(
+      baseInput({
+        verifiedResult: verified(3200, 8000),
+        speicherGrenz: emptySpeicherGrenz({
+          batterySizes: [6],
+          average: { 6: 4100 },
+        }),
+        annualConsumptionKwh: 4000,
+        heatPumpEnabled: true,
+        heatPumpConsumptionKwh: 2000,
+        evEnabled: true,
+        evAverageHomeChargedKwh: 1836,
+        totalKwPConfigured: 10,
+      })
+    );
+
+    expect(result.totalConsumption).toBe(7836);
+    expect(result.autarkieOhnePct).toBe(Math.round((3200 / 7836) * 100));
+  });
+
+  it("14b. EV enabled without an explicit average does not invent year[0] energy", () => {
+    const result = deriveSpeicherBusinessMetrics(
+      baseInput({
+        verifiedResult: verified(3200, 8000),
+        speicherGrenz: emptySpeicherGrenz({
+          batterySizes: [6],
+          average: { 6: 4100 },
+          averageLoadKwhAnnual: 7836,
+        }),
+        annualConsumptionKwh: 4000,
+        heatPumpEnabled: true,
+        heatPumpConsumptionKwh: 2000,
+        evEnabled: true,
+        totalKwPConfigured: 10,
+      })
+    );
+
+    expect(result.totalConsumption).toBe(6000);
+    expect(result.autarkieOhnePct).toBe(Math.round((3200 / 7836) * 100));
+  });
+
+  it("15. lookup size 0 — all physical KPI lookups undefined", () => {
     const result = deriveSpeicherBusinessMetrics(
       baseInput({
         verifiedResult: verified(3000, 8000),

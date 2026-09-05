@@ -12,6 +12,7 @@
  * - Wärmepumpe: `@heatpump-profile/loader` Luft/Wasser and Wasser/Wasser
  *   prototypes, scaled to user kWh. Legacy inputs default to unknown +
  *   heating+DHW.
+ * - EV: `@ev-profile/loader` home-charging profile for this target year.
  *
  * All output arrays have length 35040 (non-leap year).
  */
@@ -22,13 +23,22 @@ import {
   TIME_STEP_HOURS_15,
 } from "../../../../packages/pv-core";
 import { expandAlignedPvgisHourlyToQuarterHours } from "../../../../packages/pvgis-adapter";
-import { mergeHouseholdWithHeatPump, type LoadComponent } from "@/load/merge";
+import {
+  mergeHouseholdLoadComponents,
+  type LoadComponent,
+} from "@/load/merge";
 import {
   buildHeatPumpLoadComponent,
   type HeatPumpCalculationMeta,
   type HeatPumpDhwService,
   type HeatPumpTechnologyProduction,
 } from "@/load/resolveHeatPumpLoadComponent";
+import {
+  resolveEnabledEvConfig,
+  resolveEvLoadComponentForYear,
+  type EvCalculationInput,
+  type EvProfileMeta,
+} from "@/load/resolveEvLoadComponent";
 
 export type QuarterHourPhysicalInputs = {
   year: number;
@@ -36,9 +46,11 @@ export type QuarterHourPhysicalInputs = {
   stepsPerYear: typeof STEPS_PER_NON_LEAP_YEAR_15;
   householdLoadKwh: number[];
   heatPumpLoadKwh: number[] | null;
+  evLoadKwh: number[] | null;
   mergedLoadKwh: number[];
   pvKwh: number[];
   heatPumpMeta: HeatPumpCalculationMeta | null;
+  evMeta: EvProfileMeta | null;
 };
 
 export function buildQuarterHourPhysicalInputsForYear(params: {
@@ -50,6 +62,7 @@ export function buildQuarterHourPhysicalInputsForYear(params: {
   heatPumpConsumptionKWh?: number;
   heatPumpTechnology?: HeatPumpTechnologyProduction;
   heatPumpDhwService?: HeatPumpDhwService;
+  ev?: EvCalculationInput;
 }): QuarterHourPhysicalInputs {
   const householdLoadKwh = createUserLoadProfile15MinForYear(
     params.annualConsumptionKWh,
@@ -74,11 +87,28 @@ export function buildQuarterHourPhysicalInputsForYear(params: {
     heatPumpMeta = resolved.meta;
   }
 
+  let ev: LoadComponent | null = null;
+  let evMeta: EvProfileMeta | null = null;
+  const evConfig = resolveEnabledEvConfig(params.ev);
+  if (evConfig) {
+    const resolved = resolveEvLoadComponentForYear({
+      evInput: evConfig,
+      year: params.year,
+    });
+    ev = resolved.component;
+    evMeta = resolved.meta;
+  }
+
+  const extras: LoadComponent[] = [];
+  if (heatPump) extras.push(heatPump);
+  if (ev) extras.push(ev);
+
   const heatPumpLoadKwh = heatPump?.profile ?? null;
-  const mergedLoadKwh = mergeHouseholdWithHeatPump({
+  const evLoadKwh = ev?.profile ?? null;
+  const mergedLoadKwh = mergeHouseholdLoadComponents({
     householdProfile: householdLoadKwh,
     householdAnnualKwh: params.annualConsumptionKWh,
-    heatPump,
+    extras,
   });
 
   if (
@@ -86,7 +116,8 @@ export function buildQuarterHourPhysicalInputsForYear(params: {
     mergedLoadKwh.length !== STEPS_PER_NON_LEAP_YEAR_15 ||
     pvKwh.length !== STEPS_PER_NON_LEAP_YEAR_15 ||
     (heatPumpLoadKwh !== null &&
-      heatPumpLoadKwh.length !== STEPS_PER_NON_LEAP_YEAR_15)
+      heatPumpLoadKwh.length !== STEPS_PER_NON_LEAP_YEAR_15) ||
+    (evLoadKwh !== null && evLoadKwh.length !== STEPS_PER_NON_LEAP_YEAR_15)
   ) {
     throw new Error(
       `buildQuarterHourPhysicalInputsForYear: expected ${STEPS_PER_NON_LEAP_YEAR_15} steps`
@@ -99,8 +130,10 @@ export function buildQuarterHourPhysicalInputsForYear(params: {
     stepsPerYear: STEPS_PER_NON_LEAP_YEAR_15,
     householdLoadKwh,
     heatPumpLoadKwh,
+    evLoadKwh,
     mergedLoadKwh,
     pvKwh,
     heatPumpMeta,
+    evMeta,
   };
 }

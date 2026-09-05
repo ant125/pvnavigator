@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     "@pv-core/calculations",
     "@pv-methodology/registry",
     "@heatpump-profile/loader",
+    "@ev-profile/loader",
   ],
   outputFileTracingIncludes: {
     "/calculate": ["./data/wpuq/**/*"],

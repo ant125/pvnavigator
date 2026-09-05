@@ -1,7 +1,10 @@
 import "server-only";
 
 import { TIME_STEP_HOURS_15 } from "../../../../packages/pv-core";
-import { mergeHouseholdWithHeatPump, type LoadComponent } from "@/load/merge";
+import {
+  mergeHouseholdLoadComponents,
+  type LoadComponent,
+} from "@/load/merge";
 import {
   DEFAULT_WEATHER_DATABASE,
   simulateMultiYearSpeicherGrenz,
@@ -31,16 +34,14 @@ function sum(arr: ArrayLike<number>): number {
   return s;
 }
 
-function mergeHouseLoad(params: {
-  householdProfile: number[];
-  householdAnnualKwh: number;
+function extrasForYear(params: {
   heatPumpComponent: LoadComponent | null;
-}): number[] {
-  return mergeHouseholdWithHeatPump({
-    householdProfile: params.householdProfile,
-    householdAnnualKwh: params.householdAnnualKwh,
-    heatPump: params.heatPumpComponent,
-  });
+  evComponent: LoadComponent | null;
+}): LoadComponent[] {
+  const extras: LoadComponent[] = [];
+  if (params.heatPumpComponent) extras.push(params.heatPumpComponent);
+  if (params.evComponent) extras.push(params.evComponent);
+  return extras;
 }
 
 export type RunWpuqHouseholdRobustnessParams = {
@@ -51,6 +52,11 @@ export type RunWpuqHouseholdRobustnessParams = {
    * Robustness only changes the household load shape.
    */
   heatPumpComponent?: LoadComponent | null;
+  /**
+   * Customer EV home-charging component for each target weather year.
+   * Omit when EV is off. Do not return one calendar year for every year.
+   */
+  getEvForYear?: (year: number) => LoadComponent | null;
   getPvForYear: (year: number) => number[] | Promise<number[]>;
   bdewTechnicalSizeKwh: number;
   years?: readonly number[];
@@ -66,8 +72,8 @@ export type RunWpuqHouseholdRobustnessParams = {
 /**
  * Repeat the production simulation for each of the 27 WPuQ household shapes.
  * Only the household load shape changes; PV, roof, weather years, battery
- * model, physics, and the selected heat-pump component are identical to the
- * BDEW run.
+ * model, physics, the selected heat-pump component, and the per-year EV
+ * home-charging profile are identical to the BDEW run.
  */
 export async function runWpuqHouseholdRobustness(
   params: RunWpuqHouseholdRobustnessParams
@@ -105,14 +111,29 @@ export async function runWpuqHouseholdRobustness(
       );
     }
 
-    const merged = mergeHouseLoad({
+    const heatPumpComponent = params.heatPumpComponent ?? null;
+    const getEvForYear = params.getEvForYear;
+    const mergedWithoutEv = mergeHouseholdLoadComponents({
       householdProfile: scaled,
       householdAnnualKwh: target,
-      heatPumpComponent: params.heatPumpComponent ?? null,
+      extras: extrasForYear({
+        heatPumpComponent,
+        evComponent: null,
+      }),
     });
 
     const kernel = await simulateMultiYearSpeicherGrenz({
-      getLoadForYear: () => merged,
+      getLoadForYear: getEvForYear
+        ? (year) =>
+            mergeHouseholdLoadComponents({
+              householdProfile: scaled,
+              householdAnnualKwh: target,
+              extras: extrasForYear({
+                heatPumpComponent,
+                evComponent: getEvForYear(year),
+              }),
+            })
+        : () => mergedWithoutEv,
       getPvForYear: params.getPvForYear,
       latitude: 0,
       longitude: 0,

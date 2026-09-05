@@ -14,7 +14,19 @@ import {
   type HeatPumpDhwService,
   type HeatPumpTechnologyProduction,
 } from "@/load/resolveHeatPumpLoadComponent";
-import { mergeHouseholdWithHeatPump, type LoadComponent } from "@/load/merge";
+import {
+  buildEvCalculationMeta,
+  preflightEvLoadForYears,
+  resolveEnabledEvConfig,
+  resolveEvLoadComponentForYear,
+  type EvCalculationInput,
+  type EvCalculationMeta,
+  type EvProfileMeta,
+} from "@/load/resolveEvLoadComponent";
+import {
+  mergeHouseholdLoadComponents,
+  type LoadComponent,
+} from "@/load/merge";
 import type { PvSurfaceInput } from "@/app/(speicher)/types/speicher";
 import { buildSpeicherChartData } from "@/lib/speicherChartData";
 import { deriveRecommendedTechnicalSize } from "@/lib/speicherRecommendation";
@@ -28,6 +40,11 @@ import {
   TIME_STEP_HOURS_15,
   type PhysicalKernelResult,
 } from "../../../../packages/pv-core";
+
+export type {
+  EvCalculationInput,
+  EvCalculationMeta,
+} from "@/load/resolveEvLoadComponent";
 
 /** BDEW H25 15-min household series for one weather year (no heat pump). */
 function buildHouseholdLoadForYear(
@@ -144,6 +161,12 @@ export type CalculateSpeicherResultInput = {
    * `"space_heat_and_dhw"` (safer residential default).
    */
   heatPumpDhwService?: HeatPumpDhwService;
+  /**
+   * Optional EV configuration matching `@ev-profile/loader`.
+   * Absent or `enabled: false` leaves the load identical to current
+   * production. No hidden EV defaults.
+   */
+  ev?: EvCalculationInput;
   backupReserveKwh?: number;
   /**
    * Test-only: skip PVGIS. Production omits this so PV is fetched once
@@ -179,6 +202,11 @@ export type CalculateSpeicherResultOutput = {
    * Null when no heat-pump component was added. Not customer-facing copy.
    */
   heatPump: HeatPumpCalculationMeta | null;
+  /**
+   * Per-weather-year EV package metadata. Null when EV is absent/disabled.
+   * Does not include 35 040-step profiles.
+   */
+  ev: EvCalculationMeta | null;
 };
 
 /**
@@ -236,6 +264,11 @@ export async function calculateSpeicherResult(
   const years = (input.years ?? DEFAULT_MULTI_YEAR_YEARS).slice();
   const report = input.onProgress;
 
+  const evConfig = resolveEnabledEvConfig(input.ev);
+  if (evConfig) {
+    preflightEvLoadForYears({ evInput: evConfig, years });
+  }
+
   let getPvForYear = input.getPvForYear;
   if (!getPvForYear) {
     const hourlyByYear = await loadHourlyPvByYear({
@@ -273,19 +306,44 @@ export async function calculateSpeicherResult(
 
   const householdByYear: Record<number, number[]> = {};
   const loadByYear: Record<number, number[]> = {};
+  const evComponentByYear: Record<number, LoadComponent> = {};
+  const evMetaByYear: Record<number, EvProfileMeta> = {};
   for (const year of years) {
     const household = buildHouseholdLoadForYear(
       year,
       input.annualConsumptionKWh
     );
     householdByYear[year] = household;
-    loadByYear[year] = mergeHouseholdWithHeatPump({
+    const extras: LoadComponent[] = [];
+    if (heatPumpComponent) {
+      extras.push(heatPumpComponent);
+    }
+    if (evConfig) {
+      const evForYear = resolveEvLoadComponentForYear({
+        evInput: evConfig,
+        year,
+      });
+      extras.push(evForYear.component);
+      evComponentByYear[year] = evForYear.component;
+      evMetaByYear[year] = evForYear.meta;
+    }
+    loadByYear[year] = mergeHouseholdLoadComponents({
       householdProfile: household,
       householdAnnualKwh: input.annualConsumptionKWh,
-      heatPump: heatPumpComponent,
+      extras,
     });
   }
   await report?.({ stage: "consumption" });
+
+  const getEvForYear = evConfig
+    ? (year: number): LoadComponent => {
+        const component = evComponentByYear[year];
+        if (!component) {
+          throw new Error(`Missing EV profile for year ${year}`);
+        }
+        return component;
+      }
+    : undefined;
 
   const kernel = await simulateMultiYearSpeicherGrenz({
     getLoadForYear: (year) => loadByYear[year],
@@ -315,6 +373,7 @@ export async function calculateSpeicherResult(
   const robustness = await runWpuqHouseholdRobustness({
     householdAnnualKwh: input.annualConsumptionKWh,
     heatPumpComponent,
+    getEvForYear,
     getPvForYear,
     bdewTechnicalSizeKwh,
     years,
@@ -341,6 +400,7 @@ export async function calculateSpeicherResult(
           }
           return household;
         },
+        getEvForYear,
         getPvForYear,
         productionTechnicalSizeKwh: bdewTechnicalSizeKwh,
         years,
@@ -370,5 +430,6 @@ export async function calculateSpeicherResult(
     robustness,
     wasserWasserRobustness,
     heatPump: heatPump?.meta ?? null,
+    ev: evConfig ? buildEvCalculationMeta(evMetaByYear, years) : null,
   };
 }

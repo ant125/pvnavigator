@@ -18,6 +18,10 @@ import type {
   HeatPumpDhwService,
   HeatPumpTechnologyProduction,
 } from "@/load/resolveHeatPumpLoadComponent";
+import type {
+  EvCalculationInput,
+  EvCalculationMeta,
+} from "@/load/resolveEvLoadComponent";
 
 export type HouseholdCalculationPayload = {
   verifiedResult: VerifiedResult;
@@ -28,6 +32,8 @@ export type HouseholdCalculationPayload = {
   displayAddress: string;
   /** Resolved calculation metadata. Null when no heat-pump component was added. */
   heatPump: HeatPumpCalculationMeta | null;
+  /** Per-weather-year EV metadata. Null when EV is absent/disabled. */
+  ev: EvCalculationMeta | null;
 };
 
 function getGeocodeStatus(error: unknown): string | null {
@@ -100,6 +106,7 @@ export type HouseholdCalculationInput = {
   heatPumpConsumptionKWh?: number;
   heatPumpTechnology?: HeatPumpTechnologyProduction;
   heatPumpDhwService?: HeatPumpDhwService;
+  ev?: EvCalculationInput;
   backupReserveKwh?: number;
 };
 
@@ -139,22 +146,29 @@ export async function runHouseholdCalculation(
 
   await onProgress?.({ stage: "location" });
 
-  const { verifiedResult, speicherGrenz, robustness, wasserWasserRobustness, heatPump } =
-    await calculateSpeicherResult({
-      annualConsumptionKWh: params.annualConsumptionKWh,
-      pvSystemKwP: params.pvSystemKwP,
-      latitude,
-      longitude,
-      tiltDeg: params.tiltDeg,
-      azimuthDeg: params.azimuthDeg,
-      pvSurfaces: params.pvSurfaces,
-      heatPumpEnabled: params.heatPumpEnabled,
-      heatPumpConsumptionKWh: params.heatPumpConsumptionKWh,
-      heatPumpTechnology: params.heatPumpTechnology,
-      heatPumpDhwService: params.heatPumpDhwService,
-      backupReserveKwh: params.backupReserveKwh,
-      onProgress,
-    });
+  const {
+    verifiedResult,
+    speicherGrenz,
+    robustness,
+    wasserWasserRobustness,
+    heatPump,
+    ev,
+  } = await calculateSpeicherResult({
+    annualConsumptionKWh: params.annualConsumptionKWh,
+    pvSystemKwP: params.pvSystemKwP,
+    latitude,
+    longitude,
+    tiltDeg: params.tiltDeg,
+    azimuthDeg: params.azimuthDeg,
+    pvSurfaces: params.pvSurfaces,
+    heatPumpEnabled: params.heatPumpEnabled,
+    heatPumpConsumptionKWh: params.heatPumpConsumptionKWh,
+    heatPumpTechnology: params.heatPumpTechnology,
+    heatPumpDhwService: params.heatPumpDhwService,
+    ev: params.ev,
+    backupReserveKwh: params.backupReserveKwh,
+    onProgress,
+  });
 
   return {
     verifiedResult: setVerifiedResult(verifiedResult),
@@ -163,5 +177,6 @@ export async function runHouseholdCalculation(
     wasserWasserRobustness,
     displayAddress,
     heatPump,
+    ev,
   };
 }

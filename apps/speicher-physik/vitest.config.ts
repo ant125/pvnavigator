@@ -13,6 +13,18 @@ export default defineConfig({
         __dirname,
         "../../packages/heatpump-profile/src/index.ts"
       ),
+      "@ev-profile/loader": path.resolve(
+        __dirname,
+        "../../packages/ev-profile/src/index.ts"
+      ),
+      "@bdew-profile/loader/calendar": path.resolve(
+        __dirname,
+        "../../packages/bdew-profile/src/bdewCalendar.ts"
+      ),
+      "@bdew-profile/loader": path.resolve(
+        __dirname,
+        "../../packages/bdew-profile/src/index.ts"
+      ),
     },
   },
 });

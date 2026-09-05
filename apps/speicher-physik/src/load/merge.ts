@@ -44,24 +44,37 @@ export function mergeLoadProfiles(components: LoadComponent[]): number[] {
 }
 
 /**
- * Household series plus an optional heat-pump component. The heat-pump
- * profile is not rebuilt here; callers must pass the already selected
- * component so BDEW and all WPuQ robustness runs share the same HP shape.
+ * Household series plus any extra positive load components (heat pump, EV,
+ * future). Merge math is index-wise and component-agnostic.
+ */
+export function mergeHouseholdLoadComponents(params: {
+  householdProfile: number[];
+  householdAnnualKwh: number;
+  extras?: readonly LoadComponent[];
+}): number[] {
+  const extras = params.extras ?? [];
+  return mergeLoadProfiles([
+    {
+      name: "house",
+      yearlyConsumption: params.householdAnnualKwh,
+      profile: params.householdProfile,
+    },
+    ...extras,
+  ]);
+}
+
+/**
+ * Compatibility wrapper: household plus an optional heat-pump component.
+ * Prefer {@link mergeHouseholdLoadComponents} for new callers.
  */
 export function mergeHouseholdWithHeatPump(params: {
   householdProfile: number[];
   householdAnnualKwh: number;
   heatPump: LoadComponent | null;
 }): number[] {
-  const components: LoadComponent[] = [
-    {
-      name: "house",
-      yearlyConsumption: params.householdAnnualKwh,
-      profile: params.householdProfile,
-    },
-  ];
-  if (params.heatPump) {
-    components.push(params.heatPump);
-  }
-  return mergeLoadProfiles(components);
+  return mergeHouseholdLoadComponents({
+    householdProfile: params.householdProfile,
+    householdAnnualKwh: params.householdAnnualKwh,
+    extras: params.heatPump ? [params.heatPump] : [],
+  });
 }

@@ -2,7 +2,10 @@ import "server-only";
 
 import { scaleUniformEnergy } from "@heatpump-profile/loader";
 import { TIME_STEP_HOURS_15 } from "../../../../packages/pv-core";
-import { mergeHouseholdWithHeatPump, type LoadComponent } from "@/load/merge";
+import {
+  mergeHouseholdLoadComponents,
+  type LoadComponent,
+} from "@/load/merge";
 import {
   DEFAULT_WEATHER_DATABASE,
   simulateMultiYearSpeicherGrenz,
@@ -69,6 +72,11 @@ export type RunWpuqWasserWasserRobustnessParams = {
    * Must be synchronous (physical kernel does not await load getters).
    */
   getHouseholdForYear: (year: number) => number[];
+  /**
+   * Customer EV home-charging component for each target weather year.
+   * Same customer EV input as the primary run. Omit when EV is off.
+   */
+  getEvForYear?: (year: number) => LoadComponent | null;
   getPvForYear: (year: number) => number[] | Promise<number[]>;
   productionTechnicalSizeKwh: number;
   years?: readonly number[];
@@ -83,9 +91,10 @@ export type RunWpuqWasserWasserRobustnessParams = {
 
 /**
  * Repeat the production simulation for each of the 24 measured WW HP shapes.
- * Only the heat-pump load shape changes; household (BDEW), PV, roof, weather
- * years, battery model, and physics are identical to the primary run.
- * The production SFH38 profile is never replaced in the primary result.
+ * Only the heat-pump load shape changes; household (BDEW), per-year EV,
+ * PV, roof, weather years, battery model, and physics are identical to the
+ * primary run. The production SFH38 profile is never replaced in the
+ * primary result.
  */
 export async function runWpuqWasserWasserRobustness(
   params: RunWpuqWasserWasserRobustnessParams
@@ -120,12 +129,16 @@ export async function runWpuqWasserWasserRobustness(
       });
 
       const kernel = await simulateMultiYearSpeicherGrenz({
-        getLoadForYear: (year) =>
-          mergeHouseholdWithHeatPump({
+        getLoadForYear: (year) => {
+          const extras: LoadComponent[] = [heatPump];
+          const ev = params.getEvForYear?.(year) ?? null;
+          if (ev) extras.push(ev);
+          return mergeHouseholdLoadComponents({
             householdProfile: params.getHouseholdForYear(year),
             householdAnnualKwh: params.householdAnnualKwh,
-            heatPump,
-          }),
+            extras,
+          });
+        },
         getPvForYear: params.getPvForYear,
         latitude: 0,
         longitude: 0,
