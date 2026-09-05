@@ -92,12 +92,13 @@ export function createUserLoadProfileForYear(
   return weights.map((w) => w * scaleFactor);
 }
 
+export { BDEW_H0_REFERENCE_CALENDAR_YEAR } from "./bdewH0YearProfile";
 export {
-  BDEW_H0_REFERENCE_CALENDAR_YEAR,
   iterateBdewProfileDays,
   classifyBdewDayTypeEuropeBerlin,
-} from "./bdewH0YearProfile";
-export type { BdewDayType } from "./bdewH0YearProfile";
+  isLeapYear,
+} from "./bdewCalendar";
+export type { BdewDayType } from "./bdewCalendar";
 
 export {
   createUserLoadProfile15MinForYear,

@@ -13,7 +13,7 @@ import {
   classifyBdewDayTypeEuropeBerlin,
   iterateBdewProfileDays,
   type BdewDayType,
-} from "./bdewH0YearProfile";
+} from "./bdewCalendar";
 import {
   BDEW_H25_SLOTS_PER_DAY,
   BDEW_H25_STEPS_PER_NON_LEAP_YEAR,

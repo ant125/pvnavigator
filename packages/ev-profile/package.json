@@ -1,0 +1,20 @@
+{
+  "name": "@ev-profile/loader",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@bdew-profile/loader": "*"
+  },
+  "devDependencies": {
+    "@pv-methodology/registry": "*",
+    "vitest": "^3.0.5"
+  }
+}

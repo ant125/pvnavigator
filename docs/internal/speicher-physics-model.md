@@ -31,15 +31,20 @@ Every new dataset, simulation model and calculation component should follow thes
 
 Annual energy consumption is always defined by the user.
 
-Reference datasets define only when energy is consumed.
+Timing comes from the component’s measured or reference profile, or from explicit user-provided behavioural inputs.
 
 These two concepts are intentionally independent.
 
-### 2. Measured data defines behaviour
+### 2. Behaviour/timing has an explicit source
 
-Measured datasets are used to reproduce realistic temporal behaviour.
+Behaviour and timing must come from either:
 
-They are not used because of their original annual energy.
+- measured or reference data appropriate to the component, or
+- explicit user-provided behavioural inputs.
+
+They must not come from hidden invented assumptions.
+
+Measured datasets remain the timing source for template-based loads (BDEW, ThermBuild, WPuQ). They are used to reproduce realistic temporal behaviour, not because of their original annual energy.
 
 ### 3. Deterministic calculations
 
@@ -82,6 +87,7 @@ Die **Produktionssimulation** erfolgt in 15-Minuten-Schritten. Jedes modellierte
 - BDEW-Quelle: natives H25-Viertelstundenprofil (96 Slots/Tag, 35040 Schritte/Nichtschaltjahr). Keine Dynamisierung, keine Feiertags-Umbelegung.
 - PVGIS-Quelle: unverändert stündlich (seriescalc). Nach der bestehenden Berlin-8760-Ausrichtung wird jede Stundenenergie \(E\) gleichmäßig auf vier Viertelstunden \([E/4, E/4, E/4, E/4]\) verteilt. Keine 15-min-PVGIS-API, keine Einstrahlungsinterpolation.
 - Wärmepumpe: Luft/Wasser über gemessene 15-Minuten-Referenzprofile (ThermBuild), Wasser/Wasser über das gemessene WPuQ-Referenzprofil, jeweils gleichmäßig auf die eingegebene Jahres-kWh skaliert. Gemeinsames Skalierungsprinzip: [Load Profile Scaling Principle](#load-profile-scaling-principle).
+- Elektroauto (EV v1): generiertes zustandsbehaftetes Heimladeprofil, separat für jedes Wetterjahr (35.040 Schritte). Nur die Heimladung geht in die Haushaltslast. Arbeitsplatzladung erscheint nicht im Lastprofil. Keine gemessene Template-Skalierung. Siehe [2.4 Electric Vehicle](#24-electric-vehicle).
 - Merge: indexweise, alle Komponenten müssen dieselbe Länge haben (kein Mix 8760 + 35040).
 - Kernel: `timeStepHours = 0.25`, `BATTERY_MODEL_VERSION = 1.1.0`, `PHYSICAL_KERNEL_SCHEMA_VERSION = 1.1.0`.
 - Stundenhelfer (BDEW hourly, `createHeatPumpComponent` 8760) bleiben für Regression/Rollback.
@@ -199,7 +205,9 @@ Das bedeutet:
 
 - Tages- und Jahresverlauf sind realistisch modelliert
 
-- Individuelle Abweichungen (z. B. Home Office, Wärmepumpe, E-Auto) sind möglich
+- BDEW selbst enthält keine Wärmepumpe und kein Elektroauto. Ist eine Wärmepumpe aktiviert, wird sie separat modelliert (Abschnitt 2.3). Ist EV v1 aktiviert, wird die Heimladung separat als explizite Lastkomponente modelliert (Abschnitt 2.4).
+
+- Individuelle Abweichungen, die nicht als eigene Lastkomponente modelliert sind (z. B. Home Office), bleiben möglich
 
 👉 Die Abweichung der Simulation hängt stark davon ab,
 
@@ -237,13 +245,547 @@ Offizielle Quellen und öffentliche Formulierung: Methodik & Quellen (`thermbuil
 
 ---
 
+### 2.4 Electric Vehicle
+
+SpeicherGrenze EV v1 models an electric vehicle as an additional household load component. When EV is enabled, the model generates one deterministic 35.040-step home-charging load profile for each target weather year. That profile is merged with the household load and the optional heat-pump load before the existing physical battery kernel runs.
+
+`pv-core` continues to see only the final merged load profile. The physical kernel remains unchanged. The EV vehicle battery is not a second storage device inside `pv-core`.
+
+This section is the frozen EV v1 methodology. It is not yet the implemented production behaviour.
+
+**Terminology.** In mathematical result formulas later in this document (`EV₀`, `EV(C)`, `EV_mean`, `ΔEV`), `EV` historically denotes Eigenverbrauch. In this section, EV denotes Electric Vehicle. Vehicle-energy ledger symbols use `Edrive`, `Ehome`, `Evehicle`, and related names — not `EV`.
+
+#### Product philosophy
+
+PVNavigator does not invent customer behaviour when physically relevant information can reasonably be provided by the user.
+
+Physically relevant EV parameters are requested explicitly. No hidden behavioural default may materially influence the storage recommendation. The calculation must remain traceable from user input to derived EV demand to the final home-charging profile.
+
+If essential EV information is unavailable, EV is excluded rather than modelled from unsupported assumptions.
+
+SpeicherGrenze does not model an average EV owner. It models the specific customer from the information explicitly provided.
+
+#### Required user inputs
+
+The user enters only values. Units and time format are fixed by the UI.
+
+**Vehicle**
+
+- annual driving distance \(D_a\): km / year
+- electricity consumption `consumptionKwhPer100Km`: kWh / 100 km
+- usable EV battery capacity: kWh
+
+**Typical driving pattern**
+
+Separate typical driving distances:
+
+- Monday–Friday \(d_{\mathrm{WD}}\): km / day
+- Saturday \(d_{\mathrm{SA}}\): km / day
+- Sunday \(d_{\mathrm{SU}}\): km / day
+
+Approved principle:
+
+- annual kilometres = energy volume / how much
+- typical WD / SA / SU distances = temporal distribution / when
+
+**Home charging**
+
+- maximum effective home charging power `maxHomeChargePowerKw`
+- home charging availability Monday–Friday
+- home charging availability Saturday
+- home charging availability Sunday
+
+Charging times use the same 15-minute grid as the rest of SpeicherGrenze (96 slots/day, Δt = 0,25 h).
+
+**Workplace charging**
+
+Question:
+
+Können Sie Ihr Elektroauto regelmäßig am Arbeitsplatz laden?
+
+If no:
+
+- no workplace parameters are required.
+
+If yes, both of the following are required:
+
+- average workplace charging energy: kWh / month
+- typical workplace charging frequency: charging days / month
+
+Both are required because they answer different physical questions:
+
+- kWh/month defines the energy volume charged outside the home.
+- charging days/month prevents the model from unrealistically smoothing that energy into a small equal charge on every weekday.
+
+#### Driving-distance normalization
+
+For each target weather year \(Y\), use the existing canonical Europe/Berlin calendar classification shared with the household model (`classifyBdewDayTypeEuropeBerlin`):
+
+- WD = Monday–Friday
+- SA = Saturday
+- SU = Sunday
+- 29 February omitted
+- total modelled days = 365
+
+Let \(N_{\mathrm{WD}}(Y)\), \(N_{\mathrm{SA}}(Y)\), \(N_{\mathrm{SU}}(Y)\) be those day counts.
+
+\[
+D_{\mathrm{imp}}(Y)=N_{\mathrm{WD}}(Y)\,d_{\mathrm{WD}}+N_{\mathrm{SA}}(Y)\,d_{\mathrm{SA}}+N_{\mathrm{SU}}(Y)\,d_{\mathrm{SU}}
+\]
+
+For \(D_a>0\), require \(D_{\mathrm{imp}}(Y)>0\).
+
+Then
+
+\[
+s(Y)=\frac{D_a}{D_{\mathrm{imp}}(Y)}
+\]
+
+and
+
+\[
+d_{\mathrm{effective},\tau}(Y)=s(Y)\,d_{\tau},\qquad \tau\in\{\mathrm{WD},\mathrm{SA},\mathrm{SU}\}
+\]
+
+Apply the corresponding effective distance to every modelled day of that type.
+
+Correct only the final floating-point residual on the last modelled day so that
+
+\[
+\sum \mathrm{dailyKm}[Y] = D_a
+\]
+
+within numerical tolerance.
+
+Annual EV driving-energy demand is
+
+\[
+E_{\mathrm{drive}}=D_a\cdot\frac{\mathrm{consumptionKwhPer100Km}}{100}
+\]
+
+and must be identical for every weather year.
+
+Do not reuse \(s(Y)\) of one weather year for another.
+
+Driving distance must never be reduced because workplace charging exists. Workplace charging changes where electrical energy is replenished, not how much the vehicle is driven.
+
+##### Mileage consistency metadata
+
+Always preserve:
+
+- `impliedAnnualKmFromTypicalDistances`
+- `normalizationFactor`
+
+For customer-facing comparison, use a fixed non-leap reference mix:
+
+- 261 WD
+- 52 SA
+- 52 SU
+
+\[
+\mathrm{impliedAnnualKmFromTypicalDistances}
+=261\,d_{\mathrm{WD}}+52\,d_{\mathrm{SA}}+52\,d_{\mathrm{SU}}
+\]
+
+\[
+\mathrm{normalizationFactor}
+=\frac{D_a}{\mathrm{impliedAnnualKmFromTypicalDistances}}
+\]
+
+(omit the factor when the implied mileage is 0).
+
+Do **not** freeze a warning threshold (including 5 %) into the physics methodology. Whether the application visually warns about a large mismatch is UI / product policy, not a physical rule.
+
+Hard validation:
+
+- negative annual km → invalid
+- negative typical km → invalid
+- annual km \(>0\) while all WD / SA / SU typical km are zero → invalid
+- annual km \(=0\) remains authoritative even if typical distances are non-zero; driving demand is zero and the mismatch may be exposed in metadata
+
+#### Deterministic workplace charging events
+
+Workplace charging must **not** be smoothed into a small equal credit on every weekday.
+
+When workplace charging is enabled, for each calendar month of target year \(Y\):
+
+Eligible dates are all Monday–Friday modelled civil dates in chronological order. Saturday, Sunday, and omitted 29 February are not eligible.
+
+Let \(W\) be the number of eligible working days in that month and \(n=\) `chargingDaysPerMonth`.
+
+Validation:
+
+- \(n\) must be an integer
+- if workplace kWh/month \(>0\), then \(n\) must be \(>0\)
+- if \(n>W\) for any simulated month, return a validation error
+- never silently clamp
+
+For \(k=0,\ldots,n-1\), select workplace event index
+
+\[
+\mathrm{idx}(k)=\left\lfloor\frac{(2k+1)\,W}{2n}\right\rfloor
+\]
+
+The selected date is the eligible weekday at \(\mathrm{idx}(k)\).
+
+This is the frozen neutral deterministic placement convention. It is:
+
+- evenly distributed through the eligible working days
+- without weekday preference
+- without a Friday-specific assumption
+- without randomness
+- not a claim that these are the customer’s actual charging weekdays
+
+Monthly workplace energy is divided equally between those \(n\) events. Only the final event absorbs the floating-point residual so that the monthly offered energy equals exactly the declared kWh/month.
+
+Workplace energy:
+
+- never enters the household load profile
+- only affects the EV battery energy state
+- may be rejected when the usable EV battery is full
+- rejected workplace energy must be preserved explicitly in calculation metadata
+
+Workplace charging is **not** a simple annual subtraction from EV driving energy.
+
+#### Abstract daily event ordering
+
+Do **not** introduce invented customer clock times such as driving at 08:00 or workplace charging at 12:00.
+
+Driving and workplace charging are abstract EV-energy-state transitions. Only home charging exists on the physical 15-minute household grid.
+
+For each civil day \(D\):
+
+1. Determine that day’s user-defined home-availability mask.
+2. Determine the first home-unavailable slot of that civil day.
+3. Immediately before that unavailable period, apply:
+   - the day’s driving-energy consumption;
+   - then the workplace charging event, if that date is a selected workplace charging day.
+4. After those abstract state transitions, vehicle energy is available to the subsequent real home-charging slots.
+
+If the vehicle is home-available for the entire civil day:
+
+- use civil midnight as the abstract event boundary;
+- this is a calendar boundary, not an assumed commute time.
+
+If there is no home availability that day:
+
+- the same abstract daily energy transitions still occur;
+- home charging remains zero.
+
+The event epoch is derived from the user-provided home-availability boundary, not from an invented departure or arrival time.
+
+A home-charging slot at time \(t\) sees vehicle energy after every event epoch strictly before \(t\). An overnight morning segment therefore replenishes the previous civil day’s driving / workplace events, not the new day’s events.
+
+#### Home charging windows
+
+Materialize the user’s WD / SA / SU availability directly on the 15-minute grid.
+
+For a day-type window:
+
+- `start < end` → `[start, end)` on that civil day
+- `start > end` → overnight wrap: `[start, 24:00)` plus `[00:00, end)`
+- `start == end` must **not** implicitly mean 24 hours
+
+Full-day availability must use an explicit UI / data representation.
+
+Continuity across midnight exists only when the next civil day’s own availability also contains the corresponding morning slots.
+
+Example: a Friday WD window does not automatically make Saturday morning available unless Saturday’s own window includes those slots.
+
+Home charging:
+
+- occurs only in available 15-minute slots
+- is unmanaged
+- never exceeds `maxHomeChargePowerKw * 0.25` kWh per slot
+- charges only into free usable EV battery capacity
+- is the only EV energy written into the household load profile
+
+There is no PV-aware or tariff-aware dispatch.
+
+#### Vehicle battery energy buffer
+
+The EV battery is represented internally by usable energy
+
+\[
+0\le E_{\mathrm{vehicle}}\le \mathrm{usableBatteryCapacityKwh}
+\]
+
+It is **not** the stationary Speicher battery, not a second `pv-core` storage device, and not V2H. It must not use home-battery SOC types.
+
+For EV v1, the vehicle battery exists only to determine how charging outside the home can carry energy across multiple days and how much charging can physically be accepted.
+
+Driving:
+
+```text
+served   = min(Evehicle, drivingDemand)
+unserved = drivingDemand − served
+Evehicle -= served
+```
+
+Workplace charging offer:
+
+```text
+accepted = min(usableBatteryCapacityKwh − Evehicle, workplaceOffer)
+rejected = workplaceOffer − accepted
+Evehicle += accepted
+```
+
+Home charging during an allowed slot:
+
+```text
+home = min(usableBatteryCapacityKwh − Evehicle, maxHomeChargePowerKw * 0.25)
+Evehicle += home
+```
+
+and `home` is written to the EV household-load profile.
+
+Driving distance must never be silently reduced. A driving-energy requirement that cannot be supplied by the vehicle buffer is physical infeasibility.
+
+#### Cyclic year-boundary treatment
+
+The reported EV year must not depend on an arbitrary 1 January SOC.
+
+Physical requirement: the reported annual EV simulation must satisfy a cyclic vehicle-energy boundary
+
+\[
+E_{\mathrm{end}}\approx E_{\mathrm{start}}
+\]
+
+within numerical solver tolerance.
+
+Each target weather year is solved independently. Do not carry vehicle energy from 2006 into 2007 or between any other weather years.
+
+Production approach: repeated-year warm-up / fixed-point iteration.
+
+- The numerical seed for the first discarded pass may be \(E_{\mathrm{vehicle}}=0\).
+- Run the complete target year.
+- Use the previous pass’s year-end vehicle energy as the next pass’s starting energy.
+- Continue until the annual cycle converges.
+- Only the converged pass becomes the reported EV profile.
+
+The seed is a numerical solver seed only. It is not a claim that the customer starts January with an empty EV battery.
+
+Do **not** freeze:
+
+- a customer starting SOC
+- a specific maximum iteration count as physical methodology
+- a specific floating-point epsilon as physical behaviour
+
+Numerical tolerance and iteration limits are implementation guards.
+
+If convergence cannot be achieved within the implementation guard:
+
+- fail the EV year
+- do not publish a cold-start profile
+
+#### Energy-conservation ledger
+
+For one reported weather year preserve at least:
+
+- `Edrive` — declared driving-energy demand
+- `EdriveServed`
+- `EdriveUnserved`
+- `EworkplaceDeclared`
+- `EworkplaceAccepted`
+- `EworkplaceRejected`
+- `Ehome`
+- `Estart`
+- `Eend`
+
+Identities:
+
+```text
+EworkplaceDeclared = EworkplaceAccepted + EworkplaceRejected
+Edrive             = EdriveServed + EdriveUnserved
+```
+
+Vehicle energy conservation:
+
+```text
+Eend − Estart = EworkplaceAccepted + Ehome − EdriveServed
+```
+
+For the converged cyclic reported year, `Eend ≈ Estart`, therefore
+
+```text
+Ehome + EworkplaceAccepted ≈ EdriveServed
+```
+
+within numerical tolerance.
+
+Zero home EV charging is valid. Do **not** reject merely because `EworkplaceDeclared >= Edrive`, because workplace charging may cover all required EV energy.
+
+Rejected workplace energy is not home-charging credit.
+
+#### Physical infeasibility
+
+Distinguish input validation, valid but notable results, and genuine physical infeasibility.
+
+**Input validation** (EV excluded; no profile generated):
+
+- missing required EV inputs
+- invalid / non-finite numbers
+- negative km
+- invalid usable battery capacity
+- invalid charging power
+- annual km \(>0\) with no temporal driving shape
+- workplace charging enabled but missing kWh/month or charging days/month
+- charging days/month exceed eligible weekdays
+
+**Valid but notable results** (not automatically errors):
+
+- workplace declared energy exceeds annual EV demand
+- some workplace energy is rejected because the battery is already full
+- home EV charging becomes zero
+- typical day distances imply a substantially different annual mileage from annual km
+
+**Genuine physical infeasibility** (fail the EV year):
+
+- `EdriveUnserved` greater than numerical tolerance
+- vehicle battery energy outside \([0,\,\mathrm{capacity}]\)
+- home charge outside declared windows
+- home slot energy greater than the charging-power limit
+- broken conservation identity
+- cyclic solver failure
+
+Do not silently:
+
+- reduce driving distance
+- spill home charging outside availability
+- exceed charging power
+- discard required driving energy
+
+#### Calendar behaviour
+
+EV must explicitly differ from the heat-pump profile.
+
+Heat-pump production profiles use `calendarRemap: false` because they preserve measured weather/seasonal sequences. The measured campaign year is not weekday-remapped onto the weather calendar.
+
+EV is behavioural and day-type dependent. Monday–Friday / Saturday / Sunday behaviour is part of the EV model itself.
+
+Therefore EV must be generated separately for every target weather year using that year’s actual calendar. EV must never be built once for `years[0]` and reused across 2006–2020.
+
+29 February is omitted consistently with the existing 35.040-step non-leap grid.
+
+Household and EV must use the same canonical weekday / day-type classification (Werktag, Samstag, Sonntag) so that Saturdays and Sundays align.
+
+The resulting EV output for every target year is:
+
+- exactly 35.040 interval-energy values
+- non-negative
+- deterministic
+
+#### Relationship to the Load Profile Scaling Principle
+
+EV still follows the high-level principle in [Load Profile Scaling Principle](#load-profile-scaling-principle):
+
+- annual driving distance and consumption define annual energy volume
+- user driving and charging behaviour define temporal distribution
+
+EV is an explicit generated-profile exception to measured-template uniform scaling.
+
+EV does **not** use a measured template plus one uniform amplitude scaling factor such as `scaleUniformEnergy`.
+
+Do not force EV into the heat-pump / household template-scaling implementation (BDEW remap-then-scale, ThermBuild / WPuQ unit-weight × annual kWh).
+
+#### Resulting load architecture
+
+```text
+Household profile
++
+optional Heat Pump profile
++
+optional EV home-charging profile
+↓
+merge load components
+↓
+35.040 total household load
+↓
+existing physical battery kernel
+```
+
+The physical kernel remains unchanged.
+
+EV is an additional positive household load component. Only home charging enters the merge. Workplace charging does not.
+
+All merged components must have the same length (35.040). Merge remains index-wise, as for household and heat pump.
+
+#### Report traceability
+
+The calculation result / report must preserve the EV inputs used.
+
+Section title intended for the report:
+
+Ihre Angaben zum Elektroauto
+
+Required displayed inputs:
+
+- Jahresfahrleistung
+- Stromverbrauch
+- typical driving distance Monday–Friday
+- typical driving distance Saturday
+- typical driving distance Sunday
+- usable battery capacity
+- maximum home charging power
+- home charging windows Monday–Friday / Saturday / Sunday
+- workplace charging yes/no
+- if yes:
+  - kWh/month
+  - charging days/month
+
+Approved report text:
+
+Die Berechnung basiert auf den oben angegebenen Eingabedaten.
+
+And:
+
+Ändern sich diese Eingabedaten, kann sich auch die empfohlene Speichergröße ändern.
+
+The report should later also expose explainable derived values such as:
+
+- annual EV driving / charging-energy demand
+- energy supplied at the workplace
+- remaining annual home-charging demand
+
+Always preserve the mileage-consistency metadata (`impliedAnnualKmFromTypicalDistances`, `normalizationFactor`) and the workplace accepted / rejected split.
+
+Unapproved report aggregation rules are not defined here.
+
+#### Scope and limitations of EV v1
+
+EV v1 includes:
+
+- one electric vehicle
+- user-defined annual driving distance
+- user-defined consumption
+- user-defined usable battery capacity
+- day-type driving pattern
+- user-defined home charging windows
+- user-defined maximum home charging power
+- workplace charging energy and charging frequency
+- vehicle-energy buffer
+- deterministic 15-minute home charging profile
+
+EV v1 intentionally does not model:
+
+- PV-optimised charging
+- dynamic tariffs
+- HEMS control
+- bidirectional charging / V2H
+- multiple vehicles
+- battery degradation
+- temperature-dependent EV consumption
+- detailed charging-power taper / BMS behaviour
+
+---
+
 ### Mehrjährige Mittelung
 
 PV-Ertrag, Eigenverbrauch ohne Speicher und die Batteriesimulationen für Speichergrößen von 5 bis 30 kWh werden für dieselben Wetterjahre 2006 bis 2020 berechnet. Die ausgewiesenen Jahresenergiewerte sind arithmetische Mittelwerte dieser fünfzehn Jahre.
 
 Autarkiegrad und Eigenverbrauchsquote sind Quotienten aus diesen Mittelwerten der Energiegrößen — **nicht** Mittelwerte von jährlichen Prozentwerten.
 
-Ist eine Wärmepumpe aktiviert, ist ihr Verbrauch Bestandteil der modellierten Haushaltslast.
+Ist eine Wärmepumpe aktiviert, ist ihr Verbrauch Bestandteil der modellierten Haushaltslast. Ist EV v1 aktiviert, ist die Heimladung ebenfalls Bestandteil der modellierten Haushaltslast; Arbeitsplatzladung nicht.
 
 Alle physikalischen Kennzahlen beziehen sich auf die **technische Speichergrenze**. Die planerische Anfangskapazität (75 %-Restkapazitäts-Anpassung) dient nur der Kaufempfehlung und wird **nicht** zur Berechnung der physikalischen Kennzahlen verwendet.
 
@@ -261,7 +803,7 @@ The user's annual energy consumption always determines the total annual energy. 
 
 ### Common scaling rule
 
-All production and robustness load sources follow the same modelling philosophy:
+Template-based production and robustness load sources (BDEW, WPuQ households, ThermBuild / WPuQ heat-pump profiles) follow the same modelling philosophy:
 
 1. Take the original 15-minute yearly profile.
 2. Preserve its relative temporal shape.
@@ -274,6 +816,8 @@ result[i]   = sourceProfile[i] × scaleFactor
 ```
 
 Each `result[i]` is interval energy in kWh. Timing, cycling, zeros, and relative peaks are unchanged; only amplitude changes.
+
+Generated stateful EV home-charging profiles are an explicit exception. They do not use a measured template or `scaleUniformEnergy`. See [2.4 Electric Vehicle](#24-electric-vehicle).
 
 Runtime entry points:
 
@@ -346,31 +890,29 @@ This separation is one of the fundamental design principles of SpeicherGrenze.
 
 ### Invariant
 
-Every load profile integrated into SpeicherGrenze must satisfy all of the following conditions.
+The higher-level invariant for every load component in SpeicherGrenze is:
+
+1. Annual energy defines the energy volume (for EV: annual kilometres × consumption).
+2. The model or profile defines the temporal distribution.
+3. There is no silent arbitrary amplitude manipulation.
+
+Template-based load components additionally satisfy:
 
 1. The original measured or reference temporal shape must be preserved.
 2. The profile must be scalable to any valid annual energy consumption using a single uniform scaling factor.
 3. After scaling, the resulting 35,040-step profile must sum exactly (within floating-point tolerance) to the requested annual energy.
 
-These rules apply equally to:
+These template rules apply to:
 
 - BDEW household profiles
 - WPuQ reference households
 - ThermBuild heat-pump profiles
-- future EV charging profiles
-- future domestic hot water profiles
-- future industrial or commercial load datasets
-- every future load-profile dataset integrated into SpeicherGrenze
+- future domestic hot water profiles that are measured templates
+- future industrial or commercial load datasets that are measured templates
 
-This invariant is intentionally independent of the underlying dataset.
+They do **not** apply to SpeicherGrenze EV v1. EV is a generated stateful profile: annual kilometres and consumption define volume; user-declared driving and charging behaviour define timing. EV has no measured source profile and must not be forced through `scaleUniformEnergy`. See [2.4 Electric Vehicle](#24-electric-vehicle).
 
-Regardless of where the data originates, the modelling principle must remain identical:
-
-Annual energy determines the energy volume.
-
-The selected profile determines only the temporal distribution of that energy.
-
-This invariant is considered part of the core architecture of SpeicherGrenze and should not be changed without an explicit modelling decision.
+This higher-level volume / timing separation is considered part of the core architecture of SpeicherGrenze and should not be changed without an explicit modelling decision.
 
 ---
 
@@ -551,9 +1093,11 @@ PV-Jahresertrag geteilt durch die installierte Gesamtleistung aller Dachflächen
 
 ### Direktverbrauch ohne Speicher
 
-PV-Energie, die im selben Stundenintervall unmittelbar den Haushaltsverbrauch einschließlich einer optionalen Wärmepumpe deckt.
+PV-Energie, die im selben Stundenintervall unmittelbar den Haushaltsverbrauch einschließlich einer optionalen Wärmepumpe und einer optionalen EV-Heimladung deckt.
 
 `EV₀ = Σ min(PV, Last)`
+
+In mathematical result formulas, `EV` historically denotes Eigenverbrauch. In section 2.4, EV denotes Electric Vehicle.
 
 ### Eigenverbrauch mit Speicher
 
@@ -589,7 +1133,7 @@ Der Systemverbrauch wird separat bilanziert und ist nicht Bestandteil des Hausha
 
 ### Netzbezug Haushalt mit Speicher
 
-Netzenergie zur Deckung des verbleibenden Haushaltsverbrauchs einschließlich einer optionalen Wärmepumpe.
+Netzenergie zur Deckung des verbleibenden Haushaltsverbrauchs einschließlich einer optionalen Wärmepumpe und einer optionalen EV-Heimladung.
 
 `Netzbezug Haushalt = modellierter Haushaltsverbrauch − Eigenverbrauch mit Speicher`
 
@@ -605,7 +1149,7 @@ Der Wert stammt aus dem expliziten Netzeinspeisungs-Ledger der Simulation (Mehrj
 
 `Autarkiegrad = Eigenverbrauch / modellierter Haushaltsverbrauch × 100 %`
 
-- Der Haushaltsverbrauch enthält eine optionale Wärmepumpe.
+- Der Haushaltsverbrauch enthält eine optionale Wärmepumpe und eine optionale EV-Heimladung.
 - Der Systemverbrauch des Speichersystems ist ausgeschlossen.
 - Autarkie wird getrennt ohne und mit Speicher berechnet.
 - Das Ergebnis ist der Quotient der Mehrjahres-Mittelwerte (nicht das Mittel von jährlichen Prozentwerten).
@@ -1230,7 +1774,7 @@ Implementierungsdetails:
 - Daher wird `DEFAULT_BATTERY_SPEC` verwendet.
 - `backupReserveKwh` ist die einzige batterierelevante Produktions-Überschreibung.
 - Die Produktion setzt `includeHourly: false`.
-- Wärmepumpe und mehrere Dachflächen ändern Last-/PV-Profile, **nicht** Batteriewirkungsgrade oder Leistungsparameter.
+- Wärmepumpe, optionale EV-Heimladung und mehrere Dachflächen ändern Last-/PV-Profile, **nicht** Batteriewirkungsgrade oder Leistungsparameter.
 - Die Wirkungsgrade sind für jede simulierte Kapazität **identisch**.
 - Mit der Kapazität variieren nur Leistungsgrenzen und der relative Reserveanteil
   (`minSoc = clamp(reserveKwh / usableCapacityKwh, 0, maxSoc)`).
@@ -1263,8 +1807,9 @@ Implementierungsdetails:
 - Netzbezug- und Netzeinspeisungs-Ledger
 - mehrere PV-Dachflächen
 - optionale Wärmepumpenlast
+- optionale EV-Heimladelast (generiertes zustandsbehaftetes Profil; siehe Abschnitt 2.4)
 - Wetterjahre 2006–2020
-- einheitliche Jahresskalierung der Lastprofile (BDEW, WPuQ-Robustheit, ThermBuild)
+- einheitliche Jahresskalierung der Template-Lastprofile (BDEW, WPuQ-Robustheit, ThermBuild); EV v1 ist die generierte Ausnahme
 
 ### Nicht im Modell berücksichtigt
 
@@ -1283,7 +1828,7 @@ Implementierungsdetails:
 - vollständiges Insel-/Notstrom-Umschaltverhalten
 - zyklische jährliche SoC-Konvergenz
 - SoC-Übertrag von Jahr zu Jahr
-- geräte-, wetter- oder occupancy-abhängige Umformung von Lastprofilen (nur uniforme Jahresskalierung; siehe [Load Profile Scaling Principle](#load-profile-scaling-principle))
+- geräte-, wetter- oder occupancy-abhängige Umformung gemessener Lastprofil-Templates (BDEW, WPuQ, ThermBuild: nur uniforme Jahresskalierung; siehe [Load Profile Scaling Principle](#load-profile-scaling-principle)). EV v1 ist davon ausgenommen und wird als generiertes zustandsbehaftetes Profil aus expliziten Nutzereingaben erzeugt (Abschnitt 2.4).
 
 ---
 
