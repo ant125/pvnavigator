@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EvProfileError } from "@ev-profile/loader";
 import { commuterEvInput, infeasibleEvInput, sum } from "@/test/evFixtures";
 import {
+  buildEvCalculationMeta,
   preflightEvLoadForYears,
   resolveEnabledEvConfig,
   resolveEvLoadComponentForYear,
@@ -79,5 +80,34 @@ describe("preflightEvLoadForYears", () => {
       expect((error as EvProfileError).kind).toBe("infeasible");
       expect((error as EvProfileError).code).toBe("DRIVING_UNSERVED");
     }
+  });
+});
+
+describe("buildEvCalculationMeta", () => {
+  it("aggregates home and workplace energy as multi-year means", () => {
+    const evInput = commuterEvInput();
+    const y2018 = resolveEvLoadComponentForYear({ evInput, year: 2018 });
+    const y2019 = resolveEvLoadComponentForYear({ evInput, year: 2019 });
+    const meta = buildEvCalculationMeta(
+      { 2018: y2018.meta, 2019: y2019.meta },
+      [2018, 2019],
+      evInput
+    );
+
+    expect(meta.typicalDailyKm).toEqual({ WD: 40, SA: 20, SU: 10 });
+    expect(meta.annualDrivingDemandKwh).toBe(y2018.meta.annualDrivingDemandKwh);
+    expect(meta.annualDrivingDemandKwh).toBe(y2019.meta.annualDrivingDemandKwh);
+    expect(meta.averageHomeChargedKwh).toBeCloseTo(
+      (y2018.meta.homeChargedKwh + y2019.meta.homeChargedKwh) / 2,
+      12
+    );
+    expect(meta.averageWorkplaceAcceptedKwh).toBeCloseTo(
+      (y2018.meta.workplaceAcceptedKwh + y2019.meta.workplaceAcceptedKwh) / 2,
+      12
+    );
+    expect(meta.averageWorkplaceRejectedKwh).toBeCloseTo(
+      (y2018.meta.workplaceRejectedKwh + y2019.meta.workplaceRejectedKwh) / 2,
+      12
+    );
   });
 });

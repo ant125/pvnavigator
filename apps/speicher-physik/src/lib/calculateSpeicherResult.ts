@@ -430,6 +430,6 @@ export async function calculateSpeicherResult(
     robustness,
     wasserWasserRobustness,
     heatPump: heatPump?.meta ?? null,
-    ev: evConfig ? buildEvCalculationMeta(evMetaByYear, years) : null,
+    ev: evConfig ? buildEvCalculationMeta(evMetaByYear, years, evConfig) : null,
   };
 }

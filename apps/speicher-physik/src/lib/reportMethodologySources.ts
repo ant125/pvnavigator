@@ -17,6 +17,11 @@ export type ReportHeatPumpCitation = {
   methodologySourceId: string | null;
 } | null;
 
+/** EV methodology ids from the typed calculation result. */
+export type ReportEvCitation = {
+  methodologySourceIds: readonly string[];
+} | null;
+
 const THERMBUILD_SOURCE_ID = "thermbuild-fordatis-486";
 const WPUQ_HEATPUMP_SOURCE_ID = "wpuq-wasserwasser-heatpump";
 
@@ -75,19 +80,26 @@ function usedMeasuredHeatPumpProfile(
   );
 }
 
-function toReportSource(id: ReportSourceId): ReportSourceItem {
+function toRegistrySource(id: string): ReportSourceItem {
   const source = getMethodologySourceById(id);
   if (!source) {
     throw new Error(`Missing methodology source for report: ${id}`);
   }
+  const known = id as ReportSourceId;
   return {
     id: source.id,
-    title: REPORT_TITLE[id] ?? source.title,
-    organization: REPORT_ORGANIZATION[id] ?? source.organization,
+    title: REPORT_TITLE[known] ?? source.title,
+    organization: REPORT_ORGANIZATION[known] ?? source.organization,
     url: source.url,
-    linkLabel: source.url ? REPORT_LINK_LABEL[id] : null,
-    detail: REPORT_DETAIL[id] ?? null,
+    linkLabel: source.url
+      ? (REPORT_LINK_LABEL[known] ?? source.title)
+      : null,
+    detail: REPORT_DETAIL[known] ?? null,
   };
+}
+
+function toReportSource(id: ReportSourceId): ReportSourceItem {
+  return toRegistrySource(id);
 }
 
 /**
@@ -95,7 +107,8 @@ function toReportSource(id: ReportSourceId): ReportSourceItem {
  * Heat-pump sources are included only when the calculation resolved that id.
  */
 export function getReportMethodologySources(
-  heatPump?: ReportHeatPumpCitation
+  heatPump?: ReportHeatPumpCitation,
+  ev?: ReportEvCitation
 ): ReportSourceItem[] {
   const sources = BASE_REPORT_SOURCE_IDS.map((id) => toReportSource(id));
   if (usedThermBuildHeatPumpProfile(heatPump)) {
@@ -103,6 +116,12 @@ export function getReportMethodologySources(
   }
   if (usedWasserWasserHeatPumpProfile(heatPump)) {
     sources.push(toReportSource(WPUQ_HEATPUMP_SOURCE_ID));
+  }
+  const seen = new Set(sources.map((source) => source.id));
+  for (const id of ev?.methodologySourceIds ?? []) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    sources.push(toRegistrySource(id));
   }
   return sources;
 }
@@ -113,6 +132,7 @@ export function getReportMethodologySources(
  */
 export function getReportDurationInclusions(params: {
   heatPump?: ReportHeatPumpCitation;
+  ev?: ReportEvCitation;
   cohortSize: number;
   wwCohortSize?: number | null;
 }): string[] {
@@ -123,6 +143,9 @@ export function getReportDurationInclusions(params: {
         ? "gemessenes Wärmepumpenprofil"
         : "Wärmepumpenprofil"
     );
+  }
+  if ((params.ev?.methodologySourceIds?.length ?? 0) > 0) {
+    items.push("EV-Heimladeprofil");
   }
   items.push(`Validierung mit ${params.cohortSize} Referenzhaushalten`);
   if (typeof params.wwCohortSize === "number" && params.wwCohortSize > 0) {

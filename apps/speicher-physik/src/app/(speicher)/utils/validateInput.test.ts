@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { SpeicherInput } from "../types/speicher";
 import {
   SPEICHER_FIELD_INLINE_MESSAGES,
   validateAddressFields,
@@ -119,14 +120,14 @@ describe("validateInput field errors", () => {
   });
 });
 
-const VALID_FORM_BASE = {
+const VALID_FORM_BASE: Partial<SpeicherInput> = {
   pvSurfaces: [{ systemSizeKwP: 10, tiltDeg: 30, azimuthDeg: 180 }],
   street: "Marienplatz",
   houseNumber: "1",
   postalCode: "80331",
   city: "München",
   annualConsumptionKwh: 4500,
-} as const;
+};
 
 describe("validateInput heat pump (new UI)", () => {
   it("allows Nein without type, DHW, or consumption", () => {
@@ -256,5 +257,143 @@ describe("validateInput heat pump (new UI)", () => {
     expect(result.errors).toContain(
       SPEICHER_FIELD_INLINE_MESSAGES.heatPumpConsumptionKwh
     );
+  });
+});
+
+const VALID_EV_FORM = {
+  evEnabled: true,
+  evAnnualKm: 15000,
+  evConsumptionKwhPer100Km: 18,
+  evUsableBatteryCapacityKwh: 77,
+  evTypicalDailyKmWd: 40,
+  evTypicalDailyKmSa: 25,
+  evTypicalDailyKmSu: 10,
+  evMaxHomeChargePowerKw: 11,
+  evHomeWindowWd: { fullDay: false, start: "17:30", end: "07:00" },
+  evHomeWindowSa: { fullDay: true, start: "", end: "" },
+  evHomeWindowSu: { fullDay: false, start: "10:00", end: "20:00" },
+  evWorkplaceEnabled: false,
+} as const;
+
+describe("validateInput EV (new UI)", () => {
+  it("allows Nein / omitted EV without requiring EV fields", () => {
+    expect(validateInput({ ...VALID_FORM_BASE }).isValid).toBe(true);
+    expect(
+      validateInput({ ...VALID_FORM_BASE, evEnabled: false }).isValid
+    ).toBe(true);
+    const result = validateInput({ ...VALID_FORM_BASE, evEnabled: false });
+    expect(result.fieldErrors.evAnnualKm).toBeUndefined();
+    expect(result.fieldErrors.evMaxHomeChargePowerKw).toBeUndefined();
+  });
+
+  it("accepts a complete EV form with workplace Nein", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      ...VALID_EV_FORM,
+    });
+    expect(result.isValid).toBe(true);
+    expect(result.fieldErrors.evWorkplaceKwhPerMonth).toBeUndefined();
+    expect(result.fieldErrors.evWorkplaceChargingDaysPerMonth).toBeUndefined();
+  });
+
+  it("fails each required core field when EV is Ja", () => {
+    const requiredKeys = [
+      "evAnnualKm",
+      "evConsumptionKwhPer100Km",
+      "evUsableBatteryCapacityKwh",
+      "evTypicalDailyKmWd",
+      "evTypicalDailyKmSa",
+      "evTypicalDailyKmSu",
+      "evMaxHomeChargePowerKw",
+      "evHomeWindowWd",
+      "evHomeWindowSa",
+      "evHomeWindowSu",
+      "evWorkplaceEnabled",
+    ] as const;
+
+    for (const key of requiredKeys) {
+      const form = { ...VALID_FORM_BASE, ...VALID_EV_FORM, [key]: undefined };
+      const result = validateInput(form);
+      expect(result.isValid, key).toBe(false);
+      expect(result.fieldErrors[key], key).toBe(
+        SPEICHER_FIELD_INLINE_MESSAGES[key]
+      );
+    }
+  });
+
+  it("requires both workplace fields when workplace is Ja", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      ...VALID_EV_FORM,
+      evWorkplaceEnabled: true,
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.fieldErrors.evWorkplaceKwhPerMonth).toBe(
+      SPEICHER_FIELD_INLINE_MESSAGES.evWorkplaceKwhPerMonth
+    );
+    expect(result.fieldErrors.evWorkplaceChargingDaysPerMonth).toBe(
+      SPEICHER_FIELD_INLINE_MESSAGES.evWorkplaceChargingDaysPerMonth
+    );
+  });
+
+  it("accepts workplace Ja when both workplace fields are present", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      ...VALID_EV_FORM,
+      evWorkplaceEnabled: true,
+      evWorkplaceKwhPerMonth: 100,
+      evWorkplaceChargingDaysPerMonth: 4,
+    });
+    expect(result.isValid).toBe(true);
+  });
+
+  it("rejects a non-integer workplace charging-day count", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      ...VALID_EV_FORM,
+      evWorkplaceEnabled: true,
+      evWorkplaceKwhPerMonth: 100,
+      evWorkplaceChargingDaysPerMonth: 4.5,
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.fieldErrors.evWorkplaceChargingDaysPerMonth).toBe(
+      SPEICHER_FIELD_INLINE_MESSAGES.evWorkplaceChargingDaysPerMonth
+    );
+  });
+
+  it("rejects a charging power that is not one of the allowed values", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      ...VALID_EV_FORM,
+      evMaxHomeChargePowerKw: 10 as never,
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.fieldErrors.evMaxHomeChargePowerKw).toBe(
+      SPEICHER_FIELD_INLINE_MESSAGES.evMaxHomeChargePowerKw
+    );
+  });
+
+  it("rejects equal start/end as a full-day window", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      ...VALID_EV_FORM,
+      evHomeWindowSa: { fullDay: false, start: "12:00", end: "12:00" },
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.fieldErrors.evHomeWindowSa).toBe(
+      SPEICHER_FIELD_INLINE_MESSAGES.evHomeWindowSa
+    );
+  });
+
+  it("still accepts Wärmepumpe together with a valid EV form", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      ...VALID_EV_FORM,
+      heatPumpEnabled: true,
+      heatPumpConsumptionKwh: 5000,
+      heatPumpTechnology: "luftwasser",
+      heatPumpDhwService: "space_heat_and_dhw",
+    });
+    expect(result.isValid).toBe(true);
   });
 });

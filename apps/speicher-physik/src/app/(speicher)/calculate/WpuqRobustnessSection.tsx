@@ -24,6 +24,7 @@ import {
 } from "@/lib/robustnessReportCopy";
 import {
   getReportMethodologySources,
+  type ReportEvCitation,
   type ReportHeatPumpCitation,
 } from "@/lib/reportMethodologySources";
 
@@ -165,10 +166,12 @@ function DetailsToggle({
 
 export function ReportQuellenSection({
   heatPump,
+  ev,
 }: {
   heatPump?: ReportHeatPumpCitation;
+  ev?: ReportEvCitation;
 }) {
-  const sources = getReportMethodologySources(heatPump);
+  const sources = getReportMethodologySources(heatPump, ev);
 
   return (
     <section

@@ -14,6 +14,22 @@ export type PvSurfaceInput = {
   azimuthDeg: number;
 };
 
+/** Explicit home-charging powers offered in the EV v1 form. */
+export const EV_HOME_CHARGE_POWER_KW = [2.3, 3.7, 7.4, 11, 22] as const;
+
+export type EvHomeChargePowerKw = (typeof EV_HOME_CHARGE_POWER_KW)[number];
+
+/**
+ * Form encoding of a home-availability window.
+ * Full-day must be explicit. `start === end` is not 24 hours.
+ * Times are `HH:MM` on the 15-minute grid.
+ */
+export type EvHomeWindowForm = {
+  fullDay: boolean;
+  start: string;
+  end: string;
+};
+
 /**
  * Input data for Speicher calculation
  */
@@ -66,6 +82,43 @@ export interface SpeicherInput {
    * saved calculations.
    */
   heatPumpDhwService?: "space_heat_only" | "space_heat_and_dhw";
+
+  /** Optional: electric vehicle present. Default/legacy is absent or false. */
+  evEnabled?: boolean;
+
+  /** Annual driving distance (km / year). No hidden default. */
+  evAnnualKm?: number;
+
+  /** Vehicle electricity consumption (kWh / 100 km). */
+  evConsumptionKwhPer100Km?: number;
+
+  /** Usable EV battery capacity (kWh), not gross capacity. */
+  evUsableBatteryCapacityKwh?: number;
+
+  /** Typical Monday–Friday driving distance (km / day). */
+  evTypicalDailyKmWd?: number;
+
+  /** Typical Saturday driving distance (km). */
+  evTypicalDailyKmSa?: number;
+
+  /** Typical Sunday driving distance (km). */
+  evTypicalDailyKmSu?: number;
+
+  /**
+   * Maximum effective home charging power (kW).
+   * Must be one of the explicit UI values: 2.3, 3.7, 7.4, 11, 22.
+   */
+  evMaxHomeChargePowerKw?: EvHomeChargePowerKw;
+
+  evHomeWindowWd?: EvHomeWindowForm;
+  evHomeWindowSa?: EvHomeWindowForm;
+  evHomeWindowSu?: EvHomeWindowForm;
+
+  /** Workplace charging. Required true/false when EV is enabled. */
+  evWorkplaceEnabled?: boolean;
+
+  evWorkplaceKwhPerMonth?: number;
+  evWorkplaceChargingDaysPerMonth?: number;
 
   /** Optional: energy held as backup reserve (Notstrom), not used in daily cycling (kWh) */
   backupReserveKwh?: number;

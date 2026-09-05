@@ -4,6 +4,13 @@
  */
 
 import type { PvSurfaceInput, SpeicherInput } from "../types/speicher";
+import {
+  EV_FIELD_MESSAGES,
+  isEvHomeChargePowerKw,
+  isPresentFiniteNumber,
+  isPresentNonNegativeNumber,
+  validateHomeWindowForm,
+} from "./evForm";
 
 /** Match single-field PV-Anlagengröße (kWp): min 1, max 100 (total when multi-roof). */
 const PV_TOTAL_KWP_MAX = 100;
@@ -22,6 +29,7 @@ export const SPEICHER_FIELD_INLINE_MESSAGES = {
     "Bitte wählen Sie, wofür die Wärmepumpe verwendet wird.",
   heatPumpConsumptionKwh:
     "Bitte geben Sie den jährlichen Stromverbrauch der Wärmepumpe ein.",
+  ...EV_FIELD_MESSAGES,
 } as const;
 
 export type SpeicherFieldErrorKey = keyof typeof SPEICHER_FIELD_INLINE_MESSAGES;
@@ -29,6 +37,121 @@ export type SpeicherFieldErrorKey = keyof typeof SPEICHER_FIELD_INLINE_MESSAGES;
 export type SpeicherFieldErrors = Partial<
   Record<SpeicherFieldErrorKey, string>
 >;
+
+function pushFieldError(
+  errors: string[],
+  fieldErrors: SpeicherFieldErrors,
+  key: SpeicherFieldErrorKey
+): void {
+  const message = SPEICHER_FIELD_INLINE_MESSAGES[key];
+  errors.push(message);
+  fieldErrors[key] = message;
+}
+
+function validateRequiredNonNegative(
+  value: number | undefined,
+  key: SpeicherFieldErrorKey,
+  errors: string[],
+  fieldErrors: SpeicherFieldErrors
+): void {
+  if (!isPresentNonNegativeNumber(value)) {
+    pushFieldError(errors, fieldErrors, key);
+  }
+}
+
+function validateEvHomeWindow(
+  window: SpeicherInput["evHomeWindowWd"],
+  key: "evHomeWindowWd" | "evHomeWindowSa" | "evHomeWindowSu",
+  errors: string[],
+  fieldErrors: SpeicherFieldErrors
+): void {
+  if (validateHomeWindowForm(window) !== "ok") {
+    pushFieldError(errors, fieldErrors, key);
+  }
+}
+
+function validateEvFormFields(
+  input: Partial<SpeicherInput>,
+  errors: string[],
+  fieldErrors: SpeicherFieldErrors
+): void {
+  validateRequiredNonNegative(
+    input.evAnnualKm,
+    "evAnnualKm",
+    errors,
+    fieldErrors
+  );
+  validateRequiredNonNegative(
+    input.evConsumptionKwhPer100Km,
+    "evConsumptionKwhPer100Km",
+    errors,
+    fieldErrors
+  );
+
+  const evCapacity = input.evUsableBatteryCapacityKwh;
+  if (!isPresentFiniteNumber(evCapacity) || evCapacity <= 0) {
+    pushFieldError(errors, fieldErrors, "evUsableBatteryCapacityKwh");
+  }
+
+  validateRequiredNonNegative(
+    input.evTypicalDailyKmWd,
+    "evTypicalDailyKmWd",
+    errors,
+    fieldErrors
+  );
+  validateRequiredNonNegative(
+    input.evTypicalDailyKmSa,
+    "evTypicalDailyKmSa",
+    errors,
+    fieldErrors
+  );
+  validateRequiredNonNegative(
+    input.evTypicalDailyKmSu,
+    "evTypicalDailyKmSu",
+    errors,
+    fieldErrors
+  );
+
+  if (!isEvHomeChargePowerKw(input.evMaxHomeChargePowerKw)) {
+    pushFieldError(errors, fieldErrors, "evMaxHomeChargePowerKw");
+  }
+
+  validateEvHomeWindow(
+    input.evHomeWindowWd,
+    "evHomeWindowWd",
+    errors,
+    fieldErrors
+  );
+  validateEvHomeWindow(
+    input.evHomeWindowSa,
+    "evHomeWindowSa",
+    errors,
+    fieldErrors
+  );
+  validateEvHomeWindow(
+    input.evHomeWindowSu,
+    "evHomeWindowSu",
+    errors,
+    fieldErrors
+  );
+
+  if (input.evWorkplaceEnabled !== true && input.evWorkplaceEnabled !== false) {
+    pushFieldError(errors, fieldErrors, "evWorkplaceEnabled");
+  } else if (input.evWorkplaceEnabled === true) {
+    validateRequiredNonNegative(
+      input.evWorkplaceKwhPerMonth,
+      "evWorkplaceKwhPerMonth",
+      errors,
+      fieldErrors
+    );
+    if (
+      !Number.isInteger(input.evWorkplaceChargingDaysPerMonth) ||
+      !isPresentNonNegativeNumber(input.evWorkplaceChargingDaysPerMonth)
+    ) {
+      pushFieldError(errors, fieldErrors, "evWorkplaceChargingDaysPerMonth");
+    }
+  }
+}
 
 function validatePvSurfacesList(
   surfaces: PvSurfaceInput[],
@@ -194,6 +317,10 @@ export function validateInput(input: Partial<SpeicherInput>): {
       fieldErrors.heatPumpDhwService =
         SPEICHER_FIELD_INLINE_MESSAGES.heatPumpDhwService;
     }
+  }
+
+  if (input.evEnabled === true) {
+    validateEvFormFields(input, errors, fieldErrors);
   }
 
   const reserve = input.backupReserveKwh ?? 0;

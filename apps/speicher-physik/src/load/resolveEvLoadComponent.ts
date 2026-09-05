@@ -20,6 +20,7 @@ import {
   type EvErrorCode,
   type EvIssue,
   type EvProfileMeta,
+  type EvTypicalDailyKm,
 } from "@ev-profile/loader";
 import type { LoadComponent } from "./merge";
 
@@ -57,8 +58,22 @@ export type EvCalculationMeta = {
   years: number[];
   /** Package metadata for every weather year. Do not pick one year silently. */
   byYear: Record<number, EvProfileMeta>;
+  /**
+   * Year-independent typical distances actually used.
+   * Taken from the enabled calculation config, not from a silent years[0] pick.
+   */
+  typicalDailyKm: EvTypicalDailyKm;
+  /**
+   * Annual driving-energy demand. Identical for every weather year;
+   * asserted, not taken from a silent years[0] pick.
+   */
+  annualDrivingDemandKwh: number;
   /** Mean of `homeChargedKwh` across `years`. */
   averageHomeChargedKwh: number;
+  /** Mean of `workplaceAcceptedKwh` across `years`. */
+  averageWorkplaceAcceptedKwh: number;
+  /** Mean of `workplaceRejectedKwh` across `years`. */
+  averageWorkplaceRejectedKwh: number;
 };
 
 const REQUIRED_EV_CONFIG_KEYS = [
@@ -199,31 +214,90 @@ export function resolveEvLoadComponentForYear(params: {
   };
 }
 
-export function buildEvCalculationMeta(
+function meanAcrossYears(
   byYear: Record<number, EvProfileMeta>,
-  years: readonly number[]
-): EvCalculationMeta {
-  if (years.length === 0) {
-    throw new Error("ev: cannot build calculation metadata without years");
-  }
-  let homeSum = 0;
-  let modelVersion: string | null = null;
-  let methodologySourceIds: readonly string[] | null = null;
+  years: readonly number[],
+  read: (meta: EvProfileMeta) => number
+): number {
+  let sum = 0;
   for (const year of years) {
     const meta = byYear[year];
     if (!meta) {
       throw new Error(`ev: missing metadata for year ${year}`);
     }
-    homeSum += meta.homeChargedKwh;
-    modelVersion ??= meta.modelVersion;
-    methodologySourceIds ??= meta.methodologySourceIds;
+    sum += read(meta);
   }
+  return sum / years.length;
+}
+
+function yearIndependentNumber(
+  byYear: Record<number, EvProfileMeta>,
+  years: readonly number[],
+  read: (meta: EvProfileMeta) => number,
+  name: string
+): number {
+  const first = byYear[years[0]];
+  if (!first) {
+    throw new Error(`ev: missing metadata for year ${years[0]}`);
+  }
+  const expected = read(first);
+  for (const year of years) {
+    const meta = byYear[year];
+    if (!meta) {
+      throw new Error(`ev: missing metadata for year ${year}`);
+    }
+    if (read(meta) !== expected) {
+      throw new Error(`ev: ${name} is not identical across weather years`);
+    }
+  }
+  return expected;
+}
+
+export function buildEvCalculationMeta(
+  byYear: Record<number, EvProfileMeta>,
+  years: readonly number[],
+  config: EvCalculationConfig
+): EvCalculationMeta {
+  if (years.length === 0) {
+    throw new Error("ev: cannot build calculation metadata without years");
+  }
+  for (const year of years) {
+    if (!byYear[year]) {
+      throw new Error(`ev: missing metadata for year ${year}`);
+    }
+  }
+  const first = byYear[years[0]]!;
   return {
     enabled: true,
-    modelVersion: modelVersion!,
-    methodologySourceIds: methodologySourceIds!,
+    modelVersion: first.modelVersion,
+    methodologySourceIds: first.methodologySourceIds,
     years: years.slice(),
     byYear,
-    averageHomeChargedKwh: homeSum / years.length,
+    typicalDailyKm: {
+      WD: config.typicalDailyKm.WD,
+      SA: config.typicalDailyKm.SA,
+      SU: config.typicalDailyKm.SU,
+    },
+    annualDrivingDemandKwh: yearIndependentNumber(
+      byYear,
+      years,
+      (meta) => meta.annualDrivingDemandKwh,
+      "annualDrivingDemandKwh"
+    ),
+    averageHomeChargedKwh: meanAcrossYears(
+      byYear,
+      years,
+      (meta) => meta.homeChargedKwh
+    ),
+    averageWorkplaceAcceptedKwh: meanAcrossYears(
+      byYear,
+      years,
+      (meta) => meta.workplaceAcceptedKwh
+    ),
+    averageWorkplaceRejectedKwh: meanAcrossYears(
+      byYear,
+      years,
+      (meta) => meta.workplaceRejectedKwh
+    ),
   };
 }

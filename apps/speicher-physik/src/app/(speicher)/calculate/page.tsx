@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SpeicherInput, type PvSurfaceInput } from "../types/speicher";
 import { validateInput, type SpeicherFieldErrors, type SpeicherFieldErrorKey } from "../utils/validateInput";
 import {
+  type HouseholdCalculationPayload,
   type SpeicherGrenzPayload,
   type VerifiedResult,
   type WpuqRobustnessPayload,
@@ -30,6 +31,10 @@ import {
 } from "@/lib/reportMethodologySources";
 import { runHouseholdCalculationStream } from "./runHouseholdCalculationStream";
 import { useReportHeaderCta } from "../components/headerCtaContext";
+import { EvInputSection } from "./EvInputSection";
+import { EvResultSection } from "./EvResultSection";
+import { mapEvFormToCalculationInput } from "../utils/evForm";
+import { EV_REPORT_COPY, formatEvKwh } from "@/lib/evReportPresentation";
 
 /**
  * Speicher Calculator Page
@@ -495,6 +500,9 @@ export default function SpeicherCalculatePage() {
   const [displayAddress, setDisplayAddress] = useState<string | null>(null);
   const [heatPumpCitation, setHeatPumpCitation] =
     useState<ReportHeatPumpCitation>(null);
+  const [evResult, setEvResult] = useState<
+    HouseholdCalculationPayload["ev"]
+  >(null);
   const errorBoxRef = useRef<HTMLDivElement | null>(null);
   const calculatingStepRef = useRef<HTMLDivElement | null>(null);
   const resultsMastheadRef = useRef<HTMLDivElement | null>(null);
@@ -534,6 +542,7 @@ export default function SpeicherCalculatePage() {
     annualConsumptionKwh: undefined,
     heatPumpEnabled: false,
     heatPumpConsumptionKwh: undefined,
+    evEnabled: false,
     backupReserveKwh: 0,
   });
 
@@ -674,6 +683,7 @@ export default function SpeicherCalculatePage() {
     setCalculationDurationMs(null);
     calculationStartedAtRef.current = Date.now();
     setHeatPumpCitation(null);
+    setEvResult(null);
     setWasserWasserRobustness(null);
     setStep("calculating");
 
@@ -707,6 +717,7 @@ export default function SpeicherCalculatePage() {
                 heatPumpDhwService: formData.heatPumpDhwService,
               }
             : {}),
+          ev: mapEvFormToCalculationInput(formData),
           backupReserveKwh: formData.backupReserveKwh,
         },
         (event) => {
@@ -730,6 +741,7 @@ export default function SpeicherCalculatePage() {
           ? { methodologySourceId: response.heatPump.methodologySourceId }
           : null
       );
+      setEvResult(response.ev);
       setCalculationLink("/result");
 
       await new Promise((resolve) =>
@@ -764,6 +776,7 @@ export default function SpeicherCalculatePage() {
     setRobustness(null);
     setDisplayAddress(null);
     setHeatPumpCitation(null);
+    setEvResult(null);
     setCalculationLink("/result");
     setCalculationComplete(false);
     setCalculationDurationMs(null);
@@ -783,6 +796,8 @@ export default function SpeicherCalculatePage() {
     annualConsumptionKwh: formData.annualConsumptionKwh,
     heatPumpEnabled: formData.heatPumpEnabled,
     heatPumpConsumptionKwh: formData.heatPumpConsumptionKwh,
+    evEnabled: formData.evEnabled === true,
+    evAverageHomeChargedKwh: evResult?.averageHomeChargedKwh,
     backupReserveKwh: formData.backupReserveKwh,
     totalKwPConfigured,
   });
@@ -1491,6 +1506,15 @@ export default function SpeicherCalculatePage() {
                 </div>
               </div>
 
+              <EvInputSection
+                formData={formData}
+                fieldErrors={fieldErrors}
+                onChange={(patch) =>
+                  setFormData((prev) => ({ ...prev, ...patch }))
+                }
+                clearFieldError={clearFieldError}
+              />
+
               {/* Notstromreserve */}
               <div className="border-t border-line pt-8">
                 <div className={FORM_OPTIONAL_BLOCK}>
@@ -1877,7 +1901,9 @@ export default function SpeicherCalculatePage() {
 
                       <div className={REPORT_DATA_ITEM}>
                         <dt className={REPORT_DATA_LABEL}>
-                          Hausverbrauch (ohne Wärmepumpe):
+                          {evResult != null
+                            ? `${EV_REPORT_COPY.householdLoad}:`
+                            : "Hausverbrauch (ohne Wärmepumpe):"}
                         </dt>
                         <dd className={REPORT_DATA_VALUE}>
                           {formData.annualConsumptionKwh} kWh/Jahr
@@ -1887,7 +1913,9 @@ export default function SpeicherCalculatePage() {
                       {formData.heatPumpEnabled === true && (
                         <>
                           <div className={REPORT_DATA_ITEM}>
-                            <dt className={REPORT_DATA_LABEL}>Wärmepumpe:</dt>
+                            <dt className={REPORT_DATA_LABEL}>
+                              {EV_REPORT_COPY.heatPumpLoad}:
+                            </dt>
                             <dd className={REPORT_DATA_VALUE}>
                               {formData.heatPumpConsumptionKwh} kWh/Jahr
                             </dd>
@@ -1924,19 +1952,39 @@ export default function SpeicherCalculatePage() {
                         </>
                       )}
 
+                      {evResult != null && (
+                        <div className={REPORT_DATA_ITEM}>
+                          <dt className={REPORT_DATA_LABEL}>
+                            {EV_REPORT_COPY.evHomeLoad}:
+                          </dt>
+                          <dd className={REPORT_DATA_VALUE}>
+                            {formatEvKwh(evResult.averageHomeChargedKwh)}
+                            /Jahr
+                          </dd>
+                        </div>
+                      )}
+
                       <div className={REPORT_DATA_ITEM}>
                         <dt className={REPORT_DATA_LABEL}>
-                          Gesamtverbrauch:
+                          {evResult != null
+                            ? `${EV_REPORT_COPY.modelledLoadTotal}:`
+                            : "Gesamtverbrauch:"}
                         </dt>
                         <dd className={REPORT_DATA_VALUE}>
                           <div>
-                            {(formData.annualConsumptionKwh ?? 0) +
-                              (formData.heatPumpEnabled === true
-                                ? formData.heatPumpConsumptionKwh ?? 0
-                                : 0)}{" "}
-                            kWh/Jahr
+                            {evResult != null &&
+                            typeof speicherGrenz.averageLoadKwhAnnual ===
+                              "number" &&
+                            Number.isFinite(speicherGrenz.averageLoadKwhAnnual)
+                              ? `${formatEvKwh(speicherGrenz.averageLoadKwhAnnual)}/Jahr`
+                              : `${
+                                  (formData.annualConsumptionKwh ?? 0) +
+                                  (formData.heatPumpEnabled === true
+                                    ? formData.heatPumpConsumptionKwh ?? 0
+                                    : 0)
+                                } kWh/Jahr`}
                           </div>
-                          {formData.heatPumpEnabled === true && (
+                          {formData.heatPumpEnabled === true && evResult == null && (
                             <div className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-1`}>
                               davon Wärmepumpe: {formData.heatPumpConsumptionKwh}{" "}
                               kWh
@@ -1945,6 +1993,8 @@ export default function SpeicherCalculatePage() {
                         </dd>
                       </div>
                     </dl>
+
+                    {evResult != null && <EvResultSection ev={evResult} />}
                 </section>
 
                 <section className={REPORT_SECTION}>
@@ -2459,7 +2509,16 @@ export default function SpeicherCalculatePage() {
               )}
             </section>
 
-            <ReportQuellenSection heatPump={heatPumpCitation} />
+            <ReportQuellenSection
+              heatPump={heatPumpCitation}
+              ev={
+                evResult
+                  ? {
+                      methodologySourceIds: evResult.methodologySourceIds,
+                    }
+                  : null
+              }
+            />
 
             {/* Disclaimer — closing footnote of the report, not a section */}
             <div className="mt-8 border-t border-line-soft pt-6 lg:mt-10">
@@ -2486,6 +2545,11 @@ export default function SpeicherCalculatePage() {
                   <ul className="mt-1 list-disc space-y-0.5 pl-4">
                     {getReportDurationInclusions({
                       heatPump: heatPumpCitation,
+                      ev: evResult
+                        ? {
+                            methodologySourceIds: evResult.methodologySourceIds,
+                          }
+                        : null,
                       cohortSize:
                         robustness?.cohortSize ?? SMART_METER_HOUSEHOLD_COUNT,
                       wwCohortSize: wasserWasserRobustness?.cohortSize ?? null,

@@ -163,6 +163,24 @@ describe("getReportDurationInclusions", () => {
       ])
     );
   });
+
+  it("adds EV-Heimladeprofil only when EV methodology ids are present", () => {
+    expect(
+      getReportDurationInclusions({
+        heatPump: null,
+        ev: { methodologySourceIds: ["ev-v1-generated-load"] },
+        cohortSize: 27,
+      })
+    ).toEqual([
+      "PVGIS-Wetterdaten",
+      "Batteriesimulation",
+      "EV-Heimladeprofil",
+      "Validierung mit 27 Referenzhaushalten",
+    ]);
+    expect(
+      getReportDurationInclusions({ heatPump: null, ev: null, cohortSize: 27 })
+    ).not.toContain("EV-Heimladeprofil");
+  });
 });
 
 describe("Methodik Wärmepumpe", () => {
@@ -243,5 +261,31 @@ describe("Methodik Wärmepumpe", () => {
     expect(getReportMethodologySources().map((source) => source.id)).not.toContain(
       "wpuq-wasserwasser-heatpump"
     );
+  });
+
+  it("includes EV methodology ids from the calculation and uses registry URLs", () => {
+    const evIds = [
+      "ev-v1-generated-load",
+      "ev-v1-annual-km-normalization",
+      "ev-v1-wd-sa-su-timing",
+      "ev-v1-workplace-event-placement",
+      "ev-v1-vehicle-energy-buffer",
+      "ev-v1-cyclic-year-boundary",
+      "ev-v1-unmanaged-home-charging",
+      "ev-v1-consumption-as-charging-energy",
+    ] as const;
+    const without = getReportMethodologySources();
+    const withEv = getReportMethodologySources(undefined, {
+      methodologySourceIds: evIds,
+    });
+
+    for (const id of evIds) {
+      expect(without.map((source) => source.id)).not.toContain(id);
+      const item = withEv.find((source) => source.id === id);
+      const registry = getMethodologySourceById(id);
+      expect(item).toBeDefined();
+      expect(item?.title).toBe(registry?.title);
+      expect(item?.url).toBe(registry?.url ?? null);
+    }
   });
 });

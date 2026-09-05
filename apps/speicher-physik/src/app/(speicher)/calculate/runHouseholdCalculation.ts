@@ -22,6 +22,7 @@ import type {
   EvCalculationInput,
   EvCalculationMeta,
 } from "@/load/resolveEvLoadComponent";
+import { toGermanEvError } from "../utils/toGermanEvError";
 
 export type HouseholdCalculationPayload = {
   verifiedResult: VerifiedResult;
@@ -146,37 +147,41 @@ export async function runHouseholdCalculation(
 
   await onProgress?.({ stage: "location" });
 
-  const {
-    verifiedResult,
-    speicherGrenz,
-    robustness,
-    wasserWasserRobustness,
-    heatPump,
-    ev,
-  } = await calculateSpeicherResult({
-    annualConsumptionKWh: params.annualConsumptionKWh,
-    pvSystemKwP: params.pvSystemKwP,
-    latitude,
-    longitude,
-    tiltDeg: params.tiltDeg,
-    azimuthDeg: params.azimuthDeg,
-    pvSurfaces: params.pvSurfaces,
-    heatPumpEnabled: params.heatPumpEnabled,
-    heatPumpConsumptionKWh: params.heatPumpConsumptionKWh,
-    heatPumpTechnology: params.heatPumpTechnology,
-    heatPumpDhwService: params.heatPumpDhwService,
-    ev: params.ev,
-    backupReserveKwh: params.backupReserveKwh,
-    onProgress,
-  });
+  try {
+    const {
+      verifiedResult,
+      speicherGrenz,
+      robustness,
+      wasserWasserRobustness,
+      heatPump,
+      ev,
+    } = await calculateSpeicherResult({
+      annualConsumptionKWh: params.annualConsumptionKWh,
+      pvSystemKwP: params.pvSystemKwP,
+      latitude,
+      longitude,
+      tiltDeg: params.tiltDeg,
+      azimuthDeg: params.azimuthDeg,
+      pvSurfaces: params.pvSurfaces,
+      heatPumpEnabled: params.heatPumpEnabled,
+      heatPumpConsumptionKWh: params.heatPumpConsumptionKWh,
+      heatPumpTechnology: params.heatPumpTechnology,
+      heatPumpDhwService: params.heatPumpDhwService,
+      ev: params.ev,
+      backupReserveKwh: params.backupReserveKwh,
+      onProgress,
+    });
 
-  return {
-    verifiedResult: setVerifiedResult(verifiedResult),
-    speicherGrenz,
-    robustness,
-    wasserWasserRobustness,
-    displayAddress,
-    heatPump,
-    ev,
-  };
+    return {
+      verifiedResult: setVerifiedResult(verifiedResult),
+      speicherGrenz,
+      robustness,
+      wasserWasserRobustness,
+      displayAddress,
+      heatPump,
+      ev,
+    };
+  } catch (error) {
+    throw toGermanEvError(error);
+  }
 }

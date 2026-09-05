@@ -132,6 +132,52 @@ describe("SpeicherGrenze EV integration", () => {
     120_000
   );
 
+  it(
+    "visible result totals include EV home charging and stay null when EV is off",
+    async () => {
+      const pv = syntheticPv15();
+      const houseAnnual = 4000;
+      const evInput = commuterEvInput();
+
+      const off = await calculateSpeicherResult({
+        ...BASE_INPUT,
+        annualConsumptionKWh: houseAnnual,
+        ev: { enabled: false },
+        getPvForYear: () => pv,
+        years: [2018, 2019],
+      });
+      expect(off.ev).toBeNull();
+      expect(off.speicherGrenz.averageLoadKwhAnnual).toBeCloseTo(houseAnnual, 6);
+
+      const on = await calculateSpeicherResult({
+        ...BASE_INPUT,
+        annualConsumptionKWh: houseAnnual,
+        ev: evInput,
+        getPvForYear: () => pv,
+        years: [2018, 2019],
+      });
+      expect(on.ev).not.toBeNull();
+      expect(on.ev!.averageHomeChargedKwh).toBeGreaterThan(0);
+      expect(on.ev!.averageWorkplaceAcceptedKwh).toBeGreaterThan(0);
+      expect(on.ev!.annualDrivingDemandKwh).toBeCloseTo(
+        (evInput.annualKm * evInput.consumptionKwhPer100Km) / 100,
+        12
+      );
+      expect(on.speicherGrenz.averageLoadKwhAnnual).toBeCloseTo(
+        houseAnnual + on.ev!.averageHomeChargedKwh,
+        6
+      );
+      expect(on.speicherGrenz.averageLoadKwhAnnual).toBeGreaterThan(
+        off.speicherGrenz.averageLoadKwhAnnual
+      );
+      expect(on.speicherGrenz.averageLoadKwhAnnual).not.toBeCloseTo(
+        houseAnnual + on.ev!.annualDrivingDemandKwh,
+        1
+      );
+    },
+    180_000
+  );
+
   it("infeasible EV fails before PVGIS / weather work", async () => {
     const pvgis = vi.spyOn(multiYearSimulation, "loadHourlyPvByYear");
     await expect(
