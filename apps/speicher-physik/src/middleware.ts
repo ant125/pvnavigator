@@ -4,6 +4,8 @@ import {
   getAuthCookieOptions,
   getHubLoginUrlForSpeicherCalculate,
   mergeAuthCookieOptions,
+  rehomeAuthCookiesToParentDomain,
+  resolveRequestHostname,
 } from "@pv-auth/session";
 
 function isProtectedCalculatePage(pathname: string): boolean {
@@ -27,7 +29,11 @@ export async function middleware(request: NextRequest) {
     request,
   });
 
-  const hostname = request.nextUrl.hostname;
+  const hostname = resolveRequestHostname(
+    request.nextUrl.hostname,
+    request.headers.get("host"),
+    request.headers.get("x-forwarded-host"),
+  );
   const cookieOptions = getAuthCookieOptions(hostname);
 
   const supabase = createServerClient(url, key, {
@@ -55,6 +61,19 @@ export async function middleware(request: NextRequest) {
   if (isProtectedCalculatePage(request.nextUrl.pathname) && !user) {
     return NextResponse.redirect(loginUrl);
   }
+
+  rehomeAuthCookiesToParentDomain(
+    request.cookies.getAll(),
+    {
+      appendHeader: (name, value) => {
+        response.headers.append(name, value);
+      },
+      setCookie: (name, value, options) => {
+        response.cookies.set(name, value, options);
+      },
+    },
+    hostname,
+  );
 
   return response;
 }

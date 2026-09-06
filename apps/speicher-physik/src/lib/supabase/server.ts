@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies, headers } from "next/headers";
-import { getAuthCookieOptions, mergeAuthCookieOptions } from "@pv-auth/session";
+import {
+  getAuthCookieOptions,
+  mergeAuthCookieOptions,
+  resolveRequestHostname,
+} from "@pv-auth/session";
 
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,7 +15,11 @@ export function isSupabaseConfigured(): boolean {
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
   const headerStore = await headers();
-  const hostname = headerStore.get("host")?.split(":")[0];
+  const hostname = resolveRequestHostname(
+    undefined,
+    headerStore.get("host"),
+    headerStore.get("x-forwarded-host"),
+  );
   const cookieOptions = getAuthCookieOptions(hostname);
 
   return createServerClient(

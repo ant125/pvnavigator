@@ -62,6 +62,16 @@ describe("getHubLoginUrlForSpeicherCalculate", () => {
   it("points at the hub login with the symbolic next target", () => {
     process.env.NODE_ENV = "production";
     delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    expect(getHubLoginUrlForSpeicherCalculate()).toBe(
+      "https://pvnavigator.de/anmelden?next=speicher-calculate",
+    );
+  });
+
+  it("does not treat SpeicherGrenze SITE_URL as the hub", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    process.env.NEXT_PUBLIC_SITE_URL = "https://speicher.pvnavigator.de";
     expect(getHubLoginUrlForSpeicherCalculate()).toBe(
       "https://pvnavigator.de/anmelden?next=speicher-calculate",
     );

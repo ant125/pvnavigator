@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { getAuthCookieOptions, mergeAuthCookieOptions } from "@pv-auth/session";
+import {
+  getAuthCookieOptions,
+  mergeAuthCookieOptions,
+  rehomeAuthCookiesToParentDomain,
+  resolveRequestHostname,
+} from "@pv-auth/session";
 
 export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -14,7 +19,11 @@ export async function middleware(request: NextRequest) {
     request,
   });
 
-  const hostname = request.nextUrl.hostname;
+  const hostname = resolveRequestHostname(
+    request.nextUrl.hostname,
+    request.headers.get("host"),
+    request.headers.get("x-forwarded-host"),
+  );
   const cookieOptions = getAuthCookieOptions(hostname);
 
   const supabase = createServerClient(url, key, {
@@ -36,6 +45,19 @@ export async function middleware(request: NextRequest) {
   });
 
   await supabase.auth.getUser();
+
+  rehomeAuthCookiesToParentDomain(
+    request.cookies.getAll(),
+    {
+      appendHeader: (name, value) => {
+        response.headers.append(name, value);
+      },
+      setCookie: (name, value, options) => {
+        response.cookies.set(name, value, options);
+      },
+    },
+    hostname,
+  );
 
   return response;
 }

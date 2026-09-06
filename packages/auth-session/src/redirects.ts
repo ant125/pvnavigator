@@ -15,10 +15,26 @@ function originFromEnv(raw: string | undefined, fallback: string): string {
   }
 }
 
+function isSpeicherGrenzeHost(hostname: string): boolean {
+  const host = hostname.split(":")[0]?.toLowerCase() ?? "";
+  return host === "speicher.pvnavigator.de" || host.endsWith(".speicher.pvnavigator.de");
+}
+
 export function getHubOrigin(): string {
   const fallback =
     process.env.NODE_ENV === "production" ? DEFAULT_HUB_ORIGIN : LOCAL_HUB_ORIGIN;
-  return originFromEnv(process.env.NEXT_PUBLIC_SITE_URL, fallback);
+  const fromHub = originFromEnv(process.env.NEXT_PUBLIC_HUB_URL, "");
+  if (fromHub) return fromHub;
+
+  const fromSite = originFromEnv(process.env.NEXT_PUBLIC_SITE_URL, fallback);
+  try {
+    if (isSpeicherGrenzeHost(new URL(fromSite).hostname)) {
+      return fallback;
+    }
+  } catch {
+    return fallback;
+  }
+  return fromSite;
 }
 
 export function getSpeicherGrenzeOrigin(): string {

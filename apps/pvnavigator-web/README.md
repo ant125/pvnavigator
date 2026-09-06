@@ -21,11 +21,17 @@ In Produktion (sowohl `pvnavigator.de` als auch `speicher.pvnavigator.de`) zusä
 AUTH_COOKIE_DOMAIN=.pvnavigator.de
 ```
 
-Optional — gleicher Wert wie `AUTH_COOKIE_DOMAIN`, falls der Browser-Client die Domain nicht aus dem Host ableiten kann:
+`AUTH_COOKIE_DOMAIN` ist serverseitig. Der Browser-Client liest sie **nicht**. Er nutzt `NEXT_PUBLIC_AUTH_COOKIE_DOMAIN` falls gesetzt, sonst den Host (`pvnavigator.de` / `speicher.pvnavigator.de` → `.pvnavigator.de`).
+
+Optional — gleicher Wert wie `AUTH_COOKIE_DOMAIN`, damit Browser- und Server-Cookie-Domain identisch bleiben, ohne Host-Ableitung:
 
 ```bash
 NEXT_PUBLIC_AUTH_COOKIE_DOMAIN=.pvnavigator.de
 ```
+
+**SpeicherGrenze (`apps/speicher-physik`) braucht dieselben `NEXT_PUBLIC_SUPABASE_URL` und `NEXT_PUBLIC_SUPABASE_ANON_KEY` wie der Hub**, plus `AUTH_COOKIE_DOMAIN`. Ohne diese Variablen im Vercel-Projekt `speicher-physik` bleibt der Header dauerhaft abgemeldet — auch wenn der Hub eine gültige Session hat. `NEXT_PUBLIC_*` Werte werden zur Build-Zeit eingebettet; nach dem Setzen der Variablen muss neu deployed werden.
+
+`NEXT_PUBLIC_SITE_URL` nur auf dem Hub auf `https://pvnavigator.de` setzen. Nicht auf SpeicherGrenze auf die eigene Origin setzen — Login-Links würden sonst auf `speicher.pvnavigator.de/anmelden` zeigen.
 
 Optional — für korrekte Links in Bestätigungs-E-Mails bei lokaler Entwicklung oder Staging (ohne diese Variable wird `https://pvnavigator.de` für `emailRedirectTo` verwendet):
 
@@ -33,9 +39,7 @@ Optional — für korrekte Links in Bestätigungs-E-Mails bei lokaler Entwicklun
 NEXT_PUBLIC_SITE_URL=https://pvnavigator.de
 ```
 
-Lokal `AUTH_COOKIE_DOMAIN` **nicht** setzen. Echtes Cross-Subdomain-Session-Verhalten muss auf den echten Domains bzw. Staging geprüft werden.
-
-SpeicherGrenze (`apps/speicher-physik`) verwendet dieselben `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `AUTH_COOKIE_DOMAIN` Werte. Kein Service-Role-Key in Clients.
+Lokal `AUTH_COOKIE_DOMAIN` **nicht** setzen. Echtes Cross-Subdomain-Session-Verhalten muss auf den echten Domains bzw. Staging geprüft werden. Kein Service-Role-Key in Clients.
 
 Ohne Supabase-URL und Anon-Key zeigen die Auth-Seiten (`/anmelden`, `/konto-erstellen`) einen Hinweis statt Credentials an.
 
