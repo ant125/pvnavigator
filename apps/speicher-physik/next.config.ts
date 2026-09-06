@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: [
+    "@pv-auth/session",
     "@geocoding/core",
     "@pvgis-adapter/core",
     "@bdew-profile/loader",

@@ -48,7 +48,7 @@ export function SiteHeader({ userEmail, logoutAction }: SiteHeaderProps) {
         <div className="hidden shrink-0 items-center gap-3 md:flex">
           {authenticated ? (
             <>
-              <Link href="/konto" className={navMuted}>
+              <Link href="/konto" className="text-sm font-semibold text-[#0F172A] transition-colors hover:text-[#b45309]">
                 Mein Konto
               </Link>
               {userEmail ? (
@@ -120,7 +120,7 @@ export function SiteHeader({ userEmail, logoutAction }: SiteHeaderProps) {
                 ) : null}
                 <Link
                   href="/konto"
-                  className="block rounded-lg px-3 py-3 text-sm font-medium text-[#0F172A] hover:bg-[#FAFBFC]"
+                  className="block rounded-lg px-3 py-3 text-sm font-semibold text-[#0F172A] hover:bg-[#FAFBFC]"
                   onClick={() => setMenuOpen(false)}
                 >
                   Mein Konto

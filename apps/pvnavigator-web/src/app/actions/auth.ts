@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import {
   getEmailConfirmationRedirectUrl,
   mapSupabaseAuthErrorToUserMessage,
-  sanitizeNextPath,
+  resolvePostLoginRedirect,
 } from "@/lib/auth";
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
@@ -77,7 +77,7 @@ export async function signInAction(_prev: SignInFormState, formData: FormData): 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const nextRaw = formData.get("next");
-  const next = sanitizeNextPath(nextRaw, "/");
+  const next = resolvePostLoginRedirect(nextRaw, "/");
 
   if (!email || !password) {
     return { error: "Bitte E-Mail und Passwort eingeben." };

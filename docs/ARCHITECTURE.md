@@ -111,11 +111,56 @@ Purpose:
 
 Rules:
 - No calculation logic
-- No imports from packages/*
+- No imports from physics packages (`packages/pv-core`, PVGIS, BDEW, …)
 - Pure presentation layer
 - Acts as routing hub between services
+- May import `@pv-auth/session` for the shared Auth cookie/redirect helpers
 
 This app must remain lightweight and independent of core logic.
+
+---
+
+## Identity and persistence (Phase 1)
+
+One shared PVNavigator account across products. Authentication UI stays on
+`pvnavigator.de`. SpeicherGrenze (`speicher.pvnavigator.de`) is a product on
+that account. Identity is **Supabase Auth**; `auth.users` is the source of
+identity. Email is not duplicated into application tables.
+
+| Relation | Role |
+|---|---|
+| `auth.users` | Identity (email, credentials, confirmation) |
+| `public.profiles` | Application profile (`id` = `auth.users.id`) |
+| `public.calculations` | Completed, user-owned historical calculations |
+
+A new Auth user gets a `profiles` row from a signup trigger
+(`private.handle_new_user`). Authenticated clients may select/update their own
+profile; they cannot insert arbitrary profiles.
+
+**RLS is the ownership boundary.** A calculation belongs to exactly one
+authenticated user (`user_id = auth.uid()`). Clients may select, insert,
+update, and delete only their own rows, and cannot change `user_id`. Anonymous
+roles have no table access. Organisations are not implemented; `user_id`
+remains the creator / private owner if `organisation_id` is added later.
+
+**Who can calculate:** Product information (landing page, Methodik, Referenz,
+legal pages) stays public. **Executing** a SpeicherGrenze calculation requires
+a PVNavigator account. `/calculate` and `POST /api/calculate` are
+authentication-gated. Anonymous calculations are not allowed.
+
+**Session:** One identity across products. Production uses a parent-domain
+cookie (`.pvnavigator.de`) via `@supabase/ssr` so `pvnavigator.de` and
+`speicher.pvnavigator.de` share the same Auth session. Localhost omits the
+cookie domain.
+
+**Calculation persistence:** store canonical input JSON plus a compact result
+snapshot, with schema / battery-model versions. Do not persist 15-minute or
+hourly kernel arrays. Opening an old calculation shows that snapshot;
+recalculation is an explicit later user action. Successful calculations will
+later be saved automatically.
+
+Shared cookie/redirect helpers: `packages/auth-session` (`@pv-auth/session`).
+Schema SQL: `supabase/migrations/`.
 
 ---
 

@@ -1,21 +1,41 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import {
+  getHubKontoUrl,
+  getHubLoginUrlForSpeicherCalculate,
+  getHubSignupUrl,
+} from "@pv-auth/session";
+
 import { SpeicherShell } from "./(speicher)/components/SpeicherShell";
+import { getServerUser } from "@/lib/auth";
+
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "PV Speicher Rechner | PVNavigator",
   description: "Unabhängige Wirtschaftlichkeitsanalyse für Stromspeicher.",
 };
 
-export default function RootLayout({
+/** Header reads the shared Supabase session via cookies. */
+export const dynamic = "force-dynamic";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getServerUser();
+
   return (
     <html lang="de">
       <body className="antialiased">
-        <SpeicherShell>{children}</SpeicherShell>
+        <SpeicherShell
+          authenticated={Boolean(user)}
+          loginHref={getHubLoginUrlForSpeicherCalculate()}
+          signupHref={getHubSignupUrl()}
+          accountHref={getHubKontoUrl()}
+        >
+          {children}
+        </SpeicherShell>
       </body>
     </html>
   );

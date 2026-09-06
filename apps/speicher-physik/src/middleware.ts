@@ -1,10 +1,23 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { getAuthCookieOptions, mergeAuthCookieOptions } from "@pv-auth/session";
+import {
+  getAuthCookieOptions,
+  getHubLoginUrlForSpeicherCalculate,
+  mergeAuthCookieOptions,
+} from "@pv-auth/session";
+
+function isProtectedCalculatePage(pathname: string): boolean {
+  return pathname === "/calculate" || pathname.startsWith("/calculate/");
+}
 
 export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const loginUrl = getHubLoginUrlForSpeicherCalculate();
+
+  if (isProtectedCalculatePage(request.nextUrl.pathname) && (!url || !key)) {
+    return NextResponse.redirect(loginUrl);
+  }
 
   if (!url || !key) {
     return NextResponse.next();
@@ -35,7 +48,13 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (isProtectedCalculatePage(request.nextUrl.pathname) && !user) {
+    return NextResponse.redirect(loginUrl);
+  }
 
   return response;
 }

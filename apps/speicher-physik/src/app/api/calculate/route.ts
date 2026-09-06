@@ -2,9 +2,14 @@ import { setImmediate } from "node:timers";
 import { runHouseholdCalculation } from "@/app/(speicher)/calculate/runHouseholdCalculation";
 import type { CalculationProgressEvent } from "@/lib/calculationProgress";
 
+import { getServerUser } from "@/lib/auth";
+
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+const UNAUTHENTICATED_MESSAGE =
+  "Bitte melden Sie sich an, um die Berechnung zu starten.";
 
 type StreamMessage =
   | { type: "progress"; event: CalculationProgressEvent }
@@ -12,6 +17,11 @@ type StreamMessage =
   | { type: "error"; message: string };
 
 export async function POST(request: Request): Promise<Response> {
+  const user = await getServerUser();
+  if (!user) {
+    return Response.json({ message: UNAUTHENTICATED_MESSAGE }, { status: 401 });
+  }
+
   let params: unknown;
   try {
     params = await request.json();

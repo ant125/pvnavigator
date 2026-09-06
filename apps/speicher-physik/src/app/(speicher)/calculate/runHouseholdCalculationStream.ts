@@ -41,7 +41,13 @@ export async function runHouseholdCalculationStream(
     body: JSON.stringify(body),
   });
 
-  if (!response.body) {
+  if (response.status === 401) {
+    throw new Error(
+      "Bitte melden Sie sich an, um die Berechnung zu starten."
+    );
+  }
+
+  if (!response.ok || !response.body) {
     throw new Error(
       "Die Berechnung ist fehlgeschlagen. Bitte versuchen Sie es erneut."
     );

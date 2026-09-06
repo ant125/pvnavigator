@@ -2,6 +2,12 @@ import type { User } from "@supabase/supabase-js";
 
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
+export {
+  parseAuthNextParam,
+  resolvePostLoginRedirect,
+  sanitizeNextPath,
+} from "@pv-auth/session";
+
 const DEFAULT_AUTH_SITE_ORIGIN = "https://pvnavigator.de";
 
 /**
@@ -22,19 +28,6 @@ export function getAuthSiteOrigin(): string {
 
 export function getEmailConfirmationRedirectUrl(): string {
   return `${getAuthSiteOrigin()}/auth/bestaetigt`;
-}
-
-/**
- * Same-origin relative paths only; blocks protocol-relative and absolute URLs.
- */
-export function sanitizeNextPath(raw: unknown, fallback = "/konto"): string {
-  if (typeof raw !== "string") return fallback;
-  const trimmed = raw.trim();
-  if (!trimmed.startsWith("/")) return fallback;
-  if (trimmed.startsWith("//")) return fallback;
-  if (trimmed.includes("://")) return fallback;
-  if (trimmed.toLowerCase().startsWith("/\\")) return fallback;
-  return trimmed || fallback;
 }
 
 const SUPABASE_AUTH_FALLBACK =

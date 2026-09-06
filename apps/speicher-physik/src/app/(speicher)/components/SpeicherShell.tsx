@@ -12,6 +12,12 @@ const btnEnergy =
 
 const headerCtaClass = `${btnEnergy} shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-center text-sm leading-none sm:py-2 sm:leading-normal`;
 
+const headerAuthLink =
+  "text-sm text-ink-secondary transition-colors hover:text-ink";
+
+const headerAccountLink =
+  "text-sm font-semibold text-ink transition-colors hover:text-ink-secondary";
+
 const footerLink =
   "text-sm text-ink-secondary transition-colors hover:text-ink hover:underline hover:underline-offset-2";
 
@@ -59,7 +65,50 @@ function HeaderCta() {
   );
 }
 
-function ShellFrame({ children }: { children: ReactNode }) {
+type HeaderAccountProps = {
+  authenticated: boolean;
+  loginHref: string;
+  signupHref: string;
+  accountHref: string;
+};
+
+function HeaderAccount({
+  authenticated,
+  loginHref,
+  signupHref,
+  accountHref,
+}: HeaderAccountProps) {
+  if (authenticated) {
+    return (
+      <a href={accountHref} className={`${headerAccountLink} shrink-0`}>
+        Mein Konto
+      </a>
+    );
+  }
+
+  return (
+    <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
+      <a href={loginHref} className={headerAuthLink}>
+        Anmelden
+      </a>
+      <a href={signupHref} className={headerAuthLink}>
+        Konto erstellen
+      </a>
+    </div>
+  );
+}
+
+type ShellFrameProps = HeaderAccountProps & {
+  children: ReactNode;
+};
+
+function ShellFrame({
+  children,
+  authenticated,
+  loginHref,
+  signupHref,
+  accountHref,
+}: ShellFrameProps) {
   const pathname = usePathname();
 
   return (
@@ -79,7 +128,15 @@ function ShellFrame({ children }: { children: ReactNode }) {
               </div>
             </Link>
 
-            <HeaderCta />
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-2.5 gap-y-1 sm:gap-4">
+              <HeaderAccount
+                authenticated={authenticated}
+                loginHref={loginHref}
+                signupHref={signupHref}
+                accountHref={accountHref}
+              />
+              <HeaderCta />
+            </div>
           </div>
         </div>
       </header>
@@ -151,10 +208,23 @@ function ShellFrame({ children }: { children: ReactNode }) {
   );
 }
 
-export function SpeicherShell({ children }: { children: ReactNode }) {
+export function SpeicherShell({
+  children,
+  authenticated,
+  loginHref,
+  signupHref,
+  accountHref,
+}: ShellFrameProps) {
   return (
     <HeaderCtaProvider>
-      <ShellFrame>{children}</ShellFrame>
+      <ShellFrame
+        authenticated={authenticated}
+        loginHref={loginHref}
+        signupHref={signupHref}
+        accountHref={accountHref}
+      >
+        {children}
+      </ShellFrame>
     </HeaderCtaProvider>
   );
 }
