@@ -16,10 +16,6 @@ export function evWindowUnavailable(): EvHomeWindow {
   return { kind: "unavailable" };
 }
 
-export function evWindowFullDay(): EvHomeWindow {
-  return { kind: "fullDay" };
-}
-
 export function evWindowBounded(
   start: EvClockTime,
   end: EvClockTime
@@ -60,9 +56,6 @@ export function materializeDayMask(window: EvHomeWindow): boolean[] {
   if (window.kind === "unavailable") {
     return mask;
   }
-  if (window.kind === "fullDay") {
-    return mask.fill(true);
-  }
   if (window.kind !== "bounded") {
     throw invalidInput("INVALID_WINDOW", "unknown home-window kind", {
       window,
@@ -73,7 +66,7 @@ export function materializeDayMask(window: EvHomeWindow): boolean[] {
   if (startSlot === endSlot) {
     throw invalidInput(
       "INVALID_WINDOW",
-      "start === end is not 24-hour availability; use kind: \"fullDay\" or kind: \"unavailable\"",
+      "start === end is not 24-hour availability; use an explicit bounded start/end window",
       { start: window.start, end: window.end }
     );
   }

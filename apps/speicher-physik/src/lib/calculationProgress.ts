@@ -20,6 +20,7 @@ export type CalculationProgressEvent =
   | { stage: "location" }
   | { stage: "pvgis" }
   | { stage: "consumption" }
+  | { stage: "ev" }
   | { stage: "physics" }
   | {
       stage: "smartmeter";
@@ -40,6 +41,7 @@ export type CalculationProgressState = {
   location: boolean;
   pvgis: boolean;
   consumption: boolean;
+  ev: boolean;
   physics: boolean;
   smartmeterCompleted: number;
   smartmeterTotal: number;
@@ -51,6 +53,7 @@ export const INITIAL_CALCULATION_PROGRESS: CalculationProgressState = {
   location: false,
   pvgis: false,
   consumption: false,
+  ev: false,
   physics: false,
   smartmeterCompleted: 0,
   smartmeterTotal: SMART_METER_HOUSEHOLD_COUNT,
@@ -63,12 +66,14 @@ export type CalculationProgressStageId =
   | "pvgis"
   | "heatpump"
   | "consumption"
+  | "ev"
   | "physics";
 
 export type CalculationProgressStage = {
   id: CalculationProgressStageId;
   done: string;
   active: string;
+  subtitle?: string;
 };
 
 const LOCATION_STAGE: CalculationProgressStage = {
@@ -101,6 +106,13 @@ const CONSUMPTION_STAGE: CalculationProgressStage = {
   active: "Stromverbrauch wird modelliert",
 };
 
+const EV_STAGE: CalculationProgressStage = {
+  id: "ev",
+  done: "Elektroauto-Ladeprofil modelliert",
+  active: "Elektroauto-Ladeprofil wird modelliert",
+  subtitle: "Fahrverhalten • Ladefenster • Arbeitsplatzladung",
+};
+
 const PHYSICS_STAGE: CalculationProgressStage = {
   id: "physics",
   done: "Speicherphysik berechnet",
@@ -110,27 +122,29 @@ const PHYSICS_STAGE: CalculationProgressStage = {
 /**
  * Loading-screen stages. The heat-pump row is presentation-only and
  * appears for Luft/Wasser or Wasser/Wasser. It does not add a backend
- * progress event.
+ * progress event. The EV row is shown only when EV is enabled and is
+ * backed by a real `{ stage: "ev" }` server event.
  */
 export type HeatPumpProgressKind = false | "luftwasser" | "wasserwasser";
 
 export function getCalculationProgressStages(
-  includeHeatPumpProfile: HeatPumpProgressKind = false
+  includeHeatPumpProfile: HeatPumpProgressKind = false,
+  includeEvProfile = false
 ): readonly CalculationProgressStage[] {
-  if (!includeHeatPumpProfile) {
-    return [LOCATION_STAGE, PVGIS_STAGE, CONSUMPTION_STAGE, PHYSICS_STAGE];
+  const stages: CalculationProgressStage[] = [LOCATION_STAGE, PVGIS_STAGE];
+  if (includeHeatPumpProfile) {
+    stages.push(
+      includeHeatPumpProfile === "wasserwasser"
+        ? HEAT_PUMP_STAGE_WASSERWASSER
+        : HEAT_PUMP_STAGE_LUFTWASSER
+    );
   }
-  const heatPumpStage =
-    includeHeatPumpProfile === "wasserwasser"
-      ? HEAT_PUMP_STAGE_WASSERWASSER
-      : HEAT_PUMP_STAGE_LUFTWASSER;
-  return [
-    LOCATION_STAGE,
-    PVGIS_STAGE,
-    heatPumpStage,
-    CONSUMPTION_STAGE,
-    PHYSICS_STAGE,
-  ];
+  stages.push(CONSUMPTION_STAGE);
+  if (includeEvProfile) {
+    stages.push(EV_STAGE);
+  }
+  stages.push(PHYSICS_STAGE);
+  return stages;
 }
 
 export function isCalculationStageDone(

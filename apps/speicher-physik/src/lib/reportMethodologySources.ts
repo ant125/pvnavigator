@@ -102,9 +102,37 @@ function toReportSource(id: ReportSourceId): ReportSourceItem {
   return toRegistrySource(id);
 }
 
+/** Presentation-only id. Internal EV registry ids stay on the calculation result. */
+export const PUBLIC_EV_REPORT_SOURCE_ID = "public-ev-charging-profiles";
+
+/**
+ * One customer-facing EV citation. Internal registry ids remain unchanged
+ * and are only used as the enablement signal / traceability check.
+ * No public article yet — URL stays null and is never hardcoded.
+ */
+function toPublicEvReportSource(
+  internalIds: readonly string[]
+): ReportSourceItem {
+  for (const id of internalIds) {
+    if (!getMethodologySourceById(id)) {
+      throw new Error(`Missing methodology source for report: ${id}`);
+    }
+  }
+  return {
+    id: PUBLIC_EV_REPORT_SOURCE_ID,
+    title: "SpeicherGrenze – Methodik für Elektroauto-Ladeprofile",
+    organization: "PVNavigator",
+    url: null,
+    linkLabel: null,
+    detail:
+      "Individuelles 15-Minuten-Heimladeprofil aus Fahrleistung, Fahrverhalten, Ladefenstern, Arbeitsplatzladung und Fahrzeugbatterie.",
+  };
+}
+
 /**
  * Compact report citations. URLs come only from the methodology registry.
  * Heat-pump sources are included only when the calculation resolved that id.
+ * EV registry ids are aggregated into one public source when present.
  */
 export function getReportMethodologySources(
   heatPump?: ReportHeatPumpCitation,
@@ -117,11 +145,9 @@ export function getReportMethodologySources(
   if (usedWasserWasserHeatPumpProfile(heatPump)) {
     sources.push(toReportSource(WPUQ_HEATPUMP_SOURCE_ID));
   }
-  const seen = new Set(sources.map((source) => source.id));
-  for (const id of ev?.methodologySourceIds ?? []) {
-    if (seen.has(id)) continue;
-    seen.add(id);
-    sources.push(toRegistrySource(id));
+  const evIds = ev?.methodologySourceIds ?? [];
+  if (evIds.length > 0) {
+    sources.push(toPublicEvReportSource(evIds));
   }
   return sources;
 }

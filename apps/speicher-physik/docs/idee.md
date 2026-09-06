@@ -21,7 +21,7 @@ Methodik & Quellen
 Внизу страницы:
 
 Vollständiges Quellenverzeichnis:
-https://pvnavigator.de/methodik-quellen
+https://pvnavigator.de/methodik
 
 + QR-Code.
 
@@ -31,7 +31,7 @@ https://pvnavigator.de/methodik-quellen
 
 Автоматически генерировать QR-код на страницу
 
-https://pvnavigator.de/methodik-quellen
+https://pvnavigator.de/methodik
 
 чтобы клиент мог открыть все оригинальные документы с телефона.
 

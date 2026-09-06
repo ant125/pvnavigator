@@ -200,13 +200,13 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     title: "EV v1 – ungesteuerte Heimladung in Nutzerfenstern",
     organization: "PVNavigator",
     description:
-      "Heimladung findet nur in den explizit angegebenen WD-/SA-/SU-Verfügbarkeitsfenstern statt, ungesteuert und ohne PV- oder tarifabhängige Dispatch-Logik. Pro 15-Minuten-Slot höchstens maxHomeChargePowerKw × 0,25 kWh, nur in freie Fahrzeugkapazität. start = end bedeutet nicht 24 Stunden; ganztägige Verfügbarkeit braucht eine explizite Darstellung.",
+      "Heimladung findet nur in den explizit angegebenen WD-/SA-/SU-Ladefenstern statt, ungesteuert und ohne PV-, Strahlungs-, Tarif- oder Heimspeicher-SOC-abhängige Dispatch-Logik. Jeder Tag hat ein begrenztes oder über Mitternacht reichendes Fenster. start = end ist ungültig und bedeutet nicht 24 Stunden. Es gibt keinen versteckten Ganztagszustand und keine Mitternachtskonvention für die Heimladung. Geladen wird nur innerhalb des Fensters, wenn der EV-Energiepuffer Energie benötigt.",
     url: null,
     official: false,
     sourceType: "methodology",
     version: "EV v1",
     addedAt: "2026-09-05",
-    updatedAt: "2026-09-05",
+    updatedAt: "2026-09-06",
   },
   {
     id: "ev-v1-consumption-as-charging-energy",

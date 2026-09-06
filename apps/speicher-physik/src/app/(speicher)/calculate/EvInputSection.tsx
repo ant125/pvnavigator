@@ -307,6 +307,12 @@ export function EvInputSection({
                 <p className={`mt-2 ${FORM_HELP}`}>
                   {EV_FORM_COPY.homeWindowHelp}
                 </p>
+                <p className={`mt-2 ${FORM_HELP}`}>
+                  {EV_FORM_COPY.homeWindowWeekendHelp}
+                </p>
+                <p className={`mt-2 ${FORM_HELP}`}>
+                  {EV_FORM_COPY.homeWindowOvernightHelp}
+                </p>
                 <div className="mt-4 space-y-5">
                   <HomeWindowRow
                     dayKey="evHomeWindowWd"
@@ -446,15 +452,10 @@ function HomeWindowRow({
   onChange: (patch: Partial<SpeicherInput>) => void;
   clearFieldError: (field: SpeicherFieldErrorKey) => void;
 }) {
-  const fullDay = window?.fullDay === true;
   const startId = `${dayKey}-start`;
   const endId = `${dayKey}-end`;
 
-  const updateWindow = (patch: {
-    fullDay?: boolean;
-    start?: string;
-    end?: string;
-  }) => {
+  const updateWindow = (patch: { start?: string; end?: string }) => {
     clearFieldError(dayKey);
     onChange({ [dayKey]: mergeHomeWindow(window, patch) });
   };
@@ -462,21 +463,6 @@ function HomeWindowRow({
   return (
     <div className="space-y-3 rounded-md border border-line-soft bg-surface p-3 sm:p-4">
       <p className="text-sm font-medium text-ink">{label}</p>
-      <label className={FORM_RADIO_LABEL}>
-        <input
-          type="checkbox"
-          checked={fullDay}
-          onChange={(e) =>
-            updateWindow({
-              fullDay: e.target.checked,
-              start: e.target.checked ? "" : window?.start ?? "",
-              end: e.target.checked ? "" : window?.end ?? "",
-            })
-          }
-          className="h-4 w-4 shrink-0 rounded border-field-border accent-accent"
-        />
-        {EV_FORM_COPY.fullDayLabel}
-      </label>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label className={FORM_LABEL} htmlFor={startId}>
@@ -486,13 +472,12 @@ function HomeWindowRow({
             id={startId}
             type="time"
             step={900}
-            required={!fullDay}
-            disabled={fullDay}
-            value={fullDay ? "" : window?.start ?? ""}
+            required
+            value={window?.start ?? ""}
             onChange={(e) => updateWindow({ start: e.target.value })}
-            aria-invalid={error && !fullDay ? true : undefined}
+            aria-invalid={error ? true : undefined}
             aria-describedby={error ? `${dayKey}-error` : undefined}
-            className={fieldInputClassName(!!error && !fullDay)}
+            className={fieldInputClassName(!!error)}
           />
         </div>
         <div className="space-y-1.5">
@@ -503,13 +488,12 @@ function HomeWindowRow({
             id={endId}
             type="time"
             step={900}
-            required={!fullDay}
-            disabled={fullDay}
-            value={fullDay ? "" : window?.end ?? ""}
+            required
+            value={window?.end ?? ""}
             onChange={(e) => updateWindow({ end: e.target.value })}
-            aria-invalid={error && !fullDay ? true : undefined}
+            aria-invalid={error ? true : undefined}
             aria-describedby={error ? `${dayKey}-error` : undefined}
-            className={fieldInputClassName(!!error && !fullDay)}
+            className={fieldInputClassName(!!error)}
           />
         </div>
       </div>

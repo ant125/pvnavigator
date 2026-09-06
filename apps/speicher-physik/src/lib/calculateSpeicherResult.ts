@@ -318,15 +318,6 @@ export async function calculateSpeicherResult(
     if (heatPumpComponent) {
       extras.push(heatPumpComponent);
     }
-    if (evConfig) {
-      const evForYear = resolveEvLoadComponentForYear({
-        evInput: evConfig,
-        year,
-      });
-      extras.push(evForYear.component);
-      evComponentByYear[year] = evForYear.component;
-      evMetaByYear[year] = evForYear.meta;
-    }
     loadByYear[year] = mergeHouseholdLoadComponents({
       householdProfile: household,
       householdAnnualKwh: input.annualConsumptionKWh,
@@ -334,6 +325,32 @@ export async function calculateSpeicherResult(
     });
   }
   await report?.({ stage: "consumption" });
+
+  if (evConfig) {
+    for (const year of years) {
+      const household = householdByYear[year];
+      if (!household) {
+        throw new Error(`Missing household profile for year ${year}`);
+      }
+      const evForYear = resolveEvLoadComponentForYear({
+        evInput: evConfig,
+        year,
+      });
+      evComponentByYear[year] = evForYear.component;
+      evMetaByYear[year] = evForYear.meta;
+      const extras: LoadComponent[] = [];
+      if (heatPumpComponent) {
+        extras.push(heatPumpComponent);
+      }
+      extras.push(evForYear.component);
+      loadByYear[year] = mergeHouseholdLoadComponents({
+        householdProfile: household,
+        householdAnnualKwh: input.annualConsumptionKWh,
+        extras,
+      });
+    }
+    await report?.({ stage: "ev" });
+  }
 
   const getEvForYear = evConfig
     ? (year: number): LoadComponent => {

@@ -1595,7 +1595,7 @@ export default function SpeicherCalculatePage() {
               </p>
               <p className="mt-2">
                 <Link
-                  href="/methodik-quellen"
+                  href="/methodik"
                   className="text-sm font-medium text-accent hover:text-accent-hover transition-colors"
                 >
                   → Methodik
@@ -1627,6 +1627,9 @@ export default function SpeicherCalculatePage() {
                 formData.heatPumpTechnology === "wasserwasser")
                 ? formData.heatPumpTechnology
                 : false
+            }
+            includeEvProfile={
+              mapEvFormToCalculationInput(formData).enabled === true
             }
           />
         </div>

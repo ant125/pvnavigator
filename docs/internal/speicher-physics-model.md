@@ -4,7 +4,7 @@
 > Dieses Dokument beschreibt die implementierte Berechnungslogik,
 > Modellparameter, Randbedingungen und bekannte Einschränkungen vollständig.
 > Es ist nicht die öffentliche Methodikseite und nicht für eine automatische
-> Veröffentlichung unter `/technische-details` vorgesehen.
+> Veröffentlichung als eigene Website-Seite vorgesehen.
 
 ## Dokumentrollen
 
@@ -12,8 +12,8 @@
 |---|---|
 | Interne kanonische technische Spezifikation | dieses File (`docs/internal/speicher-physics-model.md`) |
 | Lastprofil-Skalierung (Engineering-Prinzip) | [Load Profile Scaling Principle](#load-profile-scaling-principle) in diesem File |
-| Öffentliche, vereinfachte Methodik | `docs/physics-model.md` (gerendert unter `/technische-details`) |
-| Offizielle Quellen (SSOT) | `packages/pv-methodology` → `/methodik-quellen` |
+| Öffentliche Methodik | `/methodik` |
+| Offizielle Quellen (SSOT) | `packages/pv-methodology` (`@pv-methodology/registry`) |
 | Architecture canon | `docs/ARCHITECTURE.md` |
 
 - Implementiertes Verhalten ist letztlich durch den referenzierten Produktions-Quellcode definiert.
@@ -462,17 +462,20 @@ For each civil day \(D\):
    - then the workplace charging event, if that date is a selected workplace charging day.
 4. After those abstract state transitions, vehicle energy is available to the subsequent real home-charging slots.
 
-If the vehicle is home-available for the entire civil day:
+There is no full-day special state in EV v1. Every modelled day uses an explicit same-day or overnight home-charging window. `start == end` is invalid and is never treated as 24 hours.
 
-- use civil midnight as the abstract event boundary;
-- this is a calendar boundary, not an assumed commute time.
+If the first slot of the civil day is unavailable (typical same-day window such as 10:00–16:00):
+
+- the abstract event boundary is civil midnight;
+- this is a calendar boundary for driving / workplace state transitions, not an assumed commute time;
+- it does not authorize home charging at midnight.
 
 If there is no home availability that day:
 
 - the same abstract daily energy transitions still occur;
 - home charging remains zero.
 
-The event epoch is derived from the user-provided home-availability boundary, not from an invented departure or arrival time.
+The event epoch is derived from the user-provided home-availability boundary, not from an invented departure or arrival time. Home charging still occurs only inside the explicit window.
 
 A home-charging slot at time \(t\) sees vehicle energy after every event epoch strictly before \(t\). An overnight morning segment therefore replenishes the previous civil day’s driving / workplace events, not the new day’s events.
 
@@ -484,9 +487,9 @@ For a day-type window:
 
 - `start < end` → `[start, end)` on that civil day
 - `start > end` → overnight wrap: `[start, 24:00)` plus `[00:00, end)`
-- `start == end` must **not** implicitly mean 24 hours
+- `start == end` is invalid and must **not** implicitly mean 24 hours
 
-Full-day availability must use an explicit UI / data representation.
+There is no full-day helper or encoding in EV v1. Customers who can charge during daytime enter an explicit daytime window such as 10:00–16:00.
 
 Continuity across midnight exists only when the next civil day’s own availability also contains the corresponding morning slots.
 
@@ -1343,8 +1346,7 @@ Beispiele (sonnenBatterie 10 performance, Enphase IQ Battery 5P-Garantie,
 Tesla Powerwall 2 European Warranty) sowie weitere Herstellerseiten
 (Huawei LUNA, BYD Battery-Box, Tesla Powerwall) sind ausschließlich im zentralen
 Register **Methodik & Quellen** (`packages/pv-methodology`,
-`@pv-methodology/registry`) hinterlegt und unter `/methodik-quellen` öffentlich
-einsehbar. Keine offiziellen Quell-URLs in dieser Datei duplizieren.
+`@pv-methodology/registry`) hinterlegt. Keine offiziellen Quell-URLs in dieser Datei duplizieren.
 
 Die in SpeicherGrenze verwendeten 75 % sind deshalb keine Übernahme einer
 bestimmten Herstellergarantie, sondern eine einheitliche und vorsichtige
@@ -1845,7 +1847,7 @@ Aktueller Stand:
   - `SpeicherGrenzPayload.batteryModelVersion`
   - `VerifiedResult.batteryModelVersion` / `CalculateSpeicherResultOutput.verifiedResult.batteryModelVersion`
 - Mehrjahressimulation prüft, dass alle Einzelresultate dieselbe Version tragen.
-- Die öffentliche Methodikseite (`docs/physics-model.md` / `/technische-details`)
+- Die öffentliche Methodik (`/methodik`)
   exponiert **nicht** die vollständige Parametertabelle und nicht zwingend die Modellversion.
 
 Version-Bump ist erforderlich bei Änderungen an:

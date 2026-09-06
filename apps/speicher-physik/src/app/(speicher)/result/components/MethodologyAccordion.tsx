@@ -139,14 +139,6 @@ export function MethodologyAccordion({
         <p className="text-xs text-slate-600 text-center">
           Ziel: Transparente Entscheidungsgrundlage – keine exakte Verbrauchsmessung.
         </p>
-        <p className="text-xs text-center">
-          <a
-            href="/methodik-quellen"
-            className="text-slate-400 hover:text-slate-200 underline underline-offset-2 transition-colors"
-          >
-            Methodik & Quellen – alle offiziellen Dokumente
-          </a>
-        </p>
       </div>
     </section>
   );

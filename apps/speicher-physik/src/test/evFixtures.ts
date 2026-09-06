@@ -1,7 +1,6 @@
 import {
   evClock,
   evWindowBounded,
-  evWindowFullDay,
   evWindowUnavailable,
 } from "@ev-profile/loader";
 import type { EvCalculationInput } from "@/load/resolveEvLoadComponent";
@@ -18,7 +17,7 @@ export function commuterEvInput(
     maxHomeChargePowerKw: 11,
     homeWindow: {
       WD: evWindowBounded(evClock(18, 0), evClock(7, 0)),
-      SA: evWindowFullDay(),
+      SA: evWindowBounded(evClock(10, 0), evClock(16, 0)),
       SU: evWindowBounded(evClock(10, 0), evClock(20, 0)),
     },
     workplace: { enabled: true, kwhPerMonth: 80, chargingDaysPerMonth: 8 },

@@ -187,7 +187,7 @@ export function ReportQuellenSection({
       <p className="mt-3 max-w-reading text-sm leading-relaxed text-ink-secondary">
         Die ausführliche Dokumentation steht unter{" "}
         <Link
-          href="/methodik-quellen"
+          href="/methodik"
           className="font-medium text-accent transition-colors hover:text-accent-hover"
         >
           Methodik

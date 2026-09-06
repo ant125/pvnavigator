@@ -59,7 +59,7 @@ npm run dev:pvnavigator-web
 ## Routen
 
 - **pvnavigator-web** (Home/Hub): `/`, `/impressum`, `/datenschutz`
-- **speicher-physik / speicher-wirtschaft**: `/`, `/calculate`, `/result`, `/technische-details`, `/methodik-quellen`
+- **speicher-physik / speicher-wirtschaft**: `/`, `/calculate`, `/result`, `/methodik`, `/methodik/referenz`
 - **pvshadow**: `/`, `/analyse`, `/create`
 
 ---

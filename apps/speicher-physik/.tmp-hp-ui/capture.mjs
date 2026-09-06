@@ -178,24 +178,6 @@ async function findByText(page, selector, text) {
     throw new Error("Customer report still mentions ThermBuild/dataset terms");
   }
 
-  await page.goto(`${BASE}/methodik-quellen#waermepumpe`, {
-    waitUntil: "domcontentloaded",
-  });
-  await page.waitForSelector("#waermepumpe");
-  const chapter = await page.$("#waermepumpe");
-  await chapter.screenshot({ path: path.join(OUT, "06-methodik-waermepumpe.png") });
-  console.log("wrote 06-methodik-waermepumpe.png");
-
-  await page.goto(`${BASE}/methodik-quellen#public-thermbuild`, {
-    waitUntil: "domcontentloaded",
-  });
-  await page.waitForSelector("#public-thermbuild");
-  const quelle = await page.$("#public-thermbuild");
-  await quelle.screenshot({
-    path: path.join(OUT, "07-quellen-thermbuild.png"),
-  });
-  console.log("wrote 07-quellen-thermbuild.png");
-
   await browser.close();
 })().catch((err) => {
   console.error(err);

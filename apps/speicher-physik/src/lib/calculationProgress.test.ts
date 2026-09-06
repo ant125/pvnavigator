@@ -23,6 +23,10 @@ describe("applyCalculationProgress", () => {
 
     state = applyCalculationProgress(state, { stage: "pvgis" });
     state = applyCalculationProgress(state, { stage: "consumption" });
+    expect(state.ev).toBe(false);
+    state = applyCalculationProgress(state, { stage: "ev" });
+    expect(state.ev).toBe(true);
+    expect(state.physics).toBe(false);
     state = applyCalculationProgress(state, { stage: "physics" });
     expect(state.physics).toBe(true);
     expect(state.smartmeterCompleted).toBe(0);
@@ -71,6 +75,48 @@ describe("getCalculationProgressStages", () => {
     ).toEqual(["location", "pvgis", "heatpump", "consumption", "physics"]);
   });
 
+  it("omits the EV row unless EV is enabled on the calculation input", () => {
+    expect(
+      getCalculationProgressStages(false, false).map((stage) => stage.id)
+    ).toEqual(["location", "pvgis", "consumption", "physics"]);
+    expect(getCalculationProgressStages(false, false).some((stage) => stage.id === "ev")).toBe(
+      false
+    );
+  });
+
+  it("inserts the EV step after consumption and before physics when EV is enabled", () => {
+    expect(
+      getCalculationProgressStages(false, true).map((stage) => stage.id)
+    ).toEqual(["location", "pvgis", "consumption", "ev", "physics"]);
+    expect(
+      getCalculationProgressStages("luftwasser", true).map((stage) => stage.id)
+    ).toEqual([
+      "location",
+      "pvgis",
+      "heatpump",
+      "consumption",
+      "ev",
+      "physics",
+    ]);
+    expect(
+      getCalculationProgressStages("wasserwasser", true).map((stage) => stage.id)
+    ).toEqual([
+      "location",
+      "pvgis",
+      "heatpump",
+      "consumption",
+      "ev",
+      "physics",
+    ]);
+
+    const ev = getCalculationProgressStages(false, true).find(
+      (stage) => stage.id === "ev"
+    );
+    expect(ev?.active).toBe("Elektroauto-Ladeprofil wird modelliert");
+    expect(ev?.done).toBe("Elektroauto-Ladeprofil modelliert");
+    expect(ev?.subtitle).toBe("Fahrverhalten • Ladefenster • Arbeitsplatzladung");
+  });
+
   it("uses ThermBuild wording for Luft/Wasser and Wasser/Wasser wording for WW", () => {
     const luft = getCalculationProgressStages("luftwasser").find(
       (stage) => stage.id === "heatpump"
@@ -95,6 +141,11 @@ describe("getCalculationProgressStages", () => {
     state = applyCalculationProgress(state, { stage: "consumption" });
     expect(isCalculationStageDone("heatpump", state, false)).toBe(true);
     expect(isCalculationStageDone("consumption", state, false)).toBe(true);
+    expect(isCalculationStageDone("ev", state, false)).toBe(false);
+
+    state = applyCalculationProgress(state, { stage: "ev" });
+    expect(isCalculationStageDone("ev", state, false)).toBe(true);
+    expect(isCalculationStageDone("physics", state, false)).toBe(false);
   });
 });
 

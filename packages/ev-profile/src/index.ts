@@ -27,9 +27,9 @@ export { preflightEvProfile } from "./preflight";
 export {
   evClock,
   evWindowBounded,
-  evWindowFullDay,
   evWindowUnavailable,
 } from "./windows";
+export { METHODIK_EV_REFERENCE_INPUT } from "./methodikReference";
 export { workplaceIndex } from "./workplace";
 export type {
   CreateEvProfileInput,

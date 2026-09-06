@@ -9,7 +9,7 @@ import { commuterInput, profileFingerprint, sum } from "./helpers";
  */
 const GOLDEN = {
   year: 2018,
-  fingerprint: "b8645f45",
+  fingerprint: "0f0f0f45",
   annualDrivingDemandKwh: 2700,
   impliedAnnualKmFromTypicalDistances: 12000,
   impliedAnnualKmFromYearCalendar: 12000,

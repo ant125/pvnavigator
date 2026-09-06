@@ -579,8 +579,7 @@ wird. Die konkreten Bedingungen unterscheiden sich jedoch je nach Produkt.
 Beispiele (sonnenBatterie 10 performance, Enphase IQ Battery 5P-Garantie,
 Tesla Powerwall 2 European Warranty) sowie weitere Herstellerseiten
 (Huawei LUNA, BYD Battery-Box, Tesla Powerwall) sind ausschließlich im zentralen
-Register **Methodik & Quellen** (`@pv-methodology/registry`) hinterlegt und unter
-`/methodik-quellen` öffentlich einsehbar.
+Register **Methodik & Quellen** (`@pv-methodology/registry`) hinterlegt.
 
 Die in SpeicherGrenze verwendeten 75 % sind deshalb keine Übernahme einer
 bestimmten Herstellergarantie, sondern eine einheitliche und vorsichtige

@@ -55,6 +55,8 @@
      this measure instead of spanning the full report width. Sections use grids,
      not their own widths, so this is the only internal width token. */
   --container-reading: 42rem;
+  /* Documentation chrome: left nav + article + optional TOC. */
+  --container-docs: 86rem;
 }
 
 body {
@@ -66,4 +68,68 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+.methodik-docs {
+  /* Shared first-column width for two-column Methodik parameter/value tables. */
+  --methodik-kv-label-width: 22rem;
+}
+
+.methodik-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: methodik-toc;
+}
+
+.methodik-toc-list > li {
+  counter-increment: methodik-toc;
+}
+
+.methodik-toc-link::before {
+  content: counter(methodik-toc) ". ";
+  font-variant-numeric: tabular-nums;
+}
+
+.methodik-toc-sub {
+  list-style: none;
+  margin: 0.35rem 0 0.15rem;
+  padding: 0 0 0 1rem;
+  counter-reset: methodik-toc-sub;
+}
+
+.methodik-toc-sub > li {
+  counter-increment: methodik-toc-sub;
+}
+
+.methodik-toc-sub > li + li {
+  margin-top: 0.2rem;
+}
+
+.methodik-toc-sub .methodik-toc-link::before {
+  content: counter(methodik-toc) "." counter(methodik-toc-sub) " ";
+}
+
+@media print {
+  body:has(.methodik-docs) header,
+  body:has(.methodik-docs) footer,
+  .methodik-nav,
+  .methodik-toc-aside,
+  .methodik-mobile-nav {
+    display: none !important;
+  }
+
+  body:has(.methodik-docs) {
+    background: #ffffff;
+    color: #17212b;
+  }
+
+  .methodik-docs a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .methodik-print-wide {
+    max-width: none !important;
+  }
 }

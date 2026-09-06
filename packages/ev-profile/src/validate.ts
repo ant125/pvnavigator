@@ -34,15 +34,25 @@ function assertWindow(window: EvHomeWindow, dayType: string): void {
       { window }
     );
   }
-  if (window.kind === "unavailable" || window.kind === "fullDay") return;
+  if (window.kind === "unavailable") return;
   if (window.kind === "bounded") {
     assertClockShape(window.start, `${dayType}.start`);
     assertClockShape(window.end, `${dayType}.end`);
+    if (
+      window.start.hour === window.end.hour &&
+      window.start.minute === window.end.minute
+    ) {
+      throw invalidInput(
+        "INVALID_WINDOW",
+        "start === end is not 24-hour availability; use an explicit bounded start/end window",
+        { dayType, start: window.start, end: window.end }
+      );
+    }
     return;
   }
   throw invalidInput(
     "INVALID_WINDOW",
-    `${dayType} home window kind must be unavailable, fullDay, or bounded`,
+    `${dayType} home window kind must be unavailable or bounded`,
     { window }
   );
 }

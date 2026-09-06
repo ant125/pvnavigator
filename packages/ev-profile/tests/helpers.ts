@@ -2,7 +2,6 @@ import type { CreateEvProfileInput } from "../src/index";
 import {
   evClock,
   evWindowBounded,
-  evWindowFullDay,
   evWindowUnavailable,
 } from "../src/index";
 
@@ -18,7 +17,7 @@ export function commuterInput(
     maxHomeChargePowerKw: 11,
     homeWindow: {
       WD: evWindowBounded(evClock(18, 0), evClock(7, 0)),
-      SA: evWindowFullDay(),
+      SA: evWindowBounded(evClock(10, 0), evClock(16, 0)),
       SU: evWindowBounded(evClock(10, 0), evClock(20, 0)),
     },
     workplace: { enabled: true, kwhPerMonth: 80, chargingDaysPerMonth: 8 },
@@ -39,4 +38,4 @@ export function profileFingerprint(profile: readonly number[]): string {
   return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
-export { evClock, evWindowBounded, evWindowFullDay, evWindowUnavailable };
+export { evClock, evWindowBounded, evWindowUnavailable };

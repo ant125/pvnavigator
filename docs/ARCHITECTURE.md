@@ -36,7 +36,7 @@ Rules:
 2. Only then wire the number / dataset into `packages/*` production code.
 3. Do **not** scatter official source URLs across apps, docs footnotes, or PDF
    templates. Consume `getMethodologySources()` / the registry instead.
-4. Website (`/methodik-quellen`), Technische Details, documentation and future
+4. Website (`/methodik`), Referenz (`/methodik/referenz`), documentation and future
    PDF reports all read from the same registry.
 5. Empty category sections (e.g. economics, standards) stay visible until filled.
 
@@ -158,4 +158,4 @@ Wasser/Wasser heating-only is unsupported. Robustness JSON under
 |---|---|
 | [`docs/internal/speicher-physics-model.md`](internal/speicher-physics-model.md) | Canonical implemented physics of SpeicherGrenze |
 | [Load Profile Scaling Principle](internal/speicher-physics-model.md#load-profile-scaling-principle) | Annual kWh sets energy volume; the selected profile sets only the 15-minute temporal shape |
-| [`docs/physics-model.md`](physics-model.md) | Public, simplified methodology (`/technische-details`) |
+| [`docs/physics-model.md`](physics-model.md) | Former public simplified methodology (superseded by `/methodik`) |

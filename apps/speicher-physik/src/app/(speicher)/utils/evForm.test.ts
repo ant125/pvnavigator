@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   evClock,
   evWindowBounded,
-  evWindowFullDay,
 } from "@ev-profile/loader";
 import { commuterEvInput } from "@/test/evFixtures";
 import type { SpeicherInput } from "../types/speicher";
@@ -25,9 +24,9 @@ const VALID_EV_FORM: Partial<SpeicherInput> = {
   evTypicalDailyKmSa: 20,
   evTypicalDailyKmSu: 10,
   evMaxHomeChargePowerKw: 11,
-  evHomeWindowWd: { fullDay: false, start: "18:00", end: "07:00" },
-  evHomeWindowSa: { fullDay: true, start: "", end: "" },
-  evHomeWindowSu: { fullDay: false, start: "10:00", end: "20:00" },
+  evHomeWindowWd: { start: "18:00", end: "07:00" },
+  evHomeWindowSa: { start: "10:00", end: "16:00" },
+  evHomeWindowSu: { start: "10:00", end: "20:00" },
   evWorkplaceEnabled: true,
   evWorkplaceKwhPerMonth: 80,
   evWorkplaceChargingDaysPerMonth: 8,
@@ -47,7 +46,7 @@ describe("EV numeric parsing", () => {
 
 describe("EV home-window encoding", () => {
   it("accepts a same-day window", () => {
-    const window = { fullDay: false, start: "10:00", end: "20:00" };
+    const window = { start: "10:00", end: "20:00" };
     expect(validateHomeWindowForm(window)).toBe("ok");
     expect(mapHomeWindowForm(window)).toEqual(
       evWindowBounded(evClock(10, 0), evClock(20, 0))
@@ -55,29 +54,34 @@ describe("EV home-window encoding", () => {
   });
 
   it("accepts an overnight window", () => {
-    const window = { fullDay: false, start: "17:30", end: "07:00" };
+    const window = { start: "17:30", end: "07:00" };
     expect(validateHomeWindowForm(window)).toBe("ok");
     expect(mapHomeWindowForm(window)).toEqual(
       evWindowBounded(evClock(17, 30), evClock(7, 0))
     );
   });
 
-  it("maps explicit full-day availability", () => {
-    const window = { fullDay: true, start: "00:00", end: "00:00" };
-    expect(validateHomeWindowForm(window)).toBe("ok");
-    expect(mapHomeWindowForm(window)).toEqual(evWindowFullDay());
+  it("does not accept leftover full-day form state", () => {
+    expect(validateHomeWindowForm({ start: "", end: "" })).toBe("missing");
+    expect(
+      validateHomeWindowForm({
+        start: "",
+        end: "",
+        fullDay: true,
+      } as never)
+    ).toBe("missing");
   });
 
   it("does not treat equal start/end as 24 hours", () => {
-    const window = { fullDay: false, start: "18:00", end: "18:00" };
+    const window = { start: "18:00", end: "18:00" };
     expect(validateHomeWindowForm(window)).toBe("invalid");
     expect(parseEvClockTime("18:00")).toEqual({ hour: 18, minute: 0 });
+    expect(() => mapHomeWindowForm(window)).toThrow(/start and end must differ/);
   });
 
   it("rejects times off the 15-minute grid", () => {
     expect(
       validateHomeWindowForm({
-        fullDay: false,
         start: "17:10",
         end: "07:00",
       })
@@ -140,9 +144,9 @@ describe("mapEvFormToCalculationInput", () => {
       evTypicalDailyKmSa: 20,
       evTypicalDailyKmSu: 10,
       evMaxHomeChargePowerKw: 11,
-      evHomeWindowWd: { fullDay: false, start: "18:00", end: "07:00" },
-      evHomeWindowSa: { fullDay: true, start: "", end: "" },
-      evHomeWindowSu: { fullDay: false, start: "10:00", end: "20:00" },
+      evHomeWindowWd: { start: "18:00", end: "07:00" },
+      evHomeWindowSa: { start: "10:00", end: "16:00" },
+      evHomeWindowSu: { start: "10:00", end: "20:00" },
       evWorkplaceEnabled: true,
       evWorkplaceKwhPerMonth: 80,
       evWorkplaceChargingDaysPerMonth: 8,

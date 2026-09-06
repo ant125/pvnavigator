@@ -10,12 +10,12 @@ export type EvClockTime = {
 };
 
 /**
- * Explicit home-availability encoding.
+ * Explicit home-charging window encoding.
  * `start === end` is invalid and is never treated as 24 hours.
+ * There is no full-day special state in EV v1.
  */
 export type EvHomeWindow =
   | { kind: "unavailable" }
-  | { kind: "fullDay" }
   | { kind: "bounded"; start: EvClockTime; end: EvClockTime };
 
 export type EvTypicalDailyKm = {

@@ -57,6 +57,8 @@ type CalculationProgressListProps = {
   complete?: boolean;
   /** Production heat-pump row; presentation only, no extra backend event. */
   includeHeatPumpProfile?: HeatPumpProgressKind;
+  /** EV row; shown only when calculation input has `ev.enabled === true`. */
+  includeEvProfile?: boolean;
 };
 
 export function CalculationProgressList({
@@ -64,8 +66,12 @@ export function CalculationProgressList({
   elapsedSeconds,
   complete = false,
   includeHeatPumpProfile = false,
+  includeEvProfile = false,
 }: CalculationProgressListProps) {
-  const stages = getCalculationProgressStages(includeHeatPumpProfile);
+  const stages = getCalculationProgressStages(
+    includeHeatPumpProfile,
+    includeEvProfile
+  );
   const includeWw = shouldShowWwValidationStage(includeHeatPumpProfile);
 
   const householdTotal =
@@ -147,7 +153,14 @@ export function CalculationProgressList({
               <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
                 <StageMark state={state} />
               </span>
-              <span>{done ? stage.done : stage.active}</span>
+              <span>
+                {done ? stage.done : stage.active}
+                {stage.subtitle ? (
+                  <span className="mt-0.5 block text-xs font-normal text-ink-secondary">
+                    {stage.subtitle}
+                  </span>
+                ) : null}
+              </span>
             </li>
           );
         })}

@@ -3,8 +3,8 @@
  * EvCalculationInput. No EV scheduling or feasibility math.
  *
  * Home windows use the same value-object shape as @ev-profile/loader
- * (`fullDay` / `bounded` / clock `{ hour, minute }`). The package is not
- * imported here so the calculate form stays client-safe.
+ * (`bounded` / clock `{ hour, minute }`). The package is not imported here
+ * so the calculate form stays client-safe.
  */
 
 import type { EvCalculationInput } from "@/load/resolveEvLoadComponent";
@@ -51,10 +51,13 @@ export const EV_FORM_COPY = {
     "Bitte wählen Sie die tatsächlich mögliche Ladeleistung Ihres Fahrzeugs zu Hause.",
   homePowerTypicalNote: "11 kW – typische Wallbox",
   homeWindowQuestion:
-    "Wann kann Ihr Elektroauto normalerweise zu Hause geladen werden?",
+    "Wann wird Ihr Fahrzeug zu Hause normalerweise zum Laden angeschlossen?",
   homeWindowHelp:
-    "Bitte geben Sie von und bis an. Ein Fenster über Mitternacht (zum Beispiel 17:30 bis 07:00) ist möglich. Ganztägige Verfügbarkeit muss ausdrücklich gewählt werden.",
-  fullDayLabel: "Ganztägig verfügbar",
+    "Geben Sie das Zeitfenster an, in dem die Heimladung beginnen darf, wenn das Fahrzeug Energie benötigt.",
+  homeWindowWeekendHelp:
+    "Wenn Sie am Wochenende bevorzugt tagsüber laden können, können Sie dafür ein entsprechendes Ladefenster angeben.",
+  homeWindowOvernightHelp:
+    "Ein Ladefenster über Mitternacht ist möglich, zum Beispiel 17:30–07:00.",
   fromLabel: "Von",
   toLabel: "Bis",
   weekdayRow: "Montag–Freitag",
@@ -120,11 +123,9 @@ export type EvClockValue = { hour: number; minute: number };
 
 export type EvHomeWindowValue =
   | { kind: "unavailable" }
-  | { kind: "fullDay" }
   | { kind: "bounded"; start: EvClockValue; end: EvClockValue };
 
 const EMPTY_WINDOW: EvHomeWindowForm = {
-  fullDay: false,
   start: "",
   end: "",
 };
@@ -239,7 +240,6 @@ export function validateHomeWindowForm(
   window: EvHomeWindowForm | undefined
 ): EvHomeWindowValidation {
   if (window == null) return "missing";
-  if (window.fullDay === true) return "ok";
   if (!window.start.trim() || !window.end.trim()) return "missing";
   const start = parseEvClockTime(window.start);
   const end = parseEvClockTime(window.end);
@@ -252,10 +252,6 @@ function evClock(hour: number, minute: number): EvClockValue {
   return { hour, minute };
 }
 
-function evWindowFullDay(): EvHomeWindowValue {
-  return { kind: "fullDay" };
-}
-
 function evWindowBounded(
   start: EvClockValue,
   end: EvClockValue
@@ -266,13 +262,13 @@ function evWindowBounded(
 export function mapHomeWindowForm(
   window: EvHomeWindowForm | undefined
 ): EvHomeWindowValue {
-  if (window?.fullDay === true) {
-    return evWindowFullDay();
-  }
   const start = parseEvClockTime(window?.start ?? "");
   const end = parseEvClockTime(window?.end ?? "");
   if (!start || !end) {
     throw new Error("ev: home window times are missing or invalid");
+  }
+  if (clocksEqual(start, end)) {
+    throw new Error("ev: home window start and end must differ");
   }
   return evWindowBounded(evClock(start.hour, start.minute), evClock(end.hour, end.minute));
 }

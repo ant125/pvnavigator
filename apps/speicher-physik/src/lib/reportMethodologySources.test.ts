@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { EV_METHODOLOGY_SOURCE_IDS } from "@ev-profile/loader";
 import {
   getMethodologySourceById,
   getPublicMethodologySections,
   METHODOLOGY_CHAPTERS,
 } from "@pv-methodology/registry";
 import {
+  PUBLIC_EV_REPORT_SOURCE_ID,
   getReportDurationInclusions,
   getReportMethodologySources,
 } from "./reportMethodologySources";
@@ -263,29 +265,79 @@ describe("Methodik Wärmepumpe", () => {
     );
   });
 
-  it("includes EV methodology ids from the calculation and uses registry URLs", () => {
-    const evIds = [
-      "ev-v1-generated-load",
-      "ev-v1-annual-km-normalization",
-      "ev-v1-wd-sa-su-timing",
-      "ev-v1-workplace-event-placement",
-      "ev-v1-vehicle-energy-buffer",
-      "ev-v1-cyclic-year-boundary",
-      "ev-v1-unmanaged-home-charging",
-      "ev-v1-consumption-as-charging-energy",
-    ] as const;
+  it("aggregates eight EV registry ids into one public source", () => {
+    expect(EV_METHODOLOGY_SOURCE_IDS).toHaveLength(8);
+    for (const id of EV_METHODOLOGY_SOURCE_IDS) {
+      expect(getMethodologySourceById(id), id).toBeDefined();
+    }
+
     const without = getReportMethodologySources();
     const withEv = getReportMethodologySources(undefined, {
-      methodologySourceIds: evIds,
+      methodologySourceIds: EV_METHODOLOGY_SOURCE_IDS,
+    });
+    const publicIds = withEv.map((source) => source.id);
+    const evEntries = withEv.filter(
+      (source) => source.id === PUBLIC_EV_REPORT_SOURCE_ID
+    );
+
+    expect(without.map((source) => source.id)).not.toContain(
+      PUBLIC_EV_REPORT_SOURCE_ID
+    );
+    expect(JSON.stringify(without)).not.toMatch(/Elektroauto-Ladeprofile/);
+    expect(JSON.stringify(without)).not.toMatch(/EV v1 –/);
+
+    expect(evEntries).toHaveLength(1);
+    expect(evEntries[0]).toMatchObject({
+      id: PUBLIC_EV_REPORT_SOURCE_ID,
+      title: "SpeicherGrenze – Methodik für Elektroauto-Ladeprofile",
+      organization: "PVNavigator",
+      url: null,
+      linkLabel: null,
+      detail:
+        "Individuelles 15-Minuten-Heimladeprofil aus Fahrleistung, Fahrverhalten, Ladefenstern, Arbeitsplatzladung und Fahrzeugbatterie.",
+    });
+    for (const id of EV_METHODOLOGY_SOURCE_IDS) {
+      expect(publicIds).not.toContain(id);
+    }
+    expect(JSON.stringify(withEv)).not.toMatch(/EV v1 –/);
+    expect(
+      withEv.filter((source) => source.id !== PUBLIC_EV_REPORT_SOURCE_ID)
+    ).toEqual(without);
+  });
+
+  it("leaves PVGIS, BDEW, ThermBuild, and WPuQ unchanged when EV is enabled", () => {
+    const luftwasser = getReportMethodologySources(THERMBUILD_CITATION);
+    const luftwasserEv = getReportMethodologySources(THERMBUILD_CITATION, {
+      methodologySourceIds: EV_METHODOLOGY_SOURCE_IDS,
+    });
+    const wasserwasser = getReportMethodologySources(WPUQ_HEATPUMP_CITATION);
+    const wasserwasserEv = getReportMethodologySources(WPUQ_HEATPUMP_CITATION, {
+      methodologySourceIds: EV_METHODOLOGY_SOURCE_IDS,
     });
 
-    for (const id of evIds) {
-      expect(without.map((source) => source.id)).not.toContain(id);
-      const item = withEv.find((source) => source.id === id);
-      const registry = getMethodologySourceById(id);
-      expect(item).toBeDefined();
-      expect(item?.title).toBe(registry?.title);
-      expect(item?.url).toBe(registry?.url ?? null);
-    }
+    expect(
+      luftwasserEv.filter((source) => source.id !== PUBLIC_EV_REPORT_SOURCE_ID)
+    ).toEqual(luftwasser);
+    expect(
+      wasserwasserEv.filter(
+        (source) => source.id !== PUBLIC_EV_REPORT_SOURCE_ID
+      )
+    ).toEqual(wasserwasser);
+    expect(luftwasserEv.map((source) => source.id)).toEqual([
+      "pvgis-jrc",
+      "pvgis-sarah2",
+      "bdew-h25",
+      "wpuq-scientific-data",
+      "thermbuild-fordatis-486",
+      PUBLIC_EV_REPORT_SOURCE_ID,
+    ]);
+    expect(wasserwasserEv.map((source) => source.id)).toEqual([
+      "pvgis-jrc",
+      "pvgis-sarah2",
+      "bdew-h25",
+      "wpuq-scientific-data",
+      "wpuq-wasserwasser-heatpump",
+      PUBLIC_EV_REPORT_SOURCE_ID,
+    ]);
   });
 });

@@ -20,12 +20,11 @@ export const EV_HOME_CHARGE_POWER_KW = [2.3, 3.7, 7.4, 11, 22] as const;
 export type EvHomeChargePowerKw = (typeof EV_HOME_CHARGE_POWER_KW)[number];
 
 /**
- * Form encoding of a home-availability window.
- * Full-day must be explicit. `start === end` is not 24 hours.
+ * Form encoding of an explicit home-charging window.
+ * `start === end` is invalid and is never treated as 24 hours.
  * Times are `HH:MM` on the 15-minute grid.
  */
 export type EvHomeWindowForm = {
-  fullDay: boolean;
   start: string;
   end: string;
 };

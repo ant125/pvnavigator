@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/calculate": ["./data/wpuq/**/*"],
     "/api/calculate": ["./data/wpuq/**/*"],
+    "/methodik/[slug]": ["../../docs/public/methodik/examples/**/*"],
+    "/methodik/examples/[file]": ["../../docs/public/methodik/examples/**/*"],
   },
 };
 

@@ -269,9 +269,9 @@ const VALID_EV_FORM = {
   evTypicalDailyKmSa: 25,
   evTypicalDailyKmSu: 10,
   evMaxHomeChargePowerKw: 11,
-  evHomeWindowWd: { fullDay: false, start: "17:30", end: "07:00" },
-  evHomeWindowSa: { fullDay: true, start: "", end: "" },
-  evHomeWindowSu: { fullDay: false, start: "10:00", end: "20:00" },
+  evHomeWindowWd: { start: "17:30", end: "07:00" },
+  evHomeWindowSa: { start: "10:00", end: "16:00" },
+  evHomeWindowSu: { start: "10:00", end: "20:00" },
   evWorkplaceEnabled: false,
 } as const;
 
@@ -377,7 +377,7 @@ describe("validateInput EV (new UI)", () => {
     const result = validateInput({
       ...VALID_FORM_BASE,
       ...VALID_EV_FORM,
-      evHomeWindowSa: { fullDay: false, start: "12:00", end: "12:00" },
+      evHomeWindowSa: { start: "12:00", end: "12:00" },
     });
     expect(result.isValid).toBe(false);
     expect(result.fieldErrors.evHomeWindowSa).toBe(

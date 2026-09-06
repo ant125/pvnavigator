@@ -122,20 +122,24 @@ function ShellFrame({ children }: { children: ReactNode }) {
               <ul className="mt-3 flex flex-col gap-2.5">
                 <li>
                   <Link
-                    href="/methodik-quellen"
-                    className={footerLinkClass(pathname === "/methodik-quellen")}
+                    href="/methodik"
+                    className={footerLinkClass(
+                      pathname === "/methodik" ||
+                        (pathname.startsWith("/methodik/") &&
+                          pathname !== "/methodik/referenz"),
+                    )}
                   >
                     Methodik
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/technische-details"
+                    href="/methodik/referenz"
                     className={footerLinkClass(
-                      pathname === "/technische-details",
+                      pathname === "/methodik/referenz",
                     )}
                   >
-                    Technische Details zur Berechnung
+                    Referenz
                   </Link>
                 </li>
               </ul>

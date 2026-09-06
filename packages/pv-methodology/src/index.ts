@@ -2,7 +2,7 @@
  * @pv-methodology/registry
  *
  * Central Methodik & Quellen registry for all PVNavigator products.
- * Website, Technische Details, future PDF reports and sibling apps must
+ * Website, Methodik, Referenz, future PDF reports and sibling apps must
  * consume sources from here — never hardcode official source URLs elsewhere.
  */
 

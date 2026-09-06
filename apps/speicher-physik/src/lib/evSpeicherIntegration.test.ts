@@ -38,14 +38,22 @@ describe("SpeicherGrenze EV integration", () => {
     "legacy: enabled:false keeps household-only results and null EV meta",
     async () => {
       const pv = syntheticPv15();
+      const progressStages: string[] = [];
       const disabled = await calculateSpeicherResult({
         ...BASE_INPUT,
         ev: { enabled: false },
         getPvForYear: () => pv,
         years: [2019],
+        onProgress: (event) => {
+          progressStages.push(event.stage);
+        },
       });
 
       expect(disabled.ev).toBeNull();
+      expect(progressStages).not.toContain("ev");
+      expect(progressStages.indexOf("consumption")).toBeLessThan(
+        progressStages.indexOf("physics")
+      );
       expect(disabled.heatPump).toBeNull();
       expect(disabled.robustness.householdAnnualKwh).toBe(
         BASE_INPUT.annualConsumptionKWh
@@ -62,12 +70,16 @@ describe("SpeicherGrenze EV integration", () => {
       const years = [2018, 2019];
       const spy = vi.spyOn(evAdapter, "resolveEvLoadComponentForYear");
       const evInput = commuterEvInput();
+      const progressStages: string[] = [];
 
       const result = await calculateSpeicherResult({
         ...BASE_INPUT,
         ev: evInput,
         getPvForYear: () => pv,
         years,
+        onProgress: (event) => {
+          progressStages.push(event.stage);
+        },
       });
 
       const calledYears = spy.mock.calls.map((call) => call[0].year).sort();
@@ -99,6 +111,13 @@ describe("SpeicherGrenze EV integration", () => {
       expect(result.robustness.cohortSize).toBe(WPUQ_COHORT_SIZE);
       expect(result.robustness.householdAnnualKwh).toBe(
         BASE_INPUT.annualConsumptionKWh
+      );
+      expect(progressStages.filter((stage) => stage === "ev")).toEqual(["ev"]);
+      expect(progressStages.indexOf("consumption")).toBeLessThan(
+        progressStages.indexOf("ev")
+      );
+      expect(progressStages.indexOf("ev")).toBeLessThan(
+        progressStages.indexOf("physics")
       );
 
       spy.mockRestore();

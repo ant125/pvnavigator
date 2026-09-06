@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   evWindowBounded,
-  evWindowFullDay,
   evClock,
 } from "@ev-profile/loader";
 import { commuterEvInput } from "@/test/evFixtures";
@@ -16,11 +15,13 @@ import {
 } from "./evReportPresentation";
 
 describe("EV window/power formatting", () => {
-  it("formats overnight, full-day, and German charge-power labels", () => {
+  it("formats same-day, overnight, and German charge-power labels", () => {
+    expect(
+      formatEvHomeWindow(evWindowBounded(evClock(10, 0), evClock(16, 0)))
+    ).toBe("10:00–16:00");
     expect(
       formatEvHomeWindow(evWindowBounded(evClock(18, 0), evClock(7, 0)))
     ).toBe("18:00–07:00");
-    expect(formatEvHomeWindow(evWindowFullDay())).toBe("Ganztägig verfügbar");
     expect(formatEvChargePowerKw(2.3)).toBe("2,3 kW");
     expect(formatEvChargePowerKw(11)).toBe("11 kW");
   });
@@ -49,7 +50,7 @@ describe("deriveEvReportView", () => {
     expect(byLabel["typische Fahrstrecke Sonntag"]).toBe("10 km");
     expect(byLabel["maximale Heimladeleistung"]).toBe("11 kW");
     expect(byLabel["Ladefenster Montag–Freitag"]).toBe("18:00–07:00");
-    expect(byLabel["Ladefenster Samstag"]).toBe("Ganztägig verfügbar");
+    expect(byLabel["Ladefenster Samstag"]).toBe("10:00–16:00");
     expect(byLabel["Laden am Arbeitsplatz"]).toBe("Ja");
     expect(byLabel["kWh / Monat"]).toBe("80 kWh / Monat");
     expect(byLabel["Ladetage / Monat"]).toBe("8 Tage / Monat");

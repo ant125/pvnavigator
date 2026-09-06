@@ -47,7 +47,6 @@ function formatClock(hour: number, minute: number): string {
 }
 
 export function formatEvHomeWindow(window: EvHomeWindow): string {
-  if (window.kind === "fullDay") return "Ganztägig verfügbar";
   if (window.kind === "unavailable") return "Nicht verfügbar";
   return `${formatClock(window.start.hour, window.start.minute)}–${formatClock(
     window.end.hour,

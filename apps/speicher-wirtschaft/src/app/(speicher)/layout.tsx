@@ -108,10 +108,10 @@ export default function SpeicherLayout({
               <span>Unabhängige PV-Analyse</span>
               <span className="text-slate-700">•</span>
               <Link
-                href="/technische-details"
+                href="/methodik/referenz"
                 className="hover:text-slate-300 transition-colors"
               >
-                Technische Details zur Berechnung
+                Referenz
               </Link>
             </div>
           </div>
