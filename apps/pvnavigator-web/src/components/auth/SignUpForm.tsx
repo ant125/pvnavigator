@@ -74,8 +74,7 @@ export function SignUpForm() {
           type="email"
           autoComplete="email"
           required
-          disabled={pending}
-          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2 disabled:opacity-60"
+          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2"
         />
       </div>
       <div>
@@ -89,8 +88,7 @@ export function SignUpForm() {
           autoComplete="new-password"
           required
           minLength={6}
-          disabled={pending}
-          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2 disabled:opacity-60"
+          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2"
           onChange={() => setPasswordMismatch(false)}
         />
         <p className="mt-1.5 text-xs text-[#94a3b8]">Mindestens 6 Zeichen.</p>
@@ -106,9 +104,8 @@ export function SignUpForm() {
           autoComplete="new-password"
           required
           minLength={6}
-          disabled={pending}
           aria-invalid={passwordMismatch ? true : undefined}
-          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2 disabled:opacity-60"
+          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2"
           onChange={() => setPasswordMismatch(false)}
         />
       </div>

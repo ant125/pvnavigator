@@ -2,6 +2,7 @@ export const AUTH_NEXT_SPEICHER_CALCULATE = "speicher-calculate";
 export const AUTH_SIGN_IN_PATH = "/auth/sign-in";
 export const AUTH_SIGN_OUT_PATH = "/auth/sign-out";
 export const AUTH_CONTINUE_PATH = "/auth/continue";
+export const AUTH_CALLBACK_PATH = "/auth/callback";
 
 const DEFAULT_HUB_ORIGIN = "https://pvnavigator.de";
 const DEFAULT_SPEICHER_ORIGIN = "https://speicher.pvnavigator.de";
@@ -72,7 +73,11 @@ function hostFromHeader(raw: string | null | undefined): string | undefined {
 }
 
 export function isHubAuthMutationPath(pathname: string): boolean {
-  return pathname === AUTH_SIGN_IN_PATH || pathname === AUTH_SIGN_OUT_PATH;
+  return (
+    pathname === AUTH_SIGN_IN_PATH ||
+    pathname === AUTH_SIGN_OUT_PATH ||
+    pathname === AUTH_CALLBACK_PATH
+  );
 }
 
 /**

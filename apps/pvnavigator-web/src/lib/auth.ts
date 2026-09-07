@@ -34,7 +34,7 @@ export function getAuthSiteOrigin(): string {
 }
 
 export function getEmailConfirmationRedirectUrl(): string {
-  return `${getAuthSiteOrigin()}/auth/bestaetigt`;
+  return `${getAuthSiteOrigin()}/auth/callback`;
 }
 
 const SUPABASE_AUTH_FALLBACK =

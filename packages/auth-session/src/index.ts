@@ -19,6 +19,7 @@ export {
 } from "./cookieOptions";
 
 export {
+  AUTH_CALLBACK_PATH,
   AUTH_CONTINUE_PATH,
   AUTH_NEXT_SPEICHER_CALCULATE,
   AUTH_SIGN_IN_PATH,
