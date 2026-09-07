@@ -1,9 +1,5 @@
 import type { NextRequest } from "next/server";
-import {
-  getHubLoginUrlForSpeicherCalculate,
-  getSpeicherGrenzeCalculateUrl,
-  isAllowedSessionHandoffRequest,
-} from "@pv-auth/session";
+import { isAllowedSessionHandoffRequest } from "@pv-auth/session";
 
 import { createRouteHandlerSupabase } from "@/lib/supabase/routeHandler";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
@@ -43,35 +39,33 @@ async function readSessionTokens(
   return { accessToken, refreshToken };
 }
 
-function redirectToCalculate(setCookies: string[]): Response {
+function jsonResponse(ok: boolean, status: number, setCookies: string[] = []): Response {
   const headers = new Headers();
-  headers.set("Location", getSpeicherGrenzeCalculateUrl());
-  headers.set("Cache-Control", "no-store");
+  headers.set("content-type", "application/json");
+  headers.set("cache-control", "no-store");
   for (const cookie of setCookies) {
     headers.append("Set-Cookie", cookie);
   }
-  return new Response(null, { status: 303, headers });
+  return new Response(JSON.stringify({ ok }), { status, headers });
 }
 
 export async function POST(request: NextRequest) {
-  const loginUrl = getHubLoginUrlForSpeicherCalculate();
-
   if (
     !isAllowedSessionHandoffRequest(
       request.headers.get("origin"),
       request.headers.get("referer"),
     )
   ) {
-    return new Response(null, { status: 303, headers: { Location: loginUrl } });
+    return jsonResponse(false, 403);
   }
 
   if (!isSupabaseConfigured()) {
-    return new Response(null, { status: 303, headers: { Location: loginUrl } });
+    return jsonResponse(false, 503);
   }
 
   const tokens = await readSessionTokens(request);
   if (!tokens) {
-    return new Response(null, { status: 303, headers: { Location: loginUrl } });
+    return jsonResponse(false, 400);
   }
 
   const setCookies: string[] = [];
@@ -82,8 +76,8 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    return new Response(null, { status: 303, headers: { Location: loginUrl } });
+    return jsonResponse(false, 401);
   }
 
-  return redirectToCalculate(setCookies);
+  return jsonResponse(true, 200, setCookies);
 }

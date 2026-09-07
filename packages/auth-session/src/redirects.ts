@@ -4,6 +4,7 @@ export const AUTH_SIGN_OUT_PATH = "/auth/sign-out";
 export const AUTH_CONTINUE_PATH = "/auth/continue";
 export const AUTH_CALLBACK_PATH = "/auth/callback";
 export const AUTH_ACCEPT_PATH = "/auth/accept";
+export const AUTH_CATCH_PATH = "/auth/catch";
 
 const DEFAULT_HUB_ORIGIN = "https://pvnavigator.de";
 const DEFAULT_SPEICHER_ORIGIN = "https://speicher.pvnavigator.de";
@@ -82,7 +83,7 @@ export function isHubAuthMutationPath(pathname: string): boolean {
 }
 
 export function isSpeicherAuthHandoffPath(pathname: string): boolean {
-  return pathname === AUTH_ACCEPT_PATH;
+  return pathname === AUTH_ACCEPT_PATH || pathname === AUTH_CATCH_PATH;
 }
 
 /**
@@ -97,14 +98,24 @@ export function isAllowedSessionHandoffOrigin(originHeader: string | null): bool
   }
 }
 
+function isKnownAppOrigin(origin: string): boolean {
+  return origin === getHubOrigin() || origin === getSpeicherGrenzeOrigin();
+}
+
 export function isAllowedSessionHandoffRequest(
   originHeader: string | null,
   refererHeader: string | null,
 ): boolean {
-  if (isAllowedSessionHandoffOrigin(originHeader)) return true;
+  if (originHeader) {
+    try {
+      if (isKnownAppOrigin(new URL(originHeader).origin)) return true;
+    } catch {
+      return false;
+    }
+  }
   if (!refererHeader) return false;
   try {
-    return new URL(refererHeader).origin === getHubOrigin();
+    return isKnownAppOrigin(new URL(refererHeader).origin);
   } catch {
     return false;
   }

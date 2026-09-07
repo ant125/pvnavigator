@@ -150,6 +150,9 @@ describe("session handoff", () => {
     expect(isAllowedSessionHandoffRequest(null, "https://evil.example/")).toBe(
       false,
     );
+    expect(isAllowedSessionHandoffRequest("https://speicher.pvnavigator.de", null)).toBe(
+      true,
+    );
     expect(isSpeicherAuthHandoffPath("/auth/accept")).toBe(true);
     expect(isSpeicherAuthHandoffPath("/auth/continue")).toBe(false);
   });

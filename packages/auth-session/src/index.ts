@@ -23,6 +23,7 @@ export {
 export {
   AUTH_ACCEPT_PATH,
   AUTH_CALLBACK_PATH,
+  AUTH_CATCH_PATH,
   AUTH_CONTINUE_PATH,
   AUTH_NEXT_SPEICHER_CALCULATE,
   AUTH_SIGN_IN_PATH,
@@ -43,3 +44,8 @@ export {
   resolvePostLoginRedirect,
   sanitizeNextPath,
 } from "./redirects";
+
+export {
+  decodeSessionHandoffPayload,
+  encodeSessionHandoffPayload,
+} from "./handoff";
