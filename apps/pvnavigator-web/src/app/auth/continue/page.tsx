@@ -6,6 +6,8 @@ import {
   resolvePostLoginRedirect,
 } from "@pv-auth/session";
 
+import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
+
 import { ContinueClient } from "./ContinueClient";
 
 export const metadata: Metadata = {
@@ -27,5 +29,20 @@ export default async function ContinuePage({ searchParams }: { searchParams: Sea
   const allowed =
     location === getSpeicherGrenzeCalculateUrl() || location.startsWith(`${hub}/`);
 
-  return <ContinueClient dest={allowed ? location : `${hub}/konto`} />;
+  let accessToken = "";
+  let refreshToken = "";
+  if (isSupabaseConfigured()) {
+    const supabase = await createServerSupabaseClient();
+    const { data } = await supabase.auth.getSession();
+    accessToken = data.session?.access_token ?? "";
+    refreshToken = data.session?.refresh_token ?? "";
+  }
+
+  return (
+    <ContinueClient
+      dest={allowed ? location : `${hub}/konto`}
+      accessToken={accessToken}
+      refreshToken={refreshToken}
+    />
+  );
 }

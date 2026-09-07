@@ -322,10 +322,6 @@ export async function rehomeReadableAuthCookiesInBrowser(): Promise<number> {
   const snapshot = authCookiesFromDocumentCookie(document.cookie);
   if (snapshot.length === 0) return 0;
 
-  if (await rehomeAuthCookiesWithCookieStore(snapshot, hostname)) {
-    return snapshot.length;
-  }
-
   const secure = getAuthCookieOptions(hostname).secure;
   for (const cookie of snapshot) {
     document.cookie = hostOnlyExpireSetCookieHeader(cookie.name, secure);
@@ -337,45 +333,4 @@ export async function rehomeReadableAuthCookiesInBrowser(): Promise<number> {
     document.cookie = serializeAuthSetCookie(cookie.name, cookie.value, hostname);
   }
   return snapshot.length;
-}
-
-type BrowserCookieStore = {
-  delete: (options: { name: string; path?: string }) => Promise<void>;
-  set: (options: {
-    name: string;
-    value: string;
-    domain?: string;
-    path?: string;
-    sameSite?: "lax" | "strict" | "none";
-    expires?: number;
-  }) => Promise<void>;
-};
-
-async function rehomeAuthCookiesWithCookieStore(
-  snapshot: ReadonlyArray<{ name: string; value: string }>,
-  hostname: string,
-): Promise<boolean> {
-  const store = (window as Window & { cookieStore?: BrowserCookieStore }).cookieStore;
-  if (!store?.delete || !store.set) return false;
-
-  const domain = resolveAuthCookieDomain(hostname)?.replace(/^\./, "");
-  if (!domain) return false;
-
-  const expires = Date.now() + PARENT_COOKIE_MAX_AGE * 1000;
-  try {
-    for (const cookie of snapshot) {
-      await store.delete({ name: cookie.name, path: "/" });
-      await store.set({
-        name: cookie.name,
-        value: cookie.value,
-        domain,
-        path: "/",
-        sameSite: "lax",
-        expires,
-      });
-    }
-    return true;
-  } catch {
-    return false;
-  }
 }

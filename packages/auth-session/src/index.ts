@@ -36,6 +36,7 @@ export {
   getSpeicherGrenzeOrigin,
   isAllowedHubFormOrigin,
   isAllowedSessionHandoffOrigin,
+  isAllowedSessionHandoffRequest,
   isHubAuthMutationPath,
   isSpeicherAuthHandoffPath,
   parseAuthNextParam,

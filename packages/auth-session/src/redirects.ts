@@ -97,6 +97,19 @@ export function isAllowedSessionHandoffOrigin(originHeader: string | null): bool
   }
 }
 
+export function isAllowedSessionHandoffRequest(
+  originHeader: string | null,
+  refererHeader: string | null,
+): boolean {
+  if (isAllowedSessionHandoffOrigin(originHeader)) return true;
+  if (!refererHeader) return false;
+  try {
+    return new URL(refererHeader).origin === getHubOrigin();
+  } catch {
+    return false;
+  }
+}
+
 /**
  * CSRF check for document POSTs: Origin host must match the public Host
  * (X-Forwarded-Host on Vercel, otherwise Host).

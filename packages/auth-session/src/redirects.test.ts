@@ -7,6 +7,7 @@ import {
   getSpeicherGrenzeCalculateUrl,
   isAllowedHubFormOrigin,
   isAllowedSessionHandoffOrigin,
+  isAllowedSessionHandoffRequest,
   isHubAuthMutationPath,
   isSpeicherAuthHandoffPath,
   parseAuthNextParam,
@@ -143,6 +144,12 @@ describe("session handoff", () => {
       false,
     );
     expect(isAllowedSessionHandoffOrigin(null)).toBe(false);
+    expect(
+      isAllowedSessionHandoffRequest(null, "https://pvnavigator.de/auth/continue"),
+    ).toBe(true);
+    expect(isAllowedSessionHandoffRequest(null, "https://evil.example/")).toBe(
+      false,
+    );
     expect(isSpeicherAuthHandoffPath("/auth/accept")).toBe(true);
     expect(isSpeicherAuthHandoffPath("/auth/continue")).toBe(false);
   });
