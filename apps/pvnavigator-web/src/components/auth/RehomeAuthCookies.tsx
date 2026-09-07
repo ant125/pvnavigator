@@ -9,7 +9,7 @@ import { rehomeReadableAuthCookiesInBrowser } from "@pv-auth/session";
  */
 export function RehomeAuthCookies() {
   useEffect(() => {
-    rehomeReadableAuthCookiesInBrowser();
+    void rehomeReadableAuthCookiesInBrowser();
   }, []);
   return null;
 }

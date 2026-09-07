@@ -6,7 +6,9 @@ import {
   getHubLoginUrlForSpeicherCalculate,
   getSpeicherGrenzeCalculateUrl,
   isAllowedHubFormOrigin,
+  isAllowedSessionHandoffOrigin,
   isHubAuthMutationPath,
+  isSpeicherAuthHandoffPath,
   parseAuthNextParam,
   resolvePostLoginRedirect,
   sanitizeNextPath,
@@ -128,5 +130,20 @@ describe("isAllowedHubFormOrigin", () => {
       false,
     );
     expect(isAllowedHubFormOrigin(null, "pvnavigator.de")).toBe(false);
+  });
+});
+
+describe("session handoff", () => {
+  it("only accepts the hub origin", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    expect(isAllowedSessionHandoffOrigin("https://pvnavigator.de")).toBe(true);
+    expect(isAllowedSessionHandoffOrigin("https://speicher.pvnavigator.de")).toBe(
+      false,
+    );
+    expect(isAllowedSessionHandoffOrigin(null)).toBe(false);
+    expect(isSpeicherAuthHandoffPath("/auth/accept")).toBe(true);
+    expect(isSpeicherAuthHandoffPath("/auth/continue")).toBe(false);
   });
 });

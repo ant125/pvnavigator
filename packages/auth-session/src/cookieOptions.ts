@@ -307,20 +307,75 @@ export function authCookiesFromDocumentCookie(
 
 /**
  * Copy readable `sb-*-auth-token` cookies onto `.pvnavigator.de`.
- * Next.js often stores a host-only copy; SpeicherGrenze never sees that.
- * No-op on localhost and when cookies are HttpOnly.
+ *
+ * Chrome keeps a host-only cookie (no Domain) from Next.js and ignores a
+ * same-name `Domain=.pvnavigator.de` Set-Cookie until the host-only copy is
+ * expired first. No-op on localhost and when cookies are HttpOnly.
  */
-export function rehomeReadableAuthCookiesInBrowser(): number {
+export async function rehomeReadableAuthCookiesInBrowser(): Promise<number> {
   if (typeof document === "undefined" || typeof window === "undefined") {
     return 0;
   }
   const hostname = window.location.hostname;
   if (!resolveAuthCookieDomain(hostname)) return 0;
 
-  let count = 0;
-  for (const cookie of authCookiesFromDocumentCookie(document.cookie)) {
-    document.cookie = serializeAuthSetCookie(cookie.name, cookie.value, hostname);
-    count += 1;
+  const snapshot = authCookiesFromDocumentCookie(document.cookie);
+  if (snapshot.length === 0) return 0;
+
+  if (await rehomeAuthCookiesWithCookieStore(snapshot, hostname)) {
+    return snapshot.length;
   }
-  return count;
+
+  const secure = getAuthCookieOptions(hostname).secure;
+  for (const cookie of snapshot) {
+    document.cookie = hostOnlyExpireSetCookieHeader(cookie.name, secure);
+  }
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, 0);
+  });
+  for (const cookie of snapshot) {
+    document.cookie = serializeAuthSetCookie(cookie.name, cookie.value, hostname);
+  }
+  return snapshot.length;
+}
+
+type BrowserCookieStore = {
+  delete: (options: { name: string; path?: string }) => Promise<void>;
+  set: (options: {
+    name: string;
+    value: string;
+    domain?: string;
+    path?: string;
+    sameSite?: "lax" | "strict" | "none";
+    expires?: number;
+  }) => Promise<void>;
+};
+
+async function rehomeAuthCookiesWithCookieStore(
+  snapshot: ReadonlyArray<{ name: string; value: string }>,
+  hostname: string,
+): Promise<boolean> {
+  const store = (window as Window & { cookieStore?: BrowserCookieStore }).cookieStore;
+  if (!store?.delete || !store.set) return false;
+
+  const domain = resolveAuthCookieDomain(hostname)?.replace(/^\./, "");
+  if (!domain) return false;
+
+  const expires = Date.now() + PARENT_COOKIE_MAX_AGE * 1000;
+  try {
+    for (const cookie of snapshot) {
+      await store.delete({ name: cookie.name, path: "/" });
+      await store.set({
+        name: cookie.name,
+        value: cookie.value,
+        domain,
+        path: "/",
+        sameSite: "lax",
+        expires,
+      });
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }

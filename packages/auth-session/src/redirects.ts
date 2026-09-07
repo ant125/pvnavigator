@@ -3,6 +3,7 @@ export const AUTH_SIGN_IN_PATH = "/auth/sign-in";
 export const AUTH_SIGN_OUT_PATH = "/auth/sign-out";
 export const AUTH_CONTINUE_PATH = "/auth/continue";
 export const AUTH_CALLBACK_PATH = "/auth/callback";
+export const AUTH_ACCEPT_PATH = "/auth/accept";
 
 const DEFAULT_HUB_ORIGIN = "https://pvnavigator.de";
 const DEFAULT_SPEICHER_ORIGIN = "https://speicher.pvnavigator.de";
@@ -78,6 +79,22 @@ export function isHubAuthMutationPath(pathname: string): boolean {
     pathname === AUTH_SIGN_OUT_PATH ||
     pathname === AUTH_CALLBACK_PATH
   );
+}
+
+export function isSpeicherAuthHandoffPath(pathname: string): boolean {
+  return pathname === AUTH_ACCEPT_PATH;
+}
+
+/**
+ * Hub origin may POST a session to SpeicherGrenze `/auth/accept`.
+ */
+export function isAllowedSessionHandoffOrigin(originHeader: string | null): boolean {
+  if (!originHeader) return false;
+  try {
+    return new URL(originHeader).origin === getHubOrigin();
+  } catch {
+    return false;
+  }
 }
 
 /**

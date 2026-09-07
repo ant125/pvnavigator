@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { rehomeReadableAuthCookiesInBrowser } from "@pv-auth/session";
 
+import { handoffSessionToSpeicherGrenze } from "@/lib/auth/handoffSession";
 import { AuthShell } from "@/components/auth/AuthShell";
 
 const primaryBtn =
@@ -10,19 +10,29 @@ const primaryBtn =
 
 export function ContinueClient({ dest }: { dest: string }) {
   useEffect(() => {
-    rehomeReadableAuthCookiesInBrowser();
-
     const key = `pv-auth-continue:${dest}`;
+    let bounced = false;
     try {
       const prev = Number(sessionStorage.getItem(key) || 0);
-      if (Date.now() - prev < 4000) {
-        return;
+      bounced = Date.now() - prev < 4000;
+      if (!bounced) {
+        sessionStorage.setItem(key, String(Date.now()));
       }
-      sessionStorage.setItem(key, String(Date.now()));
     } catch {
       // Ignore sessionStorage failures and still navigate.
     }
-    window.location.replace(dest);
+
+    let cancelled = false;
+    void (async () => {
+      await handoffSessionToSpeicherGrenze();
+      if (!cancelled && !bounced) {
+        window.location.assign(dest);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [dest]);
 
   return (
@@ -30,15 +40,18 @@ export function ContinueClient({ dest }: { dest: string }) {
       title="Weiterleitung"
       subtitle="Sie werden zu SpeicherGrenze weitergeleitet. Falls nichts passiert, nutzen Sie den Button."
     >
-      <a
-        href={dest}
+      <button
+        type="button"
         className={primaryBtn}
         onClick={() => {
-          rehomeReadableAuthCookiesInBrowser();
+          void (async () => {
+            await handoffSessionToSpeicherGrenze();
+            window.location.assign(dest);
+          })();
         }}
       >
         Weiter
-      </a>
+      </button>
     </AuthShell>
   );
 }

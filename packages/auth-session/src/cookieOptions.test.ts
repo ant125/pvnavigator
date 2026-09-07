@@ -6,6 +6,7 @@ import {
   getAuthCookieOptions,
   isSupabaseAuthCookieName,
   rehomeAuthCookiesToParentDomain,
+  rehomeReadableAuthCookiesInBrowser,
   resolveAuthCookieDomain,
   resolveRequestHostname,
   serializeAuthSetCookie,
@@ -244,6 +245,12 @@ describe("authCookiesFromDocumentCookie", () => {
 
   it("ignores empty input", () => {
     expect(authCookiesFromDocumentCookie("")).toEqual([]);
+  });
+});
+
+describe("rehomeReadableAuthCookiesInBrowser", () => {
+  it("is a no-op without a document", async () => {
+    expect(await rehomeReadableAuthCookiesInBrowser()).toBe(0);
   });
 });
 

@@ -6,6 +6,7 @@ import {
   copySetCookieHeaders,
   getAuthCookieOptions,
   getHubLoginUrlForSpeicherCalculate,
+  isSpeicherAuthHandoffPath,
   rehomeAuthCookiesToParentDomain,
   resolveRequestHostname,
 } from "@pv-auth/session";
@@ -28,6 +29,10 @@ function withCopiedCookies(from: NextResponse, to: NextResponse): NextResponse {
 }
 
 export async function middleware(request: NextRequest) {
+  if (isSpeicherAuthHandoffPath(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const loginUrl = getHubLoginUrlForSpeicherCalculate();

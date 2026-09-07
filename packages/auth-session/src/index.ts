@@ -21,6 +21,7 @@ export {
 } from "./cookieOptions";
 
 export {
+  AUTH_ACCEPT_PATH,
   AUTH_CALLBACK_PATH,
   AUTH_CONTINUE_PATH,
   AUTH_NEXT_SPEICHER_CALCULATE,
@@ -34,7 +35,9 @@ export {
   getSpeicherGrenzeCalculateUrl,
   getSpeicherGrenzeOrigin,
   isAllowedHubFormOrigin,
+  isAllowedSessionHandoffOrigin,
   isHubAuthMutationPath,
+  isSpeicherAuthHandoffPath,
   parseAuthNextParam,
   resolvePostLoginRedirect,
   sanitizeNextPath,
