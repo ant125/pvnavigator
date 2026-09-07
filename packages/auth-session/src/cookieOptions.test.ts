@@ -6,6 +6,7 @@ import {
   rehomeAuthCookiesToParentDomain,
   resolveAuthCookieDomain,
   resolveRequestHostname,
+  supabaseProjectRefFromUrl,
 } from "./cookieOptions";
 
 const ORIGINAL_ENV = { ...process.env };
@@ -34,6 +35,11 @@ describe("resolveAuthCookieDomain", () => {
     process.env.AUTH_COOKIE_DOMAIN = ".other.test";
     process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN = ".pvnavigator.de";
     expect(resolveAuthCookieDomain()).toBe(".pvnavigator.de");
+  });
+
+  it("normalizes URL-shaped AUTH_COOKIE_DOMAIN values", () => {
+    process.env.AUTH_COOKIE_DOMAIN = "https://pvnavigator.de";
+    expect(resolveAuthCookieDomain("localhost")).toBe(".pvnavigator.de");
   });
 
   it("infers the parent domain on pvnavigator hosts", () => {
@@ -98,6 +104,17 @@ describe("resolveRequestHostname", () => {
       resolveRequestHostname("ignored.vercel.app", "pvnavigator.de:443", null),
     ).toBe("pvnavigator.de");
   });
+
+  it("prefers Origin pvnavigator.de over Vercel internal Host", () => {
+    expect(
+      resolveRequestHostname(
+        "pvnavigator-web.vercel.app",
+        "pvnavigator-web.vercel.app",
+        "pvnavigator-web.vercel.app",
+        "https://pvnavigator.de",
+      ),
+    ).toBe("pvnavigator.de");
+  });
 });
 
 describe("isSupabaseAuthCookieName", () => {
@@ -108,10 +125,18 @@ describe("isSupabaseAuthCookieName", () => {
     expect(
       isSupabaseAuthCookieName("sb-ftxgcpebzrhvifjnjivm-auth-token.0"),
     ).toBe(true);
-    expect(isSupabaseAuthCookieName("sb-ftxgcpebzrhvifjnjivm-auth-token.1")).toBe(
-      true,
-    );
+    expect(
+      isSupabaseAuthCookieName("sb-ftxgcpebzrhvifjnjivm-auth-token.1"),
+    ).toBe(true);
     expect(isSupabaseAuthCookieName("unrelated")).toBe(false);
+  });
+});
+
+describe("supabaseProjectRefFromUrl", () => {
+  it("reads the project ref from the Supabase hostname", () => {
+    expect(
+      supabaseProjectRefFromUrl("https://ftxgcpebzrhvifjnjivm.supabase.co"),
+    ).toBe("ftxgcpebzrhvifjnjivm");
   });
 });
 
@@ -122,7 +147,6 @@ describe("rehomeAuthCookiesToParentDomain", () => {
     delete process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN;
 
     const headers: string[] = [];
-    const set: Array<{ name: string; value: string; domain?: string }> = [];
 
     rehomeAuthCookiesToParentDomain(
       [
@@ -133,24 +157,17 @@ describe("rehomeAuthCookiesToParentDomain", () => {
         appendHeader: (_name, value) => {
           headers.push(value);
         },
-        setCookie: (name, value, options) => {
-          set.push({ name, value, domain: options.domain });
-        },
       },
       "pvnavigator.de",
     );
 
-    expect(headers).toHaveLength(1);
+    expect(headers).toHaveLength(2);
     expect(headers[0]).toContain("sb-ftxgcpebzrhvifjnjivm-auth-token=");
     expect(headers[0]).toContain("Max-Age=0");
     expect(headers[0]).not.toContain("Domain=");
-    expect(set).toEqual([
-      {
-        name: "sb-ftxgcpebzrhvifjnjivm-auth-token",
-        value: "session",
-        domain: ".pvnavigator.de",
-      },
-    ]);
+    expect(headers[1]).toContain("sb-ftxgcpebzrhvifjnjivm-auth-token=session");
+    expect(headers[1]).toContain("Domain=.pvnavigator.de");
+    expect(headers[1]).not.toContain("Max-Age=0");
   });
 
   it("does nothing on localhost", () => {
@@ -162,7 +179,7 @@ describe("rehomeAuthCookiesToParentDomain", () => {
     };
     rehomeAuthCookiesToParentDomain(
       [{ name: "sb-ftxgcpebzrhvifjnjivm-auth-token", value: "session" }],
-      { appendHeader: setCookie, setCookie },
+      { appendHeader: setCookie },
       "localhost",
     );
   });

@@ -1,11 +1,16 @@
 export {
+  authCookieWriter,
+  copySetCookieHeaders,
   getAuthCookieOptions,
+  hasSupabaseAuthCookie,
   hostOnlyExpireSetCookieHeader,
   isSupabaseAuthCookieName,
   mergeAuthCookieOptions,
+  parentDomainSetCookieHeader,
   rehomeAuthCookiesToParentDomain,
   resolveAuthCookieDomain,
   resolveRequestHostname,
+  supabaseProjectRefFromUrl,
   type AuthCookieOptions,
 } from "./cookieOptions";
 

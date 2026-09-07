@@ -67,6 +67,7 @@ export async function signUpAction(
 
 export type SignInFormState = {
   error: string;
+  redirectTo?: string;
 };
 
 export async function signInAction(_prev: SignInFormState, formData: FormData): Promise<SignInFormState> {
@@ -90,7 +91,10 @@ export async function signInAction(_prev: SignInFormState, formData: FormData): 
     return { error: mapSupabaseAuthErrorToUserMessage(error) };
   }
 
-  redirect(next);
+  // Document navigation so middleware can attach Domain=.pvnavigator.de on a
+  // top-level response. Next.js fetch-action redirect() streams RSC internally
+  // and strips Set-Cookie from that hop.
+  return { error: "", redirectTo: next };
 }
 
 export async function logoutAction() {

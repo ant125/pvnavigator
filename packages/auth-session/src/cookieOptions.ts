@@ -8,43 +8,98 @@ export type AuthCookieOptions = {
 const PRODUCTION_PARENT_DOMAIN = ".pvnavigator.de";
 const AUTH_TOKEN_COOKIE = /^sb-.+-auth-token(?:\.\d+)?$/;
 const HOST_ONLY_EXPIRE_DATE = "Thu, 01 Jan 1970 00:00:00 GMT";
+const PARENT_COOKIE_MAX_AGE = 400 * 24 * 60 * 60;
 
 function firstHostFromHeader(raw: string | null | undefined): string | undefined {
   const host = raw?.split(",")[0]?.trim().split(":")[0]?.toLowerCase();
   return host || undefined;
 }
 
+function hostnameFromOrigin(raw: string | null | undefined): string | undefined {
+  const value = raw?.trim();
+  if (!value) return undefined;
+  try {
+    return firstHostFromHeader(new URL(value).hostname);
+  } catch {
+    return firstHostFromHeader(value);
+  }
+}
+
+function hostnameQualifiesForParentDomain(hostname: string): boolean {
+  const host = hostname.split(":")[0]?.toLowerCase() ?? "";
+  return host === "pvnavigator.de" || host.endsWith(".pvnavigator.de");
+}
+
 /**
- * Prefer the public Host / X-Forwarded-Host over nextUrl.hostname.
- * Vercel internal URLs (*.vercel.app) must not decide the cookie Domain.
+ * Prefer a public pvnavigator.de host over Vercel internal URLs.
+ * Origin is the last fallback — Server Actions sometimes see *.vercel.app as Host.
  */
 export function resolveRequestHostname(
   hostname?: string | null,
   hostHeader?: string | null,
   forwardedHost?: string | null,
+  originHeader?: string | null,
 ): string | undefined {
-  return (
-    firstHostFromHeader(forwardedHost) ||
-    firstHostFromHeader(hostHeader) ||
-    firstHostFromHeader(hostname)
-  );
+  const candidates = [
+    firstHostFromHeader(forwardedHost),
+    firstHostFromHeader(hostHeader),
+    firstHostFromHeader(hostname),
+    hostnameFromOrigin(originHeader),
+  ].filter((host): host is string => Boolean(host));
+
+  return candidates.find(hostnameQualifiesForParentDomain) ?? candidates[0];
 }
 
 export function isSupabaseAuthCookieName(name: string): boolean {
   return AUTH_TOKEN_COOKIE.test(name);
 }
 
-function readExplicitCookieDomain(): string | undefined {
-  const fromPublic = process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN?.trim();
-  if (fromPublic) return fromPublic;
-  const fromServer = process.env.AUTH_COOKIE_DOMAIN?.trim();
-  if (fromServer) return fromServer;
+export function hasSupabaseAuthCookie(
+  cookies: ReadonlyArray<{ name: string; value?: string }>,
+): boolean {
+  return cookies.some((cookie) => isSupabaseAuthCookieName(cookie.name) && Boolean(cookie.value));
+}
+
+export function supabaseProjectRefFromUrl(url: string | undefined): string | undefined {
+  const raw = url?.trim();
+  if (!raw) return undefined;
+  try {
+    return new URL(raw).hostname.split(".")[0] || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizeExplicitCookieDomain(raw: string): string | undefined {
+  let value = raw.trim();
+  if (!value) return undefined;
+  try {
+    if (value.includes("://")) {
+      value = new URL(value).hostname;
+    }
+  } catch {
+    return undefined;
+  }
+  const host = value.replace(/^\./, "").split(":")[0]?.toLowerCase();
+  if (!host) return undefined;
+  if (host === "pvnavigator.de" || host.endsWith(".pvnavigator.de")) {
+    return PRODUCTION_PARENT_DOMAIN;
+  }
   return undefined;
 }
 
-function hostnameQualifiesForParentDomain(hostname: string): boolean {
-  const host = hostname.split(":")[0]?.toLowerCase() ?? "";
-  return host === "pvnavigator.de" || host.endsWith(".pvnavigator.de");
+function readExplicitCookieDomain(): string | undefined {
+  const fromPublic = process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN;
+  if (fromPublic) {
+    const normalized = normalizeExplicitCookieDomain(fromPublic);
+    if (normalized) return normalized;
+  }
+  const fromServer = process.env.AUTH_COOKIE_DOMAIN;
+  if (fromServer) {
+    const normalized = normalizeExplicitCookieDomain(fromServer);
+    if (normalized) return normalized;
+  }
+  return undefined;
 }
 
 /**
@@ -96,19 +151,32 @@ export function hostOnlyExpireSetCookieHeader(name: string, secure: boolean): st
   return `${name}=; Path=/; Max-Age=0; Expires=${HOST_ONLY_EXPIRE_DATE}; SameSite=Lax${securePart}`;
 }
 
+export function parentDomainSetCookieHeader(
+  name: string,
+  value: string,
+  options: AuthCookieOptions & { maxAge: number },
+): string {
+  const domainPart = options.domain ? `; Domain=${options.domain}` : "";
+  const securePart = options.secure ? "; Secure" : "";
+  return `${name}=${value}; Path=${options.path}; Max-Age=${options.maxAge}; SameSite=${options.sameSite}${domainPart}${securePart}`;
+}
+
+export function copySetCookieHeaders(from: Headers, to: Headers): void {
+  const cookies =
+    typeof from.getSetCookie === "function" ? from.getSetCookie() : [];
+  for (const cookie of cookies) {
+    to.append("Set-Cookie", cookie);
+  }
+}
+
 type AuthCookieWriter = {
   appendHeader: (name: string, value: string) => void;
-  setCookie: (
-    name: string,
-    value: string,
-    options: AuthCookieOptions & { maxAge: number },
-  ) => void;
 };
 
 /**
  * Re-emit matching auth cookies on `.pvnavigator.de` and expire the host-only
- * copies. Existing hub sessions were written without Domain and are invisible
- * to speicher.pvnavigator.de until this runs.
+ * copies. Both headers are appended as raw Set-Cookie so Next.js cannot
+ * collapse them by cookie name.
  */
 export function rehomeAuthCookiesToParentDomain(
   cookies: ReadonlyArray<{ name: string; value: string }>,
@@ -124,9 +192,20 @@ export function rehomeAuthCookiesToParentDomain(
       "Set-Cookie",
       hostOnlyExpireSetCookieHeader(cookie.name, parent.secure),
     );
-    writer.setCookie(cookie.name, cookie.value, {
-      ...parent,
-      maxAge: 400 * 24 * 60 * 60,
-    });
+    writer.appendHeader(
+      "Set-Cookie",
+      parentDomainSetCookieHeader(cookie.name, cookie.value, {
+        ...parent,
+        maxAge: PARENT_COOKIE_MAX_AGE,
+      }),
+    );
   }
+}
+
+export function authCookieWriter(headers: Headers): AuthCookieWriter {
+  return {
+    appendHeader: (name, value) => {
+      headers.append(name, value);
+    },
+  };
 }

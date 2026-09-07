@@ -19,6 +19,7 @@ export async function createServerSupabaseClient() {
     undefined,
     headerStore.get("host"),
     headerStore.get("x-forwarded-host"),
+    headerStore.get("origin"),
   );
   const cookieOptions = getAuthCookieOptions(hostname);
 
