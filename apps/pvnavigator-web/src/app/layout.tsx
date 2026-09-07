@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 
+import { RehomeAuthCookies } from "@/components/auth/RehomeAuthCookies";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getServerUser } from "@/lib/auth";
 
@@ -32,6 +33,7 @@ export default async function RootLayout({
   return (
     <html lang="de">
       <body className={`${inter.variable} antialiased bg-[#FAFBFC] text-[#0F172A]`}>
+        <RehomeAuthCookies />
         <div className="flex min-h-screen flex-col">
           <SiteHeader userEmail={user?.email ?? null} />
           <main className="flex-1">{children}</main>

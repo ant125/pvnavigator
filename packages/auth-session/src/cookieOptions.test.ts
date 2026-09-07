@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  authCookiesFromDocumentCookie,
   expireHostOnlyAuthCookies,
   getAuthCookieOptions,
   isSupabaseAuthCookieName,
@@ -226,6 +227,23 @@ describe("serializeAuthSetCookie", () => {
     );
     expect(header).toContain("sb-x-auth-token=%7B%22a%22%3A1%2C%22b%22%3A2%7D");
     expect(header).toContain("Domain=.pvnavigator.de");
+  });
+});
+
+describe("authCookiesFromDocumentCookie", () => {
+  it("keeps supabase auth cookies and values that contain =", () => {
+    expect(
+      authCookiesFromDocumentCookie(
+        "sb-ftxgcpebzrhvifjnjivm-auth-token=base64-abc=; other=1; sb-ftxgcpebzrhvifjnjivm-auth-token.0=chunk",
+      ),
+    ).toEqual([
+      { name: "sb-ftxgcpebzrhvifjnjivm-auth-token", value: "base64-abc=" },
+      { name: "sb-ftxgcpebzrhvifjnjivm-auth-token.0", value: "chunk" },
+    ]);
+  });
+
+  it("ignores empty input", () => {
+    expect(authCookiesFromDocumentCookie("")).toEqual([]);
   });
 });
 

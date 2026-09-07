@@ -17,7 +17,7 @@ type SearchParams = Promise<{ next?: string | string[]; error?: string | string[
 export default async function AnmeldenPage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
   const rawNext = Array.isArray(sp.next) ? sp.next[0] : sp.next;
-  const nextPath = parseAuthNextParam(rawNext, "/");
+  const nextPath = parseAuthNextParam(rawNext, "/konto");
   const error = signInErrorFromQuery(Array.isArray(sp.error) ? sp.error[0] : sp.error);
   const configured = isSupabaseConfigured();
 

@@ -126,7 +126,11 @@ export function hubSignInErrorUrl(code: string, nextRaw: unknown): string {
 }
 
 export function hubPostLoginLocation(nextRaw: unknown): string {
-  return getHubAuthContinueUrl(nextRaw);
+  const dest = resolvePostLoginRedirect(nextRaw, "/konto");
+  if (dest.startsWith("http")) {
+    return getHubAuthContinueUrl(nextRaw);
+  }
+  return new URL(dest, `${getHubOrigin()}/`).toString();
 }
 
 export async function getServerUser(): Promise<User | null> {

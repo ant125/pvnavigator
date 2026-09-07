@@ -1,5 +1,6 @@
 export {
   appendAuthCookiesFromSetAll,
+  authCookiesFromDocumentCookie,
   authCookieWriter,
   copySetCookieHeaders,
   expireHostOnlyAuthCookies,
@@ -10,6 +11,7 @@ export {
   mergeAuthCookieOptions,
   parentDomainSetCookieHeader,
   rehomeAuthCookiesToParentDomain,
+  rehomeReadableAuthCookiesInBrowser,
   resolveAuthCookieDomain,
   resolveRequestHostname,
   serializeAuthSetCookie,

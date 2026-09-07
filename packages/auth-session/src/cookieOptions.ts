@@ -283,3 +283,44 @@ export function authCookieWriter(headers: Headers): AuthCookieWriter {
     },
   };
 }
+
+/**
+ * Parses `document.cookie`. Values may contain `=`; split on the first one.
+ */
+export function authCookiesFromDocumentCookie(
+  raw: string,
+): Array<{ name: string; value: string }> {
+  const cookies: Array<{ name: string; value: string }> = [];
+  if (!raw) return cookies;
+  for (const part of raw.split(";")) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const name = trimmed.slice(0, eq);
+    const value = trimmed.slice(eq + 1);
+    if (!isSupabaseAuthCookieName(name) || !value) continue;
+    cookies.push({ name, value });
+  }
+  return cookies;
+}
+
+/**
+ * Copy readable `sb-*-auth-token` cookies onto `.pvnavigator.de`.
+ * Next.js often stores a host-only copy; SpeicherGrenze never sees that.
+ * No-op on localhost and when cookies are HttpOnly.
+ */
+export function rehomeReadableAuthCookiesInBrowser(): number {
+  if (typeof document === "undefined" || typeof window === "undefined") {
+    return 0;
+  }
+  const hostname = window.location.hostname;
+  if (!resolveAuthCookieDomain(hostname)) return 0;
+
+  let count = 0;
+  for (const cookie of authCookiesFromDocumentCookie(document.cookie)) {
+    document.cookie = serializeAuthSetCookie(cookie.name, cookie.value, hostname);
+    count += 1;
+  }
+  return count;
+}

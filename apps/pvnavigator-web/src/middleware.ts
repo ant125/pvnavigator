@@ -6,9 +6,11 @@ import {
   copySetCookieHeaders,
   getAuthCookieOptions,
   getHubAuthContinueUrl,
+  getHubOrigin,
   isHubAuthMutationPath,
   parseAuthNextParam,
   rehomeAuthCookiesToParentDomain,
+  resolvePostLoginRedirect,
   resolveRequestHostname,
 } from "@pv-auth/session";
 
@@ -73,8 +75,14 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (request.method === "GET" && request.nextUrl.pathname === "/anmelden" && user) {
-    const nextParam = parseAuthNextParam(request.nextUrl.searchParams.get("next"), "/");
-    const location = getHubAuthContinueUrl(nextParam);
+    const nextParam = parseAuthNextParam(
+      request.nextUrl.searchParams.get("next"),
+      "/konto",
+    );
+    const dest = resolvePostLoginRedirect(nextParam, "/konto");
+    const location = dest.startsWith("http")
+      ? getHubAuthContinueUrl(nextParam)
+      : new URL(dest, `${getHubOrigin()}/`).toString();
     const redirectResponse = withCopiedCookies(response, NextResponse.redirect(location));
     if (!wroteAuthCookies) {
       applyAuthCookies(request, redirectResponse, hostname);
