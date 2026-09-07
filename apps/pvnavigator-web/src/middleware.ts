@@ -4,7 +4,9 @@ import {
   authCookieWriter,
   copySetCookieHeaders,
   getAuthCookieOptions,
+  getHubAuthContinueUrl,
   getHubOrigin,
+  isHubAuthMutationPath,
   mergeAuthCookieOptions,
   parseAuthNextParam,
   rehomeAuthCookiesToParentDomain,
@@ -26,6 +28,10 @@ function withCopiedCookies(from: NextResponse, to: NextResponse): NextResponse {
 }
 
 export async function middleware(request: NextRequest) {
+  if (isHubAuthMutationPath(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -68,12 +74,10 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (request.method === "GET" && request.nextUrl.pathname === "/anmelden" && user) {
-    const dest = resolvePostLoginRedirect(
-      parseAuthNextParam(request.nextUrl.searchParams.get("next"), "/"),
-      "/konto",
-    );
+    const nextParam = parseAuthNextParam(request.nextUrl.searchParams.get("next"), "/");
+    const dest = resolvePostLoginRedirect(nextParam, "/konto");
     const location = dest.startsWith("http")
-      ? dest
+      ? getHubAuthContinueUrl(nextParam)
       : new URL(dest, `${getHubOrigin()}/`).toString();
     const redirectResponse = withCopiedCookies(response, NextResponse.redirect(location));
     applyAuthCookies(request, redirectResponse, hostname);

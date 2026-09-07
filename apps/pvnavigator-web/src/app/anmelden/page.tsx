@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { getServerUser, parseAuthNextParam, resolvePostLoginRedirect } from "@/lib/auth";
+import { getServerUser, hubPostLoginLocation, parseAuthNextParam, signInErrorFromQuery } from "@/lib/auth";
 import { AuthEnvMissing } from "@/components/auth/AuthEnvMissing";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -12,18 +12,19 @@ export const metadata: Metadata = {
   description: "Bei PVNavigator mit E-Mail und Passwort anmelden.",
 };
 
-type SearchParams = Promise<{ next?: string | string[] }>;
+type SearchParams = Promise<{ next?: string | string[]; error?: string | string[] }>;
 
 export default async function AnmeldenPage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
   const rawNext = Array.isArray(sp.next) ? sp.next[0] : sp.next;
   const nextPath = parseAuthNextParam(rawNext, "/");
+  const error = signInErrorFromQuery(Array.isArray(sp.error) ? sp.error[0] : sp.error);
   const configured = isSupabaseConfigured();
 
   if (configured) {
     const user = await getServerUser();
     if (user) {
-      redirect(resolvePostLoginRedirect(nextPath, "/konto"));
+      redirect(hubPostLoginLocation(nextPath));
     }
   }
 
@@ -32,7 +33,7 @@ export default async function AnmeldenPage({ searchParams }: { searchParams: Sea
       {!configured ? (
         <AuthEnvMissing />
       ) : (
-        <SignInForm nextPath={nextPath} />
+        <SignInForm nextPath={nextPath} error={error} />
       )}
     </AuthShell>
   );

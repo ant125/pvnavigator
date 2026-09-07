@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import {
   getEmailConfirmationRedirectUrl,
   mapSupabaseAuthErrorToUserMessage,
-  resolvePostLoginRedirect,
 } from "@/lib/auth";
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
@@ -63,44 +62,4 @@ export async function signUpAction(
     success: true,
     needsConfirmation: true,
   };
-}
-
-export type SignInFormState = {
-  error: string;
-  redirectTo?: string;
-};
-
-export async function signInAction(_prev: SignInFormState, formData: FormData): Promise<SignInFormState> {
-  if (!isSupabaseConfigured()) {
-    return { error: "Anmeldung ist nicht konfiguriert." };
-  }
-
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-  const nextRaw = formData.get("next");
-  const next = resolvePostLoginRedirect(nextRaw, "/");
-
-  if (!email || !password) {
-    return { error: "Bitte E-Mail und Passwort eingeben." };
-  }
-
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    return { error: mapSupabaseAuthErrorToUserMessage(error) };
-  }
-
-  // Document navigation so middleware can attach Domain=.pvnavigator.de on a
-  // top-level response. Next.js fetch-action redirect() streams RSC internally
-  // and strips Set-Cookie from that hop.
-  return { error: "", redirectTo: next };
-}
-
-export async function logoutAction() {
-  if (isSupabaseConfigured()) {
-    const supabase = await createServerSupabaseClient();
-    await supabase.auth.signOut();
-  }
-  redirect("/");
 }

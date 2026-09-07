@@ -1,24 +1,25 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-
-import { signInAction, type SignInFormState } from "@/app/actions/auth";
 import { AuthFormErrorAlert } from "@/components/auth/AuthFormErrorAlert";
 
-const signInInitial: SignInFormState = { error: "" };
-
-export function SignInForm({ nextPath }: { nextPath: string }) {
-  const [state, formAction, pending] = useActionState(signInAction, signInInitial);
-  const busy = pending || Boolean(state.redirectTo);
-
-  useEffect(() => {
-    if (!state.redirectTo) return;
-    window.location.assign(state.redirectTo);
-  }, [state.redirectTo]);
+export function SignInForm({
+  nextPath,
+  error,
+}: {
+  nextPath: string;
+  error?: string;
+}) {
+  const [pending, setPending] = useState(false);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form
+      action="/auth/sign-in"
+      method="post"
+      className="space-y-4"
+      onSubmit={() => setPending(true)}
+    >
       <input type="hidden" name="next" value={nextPath} readOnly />
       <div>
         <label htmlFor="signin-email" className="block text-sm font-medium text-[#0F172A]">
@@ -30,7 +31,7 @@ export function SignInForm({ nextPath }: { nextPath: string }) {
           type="email"
           autoComplete="email"
           required
-          disabled={busy}
+          disabled={pending}
           className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2 disabled:opacity-60"
         />
       </div>
@@ -44,17 +45,17 @@ export function SignInForm({ nextPath }: { nextPath: string }) {
           type="password"
           autoComplete="current-password"
           required
-          disabled={busy}
+          disabled={pending}
           className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2 disabled:opacity-60"
         />
       </div>
-      {state.error ? <AuthFormErrorAlert message={state.error} /> : null}
+      {error ? <AuthFormErrorAlert message={error} /> : null}
       <button
         type="submit"
-        disabled={busy}
+        disabled={pending}
         className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-[1.03] active:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {busy ? "Wird angemeldet…" : "Anmelden"}
+        {pending ? "Wird angemeldet…" : "Anmelden"}
       </button>
       <p className="text-center text-sm text-[#64748B]">
         Noch kein Konto?{" "}

@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  expireHostOnlyAuthCookies,
   getAuthCookieOptions,
   isSupabaseAuthCookieName,
   rehomeAuthCookiesToParentDomain,
   resolveAuthCookieDomain,
   resolveRequestHostname,
+  serializeAuthSetCookie,
   supabaseProjectRefFromUrl,
 } from "./cookieOptions";
 
@@ -141,7 +143,7 @@ describe("supabaseProjectRefFromUrl", () => {
 });
 
 describe("rehomeAuthCookiesToParentDomain", () => {
-  it("expires host-only copies and writes parent-domain cookies", () => {
+  it("writes parent-domain cookies without a host-only expire", () => {
     process.env.NODE_ENV = "production";
     delete process.env.AUTH_COOKIE_DOMAIN;
     delete process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN;
@@ -161,13 +163,10 @@ describe("rehomeAuthCookiesToParentDomain", () => {
       "pvnavigator.de",
     );
 
-    expect(headers).toHaveLength(2);
-    expect(headers[0]).toContain("sb-ftxgcpebzrhvifjnjivm-auth-token=");
-    expect(headers[0]).toContain("Max-Age=0");
-    expect(headers[0]).not.toContain("Domain=");
-    expect(headers[1]).toContain("sb-ftxgcpebzrhvifjnjivm-auth-token=session");
-    expect(headers[1]).toContain("Domain=.pvnavigator.de");
-    expect(headers[1]).not.toContain("Max-Age=0");
+    expect(headers).toHaveLength(1);
+    expect(headers[0]).toContain("sb-ftxgcpebzrhvifjnjivm-auth-token=session");
+    expect(headers[0]).toContain("Domain=.pvnavigator.de");
+    expect(headers[0]).not.toContain("Max-Age=0");
   });
 
   it("does nothing on localhost", () => {
@@ -182,5 +181,59 @@ describe("rehomeAuthCookiesToParentDomain", () => {
       { appendHeader: setCookie },
       "localhost",
     );
+  });
+});
+
+describe("serializeAuthSetCookie", () => {
+  it("sets Domain=.pvnavigator.de on production hosts", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.AUTH_COOKIE_DOMAIN;
+    delete process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN;
+
+    const header = serializeAuthSetCookie(
+      "sb-ftxgcpebzrhvifjnjivm-auth-token",
+      "base64-session",
+      "pvnavigator.de",
+    );
+
+    expect(header.startsWith("sb-ftxgcpebzrhvifjnjivm-auth-token=base64-session;")).toBe(
+      true,
+    );
+    expect(header).toContain("Domain=.pvnavigator.de");
+    expect(header).toContain("Path=/");
+    expect(header).toContain("SameSite=Lax");
+    expect(header).toContain("Secure");
+    expect(header).not.toContain("Max-Age=0");
+  });
+
+  it("omits Domain on localhost", () => {
+    process.env.NODE_ENV = "development";
+    delete process.env.AUTH_COOKIE_DOMAIN;
+    delete process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN;
+    expect(serializeAuthSetCookie("sb-x-auth-token", "v", "localhost")).not.toContain(
+      "Domain=",
+    );
+  });
+});
+
+describe("expireHostOnlyAuthCookies", () => {
+  it("expires only supabase auth cookies without Domain", () => {
+    process.env.NODE_ENV = "production";
+    const headers: string[] = [];
+    expireHostOnlyAuthCookies(
+      [
+        { name: "sb-ftxgcpebzrhvifjnjivm-auth-token" },
+        { name: "other" },
+      ],
+      {
+        appendHeader: (_name, value) => {
+          headers.push(value);
+        },
+      },
+      "pvnavigator.de",
+    );
+    expect(headers).toHaveLength(1);
+    expect(headers[0]).toContain("Max-Age=0");
+    expect(headers[0]).not.toContain("Domain=");
   });
 });

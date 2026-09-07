@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 
-import { logoutAction } from "@/app/actions/auth";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getServerUser } from "@/lib/auth";
 
@@ -34,7 +33,7 @@ export default async function RootLayout({
     <html lang="de">
       <body className={`${inter.variable} antialiased bg-[#FAFBFC] text-[#0F172A]`}>
         <div className="flex min-h-screen flex-col">
-          <SiteHeader userEmail={user?.email ?? null} logoutAction={logoutAction} />
+          <SiteHeader userEmail={user?.email ?? null} />
           <main className="flex-1">{children}</main>
           <footer className="border-t border-[#E2E8F0] bg-white">
             <div className="mx-auto max-w-6xl px-4 py-5">

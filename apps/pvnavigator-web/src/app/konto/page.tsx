@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSpeicherGrenzeCalculateUrl, getSpeicherGrenzeOrigin } from "@pv-auth/session";
+import { AUTH_SIGN_OUT_PATH, getSpeicherGrenzeCalculateUrl, getSpeicherGrenzeOrigin } from "@pv-auth/session";
 
-import { logoutAction } from "@/app/actions/auth";
 import { AuthEnvMissing } from "@/components/auth/AuthEnvMissing";
 import { getServerUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
@@ -151,7 +150,7 @@ export default async function KontoPage() {
               <Link href="/" className="text-sm font-medium text-[#64748B] transition-colors hover:text-[#0F172A]">
                 Zur Startseite
               </Link>
-              <form action={logoutAction}>
+              <form action={AUTH_SIGN_OUT_PATH} method="post">
                 <button type="submit" className={ghostBtn}>
                   Abmelden
                 </button>

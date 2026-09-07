@@ -2,8 +2,11 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   AUTH_NEXT_SPEICHER_CALCULATE,
+  getHubAuthContinueUrl,
   getHubLoginUrlForSpeicherCalculate,
   getSpeicherGrenzeCalculateUrl,
+  isAllowedHubFormOrigin,
+  isHubAuthMutationPath,
   parseAuthNextParam,
   resolvePostLoginRedirect,
   sanitizeNextPath,
@@ -85,5 +88,44 @@ describe("getSpeicherGrenzeCalculateUrl", () => {
     expect(getSpeicherGrenzeCalculateUrl()).toBe(
       "http://localhost:3001/calculate",
     );
+  });
+});
+
+describe("getHubAuthContinueUrl", () => {
+  it("keeps the bounce on the hub origin with the symbolic next", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    expect(getHubAuthContinueUrl(AUTH_NEXT_SPEICHER_CALCULATE)).toBe(
+      "https://pvnavigator.de/auth/continue?next=speicher-calculate",
+    );
+  });
+});
+
+describe("isHubAuthMutationPath", () => {
+  it("matches sign-in and sign-out only", () => {
+    expect(isHubAuthMutationPath("/auth/sign-in")).toBe(true);
+    expect(isHubAuthMutationPath("/auth/sign-out")).toBe(true);
+    expect(isHubAuthMutationPath("/auth/continue")).toBe(false);
+    expect(isHubAuthMutationPath("/anmelden")).toBe(false);
+  });
+});
+
+describe("isAllowedHubFormOrigin", () => {
+  it("matches Origin to the public host, including Vercel forwarded hosts", () => {
+    expect(isAllowedHubFormOrigin("https://pvnavigator.de", "pvnavigator.de")).toBe(
+      true,
+    );
+    expect(
+      isAllowedHubFormOrigin(
+        "https://pvnavigator.de",
+        "pvnavigator-web.vercel.app",
+        "pvnavigator.de",
+      ),
+    ).toBe(true);
+    expect(isAllowedHubFormOrigin("https://evil.example", "pvnavigator.de")).toBe(
+      false,
+    );
+    expect(isAllowedHubFormOrigin(null, "pvnavigator.de")).toBe(false);
   });
 });

@@ -158,7 +158,82 @@ export function parentDomainSetCookieHeader(
 ): string {
   const domainPart = options.domain ? `; Domain=${options.domain}` : "";
   const securePart = options.secure ? "; Secure" : "";
-  return `${name}=${value}; Path=${options.path}; Max-Age=${options.maxAge}; SameSite=${options.sameSite}${domainPart}${securePart}`;
+  return `${name}=${value}; Path=${options.path}; Max-Age=${options.maxAge}; SameSite=Lax${domainPart}${securePart}`;
+}
+
+type AuthSetCookieExtra = {
+  maxAge?: number;
+  httpOnly?: boolean;
+};
+
+export type AuthCookieWriter = {
+  appendHeader: (name: string, value: string) => void;
+};
+
+/**
+ * Raw Set-Cookie line. Values are not URI-encoded so they match what
+ * `@supabase/ssr` stores. Prefer this over `cookies().set()` — Next.js
+ * Server Actions drop `Domain` and strip `Set-Cookie` on `redirect()`.
+ */
+export function serializeAuthSetCookie(
+  name: string,
+  value: string,
+  hostname?: string,
+  extra?: AuthSetCookieExtra,
+): string {
+  const options = getAuthCookieOptions(hostname);
+  const maxAge = extra?.maxAge ?? PARENT_COOKIE_MAX_AGE;
+  const parts = [
+    `${name}=${value}`,
+    `Path=${options.path}`,
+    `Max-Age=${Math.trunc(maxAge)}`,
+  ];
+  if (options.domain) {
+    parts.push(`Domain=${options.domain}`);
+  }
+  if (maxAge <= 0) {
+    parts.push(`Expires=${HOST_ONLY_EXPIRE_DATE}`);
+  }
+  parts.push("SameSite=Lax");
+  if (options.secure) {
+    parts.push("Secure");
+  }
+  if (extra?.httpOnly) {
+    parts.push("HttpOnly");
+  }
+  return parts.join("; ");
+}
+
+export function appendAuthCookiesFromSetAll(
+  cookiesToSet: ReadonlyArray<{
+    name: string;
+    value: string;
+    options?: AuthSetCookieExtra;
+  }>,
+  writer: AuthCookieWriter,
+  hostname?: string,
+): void {
+  for (const cookie of cookiesToSet) {
+    writer.appendHeader(
+      "Set-Cookie",
+      serializeAuthSetCookie(cookie.name, cookie.value, hostname, cookie.options),
+    );
+  }
+}
+
+export function expireHostOnlyAuthCookies(
+  cookies: ReadonlyArray<{ name: string }>,
+  writer: AuthCookieWriter,
+  hostname?: string,
+): void {
+  const secure = getAuthCookieOptions(hostname).secure;
+  const names = new Set<string>();
+  for (const cookie of cookies) {
+    if (isSupabaseAuthCookieName(cookie.name)) names.add(cookie.name);
+  }
+  for (const name of names) {
+    writer.appendHeader("Set-Cookie", hostOnlyExpireSetCookieHeader(name, secure));
+  }
 }
 
 export function copySetCookieHeaders(from: Headers, to: Headers): void {
@@ -169,14 +244,12 @@ export function copySetCookieHeaders(from: Headers, to: Headers): void {
   }
 }
 
-type AuthCookieWriter = {
-  appendHeader: (name: string, value: string) => void;
-};
-
 /**
- * Re-emit matching auth cookies on `.pvnavigator.de` and expire the host-only
- * copies. Both headers are appended as raw Set-Cookie so Next.js cannot
- * collapse them by cookie name.
+ * Re-emit matching auth cookies on `.pvnavigator.de`.
+ *
+ * Host-only `Max-Age=0` is not sent here: Chrome can treat a nameless expire
+ * without Domain as deleting the parent-domain cookie on the same response.
+ * Login/logout Route Handlers write Domain cookies explicitly instead.
  */
 export function rehomeAuthCookiesToParentDomain(
   cookies: ReadonlyArray<{ name: string; value: string }>,
@@ -188,10 +261,6 @@ export function rehomeAuthCookiesToParentDomain(
 
   for (const cookie of cookies) {
     if (!isSupabaseAuthCookieName(cookie.name) || !cookie.value) continue;
-    writer.appendHeader(
-      "Set-Cookie",
-      hostOnlyExpireSetCookieHeader(cookie.name, parent.secure),
-    );
     writer.appendHeader(
       "Set-Cookie",
       parentDomainSetCookieHeader(cookie.name, cookie.value, {

@@ -2,6 +2,13 @@ import type { User } from "@supabase/supabase-js";
 
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
+import {
+  getHubAuthContinueUrl,
+  getHubOrigin,
+  parseAuthNextParam,
+  resolvePostLoginRedirect,
+} from "@pv-auth/session";
+
 export {
   parseAuthNextParam,
   resolvePostLoginRedirect,
@@ -78,6 +85,51 @@ export function mapSupabaseAuthErrorToUserMessage(
   }
 
   return SUPABASE_AUTH_FALLBACK;
+}
+
+const SIGN_IN_ERROR_MESSAGES: Record<string, string> = {
+  missing: "Bitte E-Mail und Passwort eingeben.",
+  invalid: "Die E-Mail-Adresse oder das Passwort ist falsch.",
+  unconfirmed: "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.",
+  config: "Anmeldung ist nicht konfiguriert.",
+  generic: SUPABASE_AUTH_FALLBACK,
+};
+
+export function signInErrorFromQuery(raw: unknown): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  return SIGN_IN_ERROR_MESSAGES[raw];
+}
+
+export function mapSupabaseAuthErrorToSignInCode(
+  error: Pick<Error, "message"> & { code?: string },
+): string {
+  const message = error.message.toLowerCase();
+  const code = (error.code ?? "").toLowerCase();
+  if (message.includes("invalid login credentials") || code === "invalid_credentials") {
+    return "invalid";
+  }
+  if (message.includes("email not confirmed") || code === "email_not_confirmed") {
+    return "unconfirmed";
+  }
+  return "generic";
+}
+
+export function hubSignInErrorUrl(code: string, nextRaw: unknown): string {
+  const url = new URL("/anmelden", getHubOrigin());
+  url.searchParams.set("error", SIGN_IN_ERROR_MESSAGES[code] ? code : "generic");
+  const next = parseAuthNextParam(nextRaw, "/");
+  if (next && next !== "/") {
+    url.searchParams.set("next", next);
+  }
+  return url.toString();
+}
+
+export function hubPostLoginLocation(nextRaw: unknown): string {
+  const dest = resolvePostLoginRedirect(nextRaw, "/");
+  if (dest.startsWith("http")) {
+    return getHubAuthContinueUrl(nextRaw);
+  }
+  return new URL(dest, `${getHubOrigin()}/`).toString();
 }
 
 export async function getServerUser(): Promise<User | null> {

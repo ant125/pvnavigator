@@ -1,4 +1,7 @@
 export const AUTH_NEXT_SPEICHER_CALCULATE = "speicher-calculate";
+export const AUTH_SIGN_IN_PATH = "/auth/sign-in";
+export const AUTH_SIGN_OUT_PATH = "/auth/sign-out";
+export const AUTH_CONTINUE_PATH = "/auth/continue";
 
 const DEFAULT_HUB_ORIGIN = "https://pvnavigator.de";
 const DEFAULT_SPEICHER_ORIGIN = "https://speicher.pvnavigator.de";
@@ -61,6 +64,51 @@ export function getHubKontoUrl(): string {
 
 export function getHubSignupUrl(): string {
   return `${getHubOrigin()}/konto-erstellen`;
+}
+
+function hostFromHeader(raw: string | null | undefined): string | undefined {
+  const host = raw?.split(",")[0]?.trim().split(":")[0]?.toLowerCase();
+  return host || undefined;
+}
+
+export function isHubAuthMutationPath(pathname: string): boolean {
+  return pathname === AUTH_SIGN_IN_PATH || pathname === AUTH_SIGN_OUT_PATH;
+}
+
+/**
+ * CSRF check for document POSTs: Origin host must match the public Host
+ * (X-Forwarded-Host on Vercel, otherwise Host).
+ */
+export function isAllowedHubFormOrigin(
+  originHeader: string | null,
+  hostHeader?: string | null,
+  forwardedHost?: string | null,
+  requestOrigin?: string,
+): boolean {
+  if (!originHeader) return false;
+  try {
+    const originHost = new URL(originHeader).hostname.toLowerCase();
+    const requestHost =
+      hostFromHeader(forwardedHost) ??
+      hostFromHeader(hostHeader) ??
+      (requestOrigin ? new URL(requestOrigin).hostname.toLowerCase() : undefined);
+    return Boolean(requestHost) && originHost === requestHost;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Same-origin hop after login so Domain=.pvnavigator.de is stored before a
+ * cross-subdomain navigation to SpeicherGrenze.
+ */
+export function getHubAuthContinueUrl(nextRaw: unknown): string {
+  const url = new URL(AUTH_CONTINUE_PATH, getHubOrigin());
+  const next = parseAuthNextParam(nextRaw, "/");
+  if (next && next !== "/") {
+    url.searchParams.set("next", next);
+  }
+  return url.toString();
 }
 
 /**

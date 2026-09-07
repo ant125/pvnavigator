@@ -18,10 +18,9 @@ const navMuted = "text-sm font-medium text-[#64748B] transition-colors hover:tex
 
 type SiteHeaderProps = {
   userEmail: string | null;
-  logoutAction: () => Promise<void>;
 };
 
-export function SiteHeader({ userEmail, logoutAction }: SiteHeaderProps) {
+export function SiteHeader({ userEmail }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const authenticated = Boolean(userEmail);
   const hasSectionNav = navItems.length > 0;
@@ -59,7 +58,7 @@ export function SiteHeader({ userEmail, logoutAction }: SiteHeaderProps) {
                   {userEmail}
                 </span>
               ) : null}
-              <form action={logoutAction}>
+              <form action="/auth/sign-out" method="post">
                 <button type="submit" className={ghostBtn}>
                   Abmelden
                 </button>
@@ -125,7 +124,7 @@ export function SiteHeader({ userEmail, logoutAction }: SiteHeaderProps) {
                 >
                   Mein Konto
                 </Link>
-                <form action={logoutAction}>
+                <form action="/auth/sign-out" method="post">
                   <button
                     type="submit"
                     className={`${ghostBtn} w-full`}
