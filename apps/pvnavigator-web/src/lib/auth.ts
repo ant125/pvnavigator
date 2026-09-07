@@ -10,6 +10,7 @@ import {
 } from "@pv-auth/session";
 
 export {
+  getHubAuthContinueUrl,
   parseAuthNextParam,
   resolvePostLoginRedirect,
   sanitizeNextPath,
@@ -125,11 +126,7 @@ export function hubSignInErrorUrl(code: string, nextRaw: unknown): string {
 }
 
 export function hubPostLoginLocation(nextRaw: unknown): string {
-  const dest = resolvePostLoginRedirect(nextRaw, "/");
-  if (dest.startsWith("http")) {
-    return getHubAuthContinueUrl(nextRaw);
-  }
-  return new URL(dest, `${getHubOrigin()}/`).toString();
+  return getHubAuthContinueUrl(nextRaw);
 }
 
 export async function getServerUser(): Promise<User | null> {

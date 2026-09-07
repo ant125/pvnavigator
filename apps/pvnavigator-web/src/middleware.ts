@@ -1,15 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
+  appendAuthCookiesFromSetAll,
   authCookieWriter,
   copySetCookieHeaders,
   getAuthCookieOptions,
-  getHubOrigin,
+  getHubAuthContinueUrl,
   isHubAuthMutationPath,
-  mergeAuthCookieOptions,
   parseAuthNextParam,
   rehomeAuthCookiesToParentDomain,
-  resolvePostLoginRedirect,
   resolveRequestHostname,
 } from "@pv-auth/session";
 
@@ -38,7 +37,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request,
   });
 
@@ -49,6 +48,7 @@ export async function middleware(request: NextRequest) {
     request.headers.get("origin"),
   );
   const cookieOptions = getAuthCookieOptions(hostname);
+  let wroteAuthCookies = false;
 
   const supabase = createServerClient(url, key, {
     cookieOptions,
@@ -58,12 +58,12 @@ export async function middleware(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({
-          request,
-        });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, mergeAuthCookieOptions(options, hostname)),
+        appendAuthCookiesFromSetAll(
+          cookiesToSet,
+          authCookieWriter(response.headers),
+          hostname,
         );
+        wroteAuthCookies = true;
       },
     },
   });
@@ -74,19 +74,17 @@ export async function middleware(request: NextRequest) {
 
   if (request.method === "GET" && request.nextUrl.pathname === "/anmelden" && user) {
     const nextParam = parseAuthNextParam(request.nextUrl.searchParams.get("next"), "/");
-    const dest = resolvePostLoginRedirect(nextParam, "/konto");
-    // Never HTTP-redirect a logged-in hub session to SpeicherGrenze: that
-    // bounces through /auth/continue → /calculate → /anmelden forever when
-    // the parent-domain cookie is missing. Fresh login uses /auth/continue.
-    const location = dest.startsWith("http")
-      ? new URL("/konto", `${getHubOrigin()}/`).toString()
-      : new URL(dest, `${getHubOrigin()}/`).toString();
+    const location = getHubAuthContinueUrl(nextParam);
     const redirectResponse = withCopiedCookies(response, NextResponse.redirect(location));
-    applyAuthCookies(request, redirectResponse, hostname);
+    if (!wroteAuthCookies) {
+      applyAuthCookies(request, redirectResponse, hostname);
+    }
     return redirectResponse;
   }
 
-  applyAuthCookies(request, response, hostname);
+  if (!wroteAuthCookies) {
+    applyAuthCookies(request, response, hostname);
+  }
   return response;
 }
 

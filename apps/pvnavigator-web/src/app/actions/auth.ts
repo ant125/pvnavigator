@@ -40,7 +40,7 @@ export async function signUpAction(
     return { ...initialSignUpState, error: "Die Passwörter stimmen nicht überein." };
   }
 
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient({ persistCookies: true });
   const { data, error } = await supabase.auth.signUp({
     email,
     password,

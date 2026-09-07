@@ -3,6 +3,7 @@ import {
   authCookieWriter,
   getHubOrigin,
   getSpeicherGrenzeCalculateUrl,
+  getSpeicherGrenzeOrigin,
   parseAuthNextParam,
   rehomeAuthCookiesToParentDomain,
   resolvePostLoginRedirect,
@@ -22,7 +23,11 @@ function continueLocation(request: NextRequest): string {
 
 export async function GET(request: NextRequest) {
   const hub = getHubOrigin();
+  const speicherHome = `${getSpeicherGrenzeOrigin()}/`;
   const location = continueLocation(request);
+  const bounceFallback = location.startsWith(getSpeicherGrenzeOrigin())
+    ? speicherHome
+    : `${hub}/`;
   const hostname = resolveRequestHostname(
     request.nextUrl.hostname,
     request.headers.get("host"),
@@ -43,12 +48,12 @@ export async function GET(request: NextRequest) {
   <script>
   (function () {
     var dest = ${JSON.stringify(location)};
-    var home = ${JSON.stringify(`${hub}/`)};
+    var fallback = ${JSON.stringify(bounceFallback)};
     try {
       var key = "pv-auth-continue-ts";
       var prev = Number(sessionStorage.getItem(key) || 0);
       if (Date.now() - prev < 8000) {
-        location.replace(home);
+        location.replace(fallback);
         return;
       }
       sessionStorage.setItem(key, String(Date.now()));
