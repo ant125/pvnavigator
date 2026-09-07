@@ -76,7 +76,8 @@ export function isHubAuthMutationPath(pathname: string): boolean {
   return (
     pathname === AUTH_SIGN_IN_PATH ||
     pathname === AUTH_SIGN_OUT_PATH ||
-    pathname === AUTH_CALLBACK_PATH
+    pathname === AUTH_CALLBACK_PATH ||
+    pathname === AUTH_CONTINUE_PATH
   );
 }
 

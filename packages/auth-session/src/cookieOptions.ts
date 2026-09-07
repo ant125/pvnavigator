@@ -151,6 +151,11 @@ export function hostOnlyExpireSetCookieHeader(name: string, secure: boolean): st
   return `${name}=; Path=/; Max-Age=0; Expires=${HOST_ONLY_EXPIRE_DATE}; SameSite=Lax${securePart}`;
 }
 
+function cookieHeaderValue(value: string): string {
+  if (/[;,\s"]/.test(value)) return encodeURIComponent(value);
+  return value;
+}
+
 export function parentDomainSetCookieHeader(
   name: string,
   value: string,
@@ -158,7 +163,7 @@ export function parentDomainSetCookieHeader(
 ): string {
   const domainPart = options.domain ? `; Domain=${options.domain}` : "";
   const securePart = options.secure ? "; Secure" : "";
-  return `${name}=${value}; Path=${options.path}; Max-Age=${options.maxAge}; SameSite=Lax${domainPart}${securePart}`;
+  return `${name}=${cookieHeaderValue(value)}; Path=${options.path}; Max-Age=${options.maxAge}; SameSite=Lax${domainPart}${securePart}`;
 }
 
 type AuthSetCookieExtra = {
@@ -184,7 +189,7 @@ export function serializeAuthSetCookie(
   const options = getAuthCookieOptions(hostname);
   const maxAge = extra?.maxAge ?? PARENT_COOKIE_MAX_AGE;
   const parts = [
-    `${name}=${value}`,
+    `${name}=${cookieHeaderValue(value)}`,
     `Path=${options.path}`,
     `Max-Age=${Math.trunc(maxAge)}`,
   ];

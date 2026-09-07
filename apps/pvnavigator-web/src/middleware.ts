@@ -4,7 +4,6 @@ import {
   authCookieWriter,
   copySetCookieHeaders,
   getAuthCookieOptions,
-  getHubAuthContinueUrl,
   getHubOrigin,
   isHubAuthMutationPath,
   mergeAuthCookieOptions,
@@ -76,8 +75,11 @@ export async function middleware(request: NextRequest) {
   if (request.method === "GET" && request.nextUrl.pathname === "/anmelden" && user) {
     const nextParam = parseAuthNextParam(request.nextUrl.searchParams.get("next"), "/");
     const dest = resolvePostLoginRedirect(nextParam, "/konto");
+    // Never HTTP-redirect a logged-in hub session to SpeicherGrenze: that
+    // bounces through /auth/continue → /calculate → /anmelden forever when
+    // the parent-domain cookie is missing. Fresh login uses /auth/continue.
     const location = dest.startsWith("http")
-      ? getHubAuthContinueUrl(nextParam)
+      ? new URL("/konto", `${getHubOrigin()}/`).toString()
       : new URL(dest, `${getHubOrigin()}/`).toString();
     const redirectResponse = withCopiedCookies(response, NextResponse.redirect(location));
     applyAuthCookies(request, redirectResponse, hostname);

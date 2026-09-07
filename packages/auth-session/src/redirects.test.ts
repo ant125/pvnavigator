@@ -103,11 +103,11 @@ describe("getHubAuthContinueUrl", () => {
 });
 
 describe("isHubAuthMutationPath", () => {
-  it("matches sign-in, sign-out, and callback", () => {
+  it("matches sign-in, sign-out, callback, and continue", () => {
     expect(isHubAuthMutationPath("/auth/sign-in")).toBe(true);
     expect(isHubAuthMutationPath("/auth/sign-out")).toBe(true);
     expect(isHubAuthMutationPath("/auth/callback")).toBe(true);
-    expect(isHubAuthMutationPath("/auth/continue")).toBe(false);
+    expect(isHubAuthMutationPath("/auth/continue")).toBe(true);
     expect(isHubAuthMutationPath("/anmelden")).toBe(false);
   });
 });
