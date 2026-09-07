@@ -229,6 +229,20 @@ describe("serializeAuthSetCookie", () => {
     expect(header).toContain("sb-x-auth-token=%7B%22a%22%3A1%2C%22b%22%3A2%7D");
     expect(header).toContain("Domain=.pvnavigator.de");
   });
+
+  it("can omit Domain for a host-only copy on the current origin", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.AUTH_COOKIE_DOMAIN;
+    delete process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN;
+    const header = serializeAuthSetCookie(
+      "sb-x-auth-token",
+      "session",
+      "speicher.pvnavigator.de",
+      { hostOnly: true },
+    );
+    expect(header).not.toContain("Domain=");
+    expect(header).toContain("Path=/");
+  });
 });
 
 describe("authCookiesFromDocumentCookie", () => {

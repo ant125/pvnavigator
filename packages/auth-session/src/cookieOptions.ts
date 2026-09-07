@@ -169,6 +169,7 @@ export function parentDomainSetCookieHeader(
 type AuthSetCookieExtra = {
   maxAge?: number;
   httpOnly?: boolean;
+  hostOnly?: boolean;
 };
 
 export type AuthCookieWriter = {
@@ -193,7 +194,7 @@ export function serializeAuthSetCookie(
     `Path=${options.path}`,
     `Max-Age=${Math.trunc(maxAge)}`,
   ];
-  if (options.domain) {
+  if (options.domain && extra?.hostOnly !== true) {
     parts.push(`Domain=${options.domain}`);
   }
   if (maxAge <= 0) {

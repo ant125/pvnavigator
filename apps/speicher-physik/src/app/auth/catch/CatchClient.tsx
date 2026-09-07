@@ -1,53 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AUTH_ACCEPT_PATH,
   AUTH_CATCH_PATH,
-  decodeAuthHandoff,
   getHubKontoUrl,
-  getSpeicherGrenzeCalculateUrl,
 } from "@pv-auth/session";
 
 export function CatchClient() {
-  const [status, setStatus] = useState<"working" | "missing" | "failed">("working");
+  const formRef = useRef<HTMLFormElement>(null);
+  const submitted = useRef(false);
+  const [handoff, setHandoff] = useState("");
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    const payload = window.location.hash.replace(/^#/, "");
-    window.history.replaceState(null, "", AUTH_CATCH_PATH);
-    const handoff = decodeAuthHandoff(payload);
-    if (!handoff) {
-      setStatus("missing");
+    if (new URLSearchParams(window.location.search).get("error") === "1") {
+      setFailed(true);
       return;
     }
-
-    void (async () => {
-      try {
-        const body =
-          handoff.type === "cookies"
-            ? { cookies: handoff.cookies }
-            : {
-                access_token: handoff.accessToken,
-                refresh_token: handoff.refreshToken,
-              };
-        const response = await fetch(AUTH_ACCEPT_PATH, {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!response.ok) {
-          setStatus("failed");
-          return;
-        }
-        window.location.replace(getSpeicherGrenzeCalculateUrl());
-      } catch {
-        setStatus("failed");
-      }
-    })();
+    const payload = window.location.hash.replace(/^#/, "");
+    window.history.replaceState(null, "", AUTH_CATCH_PATH);
+    if (!payload) {
+      setFailed(true);
+      return;
+    }
+    setHandoff(payload);
   }, []);
 
-  if (status === "missing" || status === "failed") {
+  useEffect(() => {
+    if (!handoff || submitted.current) return;
+    submitted.current = true;
+    formRef.current?.submit();
+  }, [handoff]);
+
+  if (failed) {
     return (
       <p className="px-4 py-10 text-center text-sm text-slate-400">
         Anmeldung auf SpeicherGrenze fehlgeschlagen. Bitte öffnen Sie{" "}
@@ -59,5 +45,13 @@ export function CatchClient() {
     );
   }
 
-  return <p className="px-4 py-10 text-center text-sm text-slate-400">Weiterleitung …</p>;
+  return (
+    <form ref={formRef} action={AUTH_ACCEPT_PATH} method="post" className="px-4 py-10 text-center text-sm text-slate-400">
+      <input type="hidden" name="handoff" value={handoff} />
+      <p>Weiterleitung …</p>
+      <button type="submit" className="mt-4 underline">
+        Weiter
+      </button>
+    </form>
+  );
 }
