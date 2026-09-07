@@ -1,8 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import {
   appendAuthCookiesFromSetAll,
+  expireLegacyAuthCookies,
   getAuthCookieOptions,
+  redirectWithAuthCookies,
   resolveRequestHostname,
 } from "@pv-auth/session";
 
@@ -46,11 +48,18 @@ export function createRouteHandlerSupabase(
   return { supabase, hostname };
 }
 
-export function redirectWithSetCookies(location: string, setCookies: string[]): NextResponse {
-  const response = NextResponse.redirect(location, 303);
-  response.headers.set("Cache-Control", "no-store");
-  for (const cookie of setCookies) {
-    response.headers.append("Set-Cookie", cookie);
-  }
-  return response;
+export function redirectWithSetCookies(location: string, setCookies: string[]) {
+  return redirectWithAuthCookies(location, setCookies);
+}
+
+export function expireLegacyCookiesOn(request: NextRequest, setCookies: string[]) {
+  expireLegacyAuthCookies(
+    request.cookies.getAll(),
+    {
+      appendHeader: (_name, value) => {
+        setCookies.push(value);
+      },
+    },
+    hostnameFromAuthRequest(request),
+  );
 }

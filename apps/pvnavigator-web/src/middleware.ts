@@ -5,22 +5,12 @@ import {
   authCookieWriter,
   copySetCookieHeaders,
   getAuthCookieOptions,
-  getHubAuthContinueUrl,
   getHubOrigin,
   isHubAuthMutationPath,
   parseAuthNextParam,
-  rehomeAuthCookiesToParentDomain,
   resolvePostLoginRedirect,
   resolveRequestHostname,
 } from "@pv-auth/session";
-
-function applyAuthCookies(request: NextRequest, response: NextResponse, hostname?: string) {
-  rehomeAuthCookiesToParentDomain(
-    request.cookies.getAll(),
-    authCookieWriter(response.headers),
-    hostname,
-  );
-}
 
 function withCopiedCookies(from: NextResponse, to: NextResponse): NextResponse {
   copySetCookieHeaders(from.headers, to.headers);
@@ -50,7 +40,6 @@ export async function middleware(request: NextRequest) {
     request.headers.get("origin"),
   );
   const cookieOptions = getAuthCookieOptions(hostname);
-  let wroteAuthCookies = false;
 
   const supabase = createServerClient(url, key, {
     cookieOptions,
@@ -65,7 +54,6 @@ export async function middleware(request: NextRequest) {
           authCookieWriter(response.headers),
           hostname,
         );
-        wroteAuthCookies = true;
       },
     },
   });
@@ -81,18 +69,11 @@ export async function middleware(request: NextRequest) {
     );
     const dest = resolvePostLoginRedirect(nextParam, "/konto");
     const location = dest.startsWith("http")
-      ? getHubAuthContinueUrl(nextParam)
+      ? dest
       : new URL(dest, `${getHubOrigin()}/`).toString();
-    const redirectResponse = withCopiedCookies(response, NextResponse.redirect(location));
-    if (!wroteAuthCookies) {
-      applyAuthCookies(request, redirectResponse, hostname);
-    }
-    return redirectResponse;
+    return withCopiedCookies(response, NextResponse.redirect(location));
   }
 
-  if (!wroteAuthCookies) {
-    applyAuthCookies(request, response, hostname);
-  }
   return response;
 }
 

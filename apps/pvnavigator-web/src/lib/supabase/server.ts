@@ -1,10 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies, headers } from "next/headers";
-import {
-  getAuthCookieOptions,
-  mergeAuthCookieOptions,
-  resolveRequestHostname,
-} from "@pv-auth/session";
+import { getAuthCookieOptions, resolveRequestHostname } from "@pv-auth/session";
 
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -12,7 +8,7 @@ export function isSupabaseConfigured(): boolean {
   return typeof url === "string" && url.length > 0 && typeof key === "string" && key.length > 0;
 }
 
-export async function createServerSupabaseClient(options?: { persistCookies?: boolean }) {
+export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
   const headerStore = await headers();
   const hostname = resolveRequestHostname(
@@ -22,7 +18,6 @@ export async function createServerSupabaseClient(options?: { persistCookies?: bo
     headerStore.get("origin"),
   );
   const cookieOptions = getAuthCookieOptions(hostname);
-  const persistCookies = options?.persistCookies === true;
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,15 +28,9 @@ export async function createServerSupabaseClient(options?: { persistCookies?: bo
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
-          if (!persistCookies) return;
-          try {
-            cookiesToSet.forEach(({ name, value, options: cookieOpts }) =>
-              cookieStore.set(name, value, mergeAuthCookieOptions(cookieOpts, hostname)),
-            );
-          } catch {
-            // Server Component without mutable cookies.
-          }
+        setAll() {
+          // Cookie writes belong to Route Handlers with raw
+          // Domain=.pvnavigator.de Set-Cookie. cookies().set() is host-only.
         },
       },
     },

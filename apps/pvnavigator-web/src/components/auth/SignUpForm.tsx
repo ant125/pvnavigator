@@ -1,27 +1,23 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
-import {
-  signUpAction,
-  type SignUpFormState,
-} from "@/app/actions/auth";
 import { AuthFormErrorAlert } from "@/components/auth/AuthFormErrorAlert";
-
-const signUpInitial: SignUpFormState = {
-  error: "",
-  success: false,
-  needsConfirmation: false,
-};
 
 const passwordMismatchGerman = "Die Passwörter stimmen nicht überein.";
 
-export function SignUpForm() {
-  const [state, formAction, pending] = useActionState(signUpAction, signUpInitial);
+export function SignUpForm({
+  error,
+  needsConfirmation,
+}: {
+  error?: string;
+  needsConfirmation?: boolean;
+}) {
+  const [pending, setPending] = useState(false);
   const [passwordMismatch, setPasswordMismatch] = useState(false);
 
-  if (state.success && state.needsConfirmation) {
+  if (needsConfirmation) {
     return (
       <div className="space-y-4">
         <div
@@ -45,11 +41,12 @@ export function SignUpForm() {
   }
 
   const validationError =
-    passwordMismatch ? passwordMismatchGerman : state.error.length > 0 ? state.error : null;
+    passwordMismatch ? passwordMismatchGerman : error ? error : null;
 
   return (
     <form
-      action={formAction}
+      action="/auth/sign-up"
+      method="post"
       className="space-y-4"
       onSubmit={(e) => {
         const form = e.currentTarget;
@@ -59,9 +56,10 @@ export function SignUpForm() {
         if (p !== c) {
           e.preventDefault();
           setPasswordMismatch(true);
-        } else {
-          setPasswordMismatch(false);
+          return;
         }
+        setPasswordMismatch(false);
+        setPending(true);
       }}
     >
       <div>
@@ -113,6 +111,7 @@ export function SignUpForm() {
       <button
         type="submit"
         disabled={pending}
+        aria-busy={pending}
         className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-[1.03] active:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? "Wird erstellt…" : "Konto erstellen"}

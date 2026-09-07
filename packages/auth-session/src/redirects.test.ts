@@ -2,15 +2,12 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   AUTH_NEXT_SPEICHER_CALCULATE,
-  getHubAuthContinueUrl,
   getHubLoginUrlForSpeicherCalculate,
   getSpeicherGrenzeCalculateUrl,
   isAllowedHubFormOrigin,
-  isAllowedSessionHandoffOrigin,
-  isAllowedSessionHandoffRequest,
   isHubAuthMutationPath,
-  isSpeicherAuthHandoffPath,
   parseAuthNextParam,
+  resolvePostLoginLocation,
   resolvePostLoginRedirect,
   sanitizeNextPath,
 } from "./redirects";
@@ -36,11 +33,14 @@ describe("sanitizeNextPath", () => {
 });
 
 describe("resolvePostLoginRedirect", () => {
-  it("maps the speicher-calculate alias to the exact calculator URL", () => {
+  it("maps the speicher-calculate alias directly to the calculator URL", () => {
     process.env.NODE_ENV = "production";
     delete process.env.NEXT_PUBLIC_SPEICHER_GRENZE_URL;
     expect(resolvePostLoginRedirect(AUTH_NEXT_SPEICHER_CALCULATE)).toBe(
       "https://speicher.pvnavigator.de/calculate",
+    );
+    expect(resolvePostLoginRedirect(AUTH_NEXT_SPEICHER_CALCULATE)).not.toContain(
+      "/auth/continue",
     );
   });
 
@@ -53,6 +53,25 @@ describe("resolvePostLoginRedirect", () => {
 
   it("keeps hub relative paths", () => {
     expect(resolvePostLoginRedirect("/konto", "/")).toBe("/konto");
+  });
+});
+
+describe("resolvePostLoginLocation", () => {
+  it("sends speicher-calculate to SpeicherGrenze without /auth/continue", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    delete process.env.NEXT_PUBLIC_SPEICHER_GRENZE_URL;
+    expect(resolvePostLoginLocation(AUTH_NEXT_SPEICHER_CALCULATE)).toBe(
+      "https://speicher.pvnavigator.de/calculate",
+    );
+  });
+
+  it("expands hub paths against the hub origin", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    expect(resolvePostLoginLocation("/konto")).toBe("https://pvnavigator.de/konto");
   });
 });
 
@@ -94,20 +113,10 @@ describe("getSpeicherGrenzeCalculateUrl", () => {
   });
 });
 
-describe("getHubAuthContinueUrl", () => {
-  it("keeps the bounce on the hub origin with the symbolic next", () => {
-    process.env.NODE_ENV = "production";
-    delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_HUB_URL;
-    expect(getHubAuthContinueUrl(AUTH_NEXT_SPEICHER_CALCULATE)).toBe(
-      "https://pvnavigator.de/auth/continue?next=speicher-calculate",
-    );
-  });
-});
-
 describe("isHubAuthMutationPath", () => {
-  it("matches sign-in, sign-out, and callback", () => {
+  it("matches sign-in, sign-up, sign-out, and callback", () => {
     expect(isHubAuthMutationPath("/auth/sign-in")).toBe(true);
+    expect(isHubAuthMutationPath("/auth/sign-up")).toBe(true);
     expect(isHubAuthMutationPath("/auth/sign-out")).toBe(true);
     expect(isHubAuthMutationPath("/auth/callback")).toBe(true);
     expect(isHubAuthMutationPath("/auth/continue")).toBe(false);
@@ -131,29 +140,5 @@ describe("isAllowedHubFormOrigin", () => {
       false,
     );
     expect(isAllowedHubFormOrigin(null, "pvnavigator.de")).toBe(false);
-  });
-});
-
-describe("session handoff", () => {
-  it("only accepts the hub origin", () => {
-    process.env.NODE_ENV = "production";
-    delete process.env.NEXT_PUBLIC_SITE_URL;
-    delete process.env.NEXT_PUBLIC_HUB_URL;
-    expect(isAllowedSessionHandoffOrigin("https://pvnavigator.de")).toBe(true);
-    expect(isAllowedSessionHandoffOrigin("https://speicher.pvnavigator.de")).toBe(
-      false,
-    );
-    expect(isAllowedSessionHandoffOrigin(null)).toBe(false);
-    expect(
-      isAllowedSessionHandoffRequest(null, "https://pvnavigator.de/auth/continue"),
-    ).toBe(true);
-    expect(isAllowedSessionHandoffRequest(null, "https://evil.example/")).toBe(
-      false,
-    );
-    expect(isAllowedSessionHandoffRequest("https://speicher.pvnavigator.de", null)).toBe(
-      true,
-    );
-    expect(isSpeicherAuthHandoffPath("/auth/accept")).toBe(true);
-    expect(isSpeicherAuthHandoffPath("/auth/continue")).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { getHubAuthContinueUrl, getServerUser, parseAuthNextParam, resolvePostLoginRedirect, signInErrorFromQuery } from "@/lib/auth";
+import { getServerUser, parseAuthNextParam, resolvePostLoginRedirect, signInErrorFromQuery } from "@/lib/auth";
 import { AuthEnvMissing } from "@/components/auth/AuthEnvMissing";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -24,11 +24,7 @@ export default async function AnmeldenPage({ searchParams }: { searchParams: Sea
   if (configured) {
     const user = await getServerUser();
     if (user) {
-      const dest = resolvePostLoginRedirect(nextPath, "/konto");
-      if (dest.startsWith("http")) {
-        redirect(getHubAuthContinueUrl(nextPath));
-      }
-      redirect(dest);
+      redirect(resolvePostLoginRedirect(nextPath, "/konto"));
     }
   }
 

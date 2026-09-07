@@ -6,7 +6,11 @@ import {
   hubSignInErrorUrl,
   mapSupabaseAuthErrorToSignInCode,
 } from "@/lib/auth";
-import { createRouteHandlerSupabase, redirectWithSetCookies } from "@/lib/supabase/routeHandler";
+import {
+  createRouteHandlerSupabase,
+  expireLegacyCookiesOn,
+  redirectWithSetCookies,
+} from "@/lib/supabase/routeHandler";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -50,5 +54,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  expireLegacyCookiesOn(request, setCookies);
   return redirectWithSetCookies(hubPostLoginLocation(next), setCookies);
 }

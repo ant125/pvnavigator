@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  expireHostOnlyAuthCookies,
+  expireAuthCookiesForLogout,
   getHubOrigin,
   isAllowedHubFormOrigin,
 } from "@pv-auth/session";
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   if (isSupabaseConfigured()) {
     const { supabase, hostname } = createRouteHandlerSupabase(request, setCookies);
     await supabase.auth.signOut();
-    expireHostOnlyAuthCookies(
+    expireAuthCookiesForLogout(
       request.cookies.getAll(),
       {
         appendHeader: (_name, value) => {

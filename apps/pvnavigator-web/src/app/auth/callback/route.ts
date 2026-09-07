@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
-import { createRouteHandlerSupabase, redirectWithSetCookies } from "@/lib/supabase/routeHandler";
+import {
+  createRouteHandlerSupabase,
+  expireLegacyCookiesOn,
+  redirectWithSetCookies,
+} from "@/lib/supabase/routeHandler";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 
 const EMAIL_OTP_TYPES = new Set<EmailOtpType>([
@@ -47,6 +51,7 @@ export async function GET(request: NextRequest) {
         return redirectWithSetCookies(failure, setCookies);
       }
     }
+    expireLegacyCookiesOn(request, setCookies);
     return redirectWithSetCookies(success, setCookies);
   }
 
@@ -63,6 +68,7 @@ export async function GET(request: NextRequest) {
         return redirectWithSetCookies(failure, setCookies);
       }
     }
+    expireLegacyCookiesOn(request, setCookies);
     return redirectWithSetCookies(success, setCookies);
   }
 

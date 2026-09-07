@@ -1,10 +1,8 @@
 export const AUTH_NEXT_SPEICHER_CALCULATE = "speicher-calculate";
 export const AUTH_SIGN_IN_PATH = "/auth/sign-in";
+export const AUTH_SIGN_UP_PATH = "/auth/sign-up";
 export const AUTH_SIGN_OUT_PATH = "/auth/sign-out";
-export const AUTH_CONTINUE_PATH = "/auth/continue";
 export const AUTH_CALLBACK_PATH = "/auth/callback";
-export const AUTH_ACCEPT_PATH = "/auth/accept";
-export const AUTH_CATCH_PATH = "/auth/catch";
 
 const DEFAULT_HUB_ORIGIN = "https://pvnavigator.de";
 const DEFAULT_SPEICHER_ORIGIN = "https://speicher.pvnavigator.de";
@@ -77,48 +75,10 @@ function hostFromHeader(raw: string | null | undefined): string | undefined {
 export function isHubAuthMutationPath(pathname: string): boolean {
   return (
     pathname === AUTH_SIGN_IN_PATH ||
+    pathname === AUTH_SIGN_UP_PATH ||
     pathname === AUTH_SIGN_OUT_PATH ||
     pathname === AUTH_CALLBACK_PATH
   );
-}
-
-export function isSpeicherAuthHandoffPath(pathname: string): boolean {
-  return pathname === AUTH_ACCEPT_PATH || pathname === AUTH_CATCH_PATH;
-}
-
-/**
- * Hub origin may POST a session to SpeicherGrenze `/auth/accept`.
- */
-export function isAllowedSessionHandoffOrigin(originHeader: string | null): boolean {
-  if (!originHeader) return false;
-  try {
-    return new URL(originHeader).origin === getHubOrigin();
-  } catch {
-    return false;
-  }
-}
-
-function isKnownAppOrigin(origin: string): boolean {
-  return origin === getHubOrigin() || origin === getSpeicherGrenzeOrigin();
-}
-
-export function isAllowedSessionHandoffRequest(
-  originHeader: string | null,
-  refererHeader: string | null,
-): boolean {
-  if (originHeader) {
-    try {
-      if (isKnownAppOrigin(new URL(originHeader).origin)) return true;
-    } catch {
-      return false;
-    }
-  }
-  if (!refererHeader) return false;
-  try {
-    return isKnownAppOrigin(new URL(refererHeader).origin);
-  } catch {
-    return false;
-  }
 }
 
 /**
@@ -145,19 +105,6 @@ export function isAllowedHubFormOrigin(
 }
 
 /**
- * Same-origin hop after login so Domain=.pvnavigator.de is stored before a
- * cross-subdomain navigation to SpeicherGrenze.
- */
-export function getHubAuthContinueUrl(nextRaw: unknown): string {
-  const url = new URL(AUTH_CONTINUE_PATH, getHubOrigin());
-  const next = parseAuthNextParam(nextRaw, "/");
-  if (next && next !== "/") {
-    url.searchParams.set("next", next);
-  }
-  return url.toString();
-}
-
-/**
  * Same-origin relative paths only; blocks protocol-relative and absolute URLs.
  */
 export function sanitizeNextPath(raw: unknown, fallback = "/konto"): string {
@@ -179,6 +126,12 @@ export function resolvePostLoginRedirect(raw: unknown, fallback = "/"): string {
     return getSpeicherGrenzeCalculateUrl();
   }
   return sanitizeNextPath(raw, fallback);
+}
+
+export function resolvePostLoginLocation(nextRaw: unknown, fallback = "/konto"): string {
+  const dest = resolvePostLoginRedirect(nextRaw, fallback);
+  if (dest.startsWith("http")) return dest;
+  return new URL(dest, `${getHubOrigin()}/`).toString();
 }
 
 /**

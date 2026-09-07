@@ -6,21 +6,11 @@ import {
   copySetCookieHeaders,
   getAuthCookieOptions,
   getHubLoginUrlForSpeicherCalculate,
-  isSpeicherAuthHandoffPath,
-  rehomeAuthCookiesToParentDomain,
   resolveRequestHostname,
 } from "@pv-auth/session";
 
 function isProtectedCalculatePage(pathname: string): boolean {
   return pathname === "/calculate" || pathname.startsWith("/calculate/");
-}
-
-function applyAuthCookies(request: NextRequest, response: NextResponse, hostname?: string) {
-  rehomeAuthCookiesToParentDomain(
-    request.cookies.getAll(),
-    authCookieWriter(response.headers),
-    hostname,
-  );
 }
 
 function withCopiedCookies(from: NextResponse, to: NextResponse): NextResponse {
@@ -29,10 +19,6 @@ function withCopiedCookies(from: NextResponse, to: NextResponse): NextResponse {
 }
 
 export async function middleware(request: NextRequest) {
-  if (isSpeicherAuthHandoffPath(request.nextUrl.pathname)) {
-    return NextResponse.next();
-  }
-
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const loginUrl = getHubLoginUrlForSpeicherCalculate();
@@ -56,7 +42,6 @@ export async function middleware(request: NextRequest) {
   });
 
   const cookieOptions = getAuthCookieOptions(hostname);
-  let wroteAuthCookies = false;
 
   const supabase = createServerClient(url, key, {
     cookieOptions,
@@ -71,7 +56,6 @@ export async function middleware(request: NextRequest) {
           authCookieWriter(response.headers),
           hostname,
         );
-        wroteAuthCookies = true;
       },
     },
   });
@@ -81,16 +65,9 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (isProtectedCalculatePage(request.nextUrl.pathname) && !user) {
-    const redirectResponse = withCopiedCookies(response, NextResponse.redirect(loginUrl));
-    if (!wroteAuthCookies) {
-      applyAuthCookies(request, redirectResponse, hostname);
-    }
-    return redirectResponse;
+    return withCopiedCookies(response, NextResponse.redirect(loginUrl));
   }
 
-  if (!wroteAuthCookies) {
-    applyAuthCookies(request, response, hostname);
-  }
   return response;
 }
 
