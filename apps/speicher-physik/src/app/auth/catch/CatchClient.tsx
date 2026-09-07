@@ -4,53 +4,57 @@ import { useEffect, useState } from "react";
 import {
   AUTH_ACCEPT_PATH,
   AUTH_CATCH_PATH,
-  decodeSessionHandoffPayload,
-  getHubLoginUrlForSpeicherCalculate,
+  decodeAuthHandoff,
+  getHubKontoUrl,
   getSpeicherGrenzeCalculateUrl,
 } from "@pv-auth/session";
 
 export function CatchClient() {
-  const [missing, setMissing] = useState(false);
+  const [status, setStatus] = useState<"working" | "missing" | "failed">("working");
 
   useEffect(() => {
     const payload = window.location.hash.replace(/^#/, "");
     window.history.replaceState(null, "", AUTH_CATCH_PATH);
-    const decoded = decodeSessionHandoffPayload(payload);
-    if (!decoded) {
-      setMissing(true);
+    const handoff = decodeAuthHandoff(payload);
+    if (!handoff) {
+      setStatus("missing");
       return;
     }
 
     void (async () => {
       try {
+        const body =
+          handoff.type === "cookies"
+            ? { cookies: handoff.cookies }
+            : {
+                access_token: handoff.accessToken,
+                refresh_token: handoff.refreshToken,
+              };
         const response = await fetch(AUTH_ACCEPT_PATH, {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            access_token: decoded.accessToken,
-            refresh_token: decoded.refreshToken,
-          }),
+          body: JSON.stringify(body),
         });
-        window.location.replace(
-          response.ok
-            ? getSpeicherGrenzeCalculateUrl()
-            : getHubLoginUrlForSpeicherCalculate(),
-        );
+        if (!response.ok) {
+          setStatus("failed");
+          return;
+        }
+        window.location.replace(getSpeicherGrenzeCalculateUrl());
       } catch {
-        window.location.replace(getHubLoginUrlForSpeicherCalculate());
+        setStatus("failed");
       }
     })();
   }, []);
 
-  if (missing) {
+  if (status === "missing" || status === "failed") {
     return (
       <p className="px-4 py-10 text-center text-sm text-slate-400">
-        Sitzung nicht gefunden. Bitte erneut{" "}
-        <a className="underline" href={getHubLoginUrlForSpeicherCalculate()}>
-          anmelden
-        </a>
-        .
+        Anmeldung auf SpeicherGrenze fehlgeschlagen. Bitte öffnen Sie{" "}
+        <a className="underline" href={getHubKontoUrl()}>
+          Mein Konto
+        </a>{" "}
+        und versuchen Sie es erneut.
       </p>
     );
   }

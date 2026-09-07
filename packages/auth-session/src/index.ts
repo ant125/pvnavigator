@@ -46,6 +46,8 @@ export {
 } from "./redirects";
 
 export {
-  decodeSessionHandoffPayload,
-  encodeSessionHandoffPayload,
+  decodeAuthHandoff,
+  encodeAuthCookieHandoff,
+  type AuthHandoff,
+  type AuthHandoffCookie,
 } from "./handoff";

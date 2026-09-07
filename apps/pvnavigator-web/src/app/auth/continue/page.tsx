@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import {
+  encodeAuthCookieHandoff,
   getHubOrigin,
   getSpeicherGrenzeCalculateUrl,
+  isSupabaseAuthCookieName,
   parseAuthNextParam,
   resolvePostLoginRedirect,
 } from "@pv-auth/session";
-
-import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 import { ContinueClient } from "./ContinueClient";
 
@@ -29,20 +30,12 @@ export default async function ContinuePage({ searchParams }: { searchParams: Sea
   const allowed =
     location === getSpeicherGrenzeCalculateUrl() || location.startsWith(`${hub}/`);
 
-  let accessToken = "";
-  let refreshToken = "";
-  if (isSupabaseConfigured()) {
-    const supabase = await createServerSupabaseClient();
-    const { data } = await supabase.auth.getSession();
-    accessToken = data.session?.access_token ?? "";
-    refreshToken = data.session?.refresh_token ?? "";
-  }
+  const cookieStore = await cookies();
+  const payload = encodeAuthCookieHandoff(
+    cookieStore.getAll().filter((cookie) => isSupabaseAuthCookieName(cookie.name) && cookie.value),
+  );
 
   return (
-    <ContinueClient
-      dest={allowed ? location : `${hub}/konto`}
-      accessToken={accessToken}
-      refreshToken={refreshToken}
-    />
+    <ContinueClient dest={allowed ? location : `${hub}/konto`} payload={payload} />
   );
 }
