@@ -3,9 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AUTH_SIGN_OUT_PATH, getSpeicherGrenzeCalculateUrl, getSpeicherGrenzeOrigin } from "@pv-auth/session";
 
+import { CalculationsEmptyState, CalculationsHistory } from "@/components/account/CalculationsHistory";
 import { AuthEnvMissing } from "@/components/auth/AuthEnvMissing";
+import { CALCULATION_LIST_SELECT, type CalculationListRow } from "@/lib/calculationsList";
 import { getServerUser } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/lib/supabase/server";
+import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Mein Konto | PVNavigator",
@@ -17,9 +19,6 @@ const badgeBase =
 
 const card =
   "rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_2px_8px_-2px_rgba(15,23,42,0.06)]";
-
-const primaryBtn =
-  "inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-[1.03] active:brightness-[0.98]";
 
 const ghostBtn =
   "inline-flex items-center justify-center rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-medium text-[#64748B] shadow-sm transition hover:bg-[#FAFBFC] hover:text-[#0F172A]";
@@ -47,6 +46,17 @@ export default async function KontoPage() {
 
   const speicherOrigin = getSpeicherGrenzeOrigin();
   const calculateUrl = getSpeicherGrenzeCalculateUrl();
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("calculations")
+    .select(CALCULATION_LIST_SELECT)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("Failed to load calculations", error);
+  }
+
+  const calculations = (data ?? []) as CalculationListRow[];
 
   return (
     <div className="px-4 py-8 md:py-10">
@@ -72,17 +82,11 @@ export default async function KontoPage() {
               Meine Berechnungen
             </h2>
           </div>
-          <div className={`mt-4 px-5 py-8 sm:px-8 sm:py-10 ${card}`}>
-            <p className="text-sm font-medium text-[#0F172A]">
-              Noch keine Berechnungen vorhanden.
-            </p>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#64748B]">
-              Ihre abgeschlossenen PVNavigator-Analysen werden künftig hier gespeichert.
-            </p>
-            <a href={calculateUrl} className={`${primaryBtn} mt-6`}>
-              Neue Berechnung
-            </a>
-          </div>
+          {calculations.length === 0 ? (
+            <CalculationsEmptyState calculateUrl={calculateUrl} />
+          ) : (
+            <CalculationsHistory rows={calculations} />
+          )}
         </section>
 
         <section className="mt-10 md:mt-12" aria-labelledby="tools-heading">

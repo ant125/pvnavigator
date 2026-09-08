@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import {
   getHubKontoUrl,
   getHubLoginUrlForSpeicherCalculate,
+  getHubSignOutUrl,
   getHubSignupUrl,
 } from "@pv-auth/session";
 
@@ -30,9 +31,11 @@ export default async function RootLayout({
       <body className="antialiased">
         <SpeicherShell
           authenticated={Boolean(user)}
+          userEmail={user?.email ?? null}
           loginHref={getHubLoginUrlForSpeicherCalculate()}
           signupHref={getHubSignupUrl()}
           accountHref={getHubKontoUrl()}
+          signOutHref={getHubSignOutUrl()}
         >
           {children}
         </SpeicherShell>

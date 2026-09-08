@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   expireAuthCookiesForLogout,
   getHubOrigin,
-  isAllowedHubFormOrigin,
+  isAllowedHubSignOutOrigin,
 } from "@pv-auth/session";
 
 import { createRouteHandlerSupabase, redirectWithSetCookies } from "@/lib/supabase/routeHandler";
@@ -18,7 +18,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   if (
-    !isAllowedHubFormOrigin(
+    !isAllowedHubSignOutOrigin(
       request.headers.get("origin"),
       request.headers.get("host"),
       request.headers.get("x-forwarded-host"),

@@ -3,8 +3,10 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   AUTH_NEXT_SPEICHER_CALCULATE,
   getHubLoginUrlForSpeicherCalculate,
+  getHubSignOutUrl,
   getSpeicherGrenzeCalculateUrl,
   isAllowedHubFormOrigin,
+  isAllowedHubSignOutOrigin,
   isHubAuthMutationPath,
   parseAuthNextParam,
   resolvePostLoginLocation,
@@ -140,5 +142,56 @@ describe("isAllowedHubFormOrigin", () => {
       false,
     );
     expect(isAllowedHubFormOrigin(null, "pvnavigator.de")).toBe(false);
+  });
+
+  it("does not treat product subdomains as the Hub host", () => {
+    expect(
+      isAllowedHubFormOrigin(
+        "https://speicher.pvnavigator.de",
+        "pvnavigator.de",
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("getHubSignOutUrl", () => {
+  it("points at Hub POST /auth/sign-out", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    expect(getHubSignOutUrl()).toBe("https://pvnavigator.de/auth/sign-out");
+  });
+});
+
+describe("isAllowedHubSignOutOrigin", () => {
+  it("allows the Hub origin", () => {
+    expect(
+      isAllowedHubSignOutOrigin("https://pvnavigator.de", "pvnavigator.de"),
+    ).toBe(true);
+  });
+
+  it("allows speicher.pvnavigator.de posting to Hub", () => {
+    expect(
+      isAllowedHubSignOutOrigin(
+        "https://speicher.pvnavigator.de",
+        "pvnavigator.de",
+      ),
+    ).toBe(true);
+  });
+
+  it("allows another *.pvnavigator.de sibling", () => {
+    expect(
+      isAllowedHubSignOutOrigin(
+        "https://wirtschaft.pvnavigator.de",
+        "pvnavigator.de",
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects an external origin", () => {
+    expect(
+      isAllowedHubSignOutOrigin("https://evil.example", "pvnavigator.de"),
+    ).toBe(false);
+    expect(isAllowedHubSignOutOrigin(null, "pvnavigator.de")).toBe(false);
   });
 });

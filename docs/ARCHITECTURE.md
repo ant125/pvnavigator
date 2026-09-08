@@ -156,8 +156,13 @@ cookie domain.
 **Calculation persistence:** store canonical input JSON plus a compact result
 snapshot, with schema / battery-model versions. Do not persist 15-minute or
 hourly kernel arrays. Opening an old calculation shows that snapshot;
-recalculation is an explicit later user action. Successful calculations will
-later be saved automatically.
+recalculation is an explicit later user action.
+
+Successful authenticated calculations are persisted automatically into
+`public.calculations`. That table is the shared cross-product history
+(`product_key` distinguishes SpeicherGrenze and future tools). Hub `/konto`
+lists the current user's rows. Reopening a stored report and PDF/report
+storage remain future work.
 
 Shared cookie/redirect helpers: `packages/auth-session` (`@pv-auth/session`).
 Schema SQL: `supabase/migrations/`.

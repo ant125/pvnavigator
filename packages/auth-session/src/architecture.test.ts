@@ -75,5 +75,7 @@ describe("shared session architecture", () => {
   it("clears shared and legacy cookies on logout", () => {
     const signOut = read("apps/pvnavigator-web/src/app/auth/sign-out/route.ts");
     expect(signOut).toContain("expireAuthCookiesForLogout");
+    expect(signOut).toContain("isAllowedHubSignOutOrigin");
+    expect(signOut).not.toContain("isAllowedHubFormOrigin");
   });
 });

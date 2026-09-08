@@ -5,18 +5,13 @@ import { BatteryMedium } from "lucide-react";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { HeaderAccount, type HeaderAccountProps } from "./HeaderAccount";
 import { HeaderCtaProvider, useHeaderCtaState } from "./headerCtaContext";
 
 const btnEnergy =
   "inline-flex items-center justify-center bg-accent hover:bg-accent-hover text-white font-semibold transition-colors duration-200";
 
 const headerCtaClass = `${btnEnergy} shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-center text-sm leading-none sm:py-2 sm:leading-normal`;
-
-const headerAuthLink =
-  "text-sm text-ink-secondary transition-colors hover:text-ink";
-
-const headerAccountLink =
-  "text-sm font-semibold text-ink transition-colors hover:text-ink-secondary";
 
 const footerLink =
   "text-sm text-ink-secondary transition-colors hover:text-ink hover:underline hover:underline-offset-2";
@@ -65,39 +60,6 @@ function HeaderCta() {
   );
 }
 
-type HeaderAccountProps = {
-  authenticated: boolean;
-  loginHref: string;
-  signupHref: string;
-  accountHref: string;
-};
-
-function HeaderAccount({
-  authenticated,
-  loginHref,
-  signupHref,
-  accountHref,
-}: HeaderAccountProps) {
-  if (authenticated) {
-    return (
-      <a href={accountHref} className={`${headerAccountLink} shrink-0`}>
-        Mein Konto
-      </a>
-    );
-  }
-
-  return (
-    <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
-      <a href={loginHref} className={headerAuthLink}>
-        Anmelden
-      </a>
-      <a href={signupHref} className={headerAuthLink}>
-        Konto erstellen
-      </a>
-    </div>
-  );
-}
-
 type ShellFrameProps = HeaderAccountProps & {
   children: ReactNode;
 };
@@ -105,9 +67,11 @@ type ShellFrameProps = HeaderAccountProps & {
 function ShellFrame({
   children,
   authenticated,
+  userEmail,
   loginHref,
   signupHref,
   accountHref,
+  signOutHref,
 }: ShellFrameProps) {
   const pathname = usePathname();
 
@@ -131,9 +95,11 @@ function ShellFrame({
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-2.5 gap-y-1 sm:gap-4">
               <HeaderAccount
                 authenticated={authenticated}
+                userEmail={userEmail}
                 loginHref={loginHref}
                 signupHref={signupHref}
                 accountHref={accountHref}
+                signOutHref={signOutHref}
               />
               <HeaderCta />
             </div>
@@ -211,17 +177,21 @@ function ShellFrame({
 export function SpeicherShell({
   children,
   authenticated,
+  userEmail,
   loginHref,
   signupHref,
   accountHref,
+  signOutHref,
 }: ShellFrameProps) {
   return (
     <HeaderCtaProvider>
       <ShellFrame
         authenticated={authenticated}
+        userEmail={userEmail}
         loginHref={loginHref}
         signupHref={signupHref}
         accountHref={accountHref}
+        signOutHref={signOutHref}
       >
         {children}
       </ShellFrame>

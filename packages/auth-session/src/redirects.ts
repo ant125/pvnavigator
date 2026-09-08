@@ -67,6 +67,10 @@ export function getHubSignupUrl(): string {
   return `${getHubOrigin()}/konto-erstellen`;
 }
 
+export function getHubSignOutUrl(): string {
+  return `${getHubOrigin()}${AUTH_SIGN_OUT_PATH}`;
+}
+
 function hostFromHeader(raw: string | null | undefined): string | undefined {
   const host = raw?.split(",")[0]?.trim().split(":")[0]?.toLowerCase();
   return host || undefined;
@@ -79,6 +83,19 @@ export function isHubAuthMutationPath(pathname: string): boolean {
     pathname === AUTH_SIGN_OUT_PATH ||
     pathname === AUTH_CALLBACK_PATH
   );
+}
+
+function hostnameFromOriginHeader(originHeader: string): string | undefined {
+  try {
+    return new URL(originHeader).hostname.toLowerCase();
+  } catch {
+    return undefined;
+  }
+}
+
+function isPvNavigatorFamilyHost(hostname: string): boolean {
+  const host = hostname.split(":")[0]?.toLowerCase() ?? "";
+  return host === "pvnavigator.de" || host.endsWith(".pvnavigator.de");
 }
 
 /**
@@ -102,6 +119,28 @@ export function isAllowedHubFormOrigin(
   } catch {
     return false;
   }
+}
+
+/**
+ * Sign-out may be posted from Hub or from a product on a sibling
+ * `*.pvnavigator.de` host. Same-host Hub forms (including preview) stay allowed.
+ * Arbitrary external origins are rejected.
+ */
+export function isAllowedHubSignOutOrigin(
+  originHeader: string | null,
+  hostHeader?: string | null,
+  forwardedHost?: string | null,
+  requestOrigin?: string,
+): boolean {
+  if (
+    isAllowedHubFormOrigin(originHeader, hostHeader, forwardedHost, requestOrigin)
+  ) {
+    return true;
+  }
+  if (!originHeader) return false;
+  const originHost = hostnameFromOriginHeader(originHeader);
+  if (!originHost) return false;
+  return isPvNavigatorFamilyHost(originHost);
 }
 
 /**
