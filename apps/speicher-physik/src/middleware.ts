@@ -6,11 +6,26 @@ import {
   copySetCookieHeaders,
   getAuthCookieOptions,
   getHubLoginUrlForSpeicherCalculate,
+  getHubLoginUrlForSpeicherResult,
+  isPvNavigatorUuid,
   resolveRequestHostname,
 } from "@pv-auth/session";
 
-function isProtectedCalculatePage(pathname: string): boolean {
-  return pathname === "/calculate" || pathname.startsWith("/calculate/");
+function isProtectedSpeicherPage(pathname: string): boolean {
+  return (
+    pathname === "/calculate" ||
+    pathname.startsWith("/calculate/") ||
+    pathname === "/result" ||
+    pathname.startsWith("/result/")
+  );
+}
+
+function loginUrlForPath(pathname: string): string {
+  const match = /^\/result\/([^/]+)$/.exec(pathname);
+  if (match && isPvNavigatorUuid(match[1])) {
+    return getHubLoginUrlForSpeicherResult(match[1]);
+  }
+  return getHubLoginUrlForSpeicherCalculate();
 }
 
 function withCopiedCookies(from: NextResponse, to: NextResponse): NextResponse {
@@ -21,7 +36,7 @@ function withCopiedCookies(from: NextResponse, to: NextResponse): NextResponse {
 export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const loginUrl = getHubLoginUrlForSpeicherCalculate();
+  const loginUrl = loginUrlForPath(request.nextUrl.pathname);
   const hostname = resolveRequestHostname(
     request.nextUrl.hostname,
     request.headers.get("host"),
@@ -29,7 +44,7 @@ export async function middleware(request: NextRequest) {
     request.headers.get("origin"),
   );
 
-  if (isProtectedCalculatePage(request.nextUrl.pathname) && (!url || !key)) {
+  if (isProtectedSpeicherPage(request.nextUrl.pathname) && (!url || !key)) {
     return NextResponse.redirect(loginUrl);
   }
 
@@ -64,7 +79,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (isProtectedCalculatePage(request.nextUrl.pathname) && !user) {
+  if (isProtectedSpeicherPage(request.nextUrl.pathname) && !user) {
     return withCopiedCookies(response, NextResponse.redirect(loginUrl));
   }
 

@@ -38,6 +38,14 @@ export type DeriveSpeicherBusinessMetricsInput = {
   backupReserveKwh: number | undefined;
   /** From sumSurfaceKwP(surfaces) — computed in page, passed in. */
   totalKwPConfigured: number;
+  /**
+   * Frozen headline sizes from a historical v2 snapshot.
+   * When set, technical/planning recommendations are not re-derived.
+   */
+  presentationOverride?: {
+    recommendedTechnicalSize: number;
+    recommendedPlanningSize: number;
+  } | null;
 };
 
 export type DeriveSpeicherBusinessMetricsOutput = {
@@ -88,12 +96,18 @@ export function deriveSpeicherBusinessMetrics(
     average: speicherGrenz?.average ?? {},
   });
 
-  const recommendedTechnicalSize = deriveRecommendedTechnicalSize({
-    data: chart.data,
-  });
-  const recommendedPlanningSize = deriveRecommendedPlanningSize(
-    recommendedTechnicalSize
-  );
+  const recommendedTechnicalSize =
+    typeof input.presentationOverride?.recommendedTechnicalSize === "number" &&
+    Number.isFinite(input.presentationOverride.recommendedTechnicalSize)
+      ? input.presentationOverride.recommendedTechnicalSize
+      : deriveRecommendedTechnicalSize({
+          data: chart.data,
+        });
+  const recommendedPlanningSize =
+    typeof input.presentationOverride?.recommendedPlanningSize === "number" &&
+    Number.isFinite(input.presentationOverride.recommendedPlanningSize)
+      ? input.presentationOverride.recommendedPlanningSize
+      : deriveRecommendedPlanningSize(recommendedTechnicalSize);
   const physicalKpiLookupSize = getPhysicalKpiLookupSize(
     recommendedTechnicalSize
   );

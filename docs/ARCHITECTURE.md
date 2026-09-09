@@ -161,8 +161,19 @@ recalculation is an explicit later user action.
 Successful authenticated calculations are persisted automatically into
 `public.calculations`. That table is the shared cross-product history
 (`product_key` distinguishes SpeicherGrenze and future tools). Hub `/konto`
-lists the current user's rows. Reopening a stored report and PDF/report
-storage remain future work.
+lists the current user's rows.
+
+SpeicherGrenze reports are historical snapshots. Reopening a row does **not**
+rerun physics, PVGIS, or the 15-minute kernel. `result_schema_version`
+selects a reader (`speicher-grenze-result/v1` derives headline sizes;
+`v2` prefers frozen `presentation` sizes stored at calculation time).
+Unknown schema versions show a compatibility message instead of
+recalculating.
+
+The read-only historical report route is
+`https://speicher.pvnavigator.de/result/<calculation-id>`.
+Hub `/konto` links SpeicherGrenze rows there. Live calculation remains
+`/calculate`.
 
 Shared cookie/redirect helpers: `packages/auth-session` (`@pv-auth/session`).
 Schema SQL: `supabase/migrations/`.

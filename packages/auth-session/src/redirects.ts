@@ -1,8 +1,17 @@
 export const AUTH_NEXT_SPEICHER_CALCULATE = "speicher-calculate";
+export const AUTH_RETURN_SPEICHER = "speicher";
+export const AUTH_NEXT_SPEICHER_RESULT_PREFIX = "speicher-result:";
 export const AUTH_SIGN_IN_PATH = "/auth/sign-in";
 export const AUTH_SIGN_UP_PATH = "/auth/sign-up";
 export const AUTH_SIGN_OUT_PATH = "/auth/sign-out";
 export const AUTH_CALLBACK_PATH = "/auth/callback";
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isPvNavigatorUuid(raw: unknown): raw is string {
+  return typeof raw === "string" && UUID_RE.test(raw.trim());
+}
 
 const DEFAULT_HUB_ORIGIN = "https://pvnavigator.de";
 const DEFAULT_SPEICHER_ORIGIN = "https://speicher.pvnavigator.de";
@@ -53,10 +62,38 @@ export function getSpeicherGrenzeCalculateUrl(): string {
   return `${getSpeicherGrenzeOrigin()}/calculate`;
 }
 
+export function getSpeicherGrenzeResultUrl(id: string): string | null {
+  const uuid = id.trim();
+  if (!isPvNavigatorUuid(uuid)) return null;
+  return `${getSpeicherGrenzeOrigin()}/result/${uuid.toLowerCase()}`;
+}
+
 export function getHubLoginUrlForSpeicherCalculate(): string {
   const url = new URL("/anmelden", getHubOrigin());
   url.searchParams.set("next", AUTH_NEXT_SPEICHER_CALCULATE);
   return url.toString();
+}
+
+export function getHubLoginUrlForSpeicherResult(id: string): string {
+  const uuid = id.trim();
+  if (!isPvNavigatorUuid(uuid)) {
+    return getHubLoginUrlForSpeicherCalculate();
+  }
+  const url = new URL("/anmelden", getHubOrigin());
+  url.searchParams.set(
+    "next",
+    `${AUTH_NEXT_SPEICHER_RESULT_PREFIX}${uuid.toLowerCase()}`,
+  );
+  return url.toString();
+}
+
+function parseSpeicherResultNext(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith(AUTH_NEXT_SPEICHER_RESULT_PREFIX)) return null;
+  const id = trimmed.slice(AUTH_NEXT_SPEICHER_RESULT_PREFIX.length);
+  if (!isPvNavigatorUuid(id)) return null;
+  return `${AUTH_NEXT_SPEICHER_RESULT_PREFIX}${id.trim().toLowerCase()}`;
 }
 
 export function getHubKontoUrl(): string {
@@ -67,8 +104,12 @@ export function getHubSignupUrl(): string {
   return `${getHubOrigin()}/konto-erstellen`;
 }
 
-export function getHubSignOutUrl(): string {
-  return `${getHubOrigin()}${AUTH_SIGN_OUT_PATH}`;
+export function getHubSignOutUrl(options?: { returnTo?: string }): string {
+  const url = new URL(AUTH_SIGN_OUT_PATH, `${getHubOrigin()}/`);
+  if (options?.returnTo === AUTH_RETURN_SPEICHER) {
+    url.searchParams.set("returnTo", AUTH_RETURN_SPEICHER);
+  }
+  return url.toString();
 }
 
 function hostFromHeader(raw: string | null | undefined): string | undefined {
@@ -164,7 +205,23 @@ export function resolvePostLoginRedirect(raw: unknown, fallback = "/"): string {
   if (typeof raw === "string" && raw.trim() === AUTH_NEXT_SPEICHER_CALCULATE) {
     return getSpeicherGrenzeCalculateUrl();
   }
+  const resultNext = parseSpeicherResultNext(raw);
+  if (resultNext) {
+    const id = resultNext.slice(AUTH_NEXT_SPEICHER_RESULT_PREFIX.length);
+    return getSpeicherGrenzeResultUrl(id) ?? getSpeicherGrenzeCalculateUrl();
+  }
   return sanitizeNextPath(raw, fallback);
+}
+
+/**
+ * Resolves the post-logout destination.
+ * Approved aliases map to a fixed product origin. Anything else is Hub /.
+ */
+export function resolvePostLogoutLocation(raw: unknown): string {
+  if (typeof raw === "string" && raw.trim() === AUTH_RETURN_SPEICHER) {
+    return `${getSpeicherGrenzeOrigin()}/`;
+  }
+  return new URL("/", `${getHubOrigin()}/`).toString();
 }
 
 export function resolvePostLoginLocation(nextRaw: unknown, fallback = "/konto"): string {
@@ -180,5 +237,7 @@ export function parseAuthNextParam(raw: unknown, fallback = "/"): string {
   if (typeof raw === "string" && raw.trim() === AUTH_NEXT_SPEICHER_CALCULATE) {
     return AUTH_NEXT_SPEICHER_CALCULATE;
   }
+  const resultNext = parseSpeicherResultNext(raw);
+  if (resultNext) return resultNext;
   return sanitizeNextPath(raw, fallback);
 }

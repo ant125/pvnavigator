@@ -2,15 +2,19 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   AUTH_NEXT_SPEICHER_CALCULATE,
+  AUTH_RETURN_SPEICHER,
   getHubLoginUrlForSpeicherCalculate,
+  getHubLoginUrlForSpeicherResult,
   getHubSignOutUrl,
   getSpeicherGrenzeCalculateUrl,
+  getSpeicherGrenzeResultUrl,
   isAllowedHubFormOrigin,
   isAllowedHubSignOutOrigin,
   isHubAuthMutationPath,
   parseAuthNextParam,
   resolvePostLoginLocation,
   resolvePostLoginRedirect,
+  resolvePostLogoutLocation,
   sanitizeNextPath,
 } from "./redirects";
 
@@ -53,6 +57,21 @@ describe("resolvePostLoginRedirect", () => {
     expect(resolvePostLoginRedirect("https://evil.example")).toBe("/");
   });
 
+  it("maps a validated speicher-result alias to the report URL", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SPEICHER_GRENZE_URL;
+    expect(
+      resolvePostLoginRedirect(
+        "speicher-result:11111111-1111-4111-8111-111111111111",
+      ),
+    ).toBe(
+      "https://speicher.pvnavigator.de/result/11111111-1111-4111-8111-111111111111",
+    );
+    expect(
+      resolvePostLoginRedirect("speicher-result:https://evil.example"),
+    ).toBe("/");
+  });
+
   it("keeps hub relative paths", () => {
     expect(resolvePostLoginRedirect("/konto", "/")).toBe("/konto");
   });
@@ -82,6 +101,16 @@ describe("parseAuthNextParam", () => {
     expect(parseAuthNextParam("speicher-calculate")).toBe("speicher-calculate");
     expect(parseAuthNextParam("/konto")).toBe("/konto");
     expect(parseAuthNextParam("https://evil.example")).toBe("/");
+  });
+
+  it("preserves a validated speicher-result alias", () => {
+    expect(
+      parseAuthNextParam(
+        "speicher-result:11111111-1111-4111-8111-111111111111",
+      ),
+    ).toBe("speicher-result:11111111-1111-4111-8111-111111111111");
+    expect(parseAuthNextParam("speicher-result:not-a-uuid")).toBe("/");
+    expect(parseAuthNextParam("speicher-result:https://evil.example")).toBe("/");
   });
 });
 
@@ -160,6 +189,94 @@ describe("getHubSignOutUrl", () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.NEXT_PUBLIC_HUB_URL;
     expect(getHubSignOutUrl()).toBe("https://pvnavigator.de/auth/sign-out");
+  });
+
+  it("appends the speicher return alias when requested", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    expect(getHubSignOutUrl({ returnTo: AUTH_RETURN_SPEICHER })).toBe(
+      "https://pvnavigator.de/auth/sign-out?returnTo=speicher",
+    );
+  });
+
+  it("ignores an arbitrary returnTo value", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    expect(getHubSignOutUrl({ returnTo: "https://evil.example" })).toBe(
+      "https://pvnavigator.de/auth/sign-out",
+    );
+  });
+});
+
+describe("resolvePostLogoutLocation", () => {
+  it("sends Hub logout to Hub /", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    delete process.env.NEXT_PUBLIC_SPEICHER_GRENZE_URL;
+    expect(resolvePostLogoutLocation(undefined)).toBe("https://pvnavigator.de/");
+    expect(resolvePostLogoutLocation(null)).toBe("https://pvnavigator.de/");
+  });
+
+  it("maps the speicher alias to SpeicherGrenze /", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    delete process.env.NEXT_PUBLIC_SPEICHER_GRENZE_URL;
+    expect(resolvePostLogoutLocation(AUTH_RETURN_SPEICHER)).toBe(
+      "https://speicher.pvnavigator.de/",
+    );
+  });
+
+  it("rejects unknown aliases and arbitrary URLs", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    delete process.env.NEXT_PUBLIC_SPEICHER_GRENZE_URL;
+    expect(resolvePostLogoutLocation("https://evil.example")).toBe(
+      "https://pvnavigator.de/",
+    );
+    expect(resolvePostLogoutLocation("//evil.example")).toBe(
+      "https://pvnavigator.de/",
+    );
+    expect(resolvePostLogoutLocation("https://speicher.pvnavigator.de.evil/")).toBe(
+      "https://pvnavigator.de/",
+    );
+    expect(resolvePostLogoutLocation("wirtschaft")).toBe(
+      "https://pvnavigator.de/",
+    );
+  });
+});
+
+describe("getSpeicherGrenzeResultUrl", () => {
+  it("builds the historical report URL for a valid UUID", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SPEICHER_GRENZE_URL;
+    expect(
+      getSpeicherGrenzeResultUrl("11111111-1111-4111-8111-111111111111"),
+    ).toBe(
+      "https://speicher.pvnavigator.de/result/11111111-1111-4111-8111-111111111111",
+    );
+  });
+
+  it("rejects a non-UUID id", () => {
+    expect(getSpeicherGrenzeResultUrl("not-a-uuid")).toBeNull();
+    expect(getSpeicherGrenzeResultUrl("https://evil.example")).toBeNull();
+  });
+});
+
+describe("getHubLoginUrlForSpeicherResult", () => {
+  it("uses the validated result alias", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_HUB_URL;
+    expect(
+      getHubLoginUrlForSpeicherResult("11111111-1111-4111-8111-111111111111"),
+    ).toBe(
+      "https://pvnavigator.de/anmelden?next=speicher-result%3A11111111-1111-4111-8111-111111111111",
+    );
   });
 });
 

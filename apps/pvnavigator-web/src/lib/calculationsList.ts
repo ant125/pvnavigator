@@ -1,3 +1,5 @@
+import { getSpeicherGrenzeResultUrl } from "@pv-auth/session";
+
 export const SPEICHER_GRENZE_PRODUCT_KEY = "speicher_grenze";
 
 export type CalculationListRow = {
@@ -49,3 +51,8 @@ export function formatListingKwh(value: number | null): string | null {
 
 export const CALCULATION_LIST_SELECT =
   "id, product_key, name, summary_address, summary_pv_kwp, summary_consumption_kwh, created_at, updated_at";
+
+export function calculationResultHref(row: CalculationListRow): string | null {
+  if (row.product_key !== SPEICHER_GRENZE_PRODUCT_KEY) return null;
+  return getSpeicherGrenzeResultUrl(row.id);
+}

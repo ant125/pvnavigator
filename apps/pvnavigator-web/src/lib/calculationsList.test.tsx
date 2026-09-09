@@ -4,12 +4,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { CalculationsEmptyState, CalculationsHistory } from "@/components/account/CalculationsHistory";
 import {
   calculationDisplayName,
+  calculationResultHref,
   productLabel,
   type CalculationListRow,
 } from "./calculationsList";
 
 const speicherRow: CalculationListRow = {
-  id: "a",
+  id: "11111111-1111-4111-8111-111111111111",
   product_key: "speicher_grenze",
   name: "SpeicherGrenze",
   summary_address: "Musterstraße 1, 80331 München",
@@ -36,6 +37,15 @@ describe("product_key labels", () => {
     expect(productLabel("wirtschaftlichkeit")).toBe("Wirtschaftlichkeitsanalyse");
     expect(productLabel("pvshadow")).toBe("PVShadow");
     expect(productLabel("future_tool")).toBe("future_tool");
+  });
+});
+
+describe("calculationResultHref", () => {
+  it("links SpeicherGrenze rows to /result/[id] and leaves others unlinked", () => {
+    expect(calculationResultHref(speicherRow)).toContain(
+      "/result/11111111-1111-4111-8111-111111111111",
+    );
+    expect(calculationResultHref(secondRow)).toBeNull();
   });
 });
 
@@ -66,6 +76,9 @@ describe("CalculationsHistory", () => {
     expect(html).toContain("kWp");
     expect(html).toContain("kWh/a");
     expect(html).toContain("Abgeschlossen");
+    expect(html).toContain(
+      `/result/11111111-1111-4111-8111-111111111111`,
+    );
     expect(html).not.toContain("Öffnen");
     expect(html).not.toContain("Noch keine Berechnungen vorhanden.");
   });
@@ -77,5 +90,7 @@ describe("CalculationsHistory", () => {
     expect(html).toContain("SpeicherGrenze");
     expect(html).toContain("PVShadow");
     expect(html).toContain("Dach A");
+    expect(html).not.toContain("/result/b");
+    expect(html).not.toMatch(/href="[^"]*pvshadow/);
   });
 });

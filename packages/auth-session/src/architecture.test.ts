@@ -72,10 +72,17 @@ describe("shared session architecture", () => {
     expect(speicherServer).not.toContain("persistCookies");
   });
 
+  it("returns SpeicherGrenze users to the product origin after Hub logout", () => {
+    const layout = read("apps/speicher-physik/src/app/layout.tsx");
+    expect(layout).toContain("AUTH_RETURN_SPEICHER");
+    expect(layout).toContain("getHubSignOutUrl({ returnTo: AUTH_RETURN_SPEICHER })");
+  });
+
   it("clears shared and legacy cookies on logout", () => {
     const signOut = read("apps/pvnavigator-web/src/app/auth/sign-out/route.ts");
     expect(signOut).toContain("expireAuthCookiesForLogout");
     expect(signOut).toContain("isAllowedHubSignOutOrigin");
+    expect(signOut).toContain("resolvePostLogoutLocation");
     expect(signOut).not.toContain("isAllowedHubFormOrigin");
   });
 });

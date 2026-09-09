@@ -1,5 +1,6 @@
 import {
   calculationDisplayName,
+  calculationResultHref,
   formatListingDate,
   formatListingKwh,
   formatListingKwP,
@@ -39,8 +40,9 @@ export function CalculationsHistory({ rows }: { rows: CalculationListRow[] }) {
         const kwp = formatListingKwP(row.summary_pv_kwp);
         const kwh = formatListingKwh(row.summary_consumption_kwh);
         const meta = [kwp, kwh].filter(Boolean).join(" · ");
-        return (
-          <li key={row.id} className={`px-5 py-5 sm:px-6 ${card}`}>
+        const href = calculationResultHref(row);
+        const inner = (
+            <>
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-[0.95rem] font-semibold text-[#0F172A]">
                 {productLabel(row.product_key)}
@@ -56,6 +58,20 @@ export function CalculationsHistory({ rows }: { rows: CalculationListRow[] }) {
             <p className="mt-1.5 text-xs text-[#94a3b8]">
               {formatListingDate(row.updated_at)}
             </p>
+            </>
+        );
+        return (
+          <li key={row.id} className={`px-5 py-5 sm:px-6 ${card}`}>
+            {href ? (
+              <a
+                href={href}
+                className="block rounded-lg outline-offset-4 hover:opacity-95"
+              >
+                {inner}
+              </a>
+            ) : (
+              inner
+            )}
           </li>
         );
       })}

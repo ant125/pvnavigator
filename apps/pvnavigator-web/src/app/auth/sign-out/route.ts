@@ -3,6 +3,7 @@ import {
   expireAuthCookiesForLogout,
   getHubOrigin,
   isAllowedHubSignOutOrigin,
+  resolvePostLogoutLocation,
 } from "@pv-auth/session";
 
 import { createRouteHandlerSupabase, redirectWithSetCookies } from "@/lib/supabase/routeHandler";
@@ -43,5 +44,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return homeRedirect(setCookies);
+  const dest = resolvePostLogoutLocation(
+    request.nextUrl.searchParams.get("returnTo"),
+  );
+  return redirectWithSetCookies(dest, setCookies);
 }

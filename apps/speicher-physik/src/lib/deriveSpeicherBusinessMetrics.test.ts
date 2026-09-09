@@ -356,6 +356,36 @@ describe("deriveSpeicherBusinessMetrics", () => {
     expect(result.batterieverlusteModellGesamtKwh).toBe(32);
   });
 
+  it("9e. presentationOverride freezes headline sizes and KPI lookup", () => {
+    const result = deriveSpeicherBusinessMetrics(
+      baseInput({
+        verifiedResult: verified(3000, 8000),
+        speicherGrenz: emptySpeicherGrenz({
+          batterySizes: [5, 6, 7],
+          average: { 5: 3120, 6: 3170, 7: 3200 },
+          averageBatteryChargedKwh: { 5: 100, 6: 200, 7: 300 },
+          averageBatteryToHouseholdKwh: { 5: 80, 6: 160, 7: 240 },
+          averageGridExportKwh: { 5: 50, 6: 60, 7: 70 },
+          averageChargeLossKwh: { 5: 10, 6: 20, 7: 30 },
+          averageDischargeLossKwh: { 5: 5, 6: 10, 7: 15 },
+          averageSelfDischargeLossKwh: { 5: 1, 6: 2, 7: 3 },
+        }),
+        annualConsumptionKwh: 5000,
+        totalKwPConfigured: 10,
+        presentationOverride: {
+          recommendedTechnicalSize: 5,
+          recommendedPlanningSize: 12,
+        },
+      })
+    );
+
+    expect(result.recommendedTechnicalSize).toBe(5);
+    expect(result.recommendedPlanningSize).toBe(12);
+    expect(result.physicalKpiLookupSize).toBe(5);
+    expect(result.batteryGeladenAvgKwh).toBe(100);
+    expect(result.planningExceedsSimulatedRange).toBe(false);
+  });
+
   it("10. eigenverbrauchsquote — pvYield=8000, mit=5600", () => {
     const result = deriveSpeicherBusinessMetrics(
       baseInput({

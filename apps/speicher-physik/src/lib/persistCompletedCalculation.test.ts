@@ -149,4 +149,21 @@ describe("mapCompletedCalculation", () => {
     expect(containsKey(row.result_snapshot, "profile")).toBe(false);
     expect(containsKey(row.input, "getPvForYear")).toBe(false);
   });
+
+  it("stores v2 snapshot fields including frozen presentation", () => {
+    expect(row.result_schema_version).toBe("speicher-grenze-result/v2");
+    expect(row.result_snapshot.displayAddress).toBe(
+      "Musterstraße 1, 80331 München",
+    );
+    expect(row.result_snapshot.presentation).toEqual({
+      recommendedTechnicalSize: expect.any(Number),
+      recommendedPlanningSize: expect.any(Number),
+    });
+    const presentation = row.result_snapshot.presentation as {
+      recommendedTechnicalSize: number;
+      recommendedPlanningSize: number;
+    };
+    expect(presentation.recommendedTechnicalSize).toBeGreaterThanOrEqual(0);
+    expect(presentation.recommendedPlanningSize).toBeGreaterThanOrEqual(0);
+  });
 });

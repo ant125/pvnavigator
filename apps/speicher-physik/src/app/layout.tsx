@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import {
+  AUTH_RETURN_SPEICHER,
   getHubKontoUrl,
   getHubLoginUrlForSpeicherCalculate,
   getHubSignOutUrl,
@@ -35,7 +36,7 @@ export default async function RootLayout({
           loginHref={getHubLoginUrlForSpeicherCalculate()}
           signupHref={getHubSignupUrl()}
           accountHref={getHubKontoUrl()}
-          signOutHref={getHubSignOutUrl()}
+          signOutHref={getHubSignOutUrl({ returnTo: AUTH_RETURN_SPEICHER })}
         >
           {children}
         </SpeicherShell>

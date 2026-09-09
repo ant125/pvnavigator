@@ -8,6 +8,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+      "@pv-auth/session": path.resolve(
+        __dirname,
+        "../../packages/auth-session/src/index.ts",
+      ),
     },
   },
 });

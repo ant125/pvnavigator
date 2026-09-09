@@ -31,7 +31,8 @@ function BrandMark() {
 function HeaderCta() {
   const pathname = usePathname();
   const { reportActive, resetRef } = useHeaderCtaState();
-  const isResultRoute = pathname === "/result";
+  const isResultRoute =
+    pathname === "/result" || pathname.startsWith("/result/");
   const showNewCalculation = isResultRoute || reportActive;
 
   if (showNewCalculation) {
