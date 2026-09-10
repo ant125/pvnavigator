@@ -5,6 +5,11 @@ import Link from "next/link";
 import { SpeicherInput, type PvSurfaceInput } from "../types/speicher";
 import { validateInput, type SpeicherFieldErrors, type SpeicherFieldErrorKey } from "../utils/validateInput";
 import {
+  ANNUAL_CONSUMPTION_KWH_MAX,
+  ANNUAL_CONSUMPTION_KWH_MIN,
+  parseAnnualConsumptionInput,
+} from "../utils/annualConsumption";
+import {
   type HouseholdCalculationPayload,
   type SpeicherGrenzPayload,
   type VerifiedResult,
@@ -1022,21 +1027,34 @@ export default function SpeicherCalculatePage() {
 
               {/* Annual Consumption */}
               <div className="space-y-2 border-t border-line pt-8">
-                <label className={FORM_LABEL}>
+                <label className={FORM_LABEL} htmlFor="annualConsumptionKwh">
                   Hausverbrauch (ohne Wärmepumpe) *
                 </label>
                 <input
                   ref={annualConsumptionInputRef}
+                  id="annualConsumptionKwh"
+                  name="annualConsumptionKwh"
                   type="number"
-                  min="500"
-                  max="50000"
-                  value={formData.annualConsumptionKwh || ""}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  step={1}
+                  min={ANNUAL_CONSUMPTION_KWH_MIN}
+                  max={ANNUAL_CONSUMPTION_KWH_MAX}
+                  value={
+                    typeof formData.annualConsumptionKwh === "number" &&
+                    Number.isFinite(formData.annualConsumptionKwh)
+                      ? formData.annualConsumptionKwh
+                      : ""
+                  }
                   onChange={(e) => {
                     clearFieldError("annualConsumptionKwh");
                     setFormData({
                       ...formData,
-                      annualConsumptionKwh:
-                        parseInt(e.target.value) || undefined,
+                      annualConsumptionKwh: parseAnnualConsumptionInput(
+                        e.target.value
+                      ),
                     });
                   }}
                   aria-invalid={
@@ -1060,7 +1078,7 @@ export default function SpeicherCalculatePage() {
                 )}
                 <p className={FORM_HELP}>
                   Bitte geben Sie hier nur den Haushaltsstromverbrauch ein – ohne
-                  Wärmepumpe.
+                  Wärmepumpe. Ganze kWh zwischen 500 und 50.000.
                 </p>
               </div>
 

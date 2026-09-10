@@ -23,6 +23,7 @@ import type {
   EvCalculationMeta,
 } from "@/load/resolveEvLoadComponent";
 import { toGermanEvError } from "../utils/toGermanEvError";
+import { withValidatedAnnualConsumption } from "../utils/annualConsumption";
 
 export type HouseholdCalculationPayload = {
   verifiedResult: VerifiedResult;
@@ -118,6 +119,8 @@ export async function runHouseholdCalculation(
   params: HouseholdCalculationInput,
   onProgress?: CalculationProgressHandler
 ): Promise<HouseholdCalculationPayload> {
+  params = withValidatedAnnualConsumption(params);
+
   const addressString = buildAddressString({
     street: params.street,
     houseNumber: params.houseNumber,

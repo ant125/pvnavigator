@@ -2,6 +2,7 @@ import { setImmediate } from "node:timers";
 import { runHouseholdCalculation } from "@/app/(speicher)/calculate/runHouseholdCalculation";
 import type { CalculationProgressEvent } from "@/lib/calculationProgress";
 import { persistCompletedCalculation } from "@/lib/persistCompletedCalculation";
+import { withValidatedAnnualConsumption } from "@/app/(speicher)/utils/annualConsumption";
 
 import { getServerUser } from "@/lib/auth";
 
@@ -61,19 +62,24 @@ export async function POST(request: Request): Promise<Response> {
         controller.close();
       };
 
-      void runHouseholdCalculation(
-        params as Parameters<typeof runHouseholdCalculation>[0],
-        async (event) => {
-          send({ type: "progress", event });
-          await new Promise<void>((resolve) => {
-            setImmediate(resolve);
-          });
-        }
-      )
-        .then(async (payload) => {
+      void Promise.resolve()
+        .then(() =>
+          withValidatedAnnualConsumption(
+            params as Parameters<typeof runHouseholdCalculation>[0]
+          )
+        )
+        .then((input) =>
+          runHouseholdCalculation(input, async (event) => {
+            send({ type: "progress", event });
+            await new Promise<void>((resolve) => {
+              setImmediate(resolve);
+            });
+          }).then((payload) => ({ input, payload }))
+        )
+        .then(async ({ input, payload }) => {
           await persistCompletedCalculation({
             userId: user.id,
-            input: params as Parameters<typeof runHouseholdCalculation>[0],
+            input,
             payload,
           });
           send({ type: "complete", payload });

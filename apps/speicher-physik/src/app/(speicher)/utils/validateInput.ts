@@ -5,6 +5,11 @@
 
 import type { PvSurfaceInput, SpeicherInput } from "../types/speicher";
 import {
+  ANNUAL_CONSUMPTION_RANGE_MESSAGE,
+  GERMAN_POSTAL_CODE_PATTERN,
+  validateAnnualConsumption,
+} from "./annualConsumption";
+import {
   EV_FIELD_MESSAGES,
   isEvHomeChargePowerKw,
   isPresentFiniteNumber,
@@ -16,14 +21,12 @@ import {
 const PV_TOTAL_KWP_MAX = 100;
 const PV_PER_SURFACE_KWP_MAX = 100;
 
-const POSTAL_CODE_PATTERN = /^\d{5}$/;
-
 export const SPEICHER_FIELD_INLINE_MESSAGES = {
   postalCode: "Bitte geben Sie eine gültige fünfstellige PLZ ein.",
   city: "Bitte geben Sie einen Ort ein.",
   street: "Bitte geben Sie eine Straße ein.",
   houseNumber: "Bitte geben Sie eine Hausnummer ein.",
-  annualConsumptionKwh: "Bitte geben Sie einen gültigen Hausverbrauch ein.",
+  annualConsumptionKwh: ANNUAL_CONSUMPTION_RANGE_MESSAGE,
   heatPumpTechnology: "Bitte wählen Sie den Typ der Wärmepumpe.",
   heatPumpDhwService:
     "Bitte wählen Sie, wofür die Wärmepumpe verwendet wird.",
@@ -206,7 +209,7 @@ export function validateAddressFields(input: {
   if (!input.postalCode?.trim()) {
     errors.push("Bitte geben Sie die PLZ ein.");
     fieldErrors.postalCode = SPEICHER_FIELD_INLINE_MESSAGES.postalCode;
-  } else if (!POSTAL_CODE_PATTERN.test(input.postalCode.trim())) {
+  } else if (!GERMAN_POSTAL_CODE_PATTERN.test(input.postalCode.trim())) {
     errors.push("Die PLZ muss aus genau fünf Ziffern bestehen.");
     fieldErrors.postalCode = SPEICHER_FIELD_INLINE_MESSAGES.postalCode;
   }
@@ -276,10 +279,13 @@ export function validateInput(input: Partial<SpeicherInput>): {
   errors.push(...addressValidation.errors);
   Object.assign(fieldErrors, addressValidation.fieldErrors);
 
-  if (!input.annualConsumptionKwh || input.annualConsumptionKwh <= 0) {
-    errors.push("Bitte geben Sie Ihren Jahresverbrauch ein.");
-    fieldErrors.annualConsumptionKwh =
-      SPEICHER_FIELD_INLINE_MESSAGES.annualConsumptionKwh;
+  const consumption = validateAnnualConsumption({
+    annualConsumptionKwh: input.annualConsumptionKwh,
+    postalCode: input.postalCode,
+  });
+  if (!consumption.ok) {
+    errors.push(consumption.message);
+    fieldErrors.annualConsumptionKwh = consumption.message;
   }
 
   // New UI: type and DHW must be chosen before calculate. Legacy API

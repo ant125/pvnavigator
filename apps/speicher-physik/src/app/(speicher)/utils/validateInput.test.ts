@@ -5,6 +5,11 @@ import {
   validateAddressFields,
   validateInput,
 } from "./validateInput";
+import {
+  ANNUAL_CONSUMPTION_INTEGER_MESSAGE,
+  ANNUAL_CONSUMPTION_POSTAL_CODE_MESSAGE,
+  ANNUAL_CONSUMPTION_RANGE_MESSAGE,
+} from "./annualConsumption";
 
 describe("validateAddressFields", () => {
   it("accepts a complete valid address", () => {
@@ -96,9 +101,9 @@ describe("validateInput field errors", () => {
     });
 
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain("Bitte geben Sie Ihren Jahresverbrauch ein.");
+    expect(result.errors).toContain(ANNUAL_CONSUMPTION_RANGE_MESSAGE);
     expect(result.fieldErrors.annualConsumptionKwh).toBe(
-      SPEICHER_FIELD_INLINE_MESSAGES.annualConsumptionKwh
+      ANNUAL_CONSUMPTION_RANGE_MESSAGE
     );
   });
 
@@ -128,6 +133,62 @@ const VALID_FORM_BASE: Partial<SpeicherInput> = {
   city: "München",
   annualConsumptionKwh: 4500,
 };
+
+describe("validateInput Hausverbrauch bounds", () => {
+  it("accepts 500 and 50000 kWh", () => {
+    expect(
+      validateInput({ ...VALID_FORM_BASE, annualConsumptionKwh: 500 }).isValid
+    ).toBe(true);
+    expect(
+      validateInput({ ...VALID_FORM_BASE, annualConsumptionKwh: 50000 }).isValid
+    ).toBe(true);
+  });
+
+  it("rejects 499, 50001, 86154, NaN, and Infinity", () => {
+    for (const value of [499, 50001, 86154, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const result = validateInput({
+        ...VALID_FORM_BASE,
+        annualConsumptionKwh: value,
+      });
+      expect(result.isValid, String(value)).toBe(false);
+      expect(result.fieldErrors.annualConsumptionKwh).toBe(
+        ANNUAL_CONSUMPTION_RANGE_MESSAGE
+      );
+    }
+  });
+
+  it("rejects a non-integer kWh value instead of truncating", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      annualConsumptionKwh: 4500.5,
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.fieldErrors.annualConsumptionKwh).toBe(
+      ANNUAL_CONSUMPTION_INTEGER_MESSAGE
+    );
+  });
+
+  it("rejects when Hausverbrauch equals the PLZ", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      postalCode: "86154",
+      annualConsumptionKwh: 86154,
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.fieldErrors.annualConsumptionKwh).toBe(
+      ANNUAL_CONSUMPTION_POSTAL_CODE_MESSAGE
+    );
+  });
+
+  it("accepts a normal consumption with PLZ 86154", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      postalCode: "86154",
+      annualConsumptionKwh: 6000,
+    });
+    expect(result.isValid).toBe(true);
+  });
+});
 
 describe("validateInput heat pump (new UI)", () => {
   it("allows Nein without type, DHW, or consumption", () => {
