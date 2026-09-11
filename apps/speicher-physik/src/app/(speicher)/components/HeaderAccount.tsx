@@ -1,13 +1,13 @@
 "use client";
 
 const headerAuthLink =
-  "text-sm text-ink-secondary transition-colors hover:text-ink";
+  "inline-flex min-h-11 items-center whitespace-nowrap text-sm text-ink-secondary transition-colors hover:text-ink sm:min-h-0";
 
 const headerAccountLink =
-  "text-sm font-semibold text-ink transition-colors hover:text-ink-secondary";
+  "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap text-sm font-semibold text-ink transition-colors hover:text-ink-secondary sm:min-h-0";
 
 const headerSignOutBtn =
-  "inline-flex items-center justify-center rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-ink-secondary shadow-sm transition-colors hover:bg-canvas hover:text-ink";
+  "inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-lg px-1 py-2 text-sm font-medium text-ink-secondary transition-colors hover:text-ink sm:min-h-0 sm:border sm:border-line sm:bg-surface sm:px-3 sm:shadow-sm sm:hover:bg-canvas";
 
 export type HeaderAccountProps = {
   authenticated: boolean;
@@ -28,8 +28,8 @@ export function HeaderAccount({
 }: HeaderAccountProps) {
   if (authenticated) {
     return (
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-2.5 gap-y-1 sm:gap-3">
-        <a href={accountHref} className={`${headerAccountLink} shrink-0`}>
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 sm:gap-3">
+        <a href={accountHref} className={headerAccountLink}>
           Mein Konto
         </a>
         {userEmail ? (
@@ -50,7 +50,7 @@ export function HeaderAccount({
   }
 
   return (
-    <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
+    <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-3">
       <a href={loginHref} className={headerAuthLink}>
         Anmelden
       </a>

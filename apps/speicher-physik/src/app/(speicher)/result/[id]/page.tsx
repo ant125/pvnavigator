@@ -32,8 +32,8 @@ function IncompatibleHistoricalReport({
     : null;
 
   return (
-    <div className="py-12">
-      <div className="max-w-form mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-w-0 max-w-full py-12">
+      <div className="mx-auto min-w-0 w-full max-w-form px-4 sm:px-6 lg:px-8">
         <div className="rounded-lg border border-line bg-surface p-5 sm:p-8">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">
             Bericht nicht lesbar
@@ -126,7 +126,7 @@ export default async function HistoricalSpeicherResultPage({
   const { report } = outcome;
 
   return (
-    <div className="py-12">
+    <div className="min-w-0 max-w-full py-12">
       <SpeicherReportView
         mode="historical"
         verifiedResult={report.verifiedResult}

@@ -40,6 +40,9 @@ type WpuqRobustnessSectionProps = {
   bdew: BdewReportValues;
 };
 
+/** Local scroller for tables that are intentionally wider than a phone. */
+const TABLE_SCROLL = "min-w-0 max-w-full overflow-x-auto";
+
 function InfoHint({
   label,
   children,
@@ -50,7 +53,7 @@ function InfoHint({
   const tooltipId = useId();
 
   return (
-    <span className="group relative ml-1 inline-flex align-middle">
+    <span className="group ml-1 inline-flex align-middle">
       <button
         type="button"
         className="inline-flex h-4 w-4 items-center justify-center rounded-full text-ink-muted/80 transition-colors hover:text-ink-secondary focus-visible:text-ink-secondary"
@@ -62,7 +65,7 @@ function InfoHint({
       <span
         id={tooltipId}
         role="tooltip"
-        className="pointer-events-none invisible absolute left-0 top-full z-20 mt-2 w-72 max-w-[min(18rem,calc(100vw-2rem))] rounded-md border border-tooltip-border bg-tooltip-bg px-3 py-2 text-left text-xs font-normal leading-relaxed text-tooltip-ink opacity-0 shadow-sm transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+        className="pointer-events-none absolute left-0 right-0 top-full z-20 mt-2 hidden max-w-full whitespace-normal rounded-md border border-tooltip-border bg-tooltip-bg px-3 py-2 text-left text-xs font-normal leading-relaxed text-tooltip-ink shadow-sm group-hover:block group-focus-within:block sm:right-auto sm:w-72 sm:max-w-72"
       >
         {children}
       </span>
@@ -88,7 +91,7 @@ function RobustnessCompareTable({
   rows: readonly CompareRow[];
 }) {
   return (
-    <div className="mt-6 overflow-x-auto">
+    <div className={`mt-6 ${TABLE_SCROLL}`}>
       <table className="w-full min-w-[28rem] border-collapse text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
@@ -159,7 +162,7 @@ function DetailsToggle({
       >
         {open ? openLabel : closedLabel}
       </button>
-      {open ? <div className="mt-4">{children}</div> : null}
+      {open ? <div className="mt-4 min-w-0 max-w-full">{children}</div> : null}
     </div>
   );
 }
@@ -248,11 +251,11 @@ function HouseholdRobustnessBlock({
   return (
     <section
       aria-labelledby="household-robustness-heading"
-      className="mt-8 border-t border-line pt-8 lg:mt-10 lg:pt-10"
+      className="mt-8 min-w-0 max-w-full border-t border-line pt-8 lg:mt-10 lg:pt-10"
     >
       <h2
         id="household-robustness-heading"
-        className="max-w-reading text-lg font-semibold leading-snug text-ink"
+        className="relative min-w-0 max-w-reading text-lg font-semibold leading-snug text-ink"
       >
         Was ändert sich, wenn Ihr Haushalt Strom anders verbraucht als das{" "}
         <span className="whitespace-nowrap">
@@ -328,7 +331,7 @@ function HouseholdRobustnessBlock({
             </li>
           ))}
         </ul>
-        <div className="mt-4 overflow-x-auto">
+        <div className={`mt-4 ${TABLE_SCROLL}`}>
           <table className="w-full min-w-[32rem] border-collapse text-sm">
             <caption className="sr-only">
               Einzelergebnisse der {n} gemessenen Haushaltsprofile
@@ -402,7 +405,7 @@ function WwRobustnessBlock({
   return (
     <section
       aria-labelledby="ww-robustness-heading"
-      className="mt-8 border-t border-line pt-8 lg:mt-10 lg:pt-10"
+      className="mt-8 min-w-0 max-w-full border-t border-line pt-8 lg:mt-10 lg:pt-10"
     >
       <h2
         id="ww-robustness-heading"
@@ -464,7 +467,7 @@ function WwRobustnessBlock({
         closedLabel="Details anzeigen"
         openLabel="Details ausblenden"
       >
-        <div className="overflow-x-auto">
+        <div className={TABLE_SCROLL}>
           <table className="w-full min-w-[32rem] border-collapse text-sm">
             <caption className="sr-only">
               Einzelergebnisse der {n} gemessenen Wasser/Wasser-Profile

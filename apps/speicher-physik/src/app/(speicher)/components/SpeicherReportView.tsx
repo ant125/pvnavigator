@@ -42,14 +42,14 @@ const HEAT_PUMP_DHW_LABELS = {
 } as const;
 
 const REPORT_SHEET =
-  "max-w-sheet mx-auto rounded-lg border border-line bg-surface p-5 sm:p-8 lg:p-10";
+  "mx-auto min-w-0 w-full max-w-sheet rounded-lg border border-line bg-surface p-5 sm:p-8 lg:p-10";
 
 /**
  * Major section boundary inside the sheet: one rule with symmetric space above
  * and below, so every section transition carries the same weight. Section
  * headings therefore need no rule of their own.
  */
-const REPORT_SECTION = "mt-8 border-t border-line pt-8 lg:mt-10 lg:pt-10";
+const REPORT_SECTION = "mt-8 min-w-0 max-w-full border-t border-line pt-8 lg:mt-10 lg:pt-10";
 
 /** Report-section heading — a document chapter, not a micro label. */
 const REPORT_SECTION_HEADING = "text-lg font-semibold text-ink";
@@ -254,7 +254,7 @@ export function SpeicherReportView({
     typeof value === "number" ? `${value.toFixed(0)} kWh` : PLACEHOLDER;
 
   return (
-        <div className="max-w-frame mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto min-w-0 w-full max-w-frame px-4 sm:px-6 lg:px-8">
           <div className={REPORT_SHEET}>
             {/* Masthead — title block of the report sheet */}
             <div ref={mastheadRef} className="scroll-mt-20">
@@ -1197,7 +1197,7 @@ export function SpeicherReportView({
           </div>
 
           {mode === "historical" ? (
-            <div className="max-w-sheet mx-auto mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div className="mx-auto mt-8 flex min-w-0 w-full max-w-sheet flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
               <Link href="/calculate" className={BTN_PRIMARY}>
                 Neue Berechnung
               </Link>

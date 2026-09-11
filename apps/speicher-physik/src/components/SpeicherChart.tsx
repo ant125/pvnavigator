@@ -132,8 +132,8 @@ export default function SpeicherChart({
         : "middle";
 
   return (
-    <div className="w-full">
-      <div className="w-full h-[380px]">
+    <div className="w-full min-w-0 max-w-full">
+      <div className="h-[380px] w-full min-w-0 max-w-full">
         <ResponsiveContainer>
           <LineChart
             data={visibleData}

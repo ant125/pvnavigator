@@ -665,10 +665,10 @@ export default function SpeicherCalculatePage() {
   const totalKwPConfigured = sumSurfaceKwP(surfaces);
 
   return (
-    <div className="py-12">
+    <div className="min-w-0 max-w-full py-12">
       {/* ========== INPUT STEP ========== */}
       {step === "input" && (
-        <div className="max-w-form mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto min-w-0 w-full max-w-form px-4 sm:px-6 lg:px-8">
           <div className={INPUT_SHEET}>
             {/* Header */}
             <div className="border-b border-line pb-6">
@@ -1448,7 +1448,7 @@ export default function SpeicherCalculatePage() {
       {step === "calculating" && (
         <div
           ref={calculatingStepRef}
-          className="mx-auto flex w-full max-w-frame scroll-mt-20 justify-center px-4 py-10 sm:px-6 lg:px-8"
+          className="mx-auto flex w-full min-w-0 max-w-frame scroll-mt-20 justify-center px-4 py-10 sm:px-6 lg:px-8"
         >
           <CalculationProgressList
             progress={calculationProgress}

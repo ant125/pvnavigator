@@ -22,6 +22,10 @@ describe("HeaderAccount", () => {
     expect(html).toContain("Mein Konto");
     expect(html).toContain(`href="${ACCOUNT}"`);
     expect(html).toContain("user@example.de");
+    expect(html).toContain("hidden");
+    expect(html).toContain("lg:inline");
+    expect(html).toContain("min-w-0");
+    expect(html).toContain("flex-wrap");
     expect(html).toContain(`action="${SIGN_OUT}"`);
     expect(html).toContain('method="post"');
     expect(html).toContain("Abmelden");
