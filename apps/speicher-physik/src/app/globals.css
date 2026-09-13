@@ -64,13 +64,137 @@ body {
   outline-offset: 2px;
 }
 
+.sg-run-focus:focus-visible {
+  outline: none;
+}
+
+.sg-scene-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #f7f4ef;
+  isolation: isolate;
+}
+
+/*
+  Input preview only. Chrome budget covers sticky offset (6rem), compact card
+  padding, title, one wrapping chip row, disclaimer, and a small bottom gap.
+  Sticky stays on ordinary short desktop windows; below 31rem the card would
+  exceed the viewport even at a readable scene size, so it scrolls normally.
+*/
+.sg-preview-scene {
+  width: 100%;
+}
+
+@media (min-width: 1024px) and (min-height: 31rem) {
+  .sg-preview-pin {
+    position: sticky;
+    top: 6rem;
+    z-index: 10;
+  }
+
+  .sg-scene-frame.sg-preview-scene {
+    width: min(100%, calc((100dvh - 16.5rem) * 16 / 9));
+    margin-inline: auto;
+  }
+}
+
+.sg-scene-house {
+  position: absolute;
+  left: 11%;
+  width: 66%;
+  bottom: 8%;
+  z-index: 1;
+}
+
+.sg-scene-house img,
+.sg-scene-layer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sg-scene-layer {
+  position: absolute;
+  z-index: 3;
+}
+
+.sg-scene-hp-luftwasser {
+  left: 8%;
+  width: 12%;
+  bottom: 17%;
+}
+
+.sg-scene-hp-generic {
+  left: 37%;
+  width: 5.5%;
+  bottom: 20%;
+}
+
+.sg-scene-hp-wasserwasser {
+  left: 37%;
+  width: 6%;
+  bottom: 20%;
+}
+
+.sg-scene-hp-wasserwasser img {
+  clip-path: polygon(
+    27.1% 2%,
+    88.8% 10.3%,
+    88.8% 86.3%,
+    67% 95.6%,
+    4.7% 82.1%,
+    4.7% 13%,
+    3.4% 12.7%,
+    3.4% 9.2%
+  );
+}
+
+.sg-scene-hp img,
+.sg-scene-ev img {
+  filter: grayscale(1);
+}
+
+.sg-scene-ev {
+  left: 65%;
+  width: 31%;
+  bottom: 10%;
+}
+
+.sg-scene-backup {
+  left: 28.7%;
+  top: 73%;
+  width: 2.8%;
+  z-index: 4;
+}
+
+.sg-scene-badge {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sg-scene-pipes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  fill: none;
+  stroke: #797970;
+  stroke-width: 5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
 @keyframes sg-scene-pulse {
   0%,
   100% {
-    filter: drop-shadow(0 0 0 rgb(61 107 84 / 0));
+    filter: drop-shadow(0 0 0 transparent);
   }
   50% {
-    filter: drop-shadow(0 0 7px rgb(61 107 84 / 0.55));
+    filter: drop-shadow(0 0 5px #66845a);
   }
 }
 
@@ -78,10 +202,26 @@ body {
   animation: sg-scene-pulse 2.4s ease-in-out infinite;
 }
 
+@keyframes sg-scene-equip-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sg-scene-equip {
+  animation: sg-scene-equip-in 180ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sg-scene-active {
     animation: none;
-    filter: drop-shadow(0 0 4px rgb(61 107 84 / 0.4));
+  }
+
+  .sg-scene-equip {
+    animation: none;
   }
 }
 

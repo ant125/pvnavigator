@@ -19,7 +19,6 @@ import {
   CALCULATION_COMPLETE_PAUSE_MS,
   INITIAL_CALCULATION_PROGRESS,
   applyCalculationProgress,
-  getSceneHighlightTarget,
 } from "@/lib/calculationProgress";
 import { runHouseholdCalculationStream } from "./runHouseholdCalculationStream";
 import {
@@ -45,8 +44,8 @@ import {
   SpeicherCalculateForm,
 } from "./SpeicherCalculateForm";
 import { SpeicherCalculateWorkspace } from "./SpeicherCalculateWorkspace";
-import { SystemScene, type HeatPumpSceneKind } from "./SystemScene";
-import { SelectedSystemSummary } from "./SelectedSystemSummary";
+import { InputSystemPreview } from "./InputSystemPreview";
+import { RunSystemPreview } from "./RunSystemPreview";
 import { CompletedCalculationRow } from "./CompletedCalculationRow";
 
 type Step = "input" | "calculating" | "results";
@@ -71,6 +70,8 @@ export default function SpeicherCalculatePage() {
   >(null);
   const calculationStartedAtRef = useRef<number | null>(null);
   const submitInFlightRef = useRef(false);
+  const pendingScrollToRunRef = useRef(false);
+  const [runSceneOpen, setRunSceneOpen] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<SpeicherFieldErrors>({});
   const [verifiedResult, setVerifiedResult] = useState<VerifiedResult | null>(
@@ -100,6 +101,9 @@ export default function SpeicherCalculatePage() {
     backupReserveKwh: number | undefined;
     totalKwPConfigured: number;
   } | null>(null);
+  const [runPreview, setRunPreview] = useState<Partial<SpeicherInput> | null>(
+    null
+  );
   const errorBoxRef = useRef<HTMLDivElement | null>(null);
   const mainPaneRef = useRef<HTMLDivElement | null>(null);
   const postalCodeInputRef = useRef<HTMLInputElement | null>(null);
@@ -155,15 +159,17 @@ export default function SpeicherCalculatePage() {
   }, [step, calculationComplete]);
 
   useEffect(() => {
-    if (step !== "calculating" && !(step === "results" && !editing)) return;
-    if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
-      return;
-    }
+    if (step !== "calculating") return;
+    if (!pendingScrollToRunRef.current) return;
+
     const scrollFrame = requestAnimationFrame(() => {
+      if (!pendingScrollToRunRef.current) return;
+      pendingScrollToRunRef.current = false;
       mainPaneRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+      mainPaneRef.current?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(scrollFrame);
-  }, [step, editing]);
+  }, [step]);
 
   useEffect(() => {
     if (errors.length === 0 || formLocked) return;
@@ -195,6 +201,7 @@ export default function SpeicherCalculatePage() {
 
     const validation = validateInput(formData);
     if (!validation.isValid) {
+      pendingScrollToRunRef.current = false;
       setErrors(validation.errors);
       setFieldErrors(validation.fieldErrors);
       return;
@@ -213,6 +220,12 @@ export default function SpeicherCalculatePage() {
     setWasserWasserRobustness(null);
     setEditing(false);
     setDetailsExpanded(true);
+    setRunSceneOpen(false);
+    pendingScrollToRunRef.current = true;
+    setRunPreview({
+      ...formData,
+      pvSurfaces: surfacesOrDefault(formData),
+    });
     setStep("calculating");
 
     try {
@@ -288,6 +301,7 @@ export default function SpeicherCalculatePage() {
       setDetailsExpanded(false);
       setStep("results");
     } catch (err) {
+      pendingScrollToRunRef.current = false;
       const message =
         err instanceof Error
           ? err.message
@@ -302,6 +316,8 @@ export default function SpeicherCalculatePage() {
       setCalculationDurationMs(null);
       calculationStartedAtRef.current = null;
       setEditing(false);
+      setRunPreview(null);
+      setRunSceneOpen(false);
       setStep("input");
     } finally {
       submitInFlightRef.current = false;
@@ -321,6 +337,9 @@ export default function SpeicherCalculatePage() {
     setHeatPumpCitation(null);
     setEvResult(null);
     setResultPresentation(null);
+    setRunPreview(null);
+    setRunSceneOpen(false);
+    pendingScrollToRunRef.current = false;
     setCalculationComplete(false);
     setCalculationDurationMs(null);
     calculationStartedAtRef.current = null;
@@ -352,46 +371,21 @@ export default function SpeicherCalculatePage() {
 
   useCalculateHeaderStatus(headerStatus);
 
+  const previewForm = step === "input" ? formData : (runPreview ?? formData);
   const includeHeatPumpProfile =
-    formData.heatPumpEnabled === true &&
-    (formData.heatPumpTechnology === "luftwasser" ||
-      formData.heatPumpTechnology === "wasserwasser")
-      ? formData.heatPumpTechnology
+    previewForm.heatPumpEnabled === true &&
+    (previewForm.heatPumpTechnology === "luftwasser" ||
+      previewForm.heatPumpTechnology === "wasserwasser")
+      ? previewForm.heatPumpTechnology
       : false;
-  const includeEvProfile = formData.evEnabled === true;
-  const heatPumpKind: HeatPumpSceneKind =
-    formData.heatPumpTechnology === "wasserwasser"
-      ? "wasserwasser"
-      : formData.heatPumpTechnology === "luftwasser"
-        ? "luftwasser"
-        : "generic";
-  const sceneHighlight =
-    step === "calculating"
-      ? getSceneHighlightTarget(
-          calculationProgress,
-          calculationComplete,
-          includeHeatPumpProfile,
-          includeEvProfile
-        )
-      : null;
+  const includeEvProfile = previewForm.evEnabled === true;
 
-  const scene = (
-    <div className="rounded-sm border border-line bg-surface p-4 sm:p-5">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-accent-text">
-        02 / Ihre Systemkonfiguration
-      </p>
-      <SystemScene
-        heatPump={formData.heatPumpEnabled === true}
-        heatPumpKind={heatPumpKind}
-        ev={formData.evEnabled === true}
-        backupReserve={(formData.backupReserveKwh ?? 0) > 0}
-        highlight={sceneHighlight}
-        className="mt-4 h-auto w-full"
-      />
-      <div className="mt-4 border-t border-line-soft pt-4">
-        <SelectedSystemSummary formData={formData} />
-      </div>
-    </div>
+  const runPreviewCard = (
+    <RunSystemPreview
+      formData={runPreview ?? formData}
+      sceneOpen={runSceneOpen}
+      onToggleScene={() => setRunSceneOpen((open) => !open)}
+    />
   );
 
   const progress = (
@@ -444,36 +438,38 @@ export default function SpeicherCalculatePage() {
 
   let main: React.ReactNode;
   if (step === "input") {
-    main = scene;
-  } else if (step === "calculating") {
-    main = (
-      <div ref={mainPaneRef} className="space-y-6 scroll-mt-24">
-        {scene}
-        {progress}
-      </div>
-    );
+    main = <InputSystemPreview formData={formData} />;
   } else {
     main = (
-      <div ref={mainPaneRef} className="space-y-6 scroll-mt-24">
-        {isStale ? (
-          <div
-            role="status"
-            className="rounded-sm border border-warning/40 bg-warning-soft px-4 py-3 text-sm text-warning"
-          >
-            Eingaben geändert — Ergebnis nicht aktuell.
-          </div>
-        ) : null}
-        <CompletedCalculationRow
-          durationMs={calculationDurationMs}
-          expanded={detailsExpanded}
-          onToggle={() => setDetailsExpanded((open) => !open)}
-        >
-          <div className="space-y-6">
-            {scene}
-            {progress}
-          </div>
-        </CompletedCalculationRow>
-        {report}
+      <div
+        ref={mainPaneRef}
+        tabIndex={-1}
+        aria-label={step === "calculating" ? "Berechnung" : "Ergebnis"}
+        className="sg-run-focus space-y-6 scroll-mt-24"
+      >
+        {runPreviewCard}
+        {step === "calculating" ? (
+          progress
+        ) : (
+          <>
+            {isStale ? (
+              <div
+                role="status"
+                className="rounded-sm border border-warning/40 bg-warning-soft px-4 py-3 text-sm text-warning"
+              >
+                Eingaben geändert — Ergebnis nicht aktuell.
+              </div>
+            ) : null}
+            <CompletedCalculationRow
+              durationMs={calculationDurationMs}
+              expanded={detailsExpanded}
+              onToggle={() => setDetailsExpanded((open) => !open)}
+            >
+              {progress}
+            </CompletedCalculationRow>
+            {report}
+          </>
+        )}
       </div>
     );
   }
@@ -492,9 +488,8 @@ export default function SpeicherCalculatePage() {
 
         <SpeicherCalculateWorkspace
           formLocked={formLocked}
-          collapseFormOnMobile={
-            step === "calculating" || (step === "results" && !editing)
-          }
+          pinMain={step === "input"}
+          collapseFormOnMobile={false}
           form={
             <SpeicherCalculateForm
               formData={formData}

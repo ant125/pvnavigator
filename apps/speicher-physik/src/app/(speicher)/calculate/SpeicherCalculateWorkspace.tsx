@@ -7,11 +7,13 @@ export function SpeicherCalculateWorkspace({
   main,
   formLocked,
   collapseFormOnMobile,
+  pinMain = false,
 }: {
   form: ReactNode;
   main: ReactNode;
   formLocked: boolean;
   collapseFormOnMobile: boolean;
+  pinMain?: boolean;
 }) {
   const [mobileFormOpen, setMobileFormOpen] = useState(!collapseFormOnMobile);
 
@@ -50,7 +52,10 @@ export function SpeicherCalculateWorkspace({
         </div>
       </section>
 
-      <section aria-label="Ergebnisbereich" className="min-w-0 space-y-6">
+      <section
+        aria-label="Ergebnisbereich"
+        className={`min-w-0 space-y-6${pinMain ? " lg:self-stretch" : ""}`}
+      >
         {main}
       </section>
     </div>
