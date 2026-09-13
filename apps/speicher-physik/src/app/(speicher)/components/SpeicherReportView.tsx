@@ -42,7 +42,10 @@ const HEAT_PUMP_DHW_LABELS = {
 } as const;
 
 const REPORT_SHEET =
-  "mx-auto min-w-0 w-full max-w-sheet rounded-lg border border-line bg-surface p-5 sm:p-8 lg:p-10";
+  "mx-auto min-w-0 w-full max-w-sheet rounded-sm border border-line bg-surface p-5 sm:p-8 lg:p-10";
+
+const REPORT_SHEET_WORKSPACE =
+  "min-w-0 w-full rounded-sm border border-line bg-surface p-5 sm:p-6";
 
 /**
  * Major section boundary inside the sheet: one rule with symmetric space above
@@ -52,18 +55,19 @@ const REPORT_SHEET =
 const REPORT_SECTION = "mt-8 min-w-0 max-w-full border-t border-line pt-8 lg:mt-10 lg:pt-10";
 
 /** Report-section heading — a document chapter, not a micro label. */
-const REPORT_SECTION_HEADING = "text-lg font-semibold text-ink";
+const REPORT_SECTION_HEADING =
+  "font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-accent-text";
 
 /** Micro label above a value or a form group. */
 const REPORT_SECTION_TITLE =
-  "text-xs font-semibold uppercase tracking-wide text-ink-secondary";
+  "font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink-secondary";
 
 /** Label of a group nested inside a section — one step darker than a micro label. */
 const REPORT_GROUP_TITLE =
-  "text-xs font-semibold uppercase tracking-wide text-ink";
+  "font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink";
 
 const BTN_PRIMARY =
-  "inline-flex items-center justify-center rounded-md bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-hover";
+  "inline-flex items-center justify-center rounded-sm bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-hover";
 
 
 
@@ -94,10 +98,10 @@ const REPORT_METRIC_ROW =
 const REPORT_METRIC_LABEL = "min-w-0 leading-snug text-ink-secondary";
 
 const REPORT_METRIC_VALUE =
-  "shrink-0 text-right tabular-nums font-medium text-ink";
+  "shrink-0 text-right font-mono text-sm tabular-nums font-medium text-ink";
 
 const REPORT_METRIC_VALUE_ACCENT =
-  "shrink-0 text-right tabular-nums font-semibold text-accent-text";
+  "shrink-0 text-right font-mono text-sm tabular-nums font-semibold text-accent-text";
 
 /**
  * Stammdaten datasheet: short label above its value, three columns on desktop,
@@ -109,7 +113,7 @@ const REPORT_DATA_ITEM = "border-t border-line-soft pt-3";
 
 const REPORT_DATA_LABEL = "text-xs leading-snug text-ink-muted";
 
-const REPORT_DATA_VALUE = "mt-1 text-sm font-medium tabular-nums text-ink";
+const REPORT_DATA_VALUE = "mt-1 font-mono text-sm font-medium tabular-nums text-ink";
 
 /**
  * Tinted technical band for a nested energy balance inside a section: the total
@@ -117,7 +121,7 @@ const REPORT_DATA_VALUE = "mt-1 text-sm font-medium tabular-nums text-ink";
  * as parts of that total rather than as separate metrics.
  */
 const REPORT_BAND =
-  "mt-8 rounded-md border border-line-soft bg-surface-muted p-5 lg:p-6";
+  "mt-8 rounded-sm border border-line-soft bg-surface-muted p-5 lg:p-6";
 
 const REPORT_BAND_GRID =
   "mt-5 grid gap-x-8 gap-y-4 border-t border-line pt-5 sm:grid-cols-2 lg:grid-cols-3";
@@ -175,6 +179,7 @@ export type SpeicherReportViewProps = {
   savedAt?: string | null;
   batteryModelVersion?: string | null;
   mastheadRef?: RefObject<HTMLDivElement | null>;
+  variant?: "page" | "workspace";
 };
 
 export function SpeicherReportView({
@@ -194,6 +199,7 @@ export function SpeicherReportView({
   savedAt = null,
   batteryModelVersion = null,
   mastheadRef,
+  variant = "page",
 }: SpeicherReportViewProps) {
   const metrics = deriveSpeicherBusinessMetrics({
     verifiedResult,
@@ -254,8 +260,8 @@ export function SpeicherReportView({
     typeof value === "number" ? `${value.toFixed(0)} kWh` : PLACEHOLDER;
 
   return (
-        <div className="mx-auto min-w-0 w-full max-w-frame px-4 sm:px-6 lg:px-8">
-          <div className={REPORT_SHEET}>
+        <div className={variant === "workspace" ? "min-w-0 w-full" : "mx-auto min-w-0 w-full max-w-frame px-4 sm:px-6 lg:px-8"}>
+          <div className={variant === "workspace" ? REPORT_SHEET_WORKSPACE : REPORT_SHEET}>
             {/* Masthead — title block of the report sheet */}
             <div ref={mastheadRef} className="scroll-mt-20">
               <div className="flex items-center gap-1.5">
@@ -271,15 +277,17 @@ export function SpeicherReportView({
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="text-xs font-semibold uppercase tracking-wide text-accent-text">
+                <span className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-accent-text">
                   {mode === "historical"
                     ? "Gespeicherter Bericht"
                     : "Analyse abgeschlossen"}
                 </span>
               </div>
-              <h1 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
-                Ihre Speicher-Analyse
-              </h1>
+              {variant === "page" ? (
+                <h1 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
+                  Ihre Speicher-Analyse
+                </h1>
+              ) : null}
               {mode === "historical" ? (
                 <p className="mt-3 text-sm leading-relaxed text-ink-secondary">
                   Gespeichert am{" "}
@@ -297,71 +305,71 @@ export function SpeicherReportView({
             {/* Recommended Size */}
             <section className={REPORT_SECTION}>
               <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
-                Berechnung nach BDEW H25
+                02 / Ergebnis · Berechnung nach BDEW H25
               </h2>
               {recommendedTechnicalSize > 0 ? (
-                /*
-                  One composition instead of a headline grid stacked on a second
-                  grid: the purchase-planning result and its derivation form the
-                  main column, the physical reference value and its caveats the
-                  aside. The planning value therefore outranks the technical one
-                  typographically while both stay visibly related.
-                */
-                <div className={REPORT_SPLIT}>
-                  <div className="space-y-6">
-                    <div>
+                <div className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-sm border border-line bg-accent-soft/70 p-5">
                       <p className={REPORT_SECTION_TITLE}>
-                        Planerische Kaufempfehlung
+                        Technische Speichergrenze
                       </p>
-                      <p className="mt-2 text-4xl font-semibold tabular-nums tracking-tight text-ink">
-                        {recommendedPlanningSize} kWh
+                      <p className="mt-2 font-mono text-4xl font-semibold tabular-nums tracking-tight text-ink">
+                        {recommendedTechnicalSize}{" "}
+                        <span className="text-lg font-medium">kWh</span>
+                      </p>
+                      <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
+                        Nutzbare Kapazität heute. Alle technischen Kennzahlen
+                        beziehen sich auf diesen Wert.
                       </p>
                     </div>
-
-                    <div className="space-y-4 text-sm leading-relaxed text-ink-secondary">
-                      <p>
-                        Die physikalische Simulation ermittelt für die heutigen
-                        Bedingungen eine technische Speichergrenze von{" "}
-                        <strong className="font-semibold text-ink">
-                          {recommendedTechnicalSize} kWh nutzbarer Kapazität
-                        </strong>
-                        .
+                    <div className="rounded-sm border border-line bg-surface-muted p-5">
+                      <p className={REPORT_SECTION_TITLE}>
+                        Planerische Anfangskapazität
                       </p>
-                      <p>
-                        Für die Kaufplanung wird zusätzlich eine pauschale
-                        Alterungsreserve berücksichtigt. Dabei wird angenommen,
-                        dass nach einem Planungszeitraum von etwa 10 Jahren
-                        noch 75&nbsp;% der anfänglichen nutzbaren Kapazität
-                        verfügbar sind.
+                      <p className="mt-2 font-mono text-4xl font-semibold tabular-nums tracking-tight text-ink">
+                        {recommendedPlanningSize}{" "}
+                        <span className="text-lg font-medium">kWh</span>
                       </p>
-                      <p className="rounded-md border border-line-soft bg-surface-muted px-4 py-3 font-medium tabular-nums text-ink">
-                        Planerische Anfangskapazität = ⌈{" "}
-                        {recommendedTechnicalSize} kWh / 0,75 ⌉ ={" "}
-                        {recommendedPlanningSize} kWh
+                      <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
+                        Mit Alterungsreserve. Annahme: 75&nbsp;% nach ca. 10
+                        Jahren. Keine Herstellergarantie.
                       </p>
                     </div>
                   </div>
 
-                  <div className={`${REPORT_SPLIT_ASIDE} space-y-4`}>
-                    <div>
-                      <p className={REPORT_SECTION_TITLE}>
-                        Technische Speichergrenze heute:
-                      </p>
-                      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-ink">
-                        {recommendedTechnicalSize} kWh
-                      </p>
-                    </div>
+                  <div className="space-y-4 text-sm leading-relaxed text-ink-secondary">
+                    <p>
+                      Die physikalische Simulation ermittelt für die heutigen
+                      Bedingungen eine technische Speichergrenze von{" "}
+                      <strong className="font-semibold text-ink">
+                        {recommendedTechnicalSize} kWh nutzbarer Kapazität
+                      </strong>
+                      .
+                    </p>
+                    <p>
+                      Für die Kaufplanung wird zusätzlich eine pauschale
+                      Alterungsreserve berücksichtigt. Dabei wird angenommen,
+                      dass nach einem Planungszeitraum von etwa 10 Jahren noch
+                      75&nbsp;% der anfänglichen nutzbaren Kapazität verfügbar
+                      sind.
+                    </p>
+                    <p className="rounded-sm border border-line-soft bg-surface-muted px-4 py-3 font-mono font-medium tabular-nums text-ink">
+                      Planerische Anfangskapazität = ⌈{" "}
+                      {recommendedTechnicalSize} kWh / 0,75 ⌉ ={" "}
+                      {recommendedPlanningSize} kWh
+                    </p>
                     <p className="text-xs italic leading-relaxed text-ink-muted">
                       Die 75-%-Annahme ist keine Prognose für einen bestimmten
                       Batteriespeicher und keine Herstellergarantie. Sie
                       beeinflusst ausschließlich die planerische
                       Kaufempfehlung. Die technische Simulation und sämtliche
                       technischen Kennzahlen werden weiterhin mit der
-                      technischen Speichergrenze von{" "}
-                      {recommendedTechnicalSize} kWh berechnet.
+                      technischen Speichergrenze von {recommendedTechnicalSize}{" "}
+                      kWh berechnet.
                     </p>
                     {planningExceedsSimulatedRange && (
-                      <p className="rounded-md border border-warning/40 bg-warning-soft px-4 py-3 text-sm leading-relaxed text-warning">
+                      <p className="rounded-sm border border-warning/40 bg-warning-soft px-4 py-3 text-sm leading-relaxed text-warning">
                         Die planerische Anfangskapazität liegt außerhalb des
                         simulierten Speicherbereichs von 5–30 kWh.
                       </p>
@@ -406,7 +414,7 @@ export function SpeicherReportView({
                       Eigenverbrauch mit Speicher
                     </span>
                     <span className="shrink-0 text-right">
-                      <span className="block text-lg font-semibold tabular-nums text-accent-text">
+                      <span className="block font-mono text-lg font-semibold tabular-nums text-accent-text">
                         {formatKwh(recommendedEV)}
                       </span>
                       {deltaEigenverbrauch !== null && (
@@ -438,7 +446,7 @@ export function SpeicherReportView({
                       Autarkie mit Speicher:
                     </span>
                     <span className="shrink-0 text-right">
-                      <span className="block text-lg font-semibold tabular-nums text-accent-text">
+                      <span className="block font-mono text-lg font-semibold tabular-nums text-accent-text">
                         {autarkieMitPct !== null
                           ? `${autarkieMitPct} %`
                           : PLACEHOLDER}
@@ -459,7 +467,7 @@ export function SpeicherReportView({
               <>
                 <section className={REPORT_SECTION}>
                     <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
-                      Ihre Eingabedaten
+                      03 / Ihre Eingabedaten
                     </h2>
 
                     {/*
@@ -634,7 +642,7 @@ export function SpeicherReportView({
                 <section className={REPORT_SECTION}>
                     <div className="mb-6">
                       <h2 className={REPORT_SECTION_HEADING}>
-                        Technische Kennzahlen
+                        04 / Technische Kennzahlen
                       </h2>
                       <p className="mt-2 max-w-reading text-xs leading-relaxed text-ink-muted">
                         Alle technischen Kennzahlen beziehen sich auf die
@@ -847,7 +855,7 @@ export function SpeicherReportView({
                               Gesamtwert um 1&nbsp;kWh abweichen.
                             </span>
                           </div>
-                          <div className="shrink-0 text-right text-lg font-semibold tabular-nums text-ink">
+                          <div className="shrink-0 text-right font-mono text-lg font-semibold tabular-nums text-ink">
                             {batterieverlusteModellGesamtKwh !== null
                               ? `${batterieverlusteModellGesamtKwh} kWh/Jahr`
                               : PLACEHOLDER}
@@ -946,7 +954,7 @@ export function SpeicherReportView({
 
                 <section className={REPORT_SECTION}>
                   <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
-                    Eigenverbrauch vs Speichergröße
+                    05 / Eigenverbrauch vs Speichergröße
                   </h2>
 
                   <SpeicherChart
@@ -982,7 +990,7 @@ export function SpeicherReportView({
             */}
             <section className={REPORT_SECTION}>
               <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
-                Unsere Einschätzung
+                06 / Unsere Einschätzung
               </h2>
               {recommendedTechnicalSize > 0 ? (
                 <>

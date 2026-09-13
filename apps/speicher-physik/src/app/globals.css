@@ -6,63 +6,57 @@
  * Light theme only — no theme switching, no prefers-color-scheme override.
  */
 @theme {
-  --color-canvas: #f5f7f6;
-  --color-surface: #ffffff;
-  --color-surface-muted: #eef2f0;
+  --color-canvas: #f3efe6;
+  --color-surface: #fbf9f3;
+  --color-surface-muted: #efe9dc;
 
-  --color-ink: #17212b;
-  --color-ink-secondary: #5a6763;
-  --color-ink-muted: #6e7b76;
+  --color-ink: #2c2c28;
+  --color-ink-secondary: #5c5a52;
+  --color-ink-muted: #7a776c;
 
-  /* Report sheet boundary and major section separators. Slightly stronger than
-     the initial #dde5e1 so they stay visible on the light canvas without
-     looking heavy. */
-  --color-line: #d3ddd8;
-  /* Dividers inside a section (data rows, footnote rules) — one step lighter,
-     so a section boundary always outranks a row boundary. */
-  --color-line-soft: #e4ebe7;
-  --color-line-strong: #869790;
+  --color-line: #d9d2c4;
+  --color-line-soft: #e8e2d4;
+  --color-line-strong: #8a8578;
 
-  --color-accent: #11875d;
-  --color-accent-hover: #0d704d;
-  --color-accent-text: #0d704d;
-  --color-accent-soft: #eaf6f0;
+  --color-accent: #2f4a3c;
+  --color-accent-hover: #263c32;
+  --color-accent-text: #2f4a3c;
+  --color-accent-soft: #e4eee8;
 
-  --color-success: #0d704d;
+  --color-success: #2f4a3c;
   --color-warning: #b45309;
   --color-warning-soft: #fdf4e7;
   --color-danger: #be123c;
   --color-danger-soft: #fdf2f4;
 
   --color-field: #ffffff;
-  --color-field-border: #869790;
-  --color-focus: #11875d;
+  --color-field-border: #8a8578;
+  --color-focus: #2f4a3c;
 
-  --color-chart-grid: #dde5e1;
-  --color-chart-axis: #5a6763;
-  --color-chart-line: #11875d;
+  --color-chart-grid: #e4ddd0;
+  --color-chart-axis: #5c5a52;
+  --color-chart-line: #3d6b54;
   --color-chart-marker: #b45309;
   --color-tooltip-bg: #ffffff;
-  --color-tooltip-border: #c7d3cd;
-  --color-tooltip-ink: #17212b;
+  --color-tooltip-border: #d4cdbf;
+  --color-tooltip-ink: #2c2c28;
 
-  /* Width system: the frame carries the page gutters and is shared by header,
-     report sheet, actions and footer; the sheet is the document itself. */
-  --container-frame: 68rem;
+  --font-sans: var(--font-speicher-sans), "Source Sans 3", Arial, Helvetica,
+    sans-serif;
+  --font-mono: var(--font-speicher-mono), "IBM Plex Mono", ui-monospace,
+    monospace;
+
+  --container-frame: 80rem;
   --container-sheet: 64rem;
   --container-form: 52rem;
-  /* The one prose track inside a section: long-form body text and notes keep
-     this measure instead of spanning the full report width. Sections use grids,
-     not their own widths, so this is the only internal width token. */
   --container-reading: 42rem;
-  /* Documentation chrome: left nav + article + optional TOC. */
   --container-docs: 86rem;
 }
 
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
 
 :focus-visible {
@@ -70,8 +64,28 @@ body {
   outline-offset: 2px;
 }
 
+@keyframes sg-scene-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgb(61 107 84 / 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 7px rgb(61 107 84 / 0.55));
+  }
+}
+
+.sg-scene-active {
+  animation: sg-scene-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sg-scene-active {
+    animation: none;
+    filter: drop-shadow(0 0 4px rgb(61 107 84 / 0.4));
+  }
+}
+
 .methodik-docs {
-  /* Shared first-column width for two-column Methodik parameter/value tables. */
   --methodik-kv-label-width: 22rem;
 }
 
@@ -121,7 +135,7 @@ body {
 
   body:has(.methodik-docs) {
     background: #ffffff;
-    color: #17212b;
+    color: #2c2c28;
   }
 
   .methodik-docs a {

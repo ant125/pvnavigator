@@ -4,7 +4,9 @@ import {
   WW_ROBUSTNESS_PROFILE_COUNT,
   applyCalculationProgress,
   formatCalculationDurationDe,
+  getActiveVisibleStage,
   getCalculationProgressStages,
+  getSceneHighlightTarget,
   isCalculationStageDone,
   isHouseholdValidationComplete,
   isWwValidationComplete,
@@ -161,5 +163,37 @@ describe("WW validation stage visibility", () => {
     expect(shouldShowWwValidationStage(false)).toBe(false);
     expect(shouldShowWwValidationStage("luftwasser")).toBe(false);
     expect(shouldShowWwValidationStage("wasserwasser")).toBe(true);
+  });
+});
+
+describe("scene highlight from real progress", () => {
+  it("maps active stages without inventing a highlight when complete", () => {
+    let state = INITIAL_CALCULATION_PROGRESS;
+    expect(getActiveVisibleStage(state, false, "luftwasser", true)).toBe(
+      "location"
+    );
+    expect(getSceneHighlightTarget(state, false, "luftwasser", true)).toBe(
+      "house"
+    );
+
+    state = applyCalculationProgress(state, { stage: "location" });
+    expect(getSceneHighlightTarget(state, false, "luftwasser", true)).toBe(
+      "house"
+    );
+
+    state = applyCalculationProgress(state, { stage: "pvgis" });
+    expect(getSceneHighlightTarget(state, false, "luftwasser", true)).toBe(
+      "heatPump"
+    );
+
+    state = applyCalculationProgress(state, { stage: "consumption" });
+    expect(getSceneHighlightTarget(state, false, "luftwasser", true)).toBe("ev");
+
+    state = applyCalculationProgress(state, { stage: "ev" });
+    expect(getSceneHighlightTarget(state, false, "luftwasser", true)).toBe(
+      "battery"
+    );
+
+    expect(getSceneHighlightTarget(state, true, "luftwasser", true)).toBe(null);
   });
 });

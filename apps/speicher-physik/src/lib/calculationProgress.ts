@@ -213,3 +213,73 @@ export function isWwValidationComplete(
   if (complete) return true;
   return progress.wwTotal > 0 && progress.wwCompleted >= progress.wwTotal;
 }
+
+export type VisibleProgressStageId =
+  | CalculationProgressStageId
+  | "smartmeter"
+  | "wwprofiles";
+
+export type SceneHighlightTarget = "house" | "heatPump" | "ev" | "battery" | null;
+
+export function getActiveVisibleStage(
+  progress: CalculationProgressState,
+  complete: boolean,
+  includeHeatPumpProfile: HeatPumpProgressKind = false,
+  includeEvProfile = false
+): VisibleProgressStageId | null {
+  if (complete) return null;
+
+  const stages = getCalculationProgressStages(
+    includeHeatPumpProfile,
+    includeEvProfile
+  );
+  for (let index = 0; index < stages.length; index++) {
+    const stage = stages[index];
+    const done = isCalculationStageDone(stage.id, progress, complete);
+    const previousDone =
+      index === 0
+        ? true
+        : isCalculationStageDone(stages[index - 1].id, progress, complete);
+    if (!done && previousDone) return stage.id;
+  }
+
+  const householdFinished = isHouseholdValidationComplete(progress, complete);
+  if (progress.physics && !householdFinished) return "smartmeter";
+
+  if (
+    shouldShowWwValidationStage(includeHeatPumpProfile) &&
+    householdFinished &&
+    !isWwValidationComplete(progress, complete)
+  ) {
+    return "wwprofiles";
+  }
+
+  return null;
+}
+
+export function getSceneHighlightTarget(
+  progress: CalculationProgressState,
+  complete: boolean,
+  includeHeatPumpProfile: HeatPumpProgressKind = false,
+  includeEvProfile = false
+): SceneHighlightTarget {
+  const active = getActiveVisibleStage(
+    progress,
+    complete,
+    includeHeatPumpProfile,
+    includeEvProfile
+  );
+  if (active === "heatpump") return "heatPump";
+  if (active === "ev") return "ev";
+  if (
+    active === "physics" ||
+    active === "smartmeter" ||
+    active === "wwprofiles"
+  ) {
+    return "battery";
+  }
+  if (active === "location" || active === "pvgis" || active === "consumption") {
+    return "house";
+  }
+  return null;
+}

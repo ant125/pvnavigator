@@ -14,23 +14,16 @@ import {
   parseEvDecimalInput,
   parseEvIntegerInput,
 } from "../utils/evForm";
-
-const FORM_LABEL = "block text-sm font-medium text-ink";
-const FORM_HELP = "text-xs leading-relaxed text-ink-muted";
-const FORM_OPTIONAL_BLOCK = "space-y-3 rounded-md bg-accent-soft/40 p-4";
-const FORM_RADIO_LABEL =
-  "flex items-center gap-2 cursor-pointer text-sm text-ink";
-const FORM_RADIO_OPTION =
-  "flex items-start gap-2 cursor-pointer text-sm text-ink";
-const FORM_RADIO_HINT = "mt-0.5 block text-xs leading-relaxed text-ink-muted";
-const FORM_GROUP_HEADING =
-  "text-xs font-semibold uppercase tracking-wide text-ink";
-
-function fieldInputClassName(hasError: boolean): string {
-  return `w-full rounded-md border bg-field px-3.5 py-2.5 text-ink placeholder-ink-muted transition-colors ${
-    hasError ? "border-danger" : "border-field-border focus:border-accent"
-  }`;
-}
+import {
+  FORM_GROUP_HEADING,
+  FORM_HELP,
+  FORM_LABEL,
+  FORM_OPTIONAL_BLOCK,
+  FORM_RADIO_HINT,
+  FORM_RADIO_LABEL,
+  FORM_RADIO_OPTION,
+  fieldInputClassName,
+} from "./formStyles";
 
 function FieldError({
   id,
@@ -99,9 +92,11 @@ function UnitField({
           }}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy || undefined}
-          className={`${fieldInputClassName(!!error)} max-w-[12rem]`}
+          className={`${fieldInputClassName(!!error)} max-w-[10rem]`}
         />
-        <span className="shrink-0 text-sm text-ink-secondary">{unit}</span>
+          <span className="shrink-0 font-mono text-xs text-ink-secondary">
+            {unit}
+          </span>
       </div>
       <FieldError id={`${id}-error`} message={error} />
       {help && (
@@ -129,7 +124,7 @@ export function EvInputSection({
   const evEnabled = formData.evEnabled === true;
 
   return (
-    <div className="border-t border-line pt-8">
+    <div>
       <div className={FORM_OPTIONAL_BLOCK}>
         <fieldset>
           <legend className="text-sm font-medium text-ink">
@@ -461,7 +456,7 @@ function HomeWindowRow({
   };
 
   return (
-    <div className="space-y-3 rounded-md border border-line-soft bg-surface p-3 sm:p-4">
+    <div className="space-y-3 rounded-sm border border-line-soft bg-surface p-3">
       <p className="text-sm font-medium text-ink">{label}</p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">

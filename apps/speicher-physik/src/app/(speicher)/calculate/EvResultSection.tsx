@@ -12,7 +12,7 @@ const GROUP_HEADING =
 const DATA_GRID = "grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3";
 const DATA_ITEM = "border-t border-line-soft pt-3";
 const DATA_LABEL = "text-xs leading-snug text-ink-muted";
-const DATA_VALUE = "mt-1 text-sm font-medium tabular-nums text-ink";
+const DATA_VALUE = "mt-1 font-mono text-sm font-medium tabular-nums text-ink";
 const HELP = "text-xs leading-relaxed text-ink-muted";
 const BAND =
   "mt-6 rounded-md border border-line-soft bg-surface-muted p-5 lg:p-6";

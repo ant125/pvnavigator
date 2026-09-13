@@ -183,7 +183,7 @@ export function ReportQuellenSection({
     >
       <h2
         id="report-quellen-heading"
-        className="text-lg font-semibold text-ink"
+        className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-accent-text"
       >
         Quellen & wissenschaftliche Grundlagen
       </h2>
