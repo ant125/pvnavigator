@@ -95,7 +95,10 @@ describe("InputSystemPreview", () => {
 
     expect(html).toContain("sg-preview-pin");
     expect(html).toContain("sg-preview-scene");
-    expect(html).toContain("02 / Ihre Systemkonfiguration");
+    expect(html).toContain("02");
+    expect(html).toContain("Ihre Systemkonfiguration");
+    expect(html).not.toContain("02 /");
+    expect(html).toContain("bg-accent");
     expect(html).toContain("PV · 10 kWp");
     expect(html).not.toContain("Vorschau der ausgewählten Komponenten");
     expect(html).not.toContain("Ausrichtung / Neigung");

@@ -23,9 +23,9 @@ import {
 import { runHouseholdCalculationStream } from "./runHouseholdCalculationStream";
 import {
   useReportHeaderCta,
-  useCalculateHeaderStatus,
   type CalculateHeaderStatus,
 } from "../components/headerCtaContext";
+import { CalculatePageStatus } from "./CalculatePageStatus";
 import { SpeicherReportView } from "../components/SpeicherReportView";
 import { mapEvFormToCalculationInput } from "../utils/evForm";
 import type { ReportHeatPumpCitation } from "@/lib/reportMethodologySources";
@@ -358,7 +358,7 @@ export default function SpeicherCalculatePage() {
 
   useReportHeaderCta(handleReset, step === "results");
 
-  const headerStatus: CalculateHeaderStatus =
+  const pageStatus: CalculateHeaderStatus =
     step === "calculating"
       ? "calculating"
       : step === "results" && editing && isStale
@@ -368,8 +368,6 @@ export default function SpeicherCalculatePage() {
           : step === "results"
             ? "complete"
             : "input";
-
-  useCalculateHeaderStatus(headerStatus);
 
   const previewForm = step === "input" ? formData : (runPreview ?? formData);
   const includeHeatPumpProfile =
@@ -445,7 +443,7 @@ export default function SpeicherCalculatePage() {
         ref={mainPaneRef}
         tabIndex={-1}
         aria-label={step === "calculating" ? "Berechnung" : "Ergebnis"}
-        className="sg-run-focus space-y-6 scroll-mt-24"
+        className="sg-run-focus space-y-6 scroll-mt-sg-sticky"
       >
         {runPreviewCard}
         {step === "calculating" ? (
@@ -475,52 +473,53 @@ export default function SpeicherCalculatePage() {
   }
 
   return (
-    <div className="min-w-0 max-w-full py-8 sm:py-10">
-      <div className="mx-auto min-w-0 w-full max-w-frame px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-accent-text">
-            SpeicherGrenze
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+    <div className="min-w-0 px-layout-gap pb-3 pt-5">
+      <div className="mb-title-section-gap flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5">
+        <div className="min-w-0">
+          <h1 className="text-[1.875rem] font-semibold leading-none tracking-tight text-ink sm:text-[2.375rem] lg:text-[2.875rem]">
             Ihre Speicher-Analyse
           </h1>
+          <p className="mt-1.5 text-[1.125rem] font-medium leading-snug text-ink-secondary">
+            Technische Analyse
+          </p>
         </div>
-
-        <SpeicherCalculateWorkspace
-          formLocked={formLocked}
-          pinMain={step === "input"}
-          collapseFormOnMobile={false}
-          form={
-            <SpeicherCalculateForm
-              formData={formData}
-              setFormData={setFormData}
-              kwpInputStrings={kwpInputStrings}
-              setKwpInputStrings={setKwpInputStrings}
-              azimuthInputStrings={azimuthInputStrings}
-              setAzimuthInputStrings={setAzimuthInputStrings}
-              tiltInputStrings={tiltInputStrings}
-              setTiltInputStrings={setTiltInputStrings}
-              errors={errors}
-              fieldErrors={fieldErrors}
-              clearFieldError={clearFieldError}
-              locked={formLocked}
-              submitLabel={
-                calculatedFingerprint ? "Neu berechnen" : "Berechnung starten"
-              }
-              showSubmit={!formLocked}
-              onSubmit={handleSubmit}
-              onEditInputs={
-                step === "results" && formLocked
-                  ? () => setEditing(true)
-                  : undefined
-              }
-              errorBoxRef={errorBoxRef}
-              fieldInputRefs={fieldInputRefs}
-            />
-          }
-          main={main}
-        />
+        <CalculatePageStatus status={pageStatus} />
       </div>
+
+      <SpeicherCalculateWorkspace
+        formLocked={formLocked}
+        pinMain={step === "input"}
+        collapseFormOnMobile={false}
+        form={
+          <SpeicherCalculateForm
+            formData={formData}
+            setFormData={setFormData}
+            kwpInputStrings={kwpInputStrings}
+            setKwpInputStrings={setKwpInputStrings}
+            azimuthInputStrings={azimuthInputStrings}
+            setAzimuthInputStrings={setAzimuthInputStrings}
+            tiltInputStrings={tiltInputStrings}
+            setTiltInputStrings={setTiltInputStrings}
+            errors={errors}
+            fieldErrors={fieldErrors}
+            clearFieldError={clearFieldError}
+            locked={formLocked}
+            submitLabel={
+              calculatedFingerprint ? "Neu berechnen" : "Berechnung starten"
+            }
+            showSubmit={!formLocked}
+            onSubmit={handleSubmit}
+            onEditInputs={
+              step === "results" && formLocked
+                ? () => setEditing(true)
+                : undefined
+            }
+            errorBoxRef={errorBoxRef}
+            fieldInputRefs={fieldInputRefs}
+          />
+        }
+        main={main}
+      />
     </div>
   );
 }

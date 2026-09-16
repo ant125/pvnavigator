@@ -32,6 +32,27 @@ describe("HeaderAccount", () => {
     expect(html).not.toContain("Anmelden");
   });
 
+  it("keeps only the Mein Konto link in compact header mode", () => {
+    const html = renderToStaticMarkup(
+      <HeaderAccount
+        authenticated
+        compact
+        userEmail="user@example.de"
+        loginHref="https://pvnavigator.de/anmelden?next=speicher-calculate"
+        signupHref="https://pvnavigator.de/konto-erstellen"
+        accountHref={ACCOUNT}
+        signOutHref={SIGN_OUT}
+      />,
+    );
+
+    expect(html).toContain("Mein Konto");
+    expect(html).toContain(`href="${ACCOUNT}"`);
+    expect(html).not.toContain("user@example.de");
+    expect(html).not.toContain("Abmelden");
+    expect(html).not.toContain(`action="${SIGN_OUT}"`);
+    expect(html).not.toContain("aria-haspopup");
+  });
+
   it("does not show account or logout when signed out", () => {
     const html = renderToStaticMarkup(
       <HeaderAccount
@@ -49,5 +70,24 @@ describe("HeaderAccount", () => {
     expect(html).not.toContain("Mein Konto");
     expect(html).not.toContain("Abmelden");
     expect(html).not.toContain(SIGN_OUT);
+  });
+
+  it("does not change guest login and signup when compact", () => {
+    const html = renderToStaticMarkup(
+      <HeaderAccount
+        authenticated={false}
+        compact
+        userEmail={null}
+        loginHref="https://pvnavigator.de/anmelden?next=speicher-calculate"
+        signupHref="https://pvnavigator.de/konto-erstellen"
+        accountHref={ACCOUNT}
+        signOutHref={SIGN_OUT}
+      />,
+    );
+
+    expect(html).toContain("Anmelden");
+    expect(html).toContain("Konto erstellen");
+    expect(html).not.toContain("Mein Konto");
+    expect(html).not.toContain("Abmelden");
   });
 });

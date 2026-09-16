@@ -1,6 +1,7 @@
 "use client";
 
 import type { SpeicherInput } from "../types/speicher";
+import { FORM_COLUMN_BAR, FORM_COLUMN_BAR_LABEL } from "./formStyles";
 import { SelectedSystemChips } from "./SelectedSystemChips";
 import { SystemScene, systemSceneFromForm } from "./SystemScene";
 
@@ -12,18 +13,23 @@ export function InputSystemPreview({
   const sceneSelection = systemSceneFromForm(formData);
 
   return (
-    <div className="sg-preview-pin rounded-sm border border-line bg-surface p-3 sm:p-4">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-accent-text">
-        02 / Ihre Systemkonfiguration
-      </p>
-      <SystemScene
-        heatPump={sceneSelection.heatPump}
-        heatPumpKind={sceneSelection.heatPumpKind}
-        ev={sceneSelection.ev}
-        backupReserve={sceneSelection.backupReserve}
-        className="sg-preview-scene mt-3"
-      />
-      <SelectedSystemChips formData={formData} />
+    <div className="sg-preview-pin overflow-visible rounded-none border border-line bg-surface">
+      <header className={FORM_COLUMN_BAR}>
+        <p className={FORM_COLUMN_BAR_LABEL}>
+          <span>02</span>
+          <span>Ihre Systemkonfiguration</span>
+        </p>
+      </header>
+      <div className="px-panel-padding-x py-panel-padding-y">
+        <SystemScene
+          heatPump={sceneSelection.heatPump}
+          heatPumpKind={sceneSelection.heatPumpKind}
+          ev={sceneSelection.ev}
+          backupReserve={sceneSelection.backupReserve}
+          className="sg-preview-scene"
+        />
+        <SelectedSystemChips formData={formData} />
+      </div>
     </div>
   );
 }

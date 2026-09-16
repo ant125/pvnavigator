@@ -99,6 +99,16 @@ export function formatTiltLabel(deg: number | undefined): string {
   return preset?.label ?? `${deg}°`;
 }
 
+export function pvSurfaceHasCustomExactAngle(
+  surface: Pick<PvSurfaceInput, "tiltDeg" | "azimuthDeg">
+): boolean {
+  return (
+    (Number.isFinite(surface.azimuthDeg) &&
+      !isPresetAzimuth(surface.azimuthDeg)) ||
+    (Number.isFinite(surface.tiltDeg) && !isPresetTilt(surface.tiltDeg))
+  );
+}
+
 export function parseKwpDecimalInput(raw: string): number {
   let s = raw.trim().replace(/ /g, "");
   if (s === "") return NaN;

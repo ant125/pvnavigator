@@ -51,6 +51,22 @@
   --container-form: 52rem;
   --container-reading: 42rem;
   --container-docs: 86rem;
+
+  /* Compact header (~58px on desktop) plus a small gap. */
+  --spacing-sg-sticky: 5rem;
+
+  /*
+    /calculate sheet density.
+    Structural gaps stay compact; internal panel/field rhythm stays readable.
+  */
+  --spacing-layout-gap: 0.5rem;
+  --spacing-column-gap: 0.5rem;
+  --spacing-panel-gap: 0.5rem;
+  --spacing-panel-padding-x: 0.75rem;
+  --spacing-panel-padding-y: 0.75rem;
+  --spacing-field-gap: 0.5rem;
+  --spacing-field-group-gap: 0.75rem;
+  --spacing-title-section-gap: 1rem;
 }
 
 body {
@@ -78,8 +94,9 @@ body {
 }
 
 /*
-  Input preview only. Chrome budget covers sticky offset (6rem), compact card
-  padding, title, one wrapping chip row, disclaimer, and a small bottom gap.
+  Input preview only. Chrome budget covers sticky offset (5rem after the
+  compact header), column header bar, compact card padding, one wrapping
+  chip row, disclaimer, and a small bottom gap.
   Sticky stays on ordinary short desktop windows; below 31rem the card would
   exceed the viewport even at a readable scene size, so it scrolls normally.
 */
@@ -90,12 +107,12 @@ body {
 @media (min-width: 1024px) and (min-height: 31rem) {
   .sg-preview-pin {
     position: sticky;
-    top: 6rem;
+    top: var(--spacing-sg-sticky);
     z-index: 10;
   }
 
   .sg-scene-frame.sg-preview-scene {
-    width: min(100%, calc((100dvh - 16.5rem) * 16 / 9));
+    width: min(100%, calc((100dvh - 15.75rem) * 16 / 9));
     margin-inline: auto;
   }
 }

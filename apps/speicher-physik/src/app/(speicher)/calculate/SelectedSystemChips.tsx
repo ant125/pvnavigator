@@ -63,7 +63,7 @@ export function SelectedSystemChips({
   const chips = buildSelectedSystemChips(formData);
 
   return (
-    <div className="mt-3">
+    <div className="mt-field-group-gap">
       {chips.length > 0 ? (
         <ul
           aria-label="Ausgewählte Komponenten"
@@ -81,7 +81,7 @@ export function SelectedSystemChips({
       ) : null}
       <p
         className={`text-[11px] leading-relaxed text-ink-muted ${
-          chips.length > 0 ? "mt-3" : ""
+          chips.length > 0 ? "mt-field-group-gap" : ""
         }`}
       >
         Schematische Darstellung der gewählten Komponenten – nicht die Geometrie

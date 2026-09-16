@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
 import type { PvSurfaceInput, SpeicherInput } from "../types/speicher";
-import type {
-  SpeicherFieldErrorKey,
-  SpeicherFieldErrors,
+import {
+  pvSurfaceHasInvalidExactAngle,
+  type SpeicherFieldErrorKey,
+  type SpeicherFieldErrors,
 } from "../utils/validateInput";
 import {
   ANNUAL_CONSUMPTION_KWH_MAX,
@@ -20,6 +21,7 @@ import {
   parseAzimuthInput,
   parseKwpDecimalInput,
   parseTiltInput,
+  pvSurfaceHasCustomExactAngle,
   surfacesOrDefault,
   type PresetDropdownOption,
 } from "./calculateFormModel";
@@ -29,10 +31,16 @@ import {
   FORM_HELP,
   FORM_LABEL,
   FORM_OPTIONAL_BLOCK,
+  FORM_PANEL,
+  FORM_PANEL_BODY,
+  FORM_PANEL_HEAD,
   FORM_RADIO_HINT,
   FORM_RADIO_LABEL,
   FORM_RADIO_OPTION,
-  FORM_SECTION_BAR,
+  FORM_SECTION_HEADING,
+  FORM_SECTIONS,
+  FORM_STACK,
+  FORM_FIELD,
   FORM_SUBMIT_ZONE,
   fieldInputClassName,
 } from "./formStyles";
@@ -92,11 +100,11 @@ function PresetDropdown({
             setOpen(false);
           }
         }}
-        className={`flex w-full min-w-0 items-center justify-between gap-2 rounded-sm border bg-field px-3 py-2 text-left text-ink transition-colors disabled:cursor-not-allowed disabled:bg-surface-muted ${
+        className={`flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-sm border bg-field px-3 py-1.5 text-left text-ink transition-colors lg:h-9 disabled:cursor-not-allowed disabled:bg-surface-muted ${
           open ? "border-accent" : "border-field-border focus:border-accent"
         }`}
       >
-        <span className="min-w-0 truncate">{displayLabel}</span>
+        <span className="min-w-0 whitespace-normal break-words">{displayLabel}</span>
         <svg
           className={`h-4 w-4 shrink-0 text-ink-muted transition-transform ${
             open ? "rotate-180" : ""
@@ -167,23 +175,58 @@ function PresetDropdown({
 }
 
 function FormSection({
-  index,
   title,
+  headingExtra,
   children,
 }: {
-  index: string;
   title: string;
+  headingExtra?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-4">
-      <h2 className={FORM_SECTION_BAR}>
-        {index} / {title}
-      </h2>
-      <div className="space-y-4 px-0.5">{children}</div>
+    <section className={FORM_PANEL}>
+      <div className={FORM_PANEL_HEAD}>
+        <h2 className={FORM_SECTION_HEADING}>{title}</h2>
+        {headingExtra}
+      </div>
+      <div className={FORM_PANEL_BODY}>{children}</div>
     </section>
   );
 }
+
+function FormHinweis({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="ml-auto min-w-0 shrink-0">
+      <summary className="cursor-pointer text-xs font-medium text-ink-muted hover:text-ink">
+        Hinweis
+      </summary>
+      <p id={id} className={`mt-1.5 max-w-reading ${FORM_HELP}`}>
+        {children}
+      </p>
+    </details>
+  );
+}
+
+export function exactAnglesForcedOpen(
+  surface: PvSurfaceInput,
+  locked: boolean,
+  hasFormErrors: boolean
+): boolean {
+  const invalid = pvSurfaceHasInvalidExactAngle(surface);
+  if (hasFormErrors && invalid) return true;
+  return (
+    locked && (invalid || pvSurfaceHasCustomExactAngle(surface))
+  );
+}
+
+const PV_PLANE_ACTION =
+  "block w-fit text-sm font-medium text-accent-text hover:text-accent-hover disabled:cursor-not-allowed";
 
 export const FOCUS_FIELD_ORDER = [
   "postalCode",
@@ -246,6 +289,19 @@ export function SpeicherCalculateForm({
   fieldInputRefs,
 }: SpeicherCalculateFormProps) {
   const surfaces = surfacesOrDefault(formData);
+  const [exactAnglesOpen, setExactAnglesOpen] = useState<boolean[]>(() =>
+    surfaces.map(() => false)
+  );
+
+  useEffect(() => {
+    setExactAnglesOpen((prev) => {
+      if (prev.length === surfaces.length) return prev;
+      if (prev.length < surfaces.length) {
+        return [...prev, ...Array(surfaces.length - prev.length).fill(false)];
+      }
+      return prev.slice(0, surfaces.length);
+    });
+  }, [surfaces.length]);
 
   const updateSurface = (
     planeIndex: number,
@@ -265,6 +321,7 @@ export function SpeicherCalculateForm({
       String(DEFAULT_SURFACE.azimuthDeg),
     ]);
     setTiltInputStrings((prev) => [...prev, String(DEFAULT_SURFACE.tiltDeg)]);
+    setExactAnglesOpen((prev) => [...prev, false]);
     setFormData((prev) => ({
       ...prev,
       pvSurfaces: [
@@ -283,6 +340,7 @@ export function SpeicherCalculateForm({
     setKwpInputStrings((prev) => prev.filter((_, i) => i !== planeIndex));
     setAzimuthInputStrings((prev) => prev.filter((_, i) => i !== planeIndex));
     setTiltInputStrings((prev) => prev.filter((_, i) => i !== planeIndex));
+    setExactAnglesOpen((prev) => prev.filter((_, i) => i !== planeIndex));
     setFormData((prev) => {
       const list = surfacesOrDefault(prev).filter((_, i) => i !== planeIndex);
       return {
@@ -314,197 +372,23 @@ export function SpeicherCalculateForm({
 
       <fieldset
         disabled={locked}
-        className={`min-w-0 space-y-8 border-0 p-0 ${
+        className={`min-w-0 border-0 p-0 ${
           locked ? "[&_label]:cursor-default" : ""
         }`}
       >
         <legend className="sr-only">Eingabedaten der Speicher-Analyse</legend>
 
-        <FormSection index="01" title="PV-Anlage">
-          {surfaces.map((surface, planeIndex) => (
-            <div
-              key={planeIndex}
-              className={`space-y-4 ${
-                planeIndex > 0 ? "border-t border-line pt-4" : ""
-              }`}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-medium text-ink">
-                  Dachfläche {planeIndex + 1}
-                </h3>
-                {planeIndex > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => removeSurface(planeIndex)}
-                    className="rounded-sm border border-line px-3 py-1.5 text-xs text-ink-secondary transition-colors hover:bg-surface-muted hover:text-ink"
-                  >
-                    Diese Fläche entfernen
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className={FORM_LABEL}>PV-Leistung (kWp) *</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  value={kwpInputStrings[planeIndex] ?? ""}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setKwpInputStrings((prev) => {
-                      const next = [...prev];
-                      next[planeIndex] = v;
-                      return next;
-                    });
-                    updateSurface(planeIndex, {
-                      systemSizeKwP: parseKwpDecimalInput(v),
-                    });
-                  }}
-                  className={fieldInputClassName(false)}
-                  placeholder="z.B. 10"
-                />
-                {planeIndex === 0 && (
-                  <p className={FORM_HELP}>
-                    Die Größe Ihrer bestehenden oder geplanten PV-Anlage auf
-                    dieser Dachfläche.
-                  </p>
-                )}
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-1 xl:grid-cols-2">
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <label className={FORM_LABEL}>Dachausrichtung (°)</label>
-                    <PresetDropdown
-                      value={
-                        Number.isFinite(surface.azimuthDeg)
-                          ? surface.azimuthDeg
-                          : ""
-                      }
-                      options={buildAzimuthDropdownOptions(surface.azimuthDeg)}
-                      onChange={(n) => {
-                        setAzimuthInputStrings((prev) => {
-                          const next = [...prev];
-                          next[planeIndex] = String(n);
-                          return next;
-                        });
-                        updateSurface(planeIndex, { azimuthDeg: n });
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={FORM_LABEL}>Exakter Azimut (°)</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      value={azimuthInputStrings[planeIndex] ?? ""}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        setAzimuthInputStrings((prev) => {
-                          const next = [...prev];
-                          next[planeIndex] = raw;
-                          return next;
-                        });
-                        const parsed = parseAzimuthInput(raw);
-                        updateSurface(planeIndex, {
-                          azimuthDeg: parsed.valid ? parsed.deg : NaN,
-                        });
-                      }}
-                      onBlur={() => {
-                        const raw = azimuthInputStrings[planeIndex] ?? "";
-                        const parsed = parseAzimuthInput(raw);
-                        if (!parsed.valid) return;
-                        setAzimuthInputStrings((prev) => {
-                          const next = [...prev];
-                          next[planeIndex] = String(parsed.deg);
-                          return next;
-                        });
-                        updateSurface(planeIndex, { azimuthDeg: parsed.deg });
-                      }}
-                      className={fieldInputClassName(false)}
-                    />
-                    <p className={FORM_HELP}>
-                      0° = Nord, 90° = Ost, 180° = Süd, 270° = West.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <label className={FORM_LABEL}>Dachneigung (°)</label>
-                    <PresetDropdown
-                      value={
-                        Number.isFinite(surface.tiltDeg) ? surface.tiltDeg : ""
-                      }
-                      options={buildTiltDropdownOptions(surface.tiltDeg)}
-                      onChange={(n) => {
-                        setTiltInputStrings((prev) => {
-                          const next = [...prev];
-                          next[planeIndex] = String(n);
-                          return next;
-                        });
-                        updateSurface(planeIndex, { tiltDeg: n });
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={FORM_LABEL}>Exakte Neigung (°)</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      value={tiltInputStrings[planeIndex] ?? ""}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        setTiltInputStrings((prev) => {
-                          const next = [...prev];
-                          next[planeIndex] = raw;
-                          return next;
-                        });
-                        const parsed = parseTiltInput(raw);
-                        updateSurface(planeIndex, {
-                          tiltDeg: parsed.valid ? parsed.deg : NaN,
-                        });
-                      }}
-                      onBlur={() => {
-                        const raw = tiltInputStrings[planeIndex] ?? "";
-                        const parsed = parseTiltInput(raw);
-                        if (!parsed.valid) return;
-                        setTiltInputStrings((prev) => {
-                          const next = [...prev];
-                          next[planeIndex] = String(parsed.deg);
-                          return next;
-                        });
-                        updateSurface(planeIndex, { tiltDeg: parsed.deg });
-                      }}
-                      className={fieldInputClassName(false)}
-                    />
-                    <p className={FORM_HELP}>
-                      0° = flach, 90° = senkrecht.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={addSurface}
-            className="rounded-sm border border-line px-4 py-2 text-sm font-medium text-ink-secondary transition-colors hover:bg-surface-muted hover:text-ink"
-          >
-            Weitere Dachfläche hinzufügen
-          </button>
-        </FormSection>
-
-        <FormSection index="02" title="Standort">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label className={FORM_LABEL}>PLZ *</label>
+        <div className={FORM_SECTIONS}>
+        <FormSection title="Standort">
+          <div className={`${FORM_STACK} min-w-0 @container`}>
+          <div className="grid min-w-0 grid-cols-1 gap-x-2 gap-y-3 @min-[16rem]:grid-cols-2">
+            <div className={`${FORM_FIELD} min-w-0`}>
+              <label className={FORM_LABEL} htmlFor="postalCode">
+                PLZ *
+              </label>
               <input
                 ref={fieldInputRefs.postalCode}
+                id="postalCode"
                 type="text"
                 inputMode="numeric"
                 autoComplete="postal-code"
@@ -526,10 +410,13 @@ export function SpeicherCalculateForm({
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <label className={FORM_LABEL}>Ort *</label>
+            <div className={`${FORM_FIELD} min-w-0`}>
+              <label className={FORM_LABEL} htmlFor="city">
+                Ort *
+              </label>
               <input
                 ref={fieldInputRefs.city}
+                id="city"
                 type="text"
                 autoComplete="address-level2"
                 value={formData.city ?? ""}
@@ -548,10 +435,15 @@ export function SpeicherCalculateForm({
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <label className={FORM_LABEL}>Straße *</label>
+          </div>
+          <div className="grid min-w-0 grid-cols-1 items-start gap-x-2 gap-y-3 @min-[16rem]:grid-cols-[minmax(0,1fr)_5rem]">
+            <div className={`${FORM_FIELD} min-w-0`}>
+              <label className={FORM_LABEL} htmlFor="street">
+                Straße *
+              </label>
               <input
                 ref={fieldInputRefs.street}
+                id="street"
                 type="text"
                 autoComplete="street-address"
                 value={formData.street ?? ""}
@@ -570,10 +462,14 @@ export function SpeicherCalculateForm({
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <label className={FORM_LABEL}>Hausnummer *</label>
+            <div className={`${FORM_FIELD} min-w-0`}>
+              <label className={FORM_LABEL} htmlFor="houseNumber">
+                <span className="sr-only">Hausnummer </span>
+                Nr. *
+              </label>
               <input
                 ref={fieldInputRefs.houseNumber}
+                id="houseNumber"
                 type="text"
                 autoComplete="off"
                 value={formData.houseNumber ?? ""}
@@ -589,7 +485,7 @@ export function SpeicherCalculateForm({
                   fieldErrors.houseNumber ? "houseNumber-error" : undefined
                 }
                 className={fieldInputClassName(!!fieldErrors.houseNumber)}
-                placeholder="z.B. 1"
+                placeholder="z.B. 12a"
               />
               {fieldErrors.houseNumber && (
                 <p id="houseNumber-error" className="text-xs text-danger">
@@ -598,17 +494,247 @@ export function SpeicherCalculateForm({
               )}
             </div>
           </div>
-          <p className={FORM_HELP}>
-            Bitte geben Sie die vollständige Adresse des Gebäudes ein.
-          </p>
+          </div>
         </FormSection>
 
-        <FormSection index="03" title="Hausverbrauch">
-          <div className="space-y-2">
+        <FormSection title="PV-Anlage">
+          {surfaces.map((surface, planeIndex) => {
+            const exactPanelId = `exact-angles-${planeIndex}`;
+            const kwpId = `pvLeistung-${planeIndex}`;
+            const userOpened = exactAnglesOpen[planeIndex] === true;
+            const exactOpen =
+              userOpened ||
+              exactAnglesForcedOpen(surface, locked, errors.length > 0);
+            return (
+            <div
+              key={planeIndex}
+              className={`${FORM_STACK} ${
+                planeIndex > 0 ? "border-t border-line pt-3" : ""
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-medium text-ink">
+                  Dachfläche {planeIndex + 1}
+                </h3>
+                {planeIndex > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeSurface(planeIndex)}
+                    className={PV_PLANE_ACTION}
+                  >
+                    Entfernen
+                  </button>
+                )}
+              </div>
+
+              <div className={FORM_FIELD}>
+                <label className={FORM_LABEL} htmlFor={kwpId}>
+                  PV-Leistung (kWp) *
+                </label>
+                <div className="relative">
+                  <input
+                    id={kwpId}
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    value={kwpInputStrings[planeIndex] ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setKwpInputStrings((prev) => {
+                        const next = [...prev];
+                        next[planeIndex] = v;
+                        return next;
+                      });
+                      updateSurface(planeIndex, {
+                        systemSizeKwP: parseKwpDecimalInput(v),
+                      });
+                    }}
+                    className={`${fieldInputClassName(false)} pr-14`}
+                    placeholder="z.B. 10"
+                  />
+                  <span
+                    className="pointer-events-none absolute inset-y-0 right-3 flex items-center font-mono text-sm text-ink-muted"
+                    aria-hidden
+                  >
+                    kWp
+                  </span>
+                </div>
+                {planeIndex === 0 && (
+                  <p className={FORM_HELP}>
+                    Die Größe Ihrer bestehenden oder geplanten PV-Anlage auf
+                    dieser Dachfläche.
+                  </p>
+                )}
+              </div>
+
+              <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className={`min-w-0 ${FORM_FIELD}`}>
+                  <label className={FORM_LABEL}>Dachausrichtung (°)</label>
+                  <PresetDropdown
+                    value={
+                      Number.isFinite(surface.azimuthDeg)
+                        ? surface.azimuthDeg
+                        : ""
+                    }
+                    options={buildAzimuthDropdownOptions(surface.azimuthDeg)}
+                    onChange={(n) => {
+                      setAzimuthInputStrings((prev) => {
+                        const next = [...prev];
+                        next[planeIndex] = String(n);
+                        return next;
+                      });
+                      updateSurface(planeIndex, { azimuthDeg: n });
+                    }}
+                  />
+                </div>
+                <div className={`min-w-0 ${FORM_FIELD}`}>
+                  <label className={FORM_LABEL}>Dachneigung (°)</label>
+                  <PresetDropdown
+                    value={
+                      Number.isFinite(surface.tiltDeg) ? surface.tiltDeg : ""
+                    }
+                    options={buildTiltDropdownOptions(surface.tiltDeg)}
+                    onChange={(n) => {
+                      setTiltInputStrings((prev) => {
+                        const next = [...prev];
+                        next[planeIndex] = String(n);
+                        return next;
+                      });
+                      updateSurface(planeIndex, { tiltDeg: n });
+                    }}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className={PV_PLANE_ACTION}
+                aria-expanded={exactOpen}
+                aria-controls={exactPanelId}
+                onClick={() =>
+                  setExactAnglesOpen((prev) => {
+                    const next = [...prev];
+                    next[planeIndex] = !exactOpen;
+                    return next;
+                  })
+                }
+              >
+                {exactOpen
+                  ? "Exakte Winkel ausblenden"
+                  : "Exakte Winkel anzeigen"}
+              </button>
+
+              <div
+                id={exactPanelId}
+                hidden={!exactOpen}
+                className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2"
+              >
+                <div className={`min-w-0 ${FORM_FIELD}`}>
+                  <label className={FORM_LABEL} htmlFor={`exact-azimut-${planeIndex}`}>
+                    Exakter Azimut (°)
+                  </label>
+                  <input
+                    id={`exact-azimut-${planeIndex}`}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={azimuthInputStrings[planeIndex] ?? ""}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setAzimuthInputStrings((prev) => {
+                        const next = [...prev];
+                        next[planeIndex] = raw;
+                        return next;
+                      });
+                      const parsed = parseAzimuthInput(raw);
+                      updateSurface(planeIndex, {
+                        azimuthDeg: parsed.valid ? parsed.deg : NaN,
+                      });
+                    }}
+                    onBlur={() => {
+                      const raw = azimuthInputStrings[planeIndex] ?? "";
+                      const parsed = parseAzimuthInput(raw);
+                      if (!parsed.valid) return;
+                      setAzimuthInputStrings((prev) => {
+                        const next = [...prev];
+                        next[planeIndex] = String(parsed.deg);
+                        return next;
+                      });
+                      updateSurface(planeIndex, { azimuthDeg: parsed.deg });
+                    }}
+                    className={fieldInputClassName(false)}
+                  />
+                  <p className={FORM_HELP}>
+                    0° = Nord, 90° = Ost, 180° = Süd, 270° = West.
+                  </p>
+                </div>
+                <div className={`min-w-0 ${FORM_FIELD}`}>
+                  <label className={FORM_LABEL} htmlFor={`exact-neigung-${planeIndex}`}>
+                    Exakte Neigung (°)
+                  </label>
+                  <input
+                    id={`exact-neigung-${planeIndex}`}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={tiltInputStrings[planeIndex] ?? ""}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setTiltInputStrings((prev) => {
+                        const next = [...prev];
+                        next[planeIndex] = raw;
+                        return next;
+                      });
+                      const parsed = parseTiltInput(raw);
+                      updateSurface(planeIndex, {
+                        tiltDeg: parsed.valid ? parsed.deg : NaN,
+                      });
+                    }}
+                    onBlur={() => {
+                      const raw = tiltInputStrings[planeIndex] ?? "";
+                      const parsed = parseTiltInput(raw);
+                      if (!parsed.valid) return;
+                      setTiltInputStrings((prev) => {
+                        const next = [...prev];
+                        next[planeIndex] = String(parsed.deg);
+                        return next;
+                      });
+                      updateSurface(planeIndex, { tiltDeg: parsed.deg });
+                    }}
+                    className={fieldInputClassName(false)}
+                  />
+                  <p className={FORM_HELP}>
+                    0° = flach, 90° = senkrecht.
+                  </p>
+                </div>
+              </div>
+            </div>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={addSurface}
+            className={PV_PLANE_ACTION}
+          >
+            + Dachfläche
+          </button>
+        </FormSection>
+
+        <FormSection
+          title="Hausverbrauch"
+          headingExtra={
+            <FormHinweis id="annualConsumptionKwh-hint">
+              Ganze kWh zwischen {ANNUAL_CONSUMPTION_KWH_MIN.toLocaleString("de-DE")}{" "}
+              und {ANNUAL_CONSUMPTION_KWH_MAX.toLocaleString("de-DE")}.
+            </FormHinweis>
+          }
+        >
+          <div className={FORM_FIELD}>
             <label className={FORM_LABEL} htmlFor="annualConsumptionKwh">
               Hausverbrauch (ohne Wärmepumpe) *
             </label>
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="grid min-w-0">
               <input
                 ref={fieldInputRefs.annualConsumptionKwh}
                 id="annualConsumptionKwh"
@@ -641,13 +767,18 @@ export function SpeicherCalculateForm({
                 }
                 aria-describedby={
                   fieldErrors.annualConsumptionKwh
-                    ? "annualConsumptionKwh-error"
-                    : undefined
+                    ? "annualConsumptionKwh-unit annualConsumptionKwh-error"
+                    : "annualConsumptionKwh-unit"
                 }
-                className={fieldInputClassName(!!fieldErrors.annualConsumptionKwh)}
+                className={`${fieldInputClassName(
+                  !!fieldErrors.annualConsumptionKwh
+                )} col-start-1 row-start-1 pr-[6.5rem]`}
                 placeholder="z.B. 4500"
               />
-              <span className="shrink-0 font-mono text-sm text-ink-secondary">
+              <span
+                id="annualConsumptionKwh-unit"
+                className="pointer-events-none col-start-1 row-start-1 mr-3 self-center justify-self-end whitespace-nowrap font-mono text-sm text-ink-muted"
+              >
                 kWh/Jahr
               </span>
             </div>
@@ -656,14 +787,10 @@ export function SpeicherCalculateForm({
                 {fieldErrors.annualConsumptionKwh}
               </p>
             )}
-            <p className={FORM_HELP}>
-              Bitte geben Sie hier nur den Haushaltsstromverbrauch ein – ohne
-              Wärmepumpe. Ganze kWh zwischen 500 und 50.000.
-            </p>
           </div>
         </FormSection>
 
-        <FormSection index="04" title="Wärmepumpe">
+        <FormSection title="Wärmepumpe">
           <div className={FORM_OPTIONAL_BLOCK}>
             <fieldset>
               <legend className="text-sm font-medium text-ink">
@@ -908,7 +1035,7 @@ export function SpeicherCalculateForm({
           </div>
         </FormSection>
 
-        <FormSection index="05" title="Elektroauto">
+        <FormSection title="Elektroauto">
           <EvInputSection
             formData={formData}
             fieldErrors={fieldErrors}
@@ -917,7 +1044,7 @@ export function SpeicherCalculateForm({
           />
         </FormSection>
 
-        <FormSection index="06" title="Notstromreserve">
+        <FormSection title="Notstromreserve">
           <div className={FORM_OPTIONAL_BLOCK}>
             <label className="flex cursor-pointer items-start gap-3">
               <input
@@ -980,6 +1107,7 @@ export function SpeicherCalculateForm({
             </p>
           </div>
         </FormSection>
+        </div>
       </fieldset>
 
       <div className={FORM_SUBMIT_ZONE}>
