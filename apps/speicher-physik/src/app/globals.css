@@ -30,6 +30,11 @@
   --color-danger-soft: #fdf2f4;
 
   --color-field: #ffffff;
+  --color-field-subtle: color-mix(
+    in oklab,
+    var(--color-ink) 3%,
+    var(--color-field)
+  );
   --color-field-border: #8a8578;
   --color-focus: #2f4a3c;
 
@@ -78,6 +83,22 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+/*
+  Native radios have a square border-box, so the global :focus-visible
+  outline becomes a square ring. Chrome also treats a pointer click on a
+  radio as :focus-visible (arrow-key group). Kill that square box; keep a
+  circular keyboard indicator.
+*/
+input[type="radio"]:focus {
+  outline: none;
+}
+
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 9999px;
 }
 
 .sg-run-focus:focus-visible {
@@ -186,23 +207,51 @@ body {
   z-index: 4;
 }
 
+.sg-ev-time {
+  position: relative;
+  color-scheme: light;
+}
+
+/*
+  Hide native stepper arrows on large annual kWh number fields.
+  Keeps type="number" / keyboard entry; ±1 is not a useful control there.
+*/
+.sg-number-no-spin {
+  appearance: textfield;
+}
+
+.sg-number-no-spin::-webkit-inner-spin-button,
+.sg-number-no-spin::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.sg-ev-time:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--color-accent-soft) 55%, transparent);
+}
+
+@media (min-width: 1024px) {
+  /*
+    Hide the native clock glyph in the compact table, but keep the full
+    control clickable so the picker and keyboard entry still work.
+  */
+  .sg-ev-time::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+}
+
 .sg-scene-badge {
   display: block;
   width: 100%;
   height: auto;
-}
-
-.sg-scene-pipes {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-  fill: none;
-  stroke: #797970;
-  stroke-width: 5;
-  stroke-linejoin: round;
-  stroke-linecap: round;
 }
 
 @keyframes sg-scene-pulse {

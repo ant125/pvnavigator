@@ -45,18 +45,23 @@ function layerClass(
   return highlight === target ? "sg-scene-layer sg-scene-active" : "sg-scene-layer";
 }
 
-function heatPumpSrc(kind: HeatPumpSceneKind): string {
-  return kind === "luftwasser"
-    ? SYSTEM_SCENE_HP_LUFTWASSER_SRC
-    : kind === "wasserwasser"
-      ? SYSTEM_SCENE_HP_WASSERWASSER_SRC
-      : SYSTEM_SCENE_HP_NEUTRAL_SRC;
+type VisibleHeatPumpKind = "luftwasser" | "wasserwasser";
+
+function isVisibleHeatPumpKind(
+  kind: HeatPumpSceneKind
+): kind is VisibleHeatPumpKind {
+  return kind === "luftwasser" || kind === "wasserwasser";
 }
 
-function heatPumpSize(kind: HeatPumpSceneKind): { width: number; height: number } {
+function heatPumpSrc(kind: VisibleHeatPumpKind): string {
+  return kind === "luftwasser"
+    ? SYSTEM_SCENE_HP_LUFTWASSER_SRC
+    : SYSTEM_SCENE_HP_WASSERWASSER_SRC;
+}
+
+function heatPumpSize(kind: VisibleHeatPumpKind): { width: number; height: number } {
   if (kind === "luftwasser") return { width: 393, height: 381 };
-  if (kind === "wasserwasser") return { width: 1079, height: 1457 };
-  return { width: 330, height: 446 };
+  return { width: 1079, height: 1457 };
 }
 
 export function SystemScene({
@@ -67,8 +72,9 @@ export function SystemScene({
   highlight = null,
   className,
 }: SystemSceneProps) {
+  const showHeatPump = heatPump && isVisibleHeatPumpKind(heatPumpKind);
   const parts = ["Haus mit PV-Dach und Batteriespeicher im Inneren"];
-  if (heatPump) {
+  if (showHeatPump) {
     parts.push(
       heatPumpKind === "luftwasser"
         ? "Wärmepumpe außen links"
@@ -80,7 +86,7 @@ export function SystemScene({
     parts.push("Notstromreserve links außerhalb des Speichers");
   }
 
-  const pumpSize = heatPumpSize(heatPumpKind);
+  const pumpSize = showHeatPump ? heatPumpSize(heatPumpKind) : null;
 
   return (
     <div
@@ -107,13 +113,7 @@ export function SystemScene({
         />
       </div>
 
-      {heatPump && heatPumpKind === "luftwasser" ? (
-        <svg className="sg-scene-pipes" viewBox="0 0 1600 900" aria-hidden="true">
-          <path d="M285 628 H318 Q330 628 330 616 V601 H362 M285 642 H326 Q344 642 344 628 V615 H362" />
-        </svg>
-      ) : null}
-
-      {heatPump ? (
+      {showHeatPump && pumpSize ? (
         <div
           className={`${layerClass(highlight, "heatPump")} sg-scene-hp sg-scene-hp-${heatPumpKind} sg-scene-equip`}
           data-testid={`heat-pump-${heatPumpKind}`}

@@ -27,12 +27,13 @@ export type AzimuthPreset = (typeof AZIMUTH_PRESET_DEGREES)[number];
 
 export const TILT_PRESET_DEGREES = [0, 15, 25, 30, 35, 40, 45, 60] as const;
 
-export type PresetDropdownOption = {
-  value: number | string;
+export type PresetDropdownOption<T extends number | string = number | string> = {
+  value: T;
   label: string;
+  description?: string;
 };
 
-export const AZIMUTH_PRESET_OPTIONS: PresetDropdownOption[] = [
+export const AZIMUTH_PRESET_OPTIONS: PresetDropdownOption<number>[] = [
   { value: 0, label: "Nord (0°)" },
   { value: 45, label: "Nordost (45°)" },
   { value: 90, label: "Ost (90°)" },
@@ -43,7 +44,7 @@ export const AZIMUTH_PRESET_OPTIONS: PresetDropdownOption[] = [
   { value: 315, label: "Nordwest (315°)" },
 ];
 
-export const TILT_PRESET_OPTIONS: PresetDropdownOption[] = [
+export const TILT_PRESET_OPTIONS: PresetDropdownOption<number>[] = [
   { value: 0, label: "Flachdach (0°)" },
   { value: 15, label: "15°" },
   { value: 25, label: "25°" },
@@ -148,7 +149,7 @@ export function parseTiltInput(raw: string): { valid: boolean; deg: number } {
 
 export function buildAzimuthDropdownOptions(
   azimuthDeg: number
-): PresetDropdownOption[] {
+): PresetDropdownOption<number>[] {
   if (Number.isFinite(azimuthDeg) && !isPresetAzimuth(azimuthDeg)) {
     return [
       { value: azimuthDeg, label: `Individuell (${azimuthDeg}°)` },
@@ -158,7 +159,9 @@ export function buildAzimuthDropdownOptions(
   return AZIMUTH_PRESET_OPTIONS;
 }
 
-export function buildTiltDropdownOptions(tiltDeg: number): PresetDropdownOption[] {
+export function buildTiltDropdownOptions(
+  tiltDeg: number
+): PresetDropdownOption<number>[] {
   if (Number.isFinite(tiltDeg) && !isPresetTilt(tiltDeg)) {
     return [
       { value: tiltDeg, label: `Individuell (${tiltDeg}°)` },

@@ -26,15 +26,14 @@ export const FORM_PANEL =
   "overflow-visible rounded-none border border-line-soft bg-surface";
 
 export const FORM_PANEL_HEAD =
-  "flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line-soft bg-surface-muted/30 px-panel-padding-x py-1.5";
+  "flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line-soft bg-surface-muted/30 px-panel-padding-x py-1.5";
 
 export const FORM_PANEL_BODY =
   "space-y-field-group-gap px-panel-padding-x py-panel-padding-y";
 
 export const FORM_OPTIONAL_BLOCK = "space-y-field-group-gap";
 
-export const FORM_SUBMIT_ZONE =
-  "border-t border-line bg-surface-muted px-3 py-3";
+export const FORM_SUBMIT_ZONE = "pt-2";
 
 export const BTN_PRIMARY =
   "inline-flex items-center justify-center rounded-sm bg-accent px-5 py-2.5 font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70";
@@ -49,6 +48,28 @@ export const FORM_RADIO_OPTION =
   "flex items-start gap-2 cursor-pointer text-sm text-ink";
 
 export const FORM_RADIO_HINT = "mt-0.5 block text-xs leading-relaxed text-ink-muted";
+
+/** Opaque non-editable control chrome; matches suffix-on-white, not parent-composited alpha. */
+export const FORM_ADDON_BG = "bg-field-subtle";
+
+export function unitFieldControlClassName(hasError: boolean): string {
+  return `flex min-h-11 min-w-0 overflow-hidden rounded-sm border bg-field focus-within:border-accent has-[:disabled]:bg-surface-muted lg:min-h-9 ${
+    hasError ? "border-danger" : "border-field-border"
+  }`;
+}
+
+export const UNIT_FIELD_INPUT_CLASS =
+  "min-w-0 flex-1 border-0 bg-transparent px-2.5 py-1.5 text-ink outline-none placeholder-ink-muted focus-visible:outline-none disabled:cursor-not-allowed";
+
+export const UNIT_FIELD_SUFFIX_CLASS = `inline-flex shrink-0 items-center whitespace-nowrap border-l border-line ${FORM_ADDON_BG} px-2 font-mono text-xs text-ink-muted`;
+
+/** type="number" fields where native ±1 steppers are not useful (annual kWh). */
+export const NUMBER_INPUT_NO_SPIN = "sg-number-no-spin";
+
+/** Pointer activation should not move focus; keyboard Tab still can. */
+export function suppressPointerFocus(event: { preventDefault(): void }): void {
+  event.preventDefault();
+}
 
 export const FORM_GROUP_HEADING =
   "font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-accent-text";

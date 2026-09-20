@@ -6,6 +6,11 @@ import {
   buildSelectedSystemChips,
   SelectedSystemChips,
 } from "./SelectedSystemChips";
+import {
+  SYSTEM_SCENE_HP_LUFTWASSER_SRC,
+  SYSTEM_SCENE_HP_NEUTRAL_SRC,
+  SYSTEM_SCENE_HP_WASSERWASSER_SRC,
+} from "./SystemScene";
 
 describe("buildSelectedSystemChips", () => {
   it("omits empty and unset equipment, including missing PV power", () => {
@@ -45,12 +50,29 @@ describe("buildSelectedSystemChips", () => {
     );
   });
 
-  it("uses a type-less heat pump chip until a technology is chosen", () => {
+  it("omits the heat pump chip until a technology is chosen", () => {
     expect(
       buildSelectedSystemChips({
         heatPumpEnabled: true,
       })
-    ).toEqual([{ key: "heatPump", label: "Wärmepumpe" }]);
+    ).toEqual([]);
+    expect(
+      buildSelectedSystemChips({
+        heatPumpEnabled: false,
+      })
+    ).toEqual([]);
+    expect(
+      buildSelectedSystemChips({
+        heatPumpEnabled: true,
+        heatPumpTechnology: "luftwasser",
+      })
+    ).toEqual([{ key: "heatPump", label: "Wärmepumpe · Luft/Wasser" }]);
+    expect(
+      buildSelectedSystemChips({
+        heatPumpEnabled: true,
+        heatPumpTechnology: "wasserwasser",
+      })
+    ).toEqual([{ key: "heatPump", label: "Wärmepumpe · Wasser/Wasser" }]);
   });
 });
 
@@ -103,5 +125,26 @@ describe("InputSystemPreview", () => {
     expect(html).not.toContain("Vorschau der ausgewählten Komponenten");
     expect(html).not.toContain("Ausrichtung / Neigung");
     expect(html).not.toContain("Haushalt");
+  });
+
+  it("keeps the scene and chips without a heat pump until a type is chosen", () => {
+    const html = renderToStaticMarkup(
+      <InputSystemPreview
+        formData={{
+          pvSurfaces: [{ systemSizeKwP: 10, tiltDeg: 30, azimuthDeg: 180 }],
+          heatPumpEnabled: true,
+        }}
+      />
+    );
+
+    expect(html).toContain("sg-preview-scene");
+    expect(html).toContain("PV · 10 kWp");
+    expect(html).toContain('data-heat-pump="true"');
+    expect(html).toContain('data-heat-pump-kind="generic"');
+    expect(html).not.toContain("Wärmepumpe");
+    expect(html).not.toContain("sg-scene-hp");
+    expect(html).not.toContain(SYSTEM_SCENE_HP_NEUTRAL_SRC);
+    expect(html).not.toContain(SYSTEM_SCENE_HP_LUFTWASSER_SRC);
+    expect(html).not.toContain(SYSTEM_SCENE_HP_WASSERWASSER_SRC);
   });
 });

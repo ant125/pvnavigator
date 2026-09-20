@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
-import Link from "next/link";
+import { useEffect, useState, type RefObject } from "react";
 import type { PvSurfaceInput, SpeicherInput } from "../types/speicher";
 import {
   pvSurfaceHasInvalidExactAngle,
@@ -13,7 +12,11 @@ import {
   ANNUAL_CONSUMPTION_KWH_MIN,
   parseAnnualConsumptionInput,
 } from "../utils/annualConsumption";
-import { EvInputSection } from "./EvInputSection";
+import { EvEnableToggle, EvInputSection } from "./EvInputSection";
+import {
+  HeatPumpEnableToggle,
+  HeatPumpInputSection,
+} from "./HeatPumpInputSection";
 import {
   buildAzimuthDropdownOptions,
   buildTiltDropdownOptions,
@@ -23,8 +26,8 @@ import {
   parseTiltInput,
   pvSurfaceHasCustomExactAngle,
   surfacesOrDefault,
-  type PresetDropdownOption,
 } from "./calculateFormModel";
+import { PresetDropdown } from "./PresetDropdown";
 import {
   BTN_PRIMARY,
   BTN_SECONDARY,
@@ -34,15 +37,17 @@ import {
   FORM_PANEL,
   FORM_PANEL_BODY,
   FORM_PANEL_HEAD,
-  FORM_RADIO_HINT,
-  FORM_RADIO_LABEL,
-  FORM_RADIO_OPTION,
   FORM_SECTION_HEADING,
   FORM_SECTIONS,
   FORM_STACK,
   FORM_FIELD,
   FORM_SUBMIT_ZONE,
   fieldInputClassName,
+  NUMBER_INPUT_NO_SPIN,
+  UNIT_FIELD_INPUT_CLASS,
+  UNIT_FIELD_SUFFIX_CLASS,
+  suppressPointerFocus,
+  unitFieldControlClassName,
 } from "./formStyles";
 
 const BACKUP_RESERVE_RADIO_OPTIONS: ReadonlyArray<{
@@ -55,125 +60,6 @@ const BACKUP_RESERVE_RADIO_OPTIONS: ReadonlyArray<{
   { kwh: 3.0, label: "3.0 kWh" },
 ];
 
-function PresetDropdown({
-  value,
-  options,
-  onChange,
-  placeholder = "—",
-}: {
-  value: number | string | "";
-  options: PresetDropdownOption[];
-  onChange: (value: number) => void;
-  placeholder?: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node;
-      if (rootRef.current && !rootRef.current.contains(target)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("touchstart", handlePointerDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("touchstart", handlePointerDown);
-    };
-  }, [open]);
-
-  const selected = options.find((opt) => opt.value === value);
-  const displayLabel = selected?.label ?? placeholder;
-
-  return (
-    <div ref={rootRef} className="relative w-full min-w-0">
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((prev) => !prev)}
-        onBlur={(e) => {
-          if (!rootRef.current?.contains(e.relatedTarget as Node | null)) {
-            setOpen(false);
-          }
-        }}
-        className={`flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-sm border bg-field px-3 py-1.5 text-left text-ink transition-colors lg:h-9 disabled:cursor-not-allowed disabled:bg-surface-muted ${
-          open ? "border-accent" : "border-field-border focus:border-accent"
-        }`}
-      >
-        <span className="min-w-0 whitespace-normal break-words">{displayLabel}</span>
-        <svg
-          className={`h-4 w-4 shrink-0 text-ink-muted transition-transform ${
-            open ? "rotate-180" : ""
-          }`}
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden
-        >
-          <path
-            fillRule="evenodd"
-            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
-      {open && (
-        <ul
-          role="listbox"
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-sm border border-line bg-surface py-1 shadow-sm [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-surface [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-line [&::-webkit-scrollbar-thumb:hover]:bg-line-strong"
-        >
-          {options.map((opt) => {
-            const isSelected = opt.value === value;
-            return (
-              <li key={String(opt.value)} role="presentation">
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    const n =
-                      typeof opt.value === "number"
-                        ? opt.value
-                        : parseInt(String(opt.value), 10);
-                    if (!Number.isFinite(n)) return;
-                    onChange(n);
-                    setOpen(false);
-                  }}
-                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                    isSelected
-                      ? "bg-accent-soft font-medium text-accent-text"
-                      : "text-ink hover:bg-surface-muted"
-                  }`}
-                >
-                  <span className="min-w-0 truncate">{opt.label}</span>
-                  {isSelected && (
-                    <svg
-                      className="h-4 w-4 shrink-0 text-accent-text"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.42 0l-3.25-3.25a1 1 0 111.42-1.42l2.54 2.54 6.54-6.54a1 1 0 011.42 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 function FormSection({
   title,
   headingExtra,
@@ -181,7 +67,7 @@ function FormSection({
 }: {
   title: string;
   headingExtra?: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   return (
     <section className={FORM_PANEL}>
@@ -189,27 +75,10 @@ function FormSection({
         <h2 className={FORM_SECTION_HEADING}>{title}</h2>
         {headingExtra}
       </div>
-      <div className={FORM_PANEL_BODY}>{children}</div>
+      {children != null && children !== false ? (
+        <div className={FORM_PANEL_BODY}>{children}</div>
+      ) : null}
     </section>
-  );
-}
-
-function FormHinweis({
-  id,
-  children,
-}: {
-  id: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <details className="ml-auto min-w-0 shrink-0">
-      <summary className="cursor-pointer text-xs font-medium text-ink-muted hover:text-ink">
-        Hinweis
-      </summary>
-      <p id={id} className={`mt-1.5 max-w-reading ${FORM_HELP}`}>
-        {children}
-      </p>
-    </details>
   );
 }
 
@@ -531,7 +400,7 @@ export function SpeicherCalculateForm({
                 <label className={FORM_LABEL} htmlFor={kwpId}>
                   PV-Leistung (kWp) *
                 </label>
-                <div className="relative">
+                <div className={unitFieldControlClassName(false)}>
                   <input
                     id={kwpId}
                     type="text"
@@ -549,13 +418,11 @@ export function SpeicherCalculateForm({
                         systemSizeKwP: parseKwpDecimalInput(v),
                       });
                     }}
-                    className={`${fieldInputClassName(false)} pr-14`}
+                    aria-describedby={`${kwpId}-unit`}
+                    className={UNIT_FIELD_INPUT_CLASS}
                     placeholder="z.B. 10"
                   />
-                  <span
-                    className="pointer-events-none absolute inset-y-0 right-3 flex items-center font-mono text-sm text-ink-muted"
-                    aria-hidden
-                  >
+                  <span id={`${kwpId}-unit`} className={UNIT_FIELD_SUFFIX_CLASS}>
                     kWp
                   </span>
                 </div>
@@ -721,20 +588,16 @@ export function SpeicherCalculateForm({
           </button>
         </FormSection>
 
-        <FormSection
-          title="Hausverbrauch"
-          headingExtra={
-            <FormHinweis id="annualConsumptionKwh-hint">
-              Ganze kWh zwischen {ANNUAL_CONSUMPTION_KWH_MIN.toLocaleString("de-DE")}{" "}
-              und {ANNUAL_CONSUMPTION_KWH_MAX.toLocaleString("de-DE")}.
-            </FormHinweis>
-          }
-        >
+        <FormSection title="Hausverbrauch">
           <div className={FORM_FIELD}>
             <label className={FORM_LABEL} htmlFor="annualConsumptionKwh">
               Hausverbrauch (ohne Wärmepumpe) *
             </label>
-            <div className="grid min-w-0">
+            <div
+              className={unitFieldControlClassName(
+                !!fieldErrors.annualConsumptionKwh
+              )}
+            >
               <input
                 ref={fieldInputRefs.annualConsumptionKwh}
                 id="annualConsumptionKwh"
@@ -770,14 +633,12 @@ export function SpeicherCalculateForm({
                     ? "annualConsumptionKwh-unit annualConsumptionKwh-error"
                     : "annualConsumptionKwh-unit"
                 }
-                className={`${fieldInputClassName(
-                  !!fieldErrors.annualConsumptionKwh
-                )} col-start-1 row-start-1 pr-[6.5rem]`}
+                className={`${UNIT_FIELD_INPUT_CLASS} ${NUMBER_INPUT_NO_SPIN}`}
                 placeholder="z.B. 4500"
               />
               <span
                 id="annualConsumptionKwh-unit"
-                className="pointer-events-none col-start-1 row-start-1 mr-3 self-center justify-self-end whitespace-nowrap font-mono text-sm text-ink-muted"
+                className={UNIT_FIELD_SUFFIX_CLASS}
               >
                 kWh/Jahr
               </span>
@@ -790,258 +651,50 @@ export function SpeicherCalculateForm({
           </div>
         </FormSection>
 
-        <FormSection title="Wärmepumpe">
-          <div className={FORM_OPTIONAL_BLOCK}>
-            <fieldset>
-              <legend className="text-sm font-medium text-ink">
-                Wärmepumpe vorhanden?
-              </legend>
-              <div className="mt-3 flex flex-col gap-2">
-                <label className={FORM_RADIO_LABEL}>
-                  <input
-                    type="radio"
-                    name="heatPumpEnabled"
-                    checked={formData.heatPumpEnabled !== true}
-                    onChange={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        heatPumpEnabled: false,
-                        heatPumpConsumptionKwh: undefined,
-                        heatPumpTechnology: undefined,
-                        heatPumpDhwService: undefined,
-                      }))
-                    }
-                    className="h-4 w-4 shrink-0 border-field-border accent-accent"
-                  />
-                  Nein
-                </label>
-                <label className={FORM_RADIO_LABEL}>
-                  <input
-                    type="radio"
-                    name="heatPumpEnabled"
-                    checked={formData.heatPumpEnabled === true}
-                    onChange={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        heatPumpEnabled: true,
-                      }))
-                    }
-                    className="h-4 w-4 shrink-0 border-field-border accent-accent"
-                  />
-                  Ja
-                </label>
-              </div>
-            </fieldset>
-
-            {formData.heatPumpEnabled === true && (
-              <div className="space-y-4 pt-1">
-                <fieldset
-                  aria-invalid={
-                    fieldErrors.heatPumpTechnology ? true : undefined
-                  }
-                  aria-describedby={
-                    fieldErrors.heatPumpTechnology
-                      ? "heatPumpTechnology-error"
-                      : undefined
-                  }
-                >
-                  <legend className={FORM_LABEL}>Typ der Wärmepumpe</legend>
-                  <div className="mt-3 flex flex-col gap-3">
-                    <label className={FORM_RADIO_OPTION}>
-                      <input
-                        type="radio"
-                        name="heatPumpTechnology"
-                        checked={formData.heatPumpTechnology === "luftwasser"}
-                        onChange={() => {
-                          clearFieldError("heatPumpTechnology");
-                          setFormData((prev) => ({
-                            ...prev,
-                            heatPumpTechnology: "luftwasser",
-                          }));
-                        }}
-                        className="mt-0.5 h-4 w-4 shrink-0 border-field-border accent-accent"
-                      />
-                      <span>
-                        Luft/Wasser
-                        <span className={FORM_RADIO_HINT}>
-                          Nutzt die Außenluft als Wärmequelle.
-                          <br />
-                          Häufigste Bauart in Deutschland.
-                        </span>
-                      </span>
-                    </label>
-                    <label className={FORM_RADIO_OPTION}>
-                      <input
-                        type="radio"
-                        name="heatPumpTechnology"
-                        checked={formData.heatPumpTechnology === "wasserwasser"}
-                        onChange={() => {
-                          clearFieldError("heatPumpTechnology");
-                          clearFieldError("heatPumpDhwService");
-                          setFormData((prev) => ({
-                            ...prev,
-                            heatPumpTechnology: "wasserwasser",
-                            heatPumpDhwService:
-                              prev.heatPumpDhwService === "space_heat_only"
-                                ? undefined
-                                : prev.heatPumpDhwService,
-                          }));
-                        }}
-                        className="mt-0.5 h-4 w-4 shrink-0 border-field-border accent-accent"
-                      />
-                      <span>
-                        Wasser/Wasser
-                        <span className={FORM_RADIO_HINT}>
-                          Nutzt Grundwasser bzw. ein kaltes Nahwärmenetz als
-                          Wärmequelle.
-                        </span>
-                      </span>
-                    </label>
-                  </div>
-                  {fieldErrors.heatPumpTechnology && (
-                    <p
-                      id="heatPumpTechnology-error"
-                      className="mt-2 text-xs text-danger"
-                    >
-                      {fieldErrors.heatPumpTechnology}
-                    </p>
-                  )}
-                </fieldset>
-
-                {formData.heatPumpTechnology === "luftwasser" && (
-                  <p className="flex items-start gap-1.5 text-[11px] leading-snug text-ink-muted">
-                    <span className="mt-px" aria-hidden>
-                      ✓
-                    </span>
-                    Gemessenes ThermBuild-Referenzprofil
-                  </p>
-                )}
-
-                {(formData.heatPumpTechnology === "luftwasser" ||
-                  formData.heatPumpTechnology === "wasserwasser") && (
-                  <fieldset
-                    aria-invalid={
-                      fieldErrors.heatPumpDhwService ? true : undefined
-                    }
-                    aria-describedby={
-                      fieldErrors.heatPumpDhwService
-                        ? "heatPumpDhwService-error"
-                        : undefined
-                    }
-                  >
-                    <legend className={FORM_LABEL}>
-                      Wofür wird die Wärmepumpe verwendet?
-                    </legend>
-                    <div className="mt-3 flex flex-col gap-2">
-                      {formData.heatPumpTechnology === "luftwasser" && (
-                        <label className={FORM_RADIO_LABEL}>
-                          <input
-                            type="radio"
-                            name="heatPumpDhwService"
-                            checked={
-                              formData.heatPumpDhwService === "space_heat_only"
-                            }
-                            onChange={() => {
-                              clearFieldError("heatPumpDhwService");
-                              setFormData((prev) => ({
-                                ...prev,
-                                heatPumpDhwService: "space_heat_only",
-                              }));
-                            }}
-                            className="h-4 w-4 shrink-0 border-field-border accent-accent"
-                          />
-                          Nur Heizung
-                        </label>
-                      )}
-                      <label className={FORM_RADIO_LABEL}>
-                        <input
-                          type="radio"
-                          name="heatPumpDhwService"
-                          checked={
-                            formData.heatPumpDhwService === "space_heat_and_dhw"
-                          }
-                          onChange={() => {
-                            clearFieldError("heatPumpDhwService");
-                            setFormData((prev) => ({
-                              ...prev,
-                              heatPumpDhwService: "space_heat_and_dhw",
-                            }));
-                          }}
-                          className="h-4 w-4 shrink-0 border-field-border accent-accent"
-                        />
-                        Heizung und Warmwasser
-                      </label>
-                    </div>
-                    {fieldErrors.heatPumpDhwService && (
-                      <p
-                        id="heatPumpDhwService-error"
-                        className="mt-2 text-xs text-danger"
-                      >
-                        {fieldErrors.heatPumpDhwService}
-                      </p>
-                    )}
-                  </fieldset>
-                )}
-
-                <div className="space-y-2">
-                  <label className={FORM_LABEL} htmlFor="heatPumpConsumptionKwh">
-                    Stromverbrauch Wärmepumpe (kWh/Jahr)
-                  </label>
-                  <input
-                    id="heatPumpConsumptionKwh"
-                    type="number"
-                    name="heatPumpConsumptionKwh"
-                    min="1"
-                    value={formData.heatPumpConsumptionKwh ?? ""}
-                    onChange={(e) => {
-                      clearFieldError("heatPumpConsumptionKwh");
-                      setFormData((prev) => ({
-                        ...prev,
-                        heatPumpConsumptionKwh:
-                          parseInt(e.target.value, 10) || undefined,
-                      }));
-                    }}
-                    aria-invalid={
-                      fieldErrors.heatPumpConsumptionKwh ? true : undefined
-                    }
-                    aria-describedby={
-                      fieldErrors.heatPumpConsumptionKwh
-                        ? "heatPumpConsumptionKwh-error"
-                        : undefined
-                    }
-                    className={fieldInputClassName(
-                      !!fieldErrors.heatPumpConsumptionKwh
-                    )}
-                    placeholder="z. B. 5000"
-                  />
-                  {fieldErrors.heatPumpConsumptionKwh && (
-                    <p
-                      id="heatPumpConsumptionKwh-error"
-                      className="text-xs text-danger"
-                    >
-                      {fieldErrors.heatPumpConsumptionKwh}
-                    </p>
-                  )}
-                  <p className={FORM_HELP}>
-                    Falls vorhanden: separater Stromverbrauch Ihrer Wärmepumpe.
-                  </p>
-                </div>
-              </div>
-            )}
-            <p className={FORM_HELP}>
-              Viele Haushalte haben mit Wärmepumpe einen deutlich höheren
-              Stromverbrauch im Winter. Diese wird hier separat berücksichtigt.
-            </p>
-          </div>
+        <FormSection
+          title="Wärmepumpe"
+          headingExtra={
+            <HeatPumpEnableToggle
+              heatPumpEnabled={formData.heatPumpEnabled === true}
+              onChange={(patch) =>
+                setFormData((prev) => ({ ...prev, ...patch }))
+              }
+            />
+          }
+        >
+          {formData.heatPumpEnabled === true ? (
+            <HeatPumpInputSection
+              formData={formData}
+              fieldErrors={fieldErrors}
+              onChange={(patch) =>
+                setFormData((prev) => ({ ...prev, ...patch }))
+              }
+              clearFieldError={clearFieldError}
+            />
+          ) : null}
         </FormSection>
 
-        <FormSection title="Elektroauto">
-          <EvInputSection
-            formData={formData}
-            fieldErrors={fieldErrors}
-            onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
-            clearFieldError={clearFieldError}
-          />
+        <FormSection
+          title="Elektroauto"
+          headingExtra={
+            <EvEnableToggle
+              evEnabled={formData.evEnabled === true}
+              onChange={(patch) =>
+                setFormData((prev) => ({ ...prev, ...patch }))
+              }
+            />
+          }
+        >
+          {formData.evEnabled === true ? (
+            <EvInputSection
+              formData={formData}
+              fieldErrors={fieldErrors}
+              onChange={(patch) =>
+                setFormData((prev) => ({ ...prev, ...patch }))
+              }
+              clearFieldError={clearFieldError}
+            />
+          ) : null}
         </FormSection>
 
         <FormSection title="Notstromreserve">
@@ -1073,6 +726,7 @@ export function SpeicherCalculateForm({
                     <label
                       key={opt.kwh}
                       className="flex cursor-pointer items-center gap-2 text-sm text-ink"
+                      onMouseDown={suppressPointerFocus}
                     >
                       <input
                         type="radio"
@@ -1128,18 +782,7 @@ export function SpeicherCalculateForm({
             Berechnung läuft …
           </p>
         ) : null}
-        <p className={`${FORM_HELP} mt-3`}>
-          Pflichtfelder sind mit * gekennzeichnet. Ein abgeschlossener Bericht
-          wird in Ihrem Konto gespeichert.
-        </p>
-        <p className="mt-2">
-          <Link
-            href="/methodik"
-            className="text-sm font-medium text-accent-text hover:text-accent-hover"
-          >
-            Methodik und Quellen
-          </Link>
-        </p>
+        <p className={`${FORM_HELP} mt-2`}>Dauer ca. 40 Sekunden.</p>
       </div>
     </form>
   );

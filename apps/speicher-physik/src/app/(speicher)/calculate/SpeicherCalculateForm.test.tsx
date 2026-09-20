@@ -213,13 +213,24 @@ describe("SpeicherCalculateForm C1+C2", () => {
     expect(html).toContain('type="button"');
   });
 
-  it("places kWp inside the PV-Leistung field and keeps the accessible unit", () => {
+  it("renders PV-Leistung as a compact kWp unit field", () => {
     const html = renderForm();
     expect(html).toContain("PV-Leistung (kWp) *");
-    expect(html).toContain("pr-14");
-    expect(html).toContain("aria-hidden");
-    expect(html).toContain(">kWp<");
     expect(html).toContain('id="pvLeistung-0"');
+    expect(html).toContain('id="pvLeistung-0-unit"');
+    expect(html).toContain(">kWp<");
+    expect(html).toContain('placeholder="z.B. 10"');
+    expect(html).toContain('type="text"');
+    expect(html).toContain('inputMode="decimal"');
+    expect(html).toContain('aria-describedby="pvLeistung-0-unit"');
+    expect(html).toContain(
+      "whitespace-nowrap border-l border-line bg-field-subtle"
+    );
+    expect(html).toContain("focus-within:border-accent");
+    expect(html).not.toContain("pr-14");
+    expect(html).toContain(
+      "Die Größe Ihrer bestehenden oder geplanten PV-Anlage auf dieser Dachfläche."
+    );
   });
 
   it("lays out Ausrichtung and Neigung as a wrapping two-column grid", () => {
@@ -256,25 +267,31 @@ describe("SpeicherCalculateForm C3+C4", () => {
     );
   });
 
-  it("keeps Hausverbrauch labeled, puts kWh/Jahr inside the field, and hides range in Hinweis", () => {
+  it("keeps Hausverbrauch labeled with a compact kWh/Jahr unit field and no range Hinweis", () => {
     const html = renderForm();
     expect(html).toContain("Hausverbrauch (ohne Wärmepumpe) *");
-    expect(html).toContain("pr-[6.5rem]");
     expect(html).toContain('id="annualConsumptionKwh-unit"');
     expect(html).toContain("kWh/Jahr");
     expect(html).toContain('aria-describedby="annualConsumptionKwh-unit"');
-    expect(html).toContain("<summary");
-    expect(html).toContain("Hinweis");
-    expect(html).toContain("Ganze kWh zwischen 500 und 50.000.");
+    expect(html).toContain(
+      "whitespace-nowrap border-l border-line bg-field-subtle"
+    );
+    expect(html).toContain("focus-within:border-accent");
+    expect(html).not.toContain("pr-[6.5rem]");
+    expect(html).not.toContain("<summary");
+    expect(html).not.toContain("Hinweis");
+    expect(html).not.toContain("Ganze kWh zwischen 500 und 50.000.");
     expect(html).not.toContain(
       "Bitte geben Sie hier nur den Haushaltsstromverbrauch ein"
     );
     expect(html).toContain("value=\"4500\"");
     expect(html).toContain(`min="${500}"`);
     expect(html).toContain(`max="${50000}"`);
+    expect(html).toContain('type="number"');
+    expect(html).toContain("sg-number-no-spin");
   });
 
-  it("shows Hausverbrauch errors inline instead of inside Hinweis", () => {
+  it("shows Hausverbrauch errors inline only when the field is invalid", () => {
     const html = renderForm({
       fieldErrors: {
         annualConsumptionKwh:
@@ -288,13 +305,12 @@ describe("SpeicherCalculateForm C3+C4", () => {
     expect(html).toContain(
       'aria-describedby="annualConsumptionKwh-unit annualConsumptionKwh-error"'
     );
+    expect(html).not.toContain("<details");
+    expect(html).not.toContain("Hinweis");
+    expect(html).not.toContain("Ganze kWh zwischen 500 und 50.000.");
     const errorIndex = html.indexOf('id="annualConsumptionKwh-error"');
-    const detailsIndex = html.indexOf("<details");
-    expect(errorIndex).toBeGreaterThan(-1);
-    expect(detailsIndex).toBeGreaterThan(-1);
-    expect(html.slice(detailsIndex, html.indexOf("</details>")).includes(
-      "annualConsumptionKwh-error"
-    )).toBe(false);
+    const fieldIndex = html.indexOf('id="annualConsumptionKwh"');
+    expect(errorIndex).toBeGreaterThan(fieldIndex);
   });
 
   it("uses compact form spacing without shrinking submit or error chrome", () => {
@@ -307,11 +323,14 @@ describe("SpeicherCalculateForm C3+C4", () => {
     expect(html).toContain("text-ink");
     expect(html).toContain("min-h-11");
     expect(html).toContain("lg:min-h-9");
-    expect(html).toContain("px-3 py-3");
+    expect(html).not.toContain("border-t border-line bg-surface-muted px-3 py-3");
     expect(html).not.toContain("border-t border-line bg-surface-muted px-4 py-4");
     expect(html).toContain("bg-danger-soft p-4");
     expect(html).toContain("Testfehler");
     expect(html).toContain("Berechnung starten");
+    expect(html).toContain("Dauer ca. 40 Sekunden.");
+    expect(html).not.toContain("Pflichtfelder sind mit");
+    expect(html).not.toContain("Methodik und Quellen");
   });
 
   it("applies the inset-panel chrome to every form section heading", () => {
@@ -345,17 +364,99 @@ describe("SpeicherCalculateForm C3+C4", () => {
       html.lastIndexOf("<div", html.indexOf(">Hausverbrauch<")),
       html.indexOf("</div>", html.indexOf(">Hausverbrauch<"))
     );
-    expect(hausverbrauchHead).toContain("Hinweis");
-    expect(hausverbrauchHead).toContain("ml-auto min-w-0 shrink-0");
+    expect(hausverbrauchHead).not.toContain("Hinweis");
+    expect(hausverbrauchHead).not.toContain("Ganze kWh zwischen");
   });
 
   it("keeps Wärmepumpe, EV and Notstrom copy while locking the fieldset", () => {
     const html = renderForm({ locked: true });
     expect(html).toContain('disabled=""');
-    expect(html).toContain("Wärmepumpe vorhanden?");
+    expect(html).toContain(
+      '<legend class="sr-only">Wärmepumpe vorhanden?</legend>'
+    );
     expect(html).toContain("Elektroauto");
     expect(html).toContain("Notstromreserve");
     expect(html).toContain("value=\"86154\"");
     expect(html).toContain("value=\"4500\"");
+  });
+
+  it("puts Wärmepumpe Nein/Ja in the section heading and hides the HP body by default", () => {
+    const html = renderForm();
+    const hpStart = html.lastIndexOf("<section", html.indexOf(">Wärmepumpe<"));
+    const ev = html.indexOf(">Elektroauto<");
+    const hpChunk = html.slice(hpStart, ev);
+    expect(hpChunk).toContain(
+      '<legend class="sr-only">Wärmepumpe vorhanden?</legend>'
+    );
+    expect(hpChunk).toContain('name="heatPumpEnabled"');
+    expect(hpChunk).toContain("Nein");
+    expect(hpChunk).toContain("Ja");
+    expect(hpChunk).not.toContain('id="heatPumpTechnology"');
+    expect(hpChunk).not.toContain('id="heatPumpConsumptionKwh"');
+    expect(hpChunk).not.toContain(">Typ<");
+    expect(hpChunk).not.toContain(">Stromverbrauch<");
+    expect(hpChunk).not.toContain(
+      "space-y-field-group-gap px-panel-padding-x py-panel-padding-y"
+    );
+    expect(hpChunk).not.toContain(
+      "Viele Haushalte haben mit Wärmepumpe einen deutlich höheren"
+    );
+  });
+
+  it("shows the compact Wärmepumpe body only when Wärmepumpe is Ja", () => {
+    const html = renderForm({
+      formOverrides: {
+        heatPumpEnabled: true,
+        heatPumpTechnology: "luftwasser",
+        heatPumpDhwService: "space_heat_and_dhw",
+        heatPumpConsumptionKwh: 5000,
+      },
+    });
+    const hpStart = html.lastIndexOf("<section", html.indexOf(">Wärmepumpe<"));
+    const ev = html.indexOf(">Elektroauto<");
+    const hpChunk = html.slice(hpStart, ev);
+    expect(hpChunk).toContain('id="heatPumpTechnology"');
+    expect(hpChunk).toContain(">Typ<");
+    expect(hpChunk).toContain("Luft/Wasser");
+    expect(hpChunk).toContain(">Nutzung<");
+    expect(hpChunk).toContain("Heizung und Warmwasser");
+    expect(hpChunk).toContain('id="heatPumpConsumptionKwh"');
+    expect(hpChunk).toContain('aria-haspopup="listbox"');
+    expect(hpChunk).not.toContain("<select");
+    expect(hpChunk).not.toContain('name="heatPumpTechnology"');
+    expect(hpChunk).not.toContain("Typ der Wärmepumpe");
+    expect(hpChunk).not.toContain("Wofür wird die Wärmepumpe verwendet?");
+    expect(hpChunk).not.toContain("Häufigste Bauart in Deutschland.");
+  });
+
+  it("puts Elektroauto Nein/Ja in the section heading and hides the EV body by default", () => {
+    const html = renderForm();
+    const evStart = html.lastIndexOf("<section", html.indexOf(">Elektroauto<"));
+    const notstrom = html.indexOf(">Notstromreserve<");
+    const evChunk = html.slice(evStart, notstrom);
+    expect(evChunk).toContain(
+      '<legend class="sr-only">Elektroauto vorhanden?</legend>'
+    );
+    expect(evChunk).toContain('name="evEnabled"');
+    expect(evChunk).toContain("Nein");
+    expect(evChunk).toContain("Ja");
+    expect(evChunk).not.toContain('id="evAnnualKm"');
+    expect(evChunk).not.toContain("Jahresfahrleistung");
+    expect(evChunk).not.toContain("space-y-field-group-gap px-panel-padding-x py-panel-padding-y");
+  });
+
+  it("shows the compact EV body only when Elektroauto is Ja", () => {
+    const html = renderForm({ formOverrides: { evEnabled: true } });
+    const evStart = html.lastIndexOf("<section", html.indexOf(">Elektroauto<"));
+    const notstrom = html.indexOf(">Notstromreserve<");
+    const evChunk = html.slice(evStart, notstrom);
+    expect(evChunk).toContain('id="evAnnualKm"');
+    expect(evChunk).toContain("Jahresfahrleistung");
+    expect(evChunk).toContain("Max. Ladeleistung");
+    expect(evChunk).toContain('aria-haspopup="listbox"');
+    expect(evChunk).toContain("Auswählen");
+    expect(evChunk).not.toContain("<select");
+    expect(evChunk).toContain("Laden am Arbeitsplatz");
+    expect(evChunk).not.toContain("Für eine realistische Berücksichtigung Ihres Elektroautos");
   });
 });

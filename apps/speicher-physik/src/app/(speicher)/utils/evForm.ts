@@ -19,63 +19,47 @@ export const EV_FORM_COPY = {
   enableQuestion: "Elektroauto vorhanden?",
   yes: "Ja",
   no: "Nein",
-  introLead:
-    "Für eine realistische Berücksichtigung Ihres Elektroautos benötigen wir einige zusätzliche Angaben.",
-  introEffect:
-    "Diese Angaben beeinflussen die Speicherempfehlung direkt.",
-  vehicleHeading: "Fahrzeug",
-  annualKmQuestion: "Wie viele Kilometer fahren Sie ungefähr pro Jahr?",
-  annualKmUnit: "km / Jahr",
-  consumptionQuestion: "Wie hoch ist der Stromverbrauch Ihres Elektroautos?",
-  consumptionUnit: "kWh / 100 km",
-  consumptionHelp:
-    "Den Wert finden Sie in den technischen Daten Ihres Fahrzeugs.",
-  capacityQuestion:
-    "Wie groß ist die nutzbare Batteriekapazität Ihres Elektroautos?",
+  annualKmLabel: "Jahresfahrleistung",
+  annualKmUnit: "km/Jahr",
+  consumptionLabel: "Verbrauch",
+  consumptionUnit: "kWh/100 km",
+  capacityLabel: "Nutzbare Batterie",
   capacityUnit: "kWh",
-  capacityHelp:
-    "Den Wert finden Sie in den technischen Daten Ihres Fahrzeugs.",
   typicalHeading: "Typische Fahrstrecken",
-  typicalIntro:
-    "Die jährliche Fahrleistung bestimmt den Energiebedarf über das Jahr. Die folgenden Angaben beschreiben, wie sich die Fahrten über die Woche verteilen.",
-  typicalWdQuestion: "Wie viele Kilometer fahren Sie an einem typischen Werktag?",
-  typicalWdUnit: "km / Tag",
-  typicalSaQuestion: "Wie viele Kilometer fahren Sie an einem typischen Samstag?",
-  typicalSaUnit: "km",
-  typicalSuQuestion: "Wie viele Kilometer fahren Sie an einem typischen Sonntag?",
-  typicalSuUnit: "km",
+  typicalIntro: "Die Tageswerte beschreiben die typische Verteilung Ihrer Fahrten.",
+  typicalWdLabel: "Mo–Fr",
+  typicalSaLabel: "Sa",
+  typicalSuLabel: "So",
+  typicalWdAria: "Typische Fahrstrecke Montag bis Freitag",
+  typicalSaAria: "Typische Fahrstrecke Samstag",
+  typicalSuAria: "Typische Fahrstrecke Sonntag",
+  typicalKmUnit: "km",
   homeHeading: "Laden zu Hause",
-  homePowerQuestion:
-    "Wie schnell kann Ihr Elektroauto bei Ihnen zu Hause maximal laden?",
-  homePowerHelp:
-    "Bitte wählen Sie die tatsächlich mögliche Ladeleistung Ihres Fahrzeugs zu Hause.",
-  homePowerTypicalNote: "11 kW – typische Wallbox",
-  homeWindowQuestion:
-    "Wann wird Ihr Fahrzeug zu Hause normalerweise zum Laden angeschlossen?",
+  homePowerLabel: "Max. Ladeleistung",
+  homePowerPlaceholder: "Auswählen",
+  homePowerTypicalNote: "typische Wallbox",
+  homeWindowLabel: "Zu Hause angeschlossen",
   homeWindowHelp:
-    "Geben Sie das Zeitfenster an, in dem die Heimladung beginnen darf, wenn das Fahrzeug Energie benötigt.",
-  homeWindowWeekendHelp:
-    "Wenn Sie am Wochenende bevorzugt tagsüber laden können, können Sie dafür ein entsprechendes Ladefenster angeben.",
-  homeWindowOvernightHelp:
-    "Ein Ladefenster über Mitternacht ist möglich, zum Beispiel 17:30–07:00.",
+    "Zeitraum, in dem die Heimladung bei Bedarf beginnen darf.",
+  homeWindowOvernightHelp: "Über Mitternacht möglich.",
+  homeWindowTagLabel: "Tag",
   fromLabel: "Von",
   toLabel: "Bis",
-  weekdayRow: "Montag–Freitag",
-  saturdayRow: "Samstag",
-  sundayRow: "Sonntag",
+  weekdayRow: "Mo–Fr",
+  saturdayRow: "Sa",
+  sundayRow: "So",
+  weekdayAria: "Montag–Freitag",
+  saturdayAria: "Samstag",
+  sundayAria: "Sonntag",
   workplaceHeading: "Laden am Arbeitsplatz",
   workplaceQuestion:
     "Können Sie Ihr Elektroauto regelmäßig am Arbeitsplatz laden?",
-  workplaceEnergyQuestion:
-    "Wie viele Kilowattstunden laden Sie durchschnittlich pro Monat am Arbeitsplatz?",
-  workplaceEnergyUnit: "kWh / Monat",
-  workplaceEnergyHelp:
-    "Den Wert finden Sie häufig in der Fahrzeug-App oder im Ladeportal Ihres Arbeitgebers.",
-  workplaceDaysQuestion:
-    "An wie vielen Arbeitstagen pro Monat laden Sie Ihr Elektroauto normalerweise am Arbeitsplatz?",
-  workplaceDaysUnit: "Tage / Monat",
-  workplaceDaysHelp:
-    "Diese Angabe beschreibt, auf wie viele Arbeitstage sich die monatliche Lademenge verteilt – nicht an welchen Wochentagen Sie laden.",
+  workplaceEnergyLabel: "Monatliche Ladung",
+  workplaceEnergyUnit: "kWh/Monat",
+  workplaceEnergyHelp: "Monatlich am Arbeitsplatz geladene Energie.",
+  workplaceDaysLabel: "Ladetage",
+  workplaceDaysUnit: "Tage/Monat",
+  workplaceDaysHelp: "Anzahl der Ladetage pro Monat.",
 } as const;
 
 export const EV_FIELD_MESSAGES = {

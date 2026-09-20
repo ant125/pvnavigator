@@ -32,13 +32,12 @@ export function buildSelectedSystemChips(
 
   if (formData.heatPumpEnabled === true) {
     const technology = formData.heatPumpTechnology;
-    chips.push({
-      key: "heatPump",
-      label:
-        technology === "luftwasser" || technology === "wasserwasser"
-          ? `Wärmepumpe · ${HEAT_PUMP_TECHNOLOGY_LABELS[technology]}`
-          : "Wärmepumpe",
-    });
+    if (technology === "luftwasser" || technology === "wasserwasser") {
+      chips.push({
+        key: "heatPump",
+        label: `Wärmepumpe · ${HEAT_PUMP_TECHNOLOGY_LABELS[technology]}`,
+      });
+    }
   }
 
   if (formData.evEnabled === true) {

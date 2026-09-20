@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BatteryMedium } from "lucide-react";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { getHubOrigin } from "@pv-auth/session";
 
 import { HeaderAccount, type HeaderAccountProps } from "./HeaderAccount";
 import { useHeaderCtaState, HeaderCtaProvider } from "./headerCtaContext";
@@ -20,6 +21,9 @@ const footerLink =
 const footerLinkActive =
   "inline-flex min-h-11 items-center text-sm font-medium text-ink md:min-h-0";
 
+const brandWordmarkLink =
+  "inline-block cursor-pointer rounded-sm bg-transparent px-1 -mx-1 text-ink no-underline transition-colors duration-150 hover:bg-accent/[0.06] hover:text-accent hover:no-underline focus:no-underline focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+
 function footerLinkClass(active: boolean) {
   return active ? footerLinkActive : footerLink;
 }
@@ -35,11 +39,15 @@ function BrandMark() {
 function HeaderWordmark() {
   return (
     <span className="flex min-w-0 items-baseline whitespace-nowrap font-mono text-[11px] font-medium leading-none tracking-[0.16em] text-ink sm:text-xs sm:tracking-[0.18em]">
-      <span>PVNAVIGATOR_</span>
+      <a href="https://pvnavigator.de" className={brandWordmarkLink}>
+        PVNAVIGATOR_
+      </a>
       <span className="mx-1.5 font-normal tracking-normal text-ink-muted" aria-hidden>
         /
       </span>
-      <span>SPEICHERGRENZE</span>
+      <Link href="/" className={brandWordmarkLink}>
+        SPEICHERGRENZE
+      </Link>
     </span>
   );
 }
@@ -103,13 +111,7 @@ function ShellFrame({
 
   const headerNav = (
     <>
-      <Link
-        href="/"
-        className="flex min-w-0 items-center"
-        aria-label="PVNavigator SpeicherGrenze"
-      >
-        <HeaderWordmark />
-      </Link>
+      <HeaderWordmark />
 
       <div
         className={
@@ -130,6 +132,32 @@ function ShellFrame({
         <HeaderCta />
       </div>
     </>
+  );
+
+  const hubOrigin = getHubOrigin();
+  const calculateFooterBody = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <a
+        href="https://pvnavigator.de"
+        className={`font-mono text-[11px] font-medium tracking-[0.16em] sm:text-xs sm:tracking-[0.18em] ${brandWordmarkLink}`}
+      >
+        PVNAVIGATOR_
+      </a>
+      <nav
+        aria-label="Rechtliches"
+        className="flex flex-wrap items-center gap-x-5 gap-y-1"
+      >
+        <a href={`${hubOrigin}/kontakt`} className={footerLink}>
+          Kontakt
+        </a>
+        <a href={`${hubOrigin}/impressum`} className={footerLink}>
+          Impressum
+        </a>
+        <a href={`${hubOrigin}/datenschutz`} className={footerLink}>
+          Datenschutz
+        </a>
+      </nav>
+    </div>
   );
 
   const footerBody = (
@@ -221,11 +249,11 @@ function ShellFrame({
         <div
           className={
             isCalculateRoute
-              ? "px-layout-gap py-4"
+              ? "px-layout-gap py-2.5"
               : "mx-auto w-full min-w-0 max-w-frame px-4 py-8 sm:px-6 md:pt-10 md:pb-8 lg:px-8"
           }
         >
-          {footerBody}
+          {isCalculateRoute ? calculateFooterBody : footerBody}
         </div>
       </footer>
     </>
@@ -234,7 +262,7 @@ function ShellFrame({
   return (
     <div className="flex min-h-screen min-w-0 flex-col overflow-x-clip bg-canvas text-ink">
       {isCalculateRoute ? (
-        <div className="mx-auto flex min-h-screen w-full min-w-0 max-w-frame flex-col px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-screen w-full min-w-0 max-w-frame flex-col px-4 py-2 sm:px-6 sm:pt-3 sm:pb-4 lg:px-8">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col border border-line-strong bg-canvas">
             {shell}
           </div>

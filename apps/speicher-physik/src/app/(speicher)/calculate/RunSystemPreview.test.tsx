@@ -53,4 +53,27 @@ describe("RunSystemPreview", () => {
     expect(html).not.toContain("sg-scene-active");
     expect(html).not.toContain("sg-preview-pin");
   });
+
+  it("keeps the expanded scene without a heat pump until a type is chosen", () => {
+    const html = renderToStaticMarkup(
+      <RunSystemPreview
+        formData={{
+          pvSurfaces: [{ systemSizeKwP: 10, tiltDeg: 30, azimuthDeg: 180 }],
+          heatPumpEnabled: true,
+        }}
+        sceneOpen
+        onToggleScene={() => {}}
+      />
+    );
+
+    expect(html).toContain("sg-scene-frame");
+    expect(html).toContain("PV · 10 kWp");
+    expect(html).toContain('data-heat-pump="true"');
+    expect(html).toContain('data-heat-pump-kind="generic"');
+    expect(html).not.toContain("Wärmepumpe");
+    expect(html).not.toContain("sg-scene-hp");
+    expect(html).not.toContain("/system-scene/heat-pump-neutral.png");
+    expect(html).not.toContain("/system-scene/heat-pump-luftwasser.png");
+    expect(html).not.toContain("/system-scene/wasser-wassser.png");
+  });
 });
