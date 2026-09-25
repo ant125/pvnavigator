@@ -2,6 +2,8 @@
  * Calculation progress events for the SpeicherGrenze loading screen.
  * Reporting only — does not affect physics or results.
  */
+
+import { formatQuantityDe } from "./formatQuantityDe";
 export const SMART_METER_HOUSEHOLD_COUNT = 27;
 export const WW_ROBUSTNESS_PROFILE_COUNT = 24;
 
@@ -13,7 +15,7 @@ export const CALCULATION_COMPLETE_PAUSE_MS = 900;
  * fractional digit — presentation only.
  */
 export function formatCalculationDurationDe(durationMs: number): string {
-  return (durationMs / 1000).toFixed(1).replace(".", ",");
+  return formatQuantityDe(durationMs / 1000, 1);
 }
 
 export type CalculationProgressEvent =

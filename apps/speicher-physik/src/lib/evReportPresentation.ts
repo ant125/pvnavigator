@@ -8,6 +8,7 @@ import type {
   EvHomeWindow,
   EvProfileMeta,
 } from "@/load/resolveEvLoadComponent";
+import { formatQuantityDe } from "./formatQuantityDe";
 
 export type EvReportInputRow = {
   label: string;
@@ -27,19 +28,20 @@ export type EvReportView = {
 };
 
 function formatDeNumber(value: number, fractionDigits = 0): string {
-  return value.toLocaleString("de-DE", {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  });
+  return formatQuantityDe(value, fractionDigits);
+}
+
+function formatDeQuantity(value: number, unit: string, fractionDigits = 0): string {
+  return `${formatDeNumber(value, fractionDigits)}\u00A0${unit}`;
 }
 
 export function formatEvKwh(value: number): string {
-  return `${formatDeNumber(Math.round(value))} kWh`;
+  return formatDeQuantity(Math.round(value), "kWh");
 }
 
 export function formatEvChargePowerKw(kw: number): string {
   const digits = Number.isInteger(kw) ? 0 : 1;
-  return `${formatDeNumber(kw, digits)} kW`;
+  return formatDeQuantity(kw, "kW", digits);
 }
 
 function formatClock(hour: number, minute: number): string {
@@ -122,27 +124,35 @@ export function deriveEvReportView(ev: EvCalculationMeta): EvReportView {
   const inputRows: EvReportInputRow[] = [
     {
       label: "Jahresfahrleistung",
-      value: `${formatDeNumber(annualKm)} km / Jahr`,
+      value: formatDeQuantity(annualKm, "km / Jahr"),
     },
     {
       label: "Stromverbrauch",
-      value: `${formatDeNumber(consumption, Number.isInteger(consumption) ? 0 : 1)} kWh / 100 km`,
+      value: formatDeQuantity(
+        consumption,
+        "kWh / 100 km",
+        Number.isInteger(consumption) ? 0 : 1
+      ),
     },
     {
       label: "nutzbare Batteriekapazität",
-      value: `${formatDeNumber(capacity, Number.isInteger(capacity) ? 0 : 1)} kWh`,
+      value: formatDeQuantity(
+        capacity,
+        "kWh",
+        Number.isInteger(capacity) ? 0 : 1
+      ),
     },
     {
       label: "typische Fahrstrecke Montag–Freitag",
-      value: `${formatDeNumber(ev.typicalDailyKm.WD)} km / Tag`,
+      value: formatDeQuantity(ev.typicalDailyKm.WD, "km / Tag"),
     },
     {
       label: "typische Fahrstrecke Samstag",
-      value: `${formatDeNumber(ev.typicalDailyKm.SA)} km`,
+      value: formatDeQuantity(ev.typicalDailyKm.SA, "km"),
     },
     {
       label: "typische Fahrstrecke Sonntag",
-      value: `${formatDeNumber(ev.typicalDailyKm.SU)} km`,
+      value: formatDeQuantity(ev.typicalDailyKm.SU, "km"),
     },
     {
       label: "maximale Heimladeleistung",
@@ -170,11 +180,15 @@ export function deriveEvReportView(ev: EvCalculationMeta): EvReportView {
     inputRows.push(
       {
         label: "kWh / Monat",
-        value: `${formatDeNumber(workplace.kwhPerMonth, Number.isInteger(workplace.kwhPerMonth) ? 0 : 1)} kWh / Monat`,
+        value: formatDeQuantity(
+          workplace.kwhPerMonth,
+          "kWh / Monat",
+          Number.isInteger(workplace.kwhPerMonth) ? 0 : 1
+        ),
       },
       {
         label: "Ladetage / Monat",
-        value: `${formatDeNumber(workplace.chargingDaysPerMonth)} Tage / Monat`,
+        value: formatDeQuantity(workplace.chargingDaysPerMonth, "Tage / Monat"),
       }
     );
   }

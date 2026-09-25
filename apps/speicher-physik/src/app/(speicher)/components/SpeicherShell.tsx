@@ -38,11 +38,14 @@ function BrandMark() {
 
 function HeaderWordmark() {
   return (
-    <span className="flex min-w-0 items-baseline whitespace-nowrap font-mono text-[11px] font-medium leading-none tracking-[0.16em] text-ink sm:text-xs sm:tracking-[0.18em]">
+    <span className="flex min-w-0 items-baseline whitespace-nowrap font-mono text-[11px] font-semibold leading-[1.1] tracking-[0.16em] text-ink sm:text-xs">
       <a href="https://pvnavigator.de" className={brandWordmarkLink}>
         PVNAVIGATOR_
       </a>
-      <span className="mx-1.5 font-normal tracking-normal text-ink-muted" aria-hidden>
+      <span
+        className="mx-[0.3125rem] font-normal tracking-normal text-ink-muted"
+        aria-hidden
+      >
         /
       </span>
       <Link href="/" className={brandWordmarkLink}>
@@ -116,7 +119,7 @@ function ShellFrame({
       <div
         className={
           isCalculateRoute
-            ? "flex min-w-0 shrink-0 items-center justify-end"
+            ? "sg-print-hide flex min-w-0 shrink-0 items-center justify-end gap-3"
             : "flex min-w-0 w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto sm:gap-4"
         }
       >
@@ -216,7 +219,7 @@ function ShellFrame({
       <header
         className={
           isCalculateRoute
-            ? "sticky top-0 z-50 border-b border-line bg-canvas"
+            ? "sticky top-0 z-50 min-h-sg-calculate-header border-b border-line bg-canvas"
             : "sticky top-0 z-50 bg-canvas"
         }
       >
@@ -262,7 +265,7 @@ function ShellFrame({
   return (
     <div className="flex min-h-screen min-w-0 flex-col overflow-x-clip bg-canvas text-ink">
       {isCalculateRoute ? (
-        <div className="mx-auto flex min-h-screen w-full min-w-0 max-w-frame flex-col px-4 py-2 sm:px-6 sm:pt-3 sm:pb-4 lg:px-8">
+        <div className="sg-calculate-chrome mx-auto flex min-h-screen w-full min-w-0 max-w-frame flex-col px-4 py-2 sm:px-6 sm:pt-3 sm:pb-4 lg:px-8">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col border border-line-strong bg-canvas">
             {shell}
           </div>

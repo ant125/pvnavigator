@@ -76,4 +76,21 @@ describe("RunSystemPreview", () => {
     expect(html).not.toContain("/system-scene/heat-pump-luftwasser.png");
     expect(html).not.toContain("/system-scene/wasser-wassser.png");
   });
+
+  it("can render a compact summary without the column header", () => {
+    const html = renderToStaticMarkup(
+      <RunSystemPreview
+        formData={FULL_FORM}
+        sceneOpen={false}
+        onToggleScene={() => {}}
+        showColumnHeader={false}
+      />
+    );
+
+    expect(html).toContain("PV · 10 kWp");
+    expect(html).toContain("Szene anzeigen");
+    expect(html).not.toContain("Ihre Systemkonfiguration");
+    expect(html).not.toContain(">02<");
+    expect(html).not.toContain("bg-accent");
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import type { PvSurfaceInput, SpeicherInput } from "../types/speicher";
 import {
   pvSurfaceHasInvalidExactAngle,
@@ -95,7 +95,7 @@ export function exactAnglesForcedOpen(
 }
 
 const PV_PLANE_ACTION =
-  "block w-fit text-sm font-medium text-accent-text hover:text-accent-hover disabled:cursor-not-allowed";
+  "block w-fit text-sm font-medium text-accent-text hover:text-accent-hover disabled:cursor-not-allowed disabled:opacity-100";
 
 export const FOCUS_FIELD_ORDER = [
   "postalCode",
@@ -133,6 +133,8 @@ export type SpeicherCalculateFormProps = {
   showSubmit: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onEditInputs?: () => void;
+  /** Result panel: the field list is the only scrollport. */
+  fieldsScrollable?: boolean;
   errorBoxRef: RefObject<HTMLDivElement | null>;
   fieldInputRefs: CalculateFormFieldRefs;
 };
@@ -154,6 +156,7 @@ export function SpeicherCalculateForm({
   showSubmit,
   onSubmit,
   onEditInputs,
+  fieldsScrollable = false,
   errorBoxRef,
   fieldInputRefs,
 }: SpeicherCalculateFormProps) {
@@ -171,6 +174,18 @@ export function SpeicherCalculateForm({
       return prev.slice(0, surfaces.length);
     });
   }, [surfaces.length]);
+
+  /*
+    Unlocking moves the caret into the first field. Without it the submit
+    button that replaces "Eingaben bearbeiten" would sit focused under the
+    pointer, one Enter or Space away from an unwanted run.
+  */
+  const focusFirstFieldRef = useRef(false);
+  useEffect(() => {
+    if (locked || !focusFirstFieldRef.current) return;
+    focusFirstFieldRef.current = false;
+    fieldInputRefs.postalCode.current?.focus({ preventScroll: true });
+  }, [locked, fieldInputRefs]);
 
   const updateSurface = (
     planeIndex: number,
@@ -220,7 +235,11 @@ export function SpeicherCalculateForm({
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6" noValidate>
+    <form
+      onSubmit={onSubmit}
+      className="sg-calculate-form space-y-6"
+      noValidate
+    >
       {errors.length > 0 && (
         <div
           ref={errorBoxRef}
@@ -239,6 +258,17 @@ export function SpeicherCalculateForm({
         </div>
       )}
 
+      {/*
+        The scrollport is this plain div, not the fieldset: a fieldset as a
+        flex item does not reliably hand its constrained height to children,
+        so the fields would grow past the panel and slide under the footer.
+      */}
+      <div
+        className="sg-form-fields min-w-0"
+        tabIndex={fieldsScrollable ? 0 : undefined}
+        role={fieldsScrollable ? "region" : undefined}
+        aria-label={fieldsScrollable ? "Eingabefelder" : undefined}
+      >
       <fieldset
         disabled={locked}
         className={`min-w-0 border-0 p-0 ${
@@ -763,16 +793,33 @@ export function SpeicherCalculateForm({
         </FormSection>
         </div>
       </fieldset>
+      </div>
 
-      <div className={FORM_SUBMIT_ZONE}>
+      <div className={`${FORM_SUBMIT_ZONE} sg-form-footer`}>
+        {!showSubmit && onEditInputs ? (
+          <p className="mb-2 text-[11px] leading-[1.4] text-ink-muted">
+            Berechnete Eingaben · schreibgeschützt
+          </p>
+        ) : null}
+        {/*
+          Distinct keys keep submit and edit on separate DOM nodes. One shared
+          node would hand its focus and pressed state to the submit button that
+          replaces it, so the next Enter, Space or click would start a run.
+        */}
         {showSubmit ? (
-          <button type="submit" className={`${BTN_PRIMARY} w-full`}>
+          <button key="submit" type="submit" className={`${BTN_PRIMARY} w-full`}>
             {submitLabel}
           </button>
         ) : onEditInputs ? (
           <button
+            key="edit"
             type="button"
-            onClick={onEditInputs}
+            onMouseDown={suppressPointerFocus}
+            onClick={(event) => {
+              event.preventDefault();
+              focusFirstFieldRef.current = true;
+              onEditInputs();
+            }}
             className={`${BTN_SECONDARY} w-full`}
           >
             Eingaben bearbeiten
@@ -782,7 +829,9 @@ export function SpeicherCalculateForm({
             Berechnung läuft …
           </p>
         ) : null}
-        <p className={`${FORM_HELP} mt-2`}>Dauer ca. 40 Sekunden.</p>
+        {!showSubmit && onEditInputs ? null : (
+          <p className={`${FORM_HELP} mt-2`}>Dauer ca. 40 Sekunden.</p>
+        )}
       </div>
     </form>
   );

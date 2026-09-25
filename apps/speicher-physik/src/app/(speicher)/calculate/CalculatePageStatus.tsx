@@ -11,18 +11,27 @@ const STATUS_COPY: Record<
   stale: { title: "Ergebnis nicht aktuell", detail: null },
 };
 
-function StatusMark({ status }: { status: CalculateHeaderStatus }) {
-  if (status === "complete") {
-    return (
-      <span
-        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] leading-none text-white"
-        aria-hidden
-      >
-        ✓
-      </span>
-    );
-  }
+function BerechnetCap() {
+  return (
+    <svg
+      className="sg-status-cap"
+      viewBox="0 0 20 20"
+      aria-hidden
+    >
+      <circle cx="10" cy="10" r="10" fill="currentColor" />
+      <path
+        d="m5.5 10 3 3 6-6"
+        fill="none"
+        stroke="white"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
+function StatusMark({ status }: { status: CalculateHeaderStatus }) {
   const markClass =
     status === "stale"
       ? "bg-warning"
@@ -45,15 +54,22 @@ export function CalculatePageStatus({
 }) {
   const copy = STATUS_COPY[status];
 
+  const complete = status === "complete";
+
   return (
-    <p className="flex items-start gap-2" role="status">
-      <StatusMark status={status} />
+    <p className="sg-print-hide flex items-start gap-2" role="status">
+      {complete ? null : <StatusMark status={status} />}
       <span className="min-w-0">
-        <span className="block text-base font-semibold leading-snug text-ink">
+        <span className="block text-base font-semibold leading-[1.45] text-ink">
+          {complete ? <BerechnetCap /> : null}
           {copy.title}
         </span>
         {copy.detail ? (
-          <span className="mt-0.5 block text-sm font-normal leading-snug text-ink-muted">
+          <span
+            className={`block text-sm font-normal leading-snug text-ink-muted ${
+              complete ? "sg-status-detail" : "mt-0.5"
+            }`}
+          >
             {copy.detail}
           </span>
         ) : null}

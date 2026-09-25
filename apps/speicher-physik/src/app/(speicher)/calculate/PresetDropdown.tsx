@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PresetDropdownOption } from "./calculateFormModel";
+import { FORM_CONTROL_DISABLED } from "./formStyles";
 
 export function PresetDropdown<T extends number | string>({
   id,
@@ -22,6 +23,29 @@ export function PresetDropdown<T extends number | string>({
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuBox, setMenuBox] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const button = buttonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setMenuBox({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -50,6 +74,7 @@ export function PresetDropdown<T extends number | string>({
   return (
     <div ref={rootRef} className="relative w-full min-w-0">
       <button
+        ref={buttonRef}
         id={id}
         type="button"
         aria-haspopup="listbox"
@@ -61,7 +86,7 @@ export function PresetDropdown<T extends number | string>({
             setOpen(false);
           }
         }}
-        className={`flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-sm border bg-field px-3 py-1.5 text-left text-ink transition-colors lg:h-9 disabled:cursor-not-allowed disabled:bg-surface-muted ${borderClass}`}
+        className={`flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-sm border bg-field px-3 py-1.5 text-left text-ink transition-colors lg:h-9 ${FORM_CONTROL_DISABLED} ${borderClass}`}
       >
         <span className="min-w-0 whitespace-normal break-words">{displayLabel}</span>
         <svg
@@ -82,7 +107,17 @@ export function PresetDropdown<T extends number | string>({
       {open && (
         <ul
           role="listbox"
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-sm border border-line bg-surface py-1 shadow-sm [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-surface [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-line [&::-webkit-scrollbar-thumb:hover]:bg-line-strong"
+          style={
+            menuBox
+              ? {
+                  position: "fixed",
+                  top: menuBox.top,
+                  left: menuBox.left,
+                  width: menuBox.width,
+                }
+              : undefined
+          }
+          className="z-50 max-h-60 overflow-y-auto rounded-sm border border-line bg-surface py-1 shadow-sm [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-surface [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-line [&::-webkit-scrollbar-thumb:hover]:bg-line-strong"
         >
           {options.map((opt) => {
             const isSelected = opt.value === value;

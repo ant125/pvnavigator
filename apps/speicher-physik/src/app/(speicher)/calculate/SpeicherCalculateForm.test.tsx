@@ -352,7 +352,7 @@ describe("SpeicherCalculateForm C3+C4", () => {
     expect(html).toContain("border-b border-line-soft bg-surface-muted/30");
     for (const heading of headings) {
       expect(heading).toContain(
-        "min-w-0 font-sans text-sm font-semibold uppercase tracking-normal text-ink"
+        "min-w-0 font-sans text-sm font-bold uppercase tracking-normal text-ink"
       );
       expect(heading).not.toContain("tracking-[0.14em]");
       expect(heading).not.toContain("font-mono");
@@ -371,6 +371,12 @@ describe("SpeicherCalculateForm C3+C4", () => {
   it("keeps Wärmepumpe, EV and Notstrom copy while locking the fieldset", () => {
     const html = renderForm({ locked: true });
     expect(html).toContain('disabled=""');
+    expect(html).toContain("sg-calculate-form");
+    expect(html).toContain("disabled:bg-field");
+    expect(html).toContain("disabled:text-ink/70");
+    expect(html).toContain("disabled:opacity-100");
+    expect(html).not.toContain("disabled:bg-surface-muted");
+    expect(html).not.toContain("has-[:disabled]:bg-surface-muted");
     expect(html).toContain(
       '<legend class="sr-only">Wärmepumpe vorhanden?</legend>'
     );

@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, type RefObject } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+  type RefObject,
+} from "react";
 import { SpeicherInput } from "../types/speicher";
 import {
   validateInput,
@@ -27,13 +34,11 @@ import {
 } from "../components/headerCtaContext";
 import { CalculatePageStatus } from "./CalculatePageStatus";
 import { SpeicherReportView } from "../components/SpeicherReportView";
-import { mapEvFormToCalculationInput } from "../utils/evForm";
 import type { ReportHeatPumpCitation } from "@/lib/reportMethodologySources";
 import {
   DEFAULT_SURFACE,
   INITIAL_FORM_DATA,
   surfacesOrDefault,
-  sumSurfaceKwP,
 } from "./calculateFormModel";
 import {
   calculationInputFingerprint,
@@ -47,6 +52,11 @@ import { SpeicherCalculateWorkspace } from "./SpeicherCalculateWorkspace";
 import { InputSystemPreview } from "./InputSystemPreview";
 import { RunSystemPreview } from "./RunSystemPreview";
 import { CompletedCalculationRow } from "./CompletedCalculationRow";
+import { buildHouseholdCalculationInput } from "./householdCalculationInput";
+import { ResultNavigation } from "./ResultNavigation";
+import { scrollPageToTop } from "./scrollPageToTop";
+import { SelectedSystemChips } from "./SelectedSystemChips";
+import { SystemScene, systemSceneFromForm } from "./SystemScene";
 
 type Step = "input" | "calculating" | "results";
 
@@ -56,7 +66,6 @@ const POSTAL_CODE_MISMATCH_GENERAL_MESSAGE =
 export default function SpeicherCalculatePage() {
   const [step, setStep] = useState<Step>("input");
   const [editing, setEditing] = useState(false);
-  const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [calculatedFingerprint, setCalculatedFingerprint] = useState<
     string | null
   >(null);
@@ -158,17 +167,18 @@ export default function SpeicherCalculatePage() {
     return () => clearInterval(timer);
   }, [step, calculationComplete]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (step !== "calculating") return;
     if (!pendingScrollToRunRef.current) return;
 
-    const scrollFrame = requestAnimationFrame(() => {
+    scrollPageToTop();
+    mainPaneRef.current?.focus({ preventScroll: true });
+    const assertTopFrame = requestAnimationFrame(() => {
       if (!pendingScrollToRunRef.current) return;
       pendingScrollToRunRef.current = false;
-      mainPaneRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
-      mainPaneRef.current?.focus({ preventScroll: true });
+      scrollPageToTop();
     });
-    return () => cancelAnimationFrame(scrollFrame);
+    return () => cancelAnimationFrame(assertTopFrame);
   }, [step]);
 
   useEffect(() => {
@@ -219,7 +229,6 @@ export default function SpeicherCalculatePage() {
     setEvResult(null);
     setWasserWasserRobustness(null);
     setEditing(false);
-    setDetailsExpanded(true);
     setRunSceneOpen(false);
     pendingScrollToRunRef.current = true;
     setRunPreview({
@@ -229,38 +238,10 @@ export default function SpeicherCalculatePage() {
     setStep("calculating");
 
     try {
-      const pvSurfaces = surfacesOrDefault(formData).map((s) => ({
-        systemSizeKwP: s.systemSizeKwP,
-        tiltDeg: s.tiltDeg,
-        azimuthDeg: s.azimuthDeg,
-      }));
-      const totalKwP = sumSurfaceKwP(pvSurfaces);
+      const calculationInput = buildHouseholdCalculationInput(formData);
 
       const response = await runHouseholdCalculationStream(
-        {
-          annualConsumptionKWh: formData.annualConsumptionKwh as number,
-          pvSystemKwP: totalKwP,
-          street: formData.street as string,
-          houseNumber: formData.houseNumber as string,
-          postalCode: formData.postalCode as string,
-          city: formData.city as string,
-          tiltDeg: pvSurfaces[0].tiltDeg,
-          azimuthDeg: pvSurfaces[0].azimuthDeg,
-          pvSurfaces,
-          heatPumpEnabled: formData.heatPumpEnabled === true,
-          heatPumpConsumptionKWh:
-            formData.heatPumpEnabled === true
-              ? formData.heatPumpConsumptionKwh
-              : undefined,
-          ...(formData.heatPumpEnabled === true
-            ? {
-                heatPumpTechnology: formData.heatPumpTechnology,
-                heatPumpDhwService: formData.heatPumpDhwService,
-              }
-            : {}),
-          ev: mapEvFormToCalculationInput(formData),
-          backupReserveKwh: formData.backupReserveKwh,
-        },
+        calculationInput,
         (event) => {
           setCalculationProgress((prev) => applyCalculationProgress(prev, event));
         }
@@ -287,18 +268,17 @@ export default function SpeicherCalculatePage() {
       setResultPresentation({
         surfaces: surfacesOrDefault(formData),
         annualConsumptionKwh: formData.annualConsumptionKwh,
-        heatPumpEnabled: formData.heatPumpEnabled,
-        heatPumpConsumptionKwh: formData.heatPumpConsumptionKwh,
-        heatPumpTechnology: formData.heatPumpTechnology,
-        heatPumpDhwService: formData.heatPumpDhwService,
+        heatPumpEnabled: calculationInput.heatPumpEnabled,
+        heatPumpConsumptionKwh: calculationInput.heatPumpConsumptionKWh,
+        heatPumpTechnology: calculationInput.heatPumpTechnology,
+        heatPumpDhwService: calculationInput.heatPumpDhwService,
         evEnabled: formData.evEnabled,
         backupReserveKwh: formData.backupReserveKwh,
-        totalKwPConfigured: totalKwP,
+        totalKwPConfigured: calculationInput.pvSystemKwP,
       });
       await new Promise((resolve) =>
         setTimeout(resolve, CALCULATION_COMPLETE_PAUSE_MS)
       );
-      setDetailsExpanded(false);
       setStep("results");
     } catch (err) {
       pendingScrollToRunRef.current = false;
@@ -327,7 +307,6 @@ export default function SpeicherCalculatePage() {
   const handleReset = useCallback(() => {
     setStep("input");
     setEditing(false);
-    setDetailsExpanded(false);
     setCalculatedFingerprint(null);
     setVerifiedResult(null);
     setSpeicherGrenz(null);
@@ -383,6 +362,7 @@ export default function SpeicherCalculatePage() {
       formData={runPreview ?? formData}
       sceneOpen={runSceneOpen}
       onToggleScene={() => setRunSceneOpen((open) => !open)}
+      showColumnHeader={step !== "results"}
     />
   );
 
@@ -395,6 +375,8 @@ export default function SpeicherCalculatePage() {
       includeEvProfile={includeEvProfile}
     />
   );
+
+  const resultScene = systemSceneFromForm(runPreview ?? formData);
 
   const report =
     step === "results" && verifiedResult && resultPresentation ? (
@@ -430,6 +412,15 @@ export default function SpeicherCalculatePage() {
           }}
           totalKwPConfigured={resultPresentation.totalKwPConfigured}
           calculationDurationMs={calculationDurationMs}
+          anlageOpen={runSceneOpen}
+          anlageScene={
+            <SystemScene
+              heatPump={resultScene.heatPump}
+              heatPumpKind={resultScene.heatPumpKind}
+              ev={resultScene.ev}
+              backupReserve={resultScene.backupReserve}
+            />
+          }
         />
       </div>
     ) : null;
@@ -443,11 +434,15 @@ export default function SpeicherCalculatePage() {
         ref={mainPaneRef}
         tabIndex={-1}
         aria-label={step === "calculating" ? "Berechnung" : "Ergebnis"}
-        className="sg-run-focus space-y-6 scroll-mt-sg-sticky"
+        className={`sg-run-focus flex flex-col ${
+          step === "results" ? "gap-0" : "gap-6"
+        }`}
       >
-        {runPreviewCard}
         {step === "calculating" ? (
-          progress
+          <>
+            {runPreviewCard}
+            {progress}
+          </>
         ) : (
           <>
             {isStale ? (
@@ -460,11 +455,17 @@ export default function SpeicherCalculatePage() {
             ) : null}
             <CompletedCalculationRow
               durationMs={calculationDurationMs}
-              expanded={detailsExpanded}
-              onToggle={() => setDetailsExpanded((open) => !open)}
-            >
-              {progress}
-            </CompletedCalculationRow>
+              anlageOpen={runSceneOpen}
+              onToggleAnlage={() => setRunSceneOpen((open) => !open)}
+              chips={
+                <SelectedSystemChips
+                  formData={runPreview ?? formData}
+                  showNote={false}
+                  className="sg-completed-chips"
+                />
+              }
+            />
+            {report ? <ResultNavigation /> : null}
             {report}
           </>
         )}
@@ -473,13 +474,13 @@ export default function SpeicherCalculatePage() {
   }
 
   return (
-    <div className="min-w-0 px-layout-gap pb-3 pt-5">
+    <div className="sg-calculate-page min-w-0 px-layout-gap pb-3 pt-5">
       <div className="mb-title-section-gap flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5">
         <div className="min-w-0">
-          <h1 className="text-[1.875rem] font-semibold leading-none tracking-tight text-ink sm:text-[2.375rem] lg:text-[2.875rem]">
+          <h1 className="text-[1.875rem] font-bold leading-none tracking-[-0.035em] text-ink sm:text-[2.375rem] lg:text-[2.875rem]">
             Ihre Speicher-Analyse
           </h1>
-          <p className="mt-1.5 text-[1.125rem] font-medium leading-snug text-ink-secondary">
+          <p className="mt-1.5 text-[1.125rem] leading-[1.45] text-ink-secondary">
             Technische Analyse
           </p>
         </div>
@@ -487,9 +488,13 @@ export default function SpeicherCalculatePage() {
       </div>
 
       <SpeicherCalculateWorkspace
-        formLocked={formLocked}
         pinMain={step === "input"}
-        collapseFormOnMobile={false}
+        pinForm={step !== "input"}
+        mainColumnHeading={
+          step === "results"
+            ? { number: "02", label: "Ergebnis" }
+            : null
+        }
         form={
           <SpeicherCalculateForm
             formData={formData}
@@ -509,6 +514,7 @@ export default function SpeicherCalculatePage() {
             }
             showSubmit={!formLocked}
             onSubmit={handleSubmit}
+            fieldsScrollable={step !== "input"}
             onEditInputs={
               step === "results" && formLocked
                 ? () => setEditing(true)

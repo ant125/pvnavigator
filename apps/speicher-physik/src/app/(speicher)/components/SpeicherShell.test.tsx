@@ -83,6 +83,7 @@ describe("SpeicherShell overflow chain", () => {
     expect(headerHtml).not.toContain('aria-label="PVNavigator SpeicherGrenze"');
     expect(headerHtml).toContain("Mein Konto");
     expect(headerHtml).toContain("border-b border-line");
+    expect(headerHtml).toContain("min-h-sg-calculate-header");
     expect(headerHtml).toContain("bg-canvas");
     expect(headerHtml).not.toContain("border-line-strong");
     expect(headerHtml).not.toContain("border-b border-line bg-surface");
@@ -142,6 +143,7 @@ describe("SpeicherShell overflow chain", () => {
     expect(headerHtml).toContain("Abmelden");
     expect(headerHtml).toContain("Speicher berechnen");
     expect(headerHtml).toContain("max-md:hidden");
+    expect(headerHtml).not.toContain("min-h-sg-calculate-header");
     expect(headerHtml).not.toContain("Methodik");
     expect(html).not.toContain("border border-line-strong");
     expect(footerHtml).toContain("SpeicherGrenze");

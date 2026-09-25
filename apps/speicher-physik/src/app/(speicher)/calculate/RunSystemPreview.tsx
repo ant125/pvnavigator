@@ -11,22 +11,36 @@ export function RunSystemPreview({
   formData,
   sceneOpen,
   onToggleScene,
+  showColumnHeader = true,
 }: {
   formData: Partial<SpeicherInput>;
   sceneOpen: boolean;
   onToggleScene: () => void;
+  showColumnHeader?: boolean;
 }) {
   const sceneSelection = systemSceneFromForm(formData);
 
   return (
-    <div className="overflow-visible rounded-none border border-line bg-surface">
-      <header className={FORM_COLUMN_BAR}>
-        <p className={FORM_COLUMN_BAR_LABEL}>
-          <span>02</span>
-          <span>Ihre Systemkonfiguration</span>
-        </p>
-      </header>
-      <div className="px-panel-padding-x py-panel-padding-y">
+    <div
+      className={
+        showColumnHeader
+          ? "overflow-visible rounded-none border border-line bg-surface"
+          : "min-w-0 px-panel-padding-x py-panel-padding-y"
+      }
+    >
+      {showColumnHeader ? (
+        <header className={FORM_COLUMN_BAR}>
+          <p className={FORM_COLUMN_BAR_LABEL}>
+            <span>02</span>
+            <span>Ihre Systemkonfiguration</span>
+          </p>
+        </header>
+      ) : null}
+      <div
+        className={
+          showColumnHeader ? "px-panel-padding-x py-panel-padding-y" : undefined
+        }
+      >
         <SelectedSystemChips formData={formData} />
         <button
           type="button"

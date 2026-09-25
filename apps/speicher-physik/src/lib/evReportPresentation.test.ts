@@ -22,8 +22,8 @@ describe("EV window/power formatting", () => {
     expect(
       formatEvHomeWindow(evWindowBounded(evClock(18, 0), evClock(7, 0)))
     ).toBe("18:00–07:00");
-    expect(formatEvChargePowerKw(2.3)).toBe("2,3 kW");
-    expect(formatEvChargePowerKw(11)).toBe("11 kW");
+    expect(formatEvChargePowerKw(2.3)).toBe("2,3\u00A0kW");
+    expect(formatEvChargePowerKw(11)).toBe("11\u00A0kW");
   });
 });
 
@@ -42,18 +42,18 @@ describe("deriveEvReportView", () => {
       view.inputRows.map((row) => [row.label, row.value])
     );
 
-    expect(byLabel["Jahresfahrleistung"]).toBe("15.000 km / Jahr");
-    expect(byLabel["Stromverbrauch"]).toBe("18 kWh / 100 km");
-    expect(byLabel["nutzbare Batteriekapazität"]).toBe("60 kWh");
-    expect(byLabel["typische Fahrstrecke Montag–Freitag"]).toBe("40 km / Tag");
-    expect(byLabel["typische Fahrstrecke Samstag"]).toBe("20 km");
-    expect(byLabel["typische Fahrstrecke Sonntag"]).toBe("10 km");
-    expect(byLabel["maximale Heimladeleistung"]).toBe("11 kW");
+    expect(byLabel["Jahresfahrleistung"]).toBe("15\u202F000\u00A0km / Jahr");
+    expect(byLabel["Stromverbrauch"]).toBe("18\u00A0kWh / 100 km");
+    expect(byLabel["nutzbare Batteriekapazität"]).toBe("60\u00A0kWh");
+    expect(byLabel["typische Fahrstrecke Montag–Freitag"]).toBe("40\u00A0km / Tag");
+    expect(byLabel["typische Fahrstrecke Samstag"]).toBe("20\u00A0km");
+    expect(byLabel["typische Fahrstrecke Sonntag"]).toBe("10\u00A0km");
+    expect(byLabel["maximale Heimladeleistung"]).toBe("11\u00A0kW");
     expect(byLabel["Ladefenster Montag–Freitag"]).toBe("18:00–07:00");
     expect(byLabel["Ladefenster Samstag"]).toBe("10:00–16:00");
     expect(byLabel["Laden am Arbeitsplatz"]).toBe("Ja");
-    expect(byLabel["kWh / Monat"]).toBe("80 kWh / Monat");
-    expect(byLabel["Ladetage / Monat"]).toBe("8 Tage / Monat");
+    expect(byLabel["kWh / Monat"]).toBe("80\u00A0kWh / Monat");
+    expect(byLabel["Ladetage / Monat"]).toBe("8\u00A0Tage / Monat");
 
     const derived = Object.fromEntries(
       view.derivedRows.map((row) => [row.label, row.valueKwh])

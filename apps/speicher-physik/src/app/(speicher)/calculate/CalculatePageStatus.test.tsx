@@ -20,7 +20,8 @@ describe("CalculatePageStatus", () => {
 
     expect(html).toContain("Berechnet");
     expect(html).toContain("Berechnung abgeschlossen");
-    expect(html).toContain("✓");
+    expect(html).toContain("sg-status-cap");
+    expect(html).not.toContain(">✓<");
   });
 
   it("keeps the real calculating, editing, and stale labels", () => {

@@ -29,7 +29,7 @@ import {
 } from "./formStyles";
 
 function homeWindowTimeClassName(hasError: boolean): string {
-  return `sg-ev-time h-11 w-full min-w-0 border-0 bg-transparent px-2 py-1.5 text-ink outline-none lg:h-9 disabled:cursor-not-allowed ${
+  return `sg-ev-time h-11 w-full min-w-0 border-0 bg-transparent px-2 py-1.5 text-ink outline-none lg:h-9 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-ink/70 disabled:opacity-100 ${
     hasError ? "text-danger" : ""
   }`;
 }

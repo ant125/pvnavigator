@@ -56,13 +56,17 @@ export function buildSelectedSystemChips(
 
 export function SelectedSystemChips({
   formData,
+  showNote = true,
+  className = "mt-field-group-gap",
 }: {
   formData: Partial<SpeicherInput>;
+  showNote?: boolean;
+  className?: string;
 }) {
   const chips = buildSelectedSystemChips(formData);
 
   return (
-    <div className="mt-field-group-gap">
+    <div className={className}>
       {chips.length > 0 ? (
         <ul
           aria-label="Ausgewählte Komponenten"
@@ -71,22 +75,24 @@ export function SelectedSystemChips({
           {chips.map((chip) => (
             <li
               key={chip.key}
-              className="rounded-sm border border-line bg-surface-muted px-2.5 py-1 font-mono text-[11px] leading-snug text-ink"
+              className="shrink-0 whitespace-nowrap rounded-sm border border-line bg-surface-muted px-2.5 py-1 font-mono text-[11px] leading-snug text-ink"
             >
               {chip.label}
             </li>
           ))}
         </ul>
       ) : null}
-      <p
-        className={`text-[11px] leading-relaxed text-ink-muted ${
-          chips.length > 0 ? "mt-field-group-gap" : ""
-        }`}
-      >
-        Schematische Darstellung der gewählten Komponenten – nicht die Geometrie
-        Ihres Gebäudes. Eine Speicherkapazität erscheint erst nach der
-        Berechnung.
-      </p>
+      {showNote ? (
+        <p
+          className={`text-[11px] leading-relaxed text-ink-muted ${
+            chips.length > 0 ? "mt-field-group-gap" : ""
+          }`}
+        >
+          Schematische Darstellung der gewählten Komponenten – nicht die
+          Geometrie Ihres Gebäudes. Eine Speicherkapazität erscheint erst nach
+          der Berechnung.
+        </p>
+      ) : null}
     </div>
   );
 }

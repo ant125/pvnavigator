@@ -2,52 +2,55 @@
 
 import type { ReactNode } from "react";
 import { formatCalculationDurationDe } from "@/lib/calculationProgress";
+import { suppressPointerFocus } from "./formStyles";
+
+const ANLAGE_PANEL_ID = "anlage-eingaben";
 
 export function CompletedCalculationRow({
   durationMs,
-  expanded,
-  onToggle,
-  children,
+  anlageOpen,
+  onToggleAnlage,
+  chips,
 }: {
   durationMs: number | null;
-  expanded: boolean;
-  onToggle: () => void;
-  children?: ReactNode;
+  anlageOpen: boolean;
+  onToggleAnlage: () => void;
+  chips?: ReactNode;
 }) {
   const durationLabel =
     durationMs !== null
-      ? `${formatCalculationDurationDe(durationMs)} s`
+      ? `${formatCalculationDurationDe(durationMs)}\u00A0s`
       : null;
 
   return (
-    <div className="overflow-hidden rounded-sm border border-line bg-surface">
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-accent-soft px-4 py-3">
-        <p className="flex items-center gap-2 text-sm text-ink">
-          <span
-            className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] text-white"
-            aria-hidden
-          >
-            ✓
+    <div className="sg-completed-bar border-b border-line bg-accent-soft px-3 py-2">
+      <p className="sg-completed-main text-sm text-ink">
+        <span
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] text-white"
+          aria-hidden
+        >
+          ✓
+        </span>
+        <span className="font-semibold">Berechnung abgeschlossen</span>
+        {durationLabel ? (
+          <span className="font-mono text-xs tabular-nums text-ink-secondary">
+            {durationLabel}
           </span>
-          <span>
-            Berechnung abgeschlossen
-            {durationLabel ? (
-              <span className="ml-2 font-mono tabular-nums text-ink-secondary">
-                · {durationLabel}
-              </span>
-            ) : null}
-          </span>
-        </p>
+        ) : null}
+      </p>
+      {chips}
+      <div className="sg-completed-actions ml-auto">
         <button
           type="button"
-          onClick={onToggle}
-          aria-expanded={expanded}
-          className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent-text hover:text-accent-hover"
+          onMouseDown={suppressPointerFocus}
+          onClick={onToggleAnlage}
+          aria-expanded={anlageOpen}
+          aria-controls={ANLAGE_PANEL_ID}
+          className="bg-transparent font-mono text-[11px] font-semibold uppercase tracking-[0.13em] text-accent-text hover:bg-accent-soft hover:text-accent-hover"
         >
-          {expanded ? "Details −" : "Details +"}
+          {anlageOpen ? "Anlage & Eingaben −" : "Anlage & Eingaben +"}
         </button>
       </div>
-      {expanded ? <div className="border-t border-line p-4">{children}</div> : null}
     </div>
   );
 }
