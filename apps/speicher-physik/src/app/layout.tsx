@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Mono, Inter, Source_Sans_3 } from "next/font/google";
 import {
   AUTH_RETURN_SPEICHER,
   getHubKontoUrl,
@@ -11,6 +12,30 @@ import { SpeicherShell } from "./(speicher)/components/SpeicherShell";
 import { getServerUser } from "@/lib/auth";
 
 import "./globals.css";
+
+const speicherSans = Source_Sans_3({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-speicher-sans",
+});
+
+/*
+  /calculate uses the mockup face. Chrome's Rendered Fonts show the v4 mockup
+  drawing in locally installed Inter, which most visitors do not have, so the
+  app ships Inter itself. Other routes keep Source Sans 3.
+*/
+const speicherUi = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-speicher-ui",
+});
+
+const speicherMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  variable: "--font-speicher-mono",
+});
 
 export const metadata: Metadata = {
   title: "PV Speicher Rechner | PVNavigator",
@@ -28,8 +53,11 @@ export default async function RootLayout({
   const user = await getServerUser();
 
   return (
-    <html lang="de">
-      <body className="antialiased">
+    <html
+      lang="de"
+      className={`${speicherSans.variable} ${speicherUi.variable} ${speicherMono.variable}`}
+    >
+      <body className="font-sans antialiased">
         <SpeicherShell
           authenticated={Boolean(user)}
           userEmail={user?.email ?? null}

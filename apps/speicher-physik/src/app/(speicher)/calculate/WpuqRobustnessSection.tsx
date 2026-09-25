@@ -41,7 +41,7 @@ type WpuqRobustnessSectionProps = {
 };
 
 /** Local scroller for tables that are intentionally wider than a phone. */
-const TABLE_SCROLL = "min-w-0 max-w-full overflow-x-auto";
+const TABLE_SCROLL = "sg-table-scroll min-w-0 max-w-full overflow-x-auto";
 
 function InfoHint({
   label,
@@ -170,23 +170,37 @@ function DetailsToggle({
 export function ReportQuellenSection({
   heatPump,
   ev,
+  id,
+  hideHeading = false,
+  framed = true,
 }: {
   heatPump?: ReportHeatPumpCitation;
   ev?: ReportEvCitation;
+  id?: string;
+  hideHeading?: boolean;
+  framed?: boolean;
 }) {
   const sources = getReportMethodologySources(heatPump, ev);
+  const Root = hideHeading ? "div" : "section";
 
   return (
-    <section
-      aria-labelledby="report-quellen-heading"
-      className="mt-8 border-t border-line pt-8 lg:mt-10 lg:pt-10"
+    <Root
+      id={hideHeading ? undefined : id}
+      aria-labelledby={hideHeading ? undefined : "report-quellen-heading"}
+      className={
+        framed
+          ? "mt-8 border-t border-line pt-8 lg:mt-10 lg:pt-10"
+          : undefined
+      }
     >
-      <h2
-        id="report-quellen-heading"
-        className="text-lg font-semibold text-ink"
-      >
-        Quellen & wissenschaftliche Grundlagen
-      </h2>
+      {hideHeading ? null : (
+        <h2
+          id="report-quellen-heading"
+          className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-accent-text"
+        >
+          Quellen & wissenschaftliche Grundlagen
+        </h2>
+      )}
       <p className="mt-3 max-w-reading text-sm leading-relaxed text-ink-secondary">
         Die ausführliche Dokumentation steht unter{" "}
         <Link
@@ -230,7 +244,7 @@ export function ReportQuellenSection({
           </li>
         ))}
       </ul>
-    </section>
+    </Root>
   );
 }
 

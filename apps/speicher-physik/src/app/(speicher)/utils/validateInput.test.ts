@@ -458,3 +458,28 @@ describe("validateInput EV (new UI)", () => {
     expect(result.isValid).toBe(true);
   });
 });
+
+describe("validateInput PV exact angles", () => {
+  it("accepts non-preset 203° / 33° with the same range rules", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      pvSurfaces: [{ systemSizeKwP: 10, tiltDeg: 33, azimuthDeg: 203 }],
+    });
+    expect(result.isValid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("rejects out-of-range azimuth and tilt without changing the messages", () => {
+    const result = validateInput({
+      ...VALID_FORM_BASE,
+      pvSurfaces: [{ systemSizeKwP: 10, tiltDeg: 91, azimuthDeg: 400 }],
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      "Dachfläche 1: Neigung muss zwischen 0° und 90° liegen."
+    );
+    expect(result.errors).toContain(
+      "Dachfläche 1: Ausrichtung als ganze Zahl 0–359° (von Nord aus im Uhrzeigersinn)."
+    );
+  });
+});

@@ -56,22 +56,22 @@ describe("robustness section visibility", () => {
 
 describe("data-driven ranges (D)", () => {
   it("formats min/max from the payload, not hardcoded numbers", () => {
-    expect(formatReportRangeKwh(8.2, 12.4)).toBe("8–12 kWh");
-    expect(formatReportRangeKwh(10, 10)).toBe("10 kWh");
-    expect(formatReportRangePct(33.4, 41.4)).toBe("33–41 %");
-    expect(formatReportRangePct(40, 40)).toBe("40 %");
+    expect(formatReportRangeKwh(8.2, 12.4)).toBe("8–12\u00A0kWh");
+    expect(formatReportRangeKwh(10, 10)).toBe("10\u00A0kWh");
+    expect(formatReportRangePct(33.4, 41.4)).toBe("33–41\u00A0%");
+    expect(formatReportRangePct(40, 40)).toBe("40\u00A0%");
 
     const text = householdDefaultViewText({
       cohortSize: 27,
       sizeUnchangedCount: 23,
       ...HOUSEHOLD_RANGE,
     });
-    expect(text).toContain("9–10 kWh");
-    expect(text).toContain("38–47 %");
-    expect(text).toContain("31–40 %");
-    expect(text).toContain("42 %");
-    expect(text).toContain("36 %");
-    expect(text).not.toContain("8–12 kWh");
+    expect(text).toContain("9–10\u00A0kWh");
+    expect(text).toContain("38–47\u00A0%");
+    expect(text).toContain("31–40\u00A0%");
+    expect(text).toContain("42\u00A0%");
+    expect(text).toContain("36\u00A0%");
+    expect(text).not.toContain("8–12\u00A0kWh");
   });
 });
 

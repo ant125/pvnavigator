@@ -16,6 +16,8 @@ export type HeaderAccountProps = {
   signupHref: string;
   accountHref: string;
   signOutHref: string;
+  /** /calculate: only the account link. Other routes keep email + sign-out. */
+  compact?: boolean;
 };
 
 export function HeaderAccount({
@@ -25,8 +27,17 @@ export function HeaderAccount({
   signupHref,
   accountHref,
   signOutHref,
+  compact = false,
 }: HeaderAccountProps) {
   if (authenticated) {
+    if (compact) {
+      return (
+        <a href={accountHref} className={headerAccountLink}>
+          Mein Konto
+        </a>
+      );
+    }
+
     return (
       <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 sm:gap-3">
         <a href={accountHref} className={headerAccountLink}>

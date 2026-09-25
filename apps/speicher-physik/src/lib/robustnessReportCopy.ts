@@ -3,6 +3,11 @@
  * Presentation only — does not change physics, payloads, or aggregates.
  */
 
+import {
+  formatQuantityDe,
+  formatQuantityWithUnit,
+} from "./formatQuantityDe";
+
 export const HOUSEHOLD_ROBUSTNESS_QUESTION =
   "Was ändert sich, wenn Ihr Haushalt Strom anders verbraucht als das BDEW-Standardprofil?";
 
@@ -100,23 +105,27 @@ export function shouldShowWwRobustnessSection(
 }
 
 export function formatReportKwh(value: number): string {
-  return `${Math.round(value)} kWh`;
+  return formatQuantityWithUnit(Math.round(value), "kWh");
 }
 
 export function formatReportPct(value: number): string {
-  return `${Math.round(value)} %`;
+  return formatQuantityWithUnit(Math.round(value), "%");
 }
 
 export function formatReportRangeKwh(min: number, max: number): string {
   const lo = Math.round(min);
   const hi = Math.round(max);
-  return lo === hi ? formatReportKwh(lo) : `${lo}–${hi} kWh`;
+  return lo === hi
+    ? formatReportKwh(lo)
+    : `${formatQuantityDe(lo)}–${formatQuantityDe(hi)}\u00A0kWh`;
 }
 
 export function formatReportRangePct(min: number, max: number): string {
   const lo = Math.round(min);
   const hi = Math.round(max);
-  return lo === hi ? formatReportPct(lo) : `${lo}–${hi} %`;
+  return lo === hi
+    ? formatReportPct(lo)
+    : `${formatQuantityDe(lo)}–${formatQuantityDe(hi)}\u00A0%`;
 }
 
 export function formatOptionalReportKwh(value: number | null): string {

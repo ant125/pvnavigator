@@ -156,6 +156,25 @@ function validateEvFormFields(
   }
 }
 
+export function isValidPvSurfaceTiltDeg(deg: number): boolean {
+  return Number.isFinite(deg) && deg >= 0 && deg <= 90;
+}
+
+export function isValidPvSurfaceAzimuthDeg(deg: number): boolean {
+  return (
+    Number.isFinite(deg) && Number.isInteger(deg) && deg >= 0 && deg <= 359
+  );
+}
+
+export function pvSurfaceHasInvalidExactAngle(
+  surface: Pick<PvSurfaceInput, "tiltDeg" | "azimuthDeg">
+): boolean {
+  return (
+    !isValidPvSurfaceTiltDeg(surface.tiltDeg) ||
+    !isValidPvSurfaceAzimuthDeg(surface.azimuthDeg)
+  );
+}
+
 function validatePvSurfacesList(
   surfaces: PvSurfaceInput[],
   errors: string[]
@@ -177,18 +196,11 @@ function validatePvSurfacesList(
       totalKwP += kwp;
     }
 
-    const tilt = s.tiltDeg;
-    if (!Number.isFinite(tilt) || tilt < 0 || tilt > 90) {
+    if (!isValidPvSurfaceTiltDeg(s.tiltDeg)) {
       errors.push(`Dachfläche ${plane}: Neigung muss zwischen 0° und 90° liegen.`);
     }
 
-    const az = s.azimuthDeg;
-    if (
-      !Number.isFinite(az) ||
-      !Number.isInteger(az) ||
-      az < 0 ||
-      az > 359
-    ) {
+    if (!isValidPvSurfaceAzimuthDeg(s.azimuthDeg)) {
       errors.push(`Dachfläche ${plane}: Ausrichtung als ganze Zahl 0–359° (von Nord aus im Uhrzeigersinn).`);
     }
   });

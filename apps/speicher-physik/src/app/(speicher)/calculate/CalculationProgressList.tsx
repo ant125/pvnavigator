@@ -19,7 +19,12 @@ const WW_VALIDATION_LABEL = "Validierung mit realen Wasser/Wasser-Profilen";
 const WEATHER_YEAR_COUNT = 15;
 
 function formatElapsed(seconds: number): string {
-  return seconds === 1 ? "1 Sekunde" : `${seconds} Sekunden`;
+  const mm = Math.floor(seconds / 60);
+  const ss = seconds % 60;
+  if (mm === 0) {
+    return `${String(ss).padStart(2, "0")} s`;
+  }
+  return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
 }
 
 function StageMark({
@@ -29,7 +34,10 @@ function StageMark({
 }) {
   if (state === "done") {
     return (
-      <span className="text-success" aria-hidden>
+      <span
+        className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] text-white"
+        aria-hidden
+      >
         ✓
       </span>
     );
@@ -37,16 +45,21 @@ function StageMark({
   if (state === "active") {
     return (
       <span
-        className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-accent border-t-transparent"
+        className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent"
         aria-hidden
       />
     );
   }
-  return <span className="inline-block h-3.5 w-3.5" aria-hidden />;
+  return (
+    <span
+      className="inline-block h-4 w-4 rounded-full border border-line-strong/40"
+      aria-hidden
+    />
+  );
 }
 
 function stageRowClass(state: "done" | "active" | "pending"): string {
-  if (state === "done") return "text-success";
+  if (state === "done") return "text-accent-text";
   if (state === "active") return "font-medium text-ink";
   return "text-ink-muted";
 }
@@ -103,154 +116,163 @@ export function CalculationProgressList({
     <section
       aria-label="Berechnungsfortschritt"
       aria-live="polite"
-      className="w-full max-w-lg rounded-lg border border-line bg-surface px-5 py-6 sm:px-7 sm:py-7"
+      className="w-full overflow-hidden rounded-sm border border-line bg-surface"
     >
-      <header className="flex items-start justify-between gap-6 pb-4">
+      <header className="flex items-start justify-between gap-6 bg-accent px-4 py-3 text-white">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-5 w-5 shrink-0 items-center justify-center">
             {complete ? (
-              <span className="text-sm text-success" aria-hidden>
+              <span className="text-sm" aria-hidden>
                 ✓
               </span>
             ) : (
               <span
-                className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-line border-t-accent"
+                className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white"
                 aria-hidden
               />
             )}
           </span>
-          <h2 className="text-lg font-semibold tracking-tight text-ink">
-            {complete ? "Berechnung abgeschlossen." : "Berechnung läuft"}
+          <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.16em]">
+            {complete ? "Berechnung abgeschlossen" : "Ihre Anlage wird berechnet"}
           </h2>
         </div>
         <p className="shrink-0 text-right leading-snug">
-          <span className="block text-xs text-ink-muted">Berechnungszeit</span>
-          <span className="mt-0.5 block text-sm tabular-nums text-ink-secondary">
+          <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-white/70">
+            Vergangene Zeit
+          </span>
+          <span className="mt-0.5 block font-mono text-sm tabular-nums">
             {formatElapsed(elapsedSeconds)}
           </span>
         </p>
       </header>
 
-      <ol className="list-none border-t border-line-soft pt-4">
-        {stages.map((stage, index) => {
-          const done = isCalculationStageDone(stage.id, progress, complete);
-          const previousDone =
-            index === 0
-              ? true
-              : isCalculationStageDone(
-                  stages[index - 1].id,
-                  progress,
-                  complete
-                );
-          const active = !done && previousDone;
-          const state = done ? "done" : active ? "active" : "pending";
+      <div className="px-4 py-4 sm:px-5">
+        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-accent-text">
+          Berechnungsfortschritt
+        </p>
+        <ol className="list-none">
+          {stages.map((stage, index) => {
+            const done = isCalculationStageDone(stage.id, progress, complete);
+            const previousDone =
+              index === 0
+                ? true
+                : isCalculationStageDone(
+                    stages[index - 1].id,
+                    progress,
+                    complete
+                  );
+            const active = !done && previousDone;
+            const state = done ? "done" : active ? "active" : "pending";
 
-          return (
-            <li
-              key={stage.id}
-              className={`flex items-start gap-3 py-1 text-sm leading-snug ${stageRowClass(state)}`}
-            >
-              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
-                <StageMark state={state} />
-              </span>
-              <span>
-                {done ? stage.done : stage.active}
-                {stage.subtitle ? (
-                  <span className="mt-0.5 block text-xs font-normal text-ink-secondary">
-                    {stage.subtitle}
-                  </span>
-                ) : null}
-              </span>
-            </li>
-          );
-        })}
+            return (
+              <li
+                key={stage.id}
+                className={`flex items-start gap-3 py-1.5 text-sm leading-snug ${stageRowClass(state)}`}
+              >
+                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
+                  <StageMark state={state} />
+                </span>
+                <span>
+                  {done ? stage.done : stage.active}
+                  {stage.subtitle ? (
+                    <span className="mt-0.5 block text-xs font-normal text-ink-secondary">
+                      {stage.subtitle}
+                    </span>
+                  ) : null}
+                </span>
+              </li>
+            );
+          })}
 
-        <li
-          className={`flex items-start gap-3 py-1 text-sm leading-snug ${stageRowClass(
-            householdFinished ? "done" : householdActive ? "active" : "pending"
-          )}`}
-        >
-          <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
-            <StageMark
-              state={
-                householdFinished ? "done" : householdActive ? "active" : "pending"
-              }
-            />
-          </span>
-          <span>
-            {HOUSEHOLD_VALIDATION_LABEL}
-            <span
-              className={`mt-0.5 block text-xs font-normal tabular-nums text-ink-secondary ${
-                showHouseholdCounter ? "" : "invisible"
-              }`}
-            >
-              {showHouseholdCounter
-                ? householdCounter
-                : `${householdTotal} von ${householdTotal} Referenzhaushalten geprüft`}
-            </span>
-          </span>
-        </li>
-
-        {includeWw ? (
           <li
-            className={`flex items-start gap-3 py-1 text-sm leading-snug ${stageRowClass(
-              wwFinished ? "done" : wwActive ? "active" : "pending"
+            className={`flex items-start gap-3 py-1.5 text-sm leading-snug ${stageRowClass(
+              householdFinished ? "done" : householdActive ? "active" : "pending"
             )}`}
           >
             <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
               <StageMark
-                state={wwFinished ? "done" : wwActive ? "active" : "pending"}
+                state={
+                  householdFinished ? "done" : householdActive ? "active" : "pending"
+                }
               />
             </span>
             <span>
-              {WW_VALIDATION_LABEL}
+              {HOUSEHOLD_VALIDATION_LABEL}
               <span
-                className={`mt-0.5 block text-xs font-normal tabular-nums text-ink-secondary ${
-                  showWwCounter ? "" : "invisible"
+                className={`mt-0.5 block font-mono text-xs font-normal tabular-nums text-ink-secondary ${
+                  showHouseholdCounter ? "" : "invisible"
                 }`}
               >
-                {showWwCounter
-                  ? wwCounter
-                  : `${wwTotal} von ${wwTotal} Referenzanlagen geprüft`}
+                {showHouseholdCounter
+                  ? householdCounter
+                  : `${householdTotal} von ${householdTotal} Referenzhaushalten geprüft`}
               </span>
             </span>
           </li>
-        ) : null}
-      </ol>
 
-      <div className="mt-5 space-y-3">
-        <div className="grid text-sm leading-relaxed text-ink-secondary">
-          <p className={`col-start-1 row-start-1 ${beforeValidation ? "" : "invisible"}`}>
-            Die Berechnung basiert auf einem physikalischen Simulationsmodell.
-            Im Anschluss wird das Ergebnis mit realen Haushaltsprofilen geprüft.
-          </p>
-          <p
-            className={`col-start-1 row-start-1 ${
-              duringHousehold ? "" : "invisible"
-            }`}
-          >
-            Empfehlung bereits berechnet. Jetzt wird geprüft, wie stabil das
-            Ergebnis bei realen Haushaltsprofilen bleibt.
-          </p>
-          <p
-            className={`col-start-1 row-start-1 ${duringWw ? "" : "invisible"}`}
-          >
-            Empfehlung bereits berechnet. Jetzt wird geprüft, wie stabil das
-            Ergebnis bei realen Wasser/Wasser-Profilen bleibt.
-          </p>
-          <p
-            className={`col-start-1 row-start-1 ${complete ? "" : "invisible"}`}
-          >
-            {includeWw
-              ? `Die Empfehlung wurde mit ${householdTotal} realen Haushaltsprofilen und ${wwTotal} realen Wasser/Wasser-Profilen geprüft.`
-              : `Die Empfehlung wurde mit ${householdTotal} realen Haushaltsprofilen geprüft.`}
+          {includeWw ? (
+            <li
+              className={`flex items-start gap-3 py-1.5 text-sm leading-snug ${stageRowClass(
+                wwFinished ? "done" : wwActive ? "active" : "pending"
+              )}`}
+            >
+              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
+                <StageMark
+                  state={
+                    wwFinished ? "done" : wwActive ? "active" : "pending"
+                  }
+                />
+              </span>
+              <span>
+                {WW_VALIDATION_LABEL}
+                <span
+                  className={`mt-0.5 block font-mono text-xs font-normal tabular-nums text-ink-secondary ${
+                    showWwCounter ? "" : "invisible"
+                  }`}
+                >
+                  {showWwCounter
+                    ? wwCounter
+                    : `${wwTotal} von ${wwTotal} Referenzanlagen geprüft`}
+                </span>
+              </span>
+            </li>
+          ) : null}
+        </ol>
+
+        <div className="mt-5 space-y-3">
+          <div className="grid text-sm leading-relaxed text-ink-secondary">
+            <p className={`col-start-1 row-start-1 ${beforeValidation ? "" : "invisible"}`}>
+              Die Berechnung basiert auf einem physikalischen Simulationsmodell.
+              Im Anschluss wird das Ergebnis mit realen Haushaltsprofilen geprüft.
+            </p>
+            <p
+              className={`col-start-1 row-start-1 ${
+                duringHousehold ? "" : "invisible"
+              }`}
+            >
+              Empfehlung bereits berechnet. Jetzt wird geprüft, wie stabil das
+              Ergebnis bei realen Haushaltsprofilen bleibt.
+            </p>
+            <p
+              className={`col-start-1 row-start-1 ${duringWw ? "" : "invisible"}`}
+            >
+              Empfehlung bereits berechnet. Jetzt wird geprüft, wie stabil das
+              Ergebnis bei realen Wasser/Wasser-Profilen bleibt.
+            </p>
+            <p
+              className={`col-start-1 row-start-1 ${complete ? "" : "invisible"}`}
+            >
+              {includeWw
+                ? `Die Empfehlung wurde mit ${householdTotal} realen Haushaltsprofilen und ${wwTotal} realen Wasser/Wasser-Profilen geprüft.`
+                : `Die Empfehlung wurde mit ${householdTotal} realen Haushaltsprofilen geprüft.`}
+            </p>
+          </div>
+          <p className="font-mono text-[10px] leading-relaxed tracking-wide text-ink-muted">
+            {WEATHER_YEAR_COUNT} Wetterjahre · physikalische Batteriesimulation ·{" "}
+            {SMART_METER_HOUSEHOLD_COUNT} Referenzhaushalte
+            {includeWw ? ` · ${WW_ROBUSTNESS_PROFILE_COUNT} Wasser/Wasser-Profile` : ""}
           </p>
         </div>
-        <p className="text-[11px] leading-relaxed tracking-wide text-ink-muted/70">
-          {WEATHER_YEAR_COUNT} Wetterjahre · physikalische Batteriesimulation ·{" "}
-          {SMART_METER_HOUSEHOLD_COUNT} Referenzhaushalte
-          {includeWw ? ` · ${WW_ROBUSTNESS_PROFILE_COUNT} Wasser/Wasser-Profile` : ""}
-        </p>
       </div>
     </section>
   );

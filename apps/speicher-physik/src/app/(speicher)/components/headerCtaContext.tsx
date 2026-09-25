@@ -10,6 +10,13 @@ import {
   type ReactNode,
 } from "react";
 
+export type CalculateHeaderStatus =
+  | "input"
+  | "calculating"
+  | "complete"
+  | "editing"
+  | "stale";
+
 type HeaderCtaContextValue = {
   reportActive: boolean;
   setReportActive: (active: boolean) => void;
@@ -41,7 +48,11 @@ export function HeaderCtaProvider({ children }: { children: ReactNode }) {
 
   return (
     <HeaderCtaContext.Provider
-      value={{ reportActive, setReportActive, resetRef }}
+      value={{
+        reportActive,
+        setReportActive,
+        resetRef,
+      }}
     >
       {children}
     </HeaderCtaContext.Provider>

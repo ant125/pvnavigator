@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 
 import type { PvSurfaceInput } from "../types/speicher";
 import {
@@ -26,7 +26,12 @@ import {
   type ReportHeatPumpCitation,
 } from "@/lib/reportMethodologySources";
 import { EvResultSection } from "../calculate/EvResultSection";
+import { RESULT_SECTION_IDS } from "../calculate/resultNav";
 import { EV_REPORT_COPY, formatEvKwh } from "@/lib/evReportPresentation";
+import {
+  formatQuantityDe,
+  formatQuantityWithUnit,
+} from "@/lib/formatQuantityDe";
 import type { FrozenSpeicherPresentation } from "@/lib/persistCompletedCalculation";
 
 const PLACEHOLDER = "—";
@@ -42,7 +47,10 @@ const HEAT_PUMP_DHW_LABELS = {
 } as const;
 
 const REPORT_SHEET =
-  "mx-auto min-w-0 w-full max-w-sheet rounded-lg border border-line bg-surface p-5 sm:p-8 lg:p-10";
+  "mx-auto min-w-0 w-full max-w-sheet rounded-sm border border-line bg-surface p-5 sm:p-8 lg:p-10";
+
+const REPORT_SHEET_WORKSPACE =
+  "sg-workspace-report min-w-0 w-full bg-surface p-5 sm:p-6";
 
 /**
  * Major section boundary inside the sheet: one rule with symmetric space above
@@ -52,18 +60,57 @@ const REPORT_SHEET =
 const REPORT_SECTION = "mt-8 min-w-0 max-w-full border-t border-line pt-8 lg:mt-10 lg:pt-10";
 
 /** Report-section heading — a document chapter, not a micro label. */
-const REPORT_SECTION_HEADING = "text-lg font-semibold text-ink";
+const REPORT_SECTION_HEADING =
+  "font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-accent-text";
+
+const WORKSPACE_CHAPTER_RULE =
+  "mt-[1.875rem] min-w-0 max-w-full border-t border-line pt-[1.875rem]";
+
+const WORKSPACE_CHAPTER_EYEBROW =
+  "font-mono text-[11px] font-bold uppercase leading-none tracking-[0.2em] text-accent-text";
+
+const WORKSPACE_CHAPTER_TITLE =
+  "font-sans text-[1.5rem] font-bold leading-[1.15] tracking-[-0.01em] text-ink";
+
+function WorkspaceChapter({
+  id,
+  eyebrow,
+  title,
+  children,
+  first = false,
+}: {
+  id: string;
+  eyebrow: string;
+  title?: string;
+  children: ReactNode;
+  first?: boolean;
+}) {
+  return (
+    <section
+      id={id}
+      className={`sg-result-anchor min-w-0 max-w-full ${
+        first ? "" : WORKSPACE_CHAPTER_RULE
+      }`}
+    >
+      <p className={WORKSPACE_CHAPTER_EYEBROW}>{eyebrow}</p>
+      {title ? (
+        <h2 className={`mt-2 ${WORKSPACE_CHAPTER_TITLE}`}>{title}</h2>
+      ) : null}
+      <div className={title ? "mt-[1.125rem]" : "mt-4"}>{children}</div>
+    </section>
+  );
+}
 
 /** Micro label above a value or a form group. */
 const REPORT_SECTION_TITLE =
-  "text-xs font-semibold uppercase tracking-wide text-ink-secondary";
+  "font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink-secondary";
 
 /** Label of a group nested inside a section — one step darker than a micro label. */
 const REPORT_GROUP_TITLE =
-  "text-xs font-semibold uppercase tracking-wide text-ink";
+  "sg-metric-title font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink";
 
 const BTN_PRIMARY =
-  "inline-flex items-center justify-center rounded-md bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-hover";
+  "inline-flex items-center justify-center rounded-sm bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-hover";
 
 
 
@@ -85,19 +132,22 @@ const REPORT_TWO_TRACKS = "grid gap-x-12 gap-y-8 lg:grid-cols-2";
 
 /** One metric/comparison track: a closed table of label/value rows. */
 const REPORT_METRIC_LIST =
-  "divide-y divide-line-soft border-y border-line-soft text-sm";
+  "sg-metric-list divide-y divide-line-soft border-y border-line-soft text-sm";
 
 /** Metric row: label left, value aligned to the right edge of its track. */
 const REPORT_METRIC_ROW =
-  "grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-6 py-3";
+  "grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-6 py-3";
+
+const REPORT_COMPARE_VALUE =
+  "flex min-w-0 shrink-0 flex-col items-end text-right tabular-nums";
 
 const REPORT_METRIC_LABEL = "min-w-0 leading-snug text-ink-secondary";
 
 const REPORT_METRIC_VALUE =
-  "shrink-0 text-right tabular-nums font-medium text-ink";
+  "sg-metric-value shrink-0 whitespace-nowrap text-right font-mono text-sm tabular-nums font-medium text-ink";
 
 const REPORT_METRIC_VALUE_ACCENT =
-  "shrink-0 text-right tabular-nums font-semibold text-accent-text";
+  "sg-metric-value shrink-0 whitespace-nowrap text-right font-mono text-sm tabular-nums font-semibold text-accent-text";
 
 /**
  * Stammdaten datasheet: short label above its value, three columns on desktop,
@@ -109,7 +159,7 @@ const REPORT_DATA_ITEM = "border-t border-line-soft pt-3";
 
 const REPORT_DATA_LABEL = "text-xs leading-snug text-ink-muted";
 
-const REPORT_DATA_VALUE = "mt-1 text-sm font-medium tabular-nums text-ink";
+const REPORT_DATA_VALUE = "mt-1 font-mono text-sm font-medium tabular-nums text-ink";
 
 /**
  * Tinted technical band for a nested energy balance inside a section: the total
@@ -117,7 +167,7 @@ const REPORT_DATA_VALUE = "mt-1 text-sm font-medium tabular-nums text-ink";
  * as parts of that total rather than as separate metrics.
  */
 const REPORT_BAND =
-  "mt-8 rounded-md border border-line-soft bg-surface-muted p-5 lg:p-6";
+  "mt-8 rounded-sm border border-line-soft bg-surface-muted p-5 lg:p-6";
 
 const REPORT_BAND_GRID =
   "mt-5 grid gap-x-8 gap-y-4 border-t border-line pt-5 sm:grid-cols-2 lg:grid-cols-3";
@@ -175,6 +225,13 @@ export type SpeicherReportViewProps = {
   savedAt?: string | null;
   batteryModelVersion?: string | null;
   mastheadRef?: RefObject<HTMLDivElement | null>;
+  variant?: "page" | "workspace";
+  /**
+   * Live /calculate only. When set, Grundlage is mounted under this scene
+   * instead of as a trailing report chapter. Saved /result/[id] omits it.
+   */
+  anlageScene?: ReactNode;
+  anlageOpen?: boolean;
 };
 
 export function SpeicherReportView({
@@ -194,6 +251,9 @@ export function SpeicherReportView({
   savedAt = null,
   batteryModelVersion = null,
   mastheadRef,
+  variant = "page",
+  anlageScene = null,
+  anlageOpen = false,
 }: SpeicherReportViewProps) {
   const metrics = deriveSpeicherBusinessMetrics({
     verifiedResult,
@@ -251,12 +311,27 @@ export function SpeicherReportView({
     resolvedBackupReserveKwh > 0;
 
   const formatKwh = (value: number | null | undefined) =>
-    typeof value === "number" ? `${value.toFixed(0)} kWh` : PLACEHOLDER;
+    typeof value === "number" && Number.isFinite(value)
+      ? formatQuantityWithUnit(value, "kWh", 0)
+      : PLACEHOLDER;
 
-  return (
-        <div className="mx-auto min-w-0 w-full max-w-frame px-4 sm:px-6 lg:px-8">
-          <div className={REPORT_SHEET}>
-            {/* Masthead — title block of the report sheet */}
+  const formatKwhPerYear = (value: number | null | undefined, digits = 0) =>
+    typeof value === "number" && Number.isFinite(value)
+      ? formatQuantityWithUnit(value, "kWh/Jahr", digits)
+      : PLACEHOLDER;
+
+  const formatRoundedKwhPerYear = (value: number | null | undefined) =>
+    typeof value === "number" && Number.isFinite(value)
+      ? formatQuantityWithUnit(Math.round(value), "kWh/Jahr")
+      : PLACEHOLDER;
+
+  const formatPct = (value: number | null) =>
+    value !== null ? formatQuantityWithUnit(value, "%") : PLACEHOLDER;
+
+
+  const isWorkspace = variant === "workspace";
+
+  const masthead = (
             <div ref={mastheadRef} className="scroll-mt-20">
               <div className="flex items-center gap-1.5">
                 <svg
@@ -271,15 +346,17 @@ export function SpeicherReportView({
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="text-xs font-semibold uppercase tracking-wide text-accent-text">
+                <span className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-accent-text">
                   {mode === "historical"
                     ? "Gespeicherter Bericht"
                     : "Analyse abgeschlossen"}
                 </span>
               </div>
-              <h1 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
-                Ihre Speicher-Analyse
-              </h1>
+              {variant === "page" ? (
+                <h1 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
+                  Ihre Speicher-Analyse
+                </h1>
+              ) : null}
               {mode === "historical" ? (
                 <p className="mt-3 text-sm leading-relaxed text-ink-secondary">
                   Gespeichert am{" "}
@@ -293,75 +370,75 @@ export function SpeicherReportView({
                 </p>
               ) : null}
             </div>
+  );
 
-            {/* Recommended Size */}
-            <section className={REPORT_SECTION}>
-              <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
-                Berechnung nach BDEW H25
-              </h2>
+  const recommendationBody = (
+    <>
               {recommendedTechnicalSize > 0 ? (
-                /*
-                  One composition instead of a headline grid stacked on a second
-                  grid: the purchase-planning result and its derivation form the
-                  main column, the physical reference value and its caveats the
-                  aside. The planning value therefore outranks the technical one
-                  typographically while both stay visibly related.
-                */
-                <div className={REPORT_SPLIT}>
-                  <div className="space-y-6">
-                    <div>
-                      <p className={REPORT_SECTION_TITLE}>
-                        Planerische Kaufempfehlung
+                <div className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-sm border border-line bg-accent-soft/70 p-5">
+                      <p className={`${REPORT_SECTION_TITLE} sg-kpi-name`}>
+                        Technische Speichergrenze
                       </p>
-                      <p className="mt-2 text-4xl font-semibold tabular-nums tracking-tight text-ink">
-                        {recommendedPlanningSize} kWh
+                      <p className="sg-kpi-value mt-2 whitespace-nowrap font-mono text-4xl font-semibold tabular-nums tracking-tight text-ink">
+                        {formatQuantityDe(recommendedTechnicalSize)}
+                        {"\u00A0"}
+                        <span className="text-lg font-medium">kWh</span>
+                      </p>
+                      <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
+                        Nutzbare Kapazität heute. Alle technischen Kennzahlen
+                        beziehen sich auf diesen Wert.
                       </p>
                     </div>
-
-                    <div className="space-y-4 text-sm leading-relaxed text-ink-secondary">
-                      <p>
-                        Die physikalische Simulation ermittelt für die heutigen
-                        Bedingungen eine technische Speichergrenze von{" "}
-                        <strong className="font-semibold text-ink">
-                          {recommendedTechnicalSize} kWh nutzbarer Kapazität
-                        </strong>
-                        .
+                    <div className="rounded-sm border border-line bg-surface-muted p-5">
+                      <p className={`${REPORT_SECTION_TITLE} sg-kpi-name`}>
+                        Planerische Anfangskapazität
                       </p>
-                      <p>
-                        Für die Kaufplanung wird zusätzlich eine pauschale
-                        Alterungsreserve berücksichtigt. Dabei wird angenommen,
-                        dass nach einem Planungszeitraum von etwa 10 Jahren
-                        noch 75&nbsp;% der anfänglichen nutzbaren Kapazität
-                        verfügbar sind.
+                      <p className="sg-kpi-value mt-2 whitespace-nowrap font-mono text-4xl font-semibold tabular-nums tracking-tight text-ink">
+                        {formatQuantityDe(recommendedPlanningSize)}
+                        {"\u00A0"}
+                        <span className="text-lg font-medium">kWh</span>
                       </p>
-                      <p className="rounded-md border border-line-soft bg-surface-muted px-4 py-3 font-medium tabular-nums text-ink">
-                        Planerische Anfangskapazität = ⌈{" "}
-                        {recommendedTechnicalSize} kWh / 0,75 ⌉ ={" "}
-                        {recommendedPlanningSize} kWh
+                      <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
+                        Mit Alterungsreserve. Annahme: 75&nbsp;% nach ca. 10
+                        Jahren. Keine Herstellergarantie.
                       </p>
                     </div>
                   </div>
 
-                  <div className={`${REPORT_SPLIT_ASIDE} space-y-4`}>
-                    <div>
-                      <p className={REPORT_SECTION_TITLE}>
-                        Technische Speichergrenze heute:
-                      </p>
-                      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-ink">
-                        {recommendedTechnicalSize} kWh
-                      </p>
-                    </div>
+                  <div className="space-y-4 text-sm leading-relaxed text-ink-secondary">
+                    <p>
+                      Die physikalische Simulation ermittelt für die heutigen
+                      Bedingungen eine technische Speichergrenze von{" "}
+                      <strong className="font-semibold text-ink">
+                        {recommendedTechnicalSize} kWh nutzbarer Kapazität
+                      </strong>
+                      .
+                    </p>
+                    <p>
+                      Für die Kaufplanung wird zusätzlich eine pauschale
+                      Alterungsreserve berücksichtigt. Dabei wird angenommen,
+                      dass nach einem Planungszeitraum von etwa 10 Jahren noch
+                      75&nbsp;% der anfänglichen nutzbaren Kapazität verfügbar
+                      sind.
+                    </p>
+                    <p className="rounded-sm border border-line-soft bg-surface-muted px-4 py-3 font-mono font-medium tabular-nums text-ink">
+                      Planerische Anfangskapazität = ⌈{" "}
+                      {formatQuantityWithUnit(recommendedTechnicalSize, "kWh")} / 0,75 ⌉ ={" "}
+                      {formatQuantityWithUnit(recommendedPlanningSize, "kWh")}
+                    </p>
                     <p className="text-xs italic leading-relaxed text-ink-muted">
                       Die 75-%-Annahme ist keine Prognose für einen bestimmten
                       Batteriespeicher und keine Herstellergarantie. Sie
                       beeinflusst ausschließlich die planerische
                       Kaufempfehlung. Die technische Simulation und sämtliche
                       technischen Kennzahlen werden weiterhin mit der
-                      technischen Speichergrenze von{" "}
-                      {recommendedTechnicalSize} kWh berechnet.
+                      technischen Speichergrenze von {recommendedTechnicalSize}{" "}
+                      kWh berechnet.
                     </p>
                     {planningExceedsSimulatedRange && (
-                      <p className="rounded-md border border-warning/40 bg-warning-soft px-4 py-3 text-sm leading-relaxed text-warning">
+                      <p className="rounded-sm border border-warning/40 bg-warning-soft px-4 py-3 text-sm leading-relaxed text-warning">
                         Die planerische Anfangskapazität liegt außerhalb des
                         simulierten Speicherbereichs von 5–30 kWh.
                       </p>
@@ -377,14 +454,11 @@ export function SpeicherReportView({
                   </p>
                 </div>
               )}
-            </section>
+    </>
+  );
 
-            {/*
-              Two comparison groups instead of a four-tile strip: each group
-              reads "ohne Speicher" (left) → "mit Speicher" (right, accented,
-              with its delta), separated by a hairline.
-            */}
-            <section className={`${REPORT_SECTION} ${REPORT_TWO_TRACKS}`}>
+  const comparisonInner = (
+    <>
               <div>
                 <h3 className={`mb-3 ${REPORT_GROUP_TITLE}`}>
                   Eigenverbrauch
@@ -394,7 +468,7 @@ export function SpeicherReportView({
                     <span className={REPORT_METRIC_LABEL}>
                       Eigenverbrauch ohne Speicher (jährlich)
                     </span>
-                    <span className="shrink-0 text-right text-base font-medium tabular-nums text-ink">
+                    <span className={`${REPORT_COMPARE_VALUE} text-base font-medium text-ink`}>
                       {formatKwh(
                         verifiedResult?.energy.year
                           .selfConsumptionWithoutStorage
@@ -405,14 +479,14 @@ export function SpeicherReportView({
                     <span className={REPORT_METRIC_LABEL}>
                       Eigenverbrauch mit Speicher
                     </span>
-                    <span className="shrink-0 text-right">
-                      <span className="block text-lg font-semibold tabular-nums text-accent-text">
+                    <span className={REPORT_COMPARE_VALUE}>
+                      <span className="sg-compare-primary block font-mono text-lg font-semibold text-accent-text">
                         {formatKwh(recommendedEV)}
                       </span>
                       {deltaEigenverbrauch !== null && (
-                        <span className="mt-0.5 block text-xs font-medium tabular-nums text-success">
+                        <span className="sg-compare-delta mt-0.5 block text-xs font-medium text-success">
                           ({deltaEigenverbrauch >= 0 ? "+" : ""}
-                          {deltaEigenverbrauch} kWh)
+                          {formatQuantityWithUnit(deltaEigenverbrauch, "kWh")})
                         </span>
                       )}
                     </span>
@@ -427,41 +501,37 @@ export function SpeicherReportView({
                     <span className={REPORT_METRIC_LABEL}>
                       Autarkie ohne Speicher:
                     </span>
-                    <span className="shrink-0 text-right text-base font-medium tabular-nums text-ink">
-                      {autarkieOhnePct !== null
-                        ? `${autarkieOhnePct} %`
-                        : PLACEHOLDER}
+                    <span className={`${REPORT_COMPARE_VALUE} text-base font-medium text-ink`}>
+                      {formatPct(autarkieOhnePct)}
                     </span>
                   </div>
                   <div className={REPORT_METRIC_ROW}>
                     <span className={REPORT_METRIC_LABEL}>
                       Autarkie mit Speicher:
                     </span>
-                    <span className="shrink-0 text-right">
-                      <span className="block text-lg font-semibold tabular-nums text-accent-text">
-                        {autarkieMitPct !== null
-                          ? `${autarkieMitPct} %`
-                          : PLACEHOLDER}
+                    <span className={REPORT_COMPARE_VALUE}>
+                      <span className="sg-compare-primary block font-mono text-lg font-semibold text-accent-text">
+                        {formatPct(autarkieMitPct)}
                       </span>
                       {deltaAutarkiePctPoints !== null && (
-                        <span className="mt-0.5 block text-xs font-medium tabular-nums text-success">
+                        <span className="sg-compare-delta mt-0.5 block text-xs font-medium text-success">
                           ({deltaAutarkiePctPoints >= 0 ? "+" : ""}
-                          {deltaAutarkiePctPoints} Prozentpunkte)
+                          {formatQuantityWithUnit(
+                            deltaAutarkiePctPoints,
+                            "Prozentpunkte"
+                          )}
+                          )
                         </span>
                       )}
                     </span>
                   </div>
                 </div>
               </div>
-            </section>
+    </>
+  );
 
-            {speicherGrenz && (
-              <>
-                <section className={REPORT_SECTION}>
-                    <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
-                      Ihre Eingabedaten
-                    </h2>
-
+  const foundationInner = speicherGrenz ? (
+    <>
                     {/*
                       Stammdaten as a datasheet grid: label above value, so a
                       short dataset reads across the report width instead of
@@ -528,7 +598,7 @@ export function SpeicherReportView({
                             Notstromreserve:
                           </dt>
                           <dd className={REPORT_DATA_VALUE}>
-                            {resolvedBackupReserveKwh} kWh
+                            {formatQuantityWithUnit(resolvedBackupReserveKwh, "kWh")}
                           </dd>
                         </div>
                       )}
@@ -540,7 +610,12 @@ export function SpeicherReportView({
                             : "Hausverbrauch (ohne Wärmepumpe):"}
                         </dt>
                         <dd className={REPORT_DATA_VALUE}>
-                          {input.annualConsumptionKwh} kWh/Jahr
+                          {typeof input.annualConsumptionKwh === "number"
+                            ? formatQuantityWithUnit(
+                                input.annualConsumptionKwh,
+                                "kWh/Jahr"
+                              )
+                            : PLACEHOLDER}
                         </dd>
                       </div>
 
@@ -551,7 +626,12 @@ export function SpeicherReportView({
                               {EV_REPORT_COPY.heatPumpLoad}:
                             </dt>
                             <dd className={REPORT_DATA_VALUE}>
-                              {input.heatPumpConsumptionKwh} kWh/Jahr
+                              {typeof input.heatPumpConsumptionKwh === "number"
+                                ? formatQuantityWithUnit(
+                                    input.heatPumpConsumptionKwh,
+                                    "kWh/Jahr"
+                                  )
+                                : PLACEHOLDER}
                             </dd>
                           </div>
                           {(input.heatPumpTechnology === "luftwasser" ||
@@ -611,17 +691,23 @@ export function SpeicherReportView({
                               "number" &&
                             Number.isFinite(speicherGrenz.averageLoadKwhAnnual)
                               ? `${formatEvKwh(speicherGrenz.averageLoadKwhAnnual)}/Jahr`
-                              : `${
+                              : formatQuantityWithUnit(
                                   (input.annualConsumptionKwh ?? 0) +
-                                  (input.heatPumpEnabled === true
-                                    ? input.heatPumpConsumptionKwh ?? 0
-                                    : 0)
-                                } kWh/Jahr`}
+                                    (input.heatPumpEnabled === true
+                                      ? input.heatPumpConsumptionKwh ?? 0
+                                      : 0),
+                                  "kWh/Jahr"
+                                )}
                           </div>
                           {input.heatPumpEnabled === true && ev == null && (
                             <div className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-1`}>
-                              davon Wärmepumpe: {input.heatPumpConsumptionKwh}{" "}
-                              kWh
+                              davon Wärmepumpe:{" "}
+                              {typeof input.heatPumpConsumptionKwh === "number"
+                                ? formatQuantityWithUnit(
+                                    input.heatPumpConsumptionKwh,
+                                    "kWh"
+                                  )
+                                : PLACEHOLDER}
                             </div>
                           )}
                         </dd>
@@ -629,13 +715,10 @@ export function SpeicherReportView({
                     </dl>
 
                     {ev != null && <EvResultSection ev={ev} />}
-                </section>
+    </>
+  ) : null;
 
-                <section className={REPORT_SECTION}>
-                    <div className="mb-6">
-                      <h2 className={REPORT_SECTION_HEADING}>
-                        Technische Kennzahlen
-                      </h2>
+  const kennzahlenHelper = (
                       <p className="mt-2 max-w-reading text-xs leading-relaxed text-ink-muted">
                         Alle technischen Kennzahlen beziehen sich auf die
                         technische Speichergrenze von{" "}
@@ -644,8 +727,10 @@ export function SpeicherReportView({
                         </strong>{" "}
                         und nicht auf die planerische Kaufempfehlung.
                       </p>
-                    </div>
+  );
 
+  const balanceRest = (
+    <>
                     {/*
                       Two metric tracks: energy flow on the left, system, grid
                       and autarky on the right. The nested battery-loss balance
@@ -660,7 +745,7 @@ export function SpeicherReportView({
                         <dd className={REPORT_METRIC_VALUE}>
                           {typeof pvYieldKwhAnnual === "number" &&
                           Number.isFinite(pvYieldKwhAnnual)
-                            ? `${pvYieldKwhAnnual.toFixed(0)} kWh/Jahr`
+                            ? formatKwhPerYear(pvYieldKwhAnnual, 0)
                             : PLACEHOLDER}
                         </dd>
                       </div>
@@ -671,7 +756,11 @@ export function SpeicherReportView({
                         </dt>
                         <dd className={REPORT_METRIC_VALUE}>
                           {specificYieldKwhPerKwp !== null
-                            ? `${specificYieldKwhPerKwp.toFixed(1)} kWh/kWp`
+                            ? formatQuantityWithUnit(
+                                specificYieldKwhPerKwp,
+                                "kWh/kWp",
+                                1
+                              )
                             : PLACEHOLDER}
                         </dd>
                       </div>
@@ -710,7 +799,7 @@ export function SpeicherReportView({
                         <dd className={REPORT_METRIC_VALUE}>
                           {typeof batteryGeladenAvgKwh === "number" &&
                           Number.isFinite(batteryGeladenAvgKwh)
-                            ? `${Math.round(batteryGeladenAvgKwh)} kWh/Jahr`
+                            ? formatRoundedKwhPerYear(batteryGeladenAvgKwh)
                             : PLACEHOLDER}
                         </dd>
                       </div>
@@ -730,7 +819,7 @@ export function SpeicherReportView({
                         <dd className={REPORT_METRIC_VALUE}>
                           {typeof batteryAnVerbrauchAvgKwh === "number" &&
                           Number.isFinite(batteryAnVerbrauchAvgKwh)
-                            ? `${Math.round(batteryAnVerbrauchAvgKwh)} kWh/Jahr`
+                            ? formatRoundedKwhPerYear(batteryAnVerbrauchAvgKwh)
                             : PLACEHOLDER}
                         </dd>
                       </div>
@@ -755,7 +844,7 @@ export function SpeicherReportView({
                           {typeof avgAuxiliaryConsumptionDisplayKwh ===
                             "number" &&
                           Number.isFinite(avgAuxiliaryConsumptionDisplayKwh)
-                            ? `${Math.round(avgAuxiliaryConsumptionDisplayKwh)} kWh/Jahr`
+                            ? formatRoundedKwhPerYear(avgAuxiliaryConsumptionDisplayKwh)
                             : PLACEHOLDER}
                         </dd>
                       </div>
@@ -776,7 +865,7 @@ export function SpeicherReportView({
                         <dd className={REPORT_METRIC_VALUE}>
                           {typeof netzbezugMitSpeicherKwhYear === "number" &&
                           Number.isFinite(netzbezugMitSpeicherKwhYear)
-                            ? `${netzbezugMitSpeicherKwhYear.toFixed(0)} kWh/Jahr`
+                            ? formatKwhPerYear(netzbezugMitSpeicherKwhYear, 0)
                             : PLACEHOLDER}
                         </dd>
                       </div>
@@ -796,7 +885,7 @@ export function SpeicherReportView({
                         <dd className={REPORT_METRIC_VALUE}>
                           {typeof einspeisungRechnerischKwhYear === "number" &&
                           Number.isFinite(einspeisungRechnerischKwhYear)
-                            ? `${einspeisungRechnerischKwhYear.toFixed(0)} kWh/Jahr`
+                            ? formatKwhPerYear(einspeisungRechnerischKwhYear, 0)
                             : PLACEHOLDER}
                         </dd>
                       </div>
@@ -806,9 +895,7 @@ export function SpeicherReportView({
                           Autarkiegrad mit Speicher
                         </dt>
                         <dd className={REPORT_METRIC_VALUE_ACCENT}>
-                          {autarkieMitPct !== null
-                            ? `${autarkieMitPct} %`
-                            : PLACEHOLDER}
+                          {formatPct(autarkieMitPct)}
                         </dd>
                       </div>
 
@@ -817,9 +904,7 @@ export function SpeicherReportView({
                           Eigenverbrauchsquote
                         </dt>
                         <dd className={REPORT_METRIC_VALUE}>
-                          {eigenverbrauchsquoteMitSpeicherPct !== null
-                            ? `${eigenverbrauchsquoteMitSpeicherPct} %`
-                            : PLACEHOLDER}
+                          {formatPct(eigenverbrauchsquoteMitSpeicherPct)}
                         </dd>
                       </div>
                     </dl>
@@ -847,10 +932,8 @@ export function SpeicherReportView({
                               Gesamtwert um 1&nbsp;kWh abweichen.
                             </span>
                           </div>
-                          <div className="shrink-0 text-right text-lg font-semibold tabular-nums text-ink">
-                            {batterieverlusteModellGesamtKwh !== null
-                              ? `${batterieverlusteModellGesamtKwh} kWh/Jahr`
-                              : PLACEHOLDER}
+                          <div className="sg-loss-total shrink-0 text-right font-mono text-lg font-semibold tabular-nums text-ink">
+                            {formatRoundedKwhPerYear(batterieverlusteModellGesamtKwh)}
                           </div>
                         </div>
 
@@ -860,12 +943,11 @@ export function SpeicherReportView({
                               PV → Speicher
                             </dt>
                             <dd className={REPORT_DATA_VALUE}>
-                              {Math.round(
+                              {formatRoundedKwhPerYear(
                                 speicherGrenz.averageChargeLossPvToBatteryKwh[
                                   physicalKpiLookupSize
                                 ] ?? 0
-                              )}{" "}
-                              kWh/Jahr
+                              )}
                             </dd>
                           </div>
                           <div>
@@ -873,12 +955,11 @@ export function SpeicherReportView({
                               Zellverluste beim Laden
                             </dt>
                             <dd className={REPORT_DATA_VALUE}>
-                              {Math.round(
+                              {formatRoundedKwhPerYear(
                                 speicherGrenz.averageChargeLossChemicalKwh[
                                   physicalKpiLookupSize
                                 ] ?? 0
-                              )}{" "}
-                              kWh/Jahr
+                              )}
                             </dd>
                           </div>
                           <div>
@@ -886,12 +967,11 @@ export function SpeicherReportView({
                               Zellverluste beim Entladen
                             </dt>
                             <dd className={REPORT_DATA_VALUE}>
-                              {Math.round(
+                              {formatRoundedKwhPerYear(
                                 speicherGrenz.averageDischargeLossChemicalKwh[
                                   physicalKpiLookupSize
                                 ] ?? 0
-                              )}{" "}
-                              kWh/Jahr
+                              )}
                             </dd>
                           </div>
                           <div>
@@ -899,13 +979,12 @@ export function SpeicherReportView({
                               Speicher → AC-Bus
                             </dt>
                             <dd className={REPORT_DATA_VALUE}>
-                              {Math.round(
+                              {formatRoundedKwhPerYear(
                                 speicherGrenz
                                   .averageDischargeLossBatteryToAcKwh[
                                   physicalKpiLookupSize
                                 ] ?? 0
-                              )}{" "}
-                              kWh/Jahr
+                              )}
                             </dd>
                           </div>
                           <div>
@@ -916,7 +995,9 @@ export function SpeicherReportView({
                               {typeof avgSelfDischargeLossDisplayKwh ===
                                 "number" &&
                               Number.isFinite(avgSelfDischargeLossDisplayKwh)
-                                ? `${Math.round(avgSelfDischargeLossDisplayKwh)} kWh/Jahr`
+                                ? formatRoundedKwhPerYear(
+                                    avgSelfDischargeLossDisplayKwh
+                                  )
                                 : PLACEHOLDER}
                             </dd>
                           </div>
@@ -942,13 +1023,11 @@ export function SpeicherReportView({
                         </div>
                       </div>
                     )}
-                </section>
+    </>
+  );
 
-                <section className={REPORT_SECTION}>
-                  <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
-                    Eigenverbrauch vs Speichergröße
-                  </h2>
-
+  const chartInner = (
+    <>
                   <SpeicherChart
                     data={chart.data}
                     recommendedTechnicalSize={recommendedTechnicalSize}
@@ -959,11 +1038,10 @@ export function SpeicherReportView({
                     Speichergröße deutlich ab. Ab einem bestimmten Punkt bringt
                     mehr Speicher nur noch geringen Mehrwert.
                   </div>
-                </section>
-              </>
-            )}
+    </>
+  );
 
-            {robustness ? (
+  const robustnessBlock = robustness ? (
               <WpuqRobustnessSection
                 robustness={robustness}
                 wasserWasserRobustness={wasserWasserRobustness}
@@ -973,17 +1051,10 @@ export function SpeicherReportView({
                   autarkiePct: autarkieMitPct,
                 }}
               />
-            ) : null}
+            ) : null;
 
-            {/*
-              Written conclusion: prose argument on the left, compact key figures
-              on the right (same split pattern as the recommendation section).
-              Methodological notes and Hinweis stay full-width below.
-            */}
-            <section className={REPORT_SECTION}>
-              <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
-                Unsere Einschätzung
-              </h2>
+  const assessmentBody = (
+    <>
               {recommendedTechnicalSize > 0 ? (
                 <>
                   <div className={REPORT_SPLIT}>
@@ -1017,7 +1088,7 @@ export function SpeicherReportView({
                         {hasActiveBackupReserve && (
                           <p className={REPORT_CONCLUSION_CONTEXT}>
                             Die Berechnung berücksichtigt eine Notstromreserve von{" "}
-                            {resolvedBackupReserveKwh} kWh.
+                            {formatQuantityWithUnit(resolvedBackupReserveKwh, "kWh")}.
                           </p>
                         )}
                       </div>
@@ -1074,7 +1145,7 @@ export function SpeicherReportView({
                         <dd
                           className={`${REPORT_DATA_VALUE} font-semibold text-accent-text`}
                         >
-                          {recommendedPlanningSize} kWh
+                          {formatQuantityWithUnit(recommendedPlanningSize, "kWh")}
                         </dd>
                       </div>
                       <div className={REPORT_DATA_ITEM}>
@@ -1082,20 +1153,20 @@ export function SpeicherReportView({
                           Technische Speichergrenze
                         </dt>
                         <dd className={REPORT_DATA_VALUE}>
-                          {recommendedTechnicalSize} kWh
+                          {formatQuantityWithUnit(recommendedTechnicalSize, "kWh")}
                         </dd>
                       </div>
                       <div className={REPORT_DATA_ITEM}>
                         <dt className={REPORT_DATA_LABEL}>Plateau ab</dt>
                         <dd className={REPORT_DATA_VALUE}>
-                          {recommendedTechnicalSize} kWh
+                          {formatQuantityWithUnit(recommendedTechnicalSize, "kWh")}
                         </dd>
                       </div>
                       {hasActiveBackupReserve && (
                         <div className={REPORT_DATA_ITEM}>
                           <dt className={REPORT_DATA_LABEL}>Notstromreserve</dt>
                           <dd className={REPORT_DATA_VALUE}>
-                            {resolvedBackupReserveKwh} kWh
+                            {formatQuantityWithUnit(resolvedBackupReserveKwh, "kWh")}
                           </dd>
                         </div>
                       )}
@@ -1115,7 +1186,7 @@ export function SpeicherReportView({
                     </p>
                     <p className={REPORT_NOTE}>
                       Die Berechnung basiert auf einer Simulation in
-                      15-Minuten-Schritten (35.040 Zeitschritte pro Jahr). Die
+                      15-Minuten-Schritten ({formatQuantityDe(35040)} Zeitschritte pro Jahr). Die
                       75-%-Planungsannahme
                       beeinflusst die Simulation nicht, sondern ausschließlich
                       die planerische Kaufempfehlung.
@@ -1141,8 +1212,10 @@ export function SpeicherReportView({
                   Bedingungen kaum erhöht.
                 </p>
               )}
-            </section>
+    </>
+  );
 
+  const quellen = (
             <ReportQuellenSection
               heatPump={heatPumpCitation}
               ev={
@@ -1153,7 +1226,31 @@ export function SpeicherReportView({
                   : null
               }
             />
+  );
 
+  const workspaceQuellen = (
+    <WorkspaceChapter
+      id={RESULT_SECTION_IDS.sources}
+      eyebrow="Quellen"
+      title="Quellen & wissenschaftliche Grundlagen"
+    >
+      <ReportQuellenSection
+        hideHeading
+        framed={false}
+        heatPump={heatPumpCitation}
+        ev={
+          ev
+            ? {
+                methodologySourceIds: ev.methodologySourceIds,
+              }
+            : null
+        }
+      />
+    </WorkspaceChapter>
+  );
+
+  const disclaimer = (
+    <>
             {/* Disclaimer — closing footnote of the report, not a section */}
             <div className="mt-8 border-t border-line-soft pt-6 lg:mt-10">
               <p className="max-w-reading text-xs leading-relaxed text-ink-muted">
@@ -1194,8 +1291,152 @@ export function SpeicherReportView({
                 </div>
               ) : null}
             </div>
-          </div>
+    </>
+  );
 
+  const showAnlage = isWorkspace && anlageScene != null;
+
+  const anlagePanel = showAnlage ? (
+    <div
+      id="anlage-eingaben"
+      className={anlageOpen ? "sg-anlage" : "sg-anlage sg-anlage-collapsed"}
+    >
+      <p className="mb-3 text-xs leading-relaxed text-ink-muted">
+        Schematische Darstellung der gewählten Komponenten – nicht die Geometrie
+        Ihres Gebäudes.
+      </p>
+      {anlageScene}
+      {foundationInner ? (
+        <section className="sg-anlage-basis mt-5 border-t border-line pt-6">
+          <p className={WORKSPACE_CHAPTER_EYEBROW}>Grundlage</p>
+          <h2 className={`mt-1.5 ${WORKSPACE_CHAPTER_TITLE}`}>
+            Grundlage der Berechnung
+          </h2>
+          <div className="mt-6">{foundationInner}</div>
+        </section>
+      ) : null}
+    </div>
+  ) : null;
+
+  const chapters = isWorkspace ? (
+    <>
+      {anlagePanel}
+      <WorkspaceChapter
+        id={RESULT_SECTION_IDS.overview}
+        eyebrow="Überblick"
+        title="Berechnung nach BDEW H25"
+        first
+      >
+        {recommendationBody}
+        <div className={`mt-8 ${REPORT_TWO_TRACKS}`}>{comparisonInner}</div>
+        <div className={REPORT_SECTION}>
+          <h2 className={WORKSPACE_CHAPTER_TITLE}>Unsere Einschätzung</h2>
+          <div className="mt-6">{assessmentBody}</div>
+        </div>
+      </WorkspaceChapter>
+      {speicherGrenz ? (
+        <WorkspaceChapter
+          id={RESULT_SECTION_IDS.storageSize}
+          eyebrow="Speichergröße"
+          title="Eigenverbrauch vs Speichergröße"
+        >
+          {chartInner}
+        </WorkspaceChapter>
+      ) : (
+        <section
+          id={RESULT_SECTION_IDS.storageSize}
+          className="sg-result-anchor"
+        />
+      )}
+      <WorkspaceChapter id={RESULT_SECTION_IDS.profiles} eyebrow="Profile">
+        {robustnessBlock}
+      </WorkspaceChapter>
+      {speicherGrenz ? (
+        <WorkspaceChapter
+          id={RESULT_SECTION_IDS.balance}
+          eyebrow="Bilanz"
+          title="Technische Kennzahlen"
+        >
+          <div className="mb-6">{kennzahlenHelper}</div>
+          {balanceRest}
+        </WorkspaceChapter>
+      ) : (
+        <section
+          id={RESULT_SECTION_IDS.balance}
+          className="sg-result-anchor"
+        />
+      )}
+      {showAnlage ? null : speicherGrenz ? (
+        <WorkspaceChapter
+          id={RESULT_SECTION_IDS.foundation}
+          eyebrow="Grundlage"
+          title="Grundlage der Berechnung"
+        >
+          {foundationInner}
+        </WorkspaceChapter>
+      ) : (
+        <section
+          id={RESULT_SECTION_IDS.foundation}
+          className="sg-result-anchor"
+        />
+      )}
+      {workspaceQuellen}
+      {disclaimer}
+    </>
+  ) : (
+    <>
+      {masthead}
+      <section className={REPORT_SECTION}>
+        <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
+          02 / Ergebnis · Berechnung nach BDEW H25
+        </h2>
+        {recommendationBody}
+      </section>
+      <section className={`${REPORT_SECTION} ${REPORT_TWO_TRACKS}`}>
+        {comparisonInner}
+      </section>
+      {speicherGrenz ? (
+        <>
+          <section className={REPORT_SECTION}>
+            <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
+              03 / Ihre Eingabedaten
+            </h2>
+            {foundationInner}
+          </section>
+          <section className={REPORT_SECTION}>
+            <div className="mb-6">
+              <h2 className={REPORT_SECTION_HEADING}>
+                04 / Technische Kennzahlen
+              </h2>
+              {kennzahlenHelper}
+            </div>
+            {balanceRest}
+          </section>
+          <section className={REPORT_SECTION}>
+            <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
+              05 / Eigenverbrauch vs Speichergröße
+            </h2>
+            {chartInner}
+          </section>
+        </>
+      ) : null}
+      {robustnessBlock}
+      <section className={REPORT_SECTION}>
+        <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
+          06 / Unsere Einschätzung
+        </h2>
+        {assessmentBody}
+      </section>
+      {quellen}
+      {disclaimer}
+    </>
+  );
+
+  return (
+        <div className={variant === "workspace" ? "min-w-0 w-full" : "mx-auto min-w-0 w-full max-w-frame px-4 sm:px-6 lg:px-8"}>
+          <div className={variant === "workspace" ? REPORT_SHEET_WORKSPACE : REPORT_SHEET}>
+            {chapters}
+          </div>
           {mode === "historical" ? (
             <div className="mx-auto mt-8 flex min-w-0 w-full max-w-sheet flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
               <Link href="/calculate" className={BTN_PRIMARY}>

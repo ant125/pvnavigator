@@ -3,6 +3,10 @@
 # dependencies
 /node_modules
 **/node_modules/
+
+# Local design handoff (preview ZIP / designer drop, not app source)
+apps/speicher-physik/design-handoff/
+/system-scene-chatgpt-handoff.zip
 /.pnp
 .pnp.*
 .yarn/*

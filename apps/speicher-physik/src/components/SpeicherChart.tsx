@@ -1,5 +1,6 @@
 "use client";
 
+import { formatQuantityDe, formatQuantityWithUnit } from "@/lib/formatQuantityDe";
 import {
   LineChart,
   Line,
@@ -137,7 +138,7 @@ export default function SpeicherChart({
         <ResponsiveContainer>
           <LineChart
             data={visibleData}
-            margin={{ top: 20, right: 24, left: 0, bottom: 12 }}
+            margin={{ top: 20, right: 24, left: 8, bottom: 12 }}
           >
             <CartesianGrid vertical={false} stroke={CHART.grid} />
 
@@ -147,6 +148,7 @@ export default function SpeicherChart({
               tick={{ fill: CHART.axis, fontSize: 12 }}
               tickMargin={6}
               padding={{ left: 8, right: 8 }}
+              tickFormatter={(value: number) => formatQuantityDe(Number(value), 0)}
             />
 
             <YAxis
@@ -155,6 +157,7 @@ export default function SpeicherChart({
               stroke={CHART.axis}
               tick={{ fill: CHART.axis, fontSize: 12 }}
               tickMargin={8}
+              tickFormatter={(value: number) => formatQuantityDe(Number(value), 0)}
             />
 
             {recommendedTechnicalSize > 0 && (
@@ -183,7 +186,10 @@ export default function SpeicherChart({
                 return (
                   <div className="rounded-md border border-tooltip-border bg-tooltip-bg px-3 py-2 text-sm text-tooltip-ink shadow-sm">
                     <div>Speichergröße: {label} kWh</div>
-                    <div>Eigenverbrauch: {Math.round(Number(ev))} kWh</div>
+                    <div>
+                      Eigenverbrauch:{" "}
+                      {formatQuantityWithUnit(Math.round(Number(ev)), "kWh")}
+                    </div>
                   </div>
                 );
               }}
