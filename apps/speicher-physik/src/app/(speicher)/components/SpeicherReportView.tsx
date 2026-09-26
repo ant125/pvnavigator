@@ -66,6 +66,13 @@ const REPORT_SECTION_HEADING =
 const WORKSPACE_CHAPTER_RULE =
   "mt-[1.875rem] min-w-0 max-w-full border-t border-line pt-[1.875rem]";
 
+/**
+ * Same rhythm as WORKSPACE_CHAPTER_RULE, for the Anlage panel that precedes the
+ * first chapter. The chapter after it renders as `first` and carries no top
+ * spacing, so this gap never doubles; collapsing the panel removes it too.
+ */
+const WORKSPACE_CHAPTER_GAP = "mb-[1.875rem]";
+
 const WORKSPACE_CHAPTER_EYEBROW =
   "font-mono text-[11px] font-bold uppercase leading-none tracking-[0.2em] text-accent-text";
 
@@ -1299,7 +1306,9 @@ export function SpeicherReportView({
   const anlagePanel = showAnlage ? (
     <div
       id="anlage-eingaben"
-      className={anlageOpen ? "sg-anlage" : "sg-anlage sg-anlage-collapsed"}
+      className={`${WORKSPACE_CHAPTER_GAP} ${
+        anlageOpen ? "sg-anlage" : "sg-anlage sg-anlage-collapsed"
+      }`}
     >
       <p className="mb-3 text-xs leading-relaxed text-ink-muted">
         Schematische Darstellung der gewählten Komponenten – nicht die Geometrie
