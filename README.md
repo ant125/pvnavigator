@@ -5,6 +5,7 @@ Monorepo für PV-Analyse und Speicher-Berechnungen.
 ## Architecture
 
 - Canonical structure: docs/ARCHITECTURE.md
+- Vercel-Einstellungen pro App: [docs/deploy.md](docs/deploy.md)
 
 ## Struktur
 
