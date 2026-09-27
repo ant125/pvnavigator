@@ -36,14 +36,22 @@ function BrandMark() {
   );
 }
 
-function HeaderWordmark() {
+function HeaderWordmark({ tight = false }: { tight?: boolean }) {
   return (
-    <span className="flex min-w-0 items-baseline whitespace-nowrap font-mono text-[11px] font-semibold leading-[1.1] tracking-[0.16em] text-ink sm:text-xs">
+    <span
+      className={`flex min-w-0 items-baseline whitespace-nowrap font-mono font-semibold leading-[1.1] text-ink sm:text-xs sm:tracking-[0.16em] ${
+        tight
+          ? "text-[9px] tracking-normal sm:text-xs"
+          : "text-[11px] tracking-[0.06em]"
+      }`}
+    >
       <a href="https://pvnavigator.de" className={brandWordmarkLink}>
         PVNAVIGATOR_
       </a>
       <span
-        className="mx-[0.3125rem] font-normal tracking-normal text-ink-muted"
+        className={`font-normal tracking-normal text-ink-muted sm:mx-[0.3125rem] ${
+          tight ? "mx-px" : "mx-0.5"
+        }`}
         aria-hidden
       >
         /
@@ -112,9 +120,11 @@ function ShellFrame({
     pathname === "/methodik" ||
     (pathname.startsWith("/methodik/") && pathname !== "/methodik/referenz");
 
+  const tightWordmark = isCalculateRoute && !authenticated;
+
   const headerNav = (
     <>
-      <HeaderWordmark />
+      <HeaderWordmark tight={tightWordmark} />
 
       <div
         className={
@@ -219,14 +229,21 @@ function ShellFrame({
       <header
         className={
           isCalculateRoute
-            ? "sticky top-0 z-50 min-h-sg-calculate-header border-b border-line bg-canvas"
+            ? "sticky top-0 z-50 flex min-h-sg-calculate-header flex-col border-b border-line bg-canvas"
             : "sticky top-0 z-50 bg-canvas"
         }
       >
         <div
           className={
+            /*
+              The row stretches over the full header height and centres its
+              content, so the optional "Neue Berechnung" button of the result
+              state cannot move the wordmark or the account link.
+            */
             isCalculateRoute
-              ? "flex min-w-0 items-center justify-between gap-3 px-layout-gap py-2"
+              ? `flex min-w-0 flex-1 items-center justify-between px-layout-gap py-2 sm:gap-3 ${
+                  tightWordmark ? "gap-1" : "gap-2"
+                }`
               : "mx-auto w-full min-w-0 max-w-frame px-4 sm:px-6 lg:px-8"
           }
         >

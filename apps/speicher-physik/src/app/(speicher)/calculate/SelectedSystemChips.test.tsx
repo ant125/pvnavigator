@@ -50,6 +50,27 @@ describe("buildSelectedSystemChips", () => {
     );
   });
 
+  it("formats PV power in German and keeps whole numbers plain", () => {
+    expect(
+      buildSelectedSystemChips({
+        pvSurfaces: [{ systemSizeKwP: 9.5, tiltDeg: 30, azimuthDeg: 180 }],
+      }).map((chip) => chip.label)
+    ).toEqual(["PV · 9,5 kWp"]);
+    expect(
+      buildSelectedSystemChips({
+        pvSurfaces: [{ systemSizeKwP: 21, tiltDeg: 30, azimuthDeg: 180 }],
+      }).map((chip) => chip.label)
+    ).toEqual(["PV · 21 kWp"]);
+    expect(
+      buildSelectedSystemChips({
+        pvSurfaces: [
+          { systemSizeKwP: 6.25, tiltDeg: 30, azimuthDeg: 180 },
+          { systemSizeKwP: 4.25, tiltDeg: 15, azimuthDeg: 90 },
+        ],
+      }).map((chip) => chip.label)
+    ).toEqual(["PV · 10,5 kWp · 2 Flächen"]);
+  });
+
   it("omits the heat pump chip until a technology is chosen", () => {
     expect(
       buildSelectedSystemChips({
@@ -94,7 +115,7 @@ describe("SelectedSystemChips", () => {
     expect(html).toContain("PV · 10 kWp");
     expect(html).toContain("Wärmepumpe · Wasser/Wasser");
     expect(html).toContain("Elektroauto");
-    expect(html).toContain("Notstrom · 1.5 kWh");
+    expect(html).toContain("Notstrom · 1,5 kWh");
     expect(html).not.toContain("<button");
     expect(html).not.toContain("cursor-pointer");
     expect(html).not.toContain("href=");

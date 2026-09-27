@@ -12,14 +12,8 @@ const FULL_FORM = {
 };
 
 describe("RunSystemPreview", () => {
-  it("shows chips and a collapsed scene toggle without the input sticky frame", () => {
-    const html = renderToStaticMarkup(
-      <RunSystemPreview
-        formData={FULL_FORM}
-        sceneOpen={false}
-        onToggleScene={() => {}}
-      />
-    );
+  it("summarises the selected components under the column header", () => {
+    const html = renderToStaticMarkup(<RunSystemPreview formData={FULL_FORM} />);
 
     expect(html).toContain("02");
     expect(html).toContain("Ihre Systemkonfiguration");
@@ -27,70 +21,37 @@ describe("RunSystemPreview", () => {
     expect(html).toContain("bg-accent");
     expect(html).toContain("rounded-none border border-line");
     expect(html).toContain("PV · 10 kWp");
-    expect(html).toContain("Szene anzeigen");
-    expect(html).toContain('aria-expanded="false"');
+    expect(html).toContain("Wärmepumpe · Luft/Wasser");
+    expect(html).toContain("Elektroauto");
+    expect(html).toContain("Notstrom · 2 kWh");
+    expect(html).not.toContain("sg-preview-pin");
+  });
+
+  it("drops the scene, its toggle and the scene note while the calculation runs", () => {
+    const html = renderToStaticMarkup(<RunSystemPreview formData={FULL_FORM} />);
+
+    expect(html).not.toContain("Szene anzeigen");
     expect(html).not.toContain("Szene ausblenden");
-    expect(html).not.toContain("sg-preview-pin");
-    expect(html).not.toContain("sg-preview-scene");
+    expect(html).not.toContain("aria-expanded");
     expect(html).not.toContain("sg-scene-frame");
-    expect(html).not.toContain("Vorschau der ausgewählten Komponenten");
-    expect(html).not.toContain("Ausrichtung / Neigung");
+    expect(html).not.toContain("/system-scene/");
+    expect(html).not.toContain("Schematische Darstellung");
+    expect(html).not.toContain("hidden=");
   });
 
-  it("renders the house without calculation highlight when expanded", () => {
-    const html = renderToStaticMarkup(
-      <RunSystemPreview
-        formData={FULL_FORM}
-        sceneOpen
-        onToggleScene={() => {}}
-      />
-    );
-
-    expect(html).toContain("Szene ausblenden");
-    expect(html).toContain('aria-expanded="true"');
-    expect(html).toContain("sg-scene-frame");
-    expect(html).toContain("/system-scene/base-house-no-label.png");
-    expect(html).not.toContain("sg-scene-active");
-    expect(html).not.toContain("sg-preview-pin");
-  });
-
-  it("keeps the expanded scene without a heat pump until a type is chosen", () => {
+  it("omits components that are not part of the input", () => {
     const html = renderToStaticMarkup(
       <RunSystemPreview
         formData={{
           pvSurfaces: [{ systemSizeKwP: 10, tiltDeg: 30, azimuthDeg: 180 }],
           heatPumpEnabled: true,
         }}
-        sceneOpen
-        onToggleScene={() => {}}
       />
     );
 
-    expect(html).toContain("sg-scene-frame");
     expect(html).toContain("PV · 10 kWp");
-    expect(html).toContain('data-heat-pump="true"');
-    expect(html).toContain('data-heat-pump-kind="generic"');
     expect(html).not.toContain("Wärmepumpe");
-    expect(html).not.toContain("sg-scene-hp");
-    expect(html).not.toContain("/system-scene/heat-pump-neutral.png");
-    expect(html).not.toContain("/system-scene/heat-pump-luftwasser.png");
-    expect(html).not.toContain("/system-scene/wasser-wassser.png");
-  });
-
-  it("can render a compact summary without the column header", () => {
-    const html = renderToStaticMarkup(
-      <RunSystemPreview
-        formData={FULL_FORM}
-        sceneOpen={false}
-        onToggleScene={() => {}}
-        showColumnHeader={false}
-      />
-    );
-
-    expect(html).toContain("PV · 10 kWp");
-    expect(html).toContain("Szene anzeigen");
-    expect(html).not.toContain("Ihre Systemkonfiguration");
-    expect(html).not.toContain(">02<");
-    expect(html).not.toContain("bg-accent");
+    expect(html).not.toContain("Elektroauto");
+    expect(html).not.toContain("Notstrom");
   });
 });

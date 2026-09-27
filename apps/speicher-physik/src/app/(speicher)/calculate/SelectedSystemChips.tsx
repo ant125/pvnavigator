@@ -1,9 +1,16 @@
+import { formatQuantityDe } from "@/lib/formatQuantityDe";
+
 import type { SpeicherInput } from "../types/speicher";
 import {
   formatKwpDisplay,
   surfacesOrDefault,
   sumSurfaceKwP,
 } from "./calculateFormModel";
+
+/** Chip labels only. Rounds like formatKwpDisplay, then uses the German formatter. */
+function formatChipKwp(value: number): string {
+  return formatQuantityDe(Number(formatKwpDisplay(value)));
+}
 
 const HEAT_PUMP_TECHNOLOGY_LABELS = {
   luftwasser: "Luft/Wasser",
@@ -25,8 +32,8 @@ export function buildSelectedSystemChips(
   if (Number.isFinite(totalKwP) && totalKwP > 0) {
     const pvLabel =
       surfaces.length > 1
-        ? `PV · ${formatKwpDisplay(totalKwP)} kWp · ${surfaces.length} Flächen`
-        : `PV · ${formatKwpDisplay(totalKwP)} kWp`;
+        ? `PV · ${formatChipKwp(totalKwP)} kWp · ${surfaces.length} Flächen`
+        : `PV · ${formatChipKwp(totalKwP)} kWp`;
     chips.push({ key: "pv", label: pvLabel });
   }
 
@@ -47,7 +54,7 @@ export function buildSelectedSystemChips(
   if ((formData.backupReserveKwh ?? 0) > 0) {
     chips.push({
       key: "backup",
-      label: `Notstrom · ${formData.backupReserveKwh} kWh`,
+      label: `Notstrom · ${formatQuantityDe(formData.backupReserveKwh ?? 0)} kWh`,
     });
   }
 

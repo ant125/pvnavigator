@@ -84,6 +84,9 @@ describe("SpeicherShell overflow chain", () => {
     expect(headerHtml).toContain("Mein Konto");
     expect(headerHtml).toContain("border-b border-line");
     expect(headerHtml).toContain("min-h-sg-calculate-header");
+    expect(headerHtml).toContain("tracking-[0.06em]");
+    expect(headerHtml).toContain("sm:tracking-[0.16em]");
+    expect(headerHtml).toContain("sm:gap-3");
     expect(headerHtml).toContain("bg-canvas");
     expect(headerHtml).not.toContain("border-line-strong");
     expect(headerHtml).not.toContain("border-b border-line bg-surface");
@@ -124,6 +127,28 @@ describe("SpeicherShell overflow chain", () => {
     expect(footerHtml).not.toContain("Methodik");
     expect(footerHtml).not.toContain("href=\"/methodik\"");
     expect(footerHtml).not.toContain("Referenz");
+  });
+
+  it("keeps the signed-out calculate wordmark on one line beside both account links", () => {
+    usePathname.mockReturnValue("/calculate");
+    const html = renderToStaticMarkup(
+      <SpeicherShell {...shellProps} authenticated={false} userEmail={null}>
+        <div>report</div>
+      </SpeicherShell>,
+    );
+    const headerHtml = html.slice(
+      html.indexOf("<header"),
+      html.indexOf("</header>"),
+    );
+
+    expect(headerHtml).toContain("Anmelden");
+    expect(headerHtml).toContain("Konto erstellen");
+    expect(headerHtml).toContain("text-[9px]");
+    expect(headerHtml).toContain("tracking-normal");
+    expect(headerHtml).toContain("text-xs");
+    expect(headerHtml).toContain("min-h-11");
+    expect(headerHtml).toContain("min-h-sg-calculate-header");
+    expect(headerHtml).not.toContain("flex-wrap");
   });
 
   it("keeps email, sign-out, and the calculator link off /calculate", () => {

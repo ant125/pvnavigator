@@ -3,6 +3,10 @@
 const headerAuthLink =
   "inline-flex min-h-11 items-center whitespace-nowrap text-sm text-ink-secondary transition-colors hover:text-ink sm:min-h-0";
 
+/** /calculate guest row: 12px type below sm so both links stay beside the wordmark. */
+const headerAuthLinkCompact =
+  "inline-flex min-h-11 items-center whitespace-nowrap text-xs text-ink-secondary transition-colors hover:text-ink sm:min-h-0 sm:text-sm";
+
 const headerAccountLink =
   "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap text-sm font-semibold text-ink transition-colors hover:text-ink-secondary sm:min-h-0";
 
@@ -61,11 +65,17 @@ export function HeaderAccount({
   }
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-3">
-      <a href={loginHref} className={headerAuthLink}>
+    <div
+      className={
+        compact
+          ? "flex min-w-0 items-center gap-1.5 sm:gap-3"
+          : "flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-3"
+      }
+    >
+      <a href={loginHref} className={compact ? headerAuthLinkCompact : headerAuthLink}>
         Anmelden
       </a>
-      <a href={signupHref} className={headerAuthLink}>
+      <a href={signupHref} className={compact ? headerAuthLinkCompact : headerAuthLink}>
         Konto erstellen
       </a>
     </div>

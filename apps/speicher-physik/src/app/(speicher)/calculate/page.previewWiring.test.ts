@@ -11,9 +11,15 @@ describe("calculate page preview wiring", () => {
     expect(pageSource).toContain('pinForm={step !== "input"}');
   });
 
-  it("uses a collapsible run preview and progress on later steps", () => {
-    expect(pageSource).toContain("RunSystemPreview");
-    expect(pageSource).toContain("formData={runPreview ?? formData}");
+  it("uses a chips-only run preview and progress while calculating", () => {
+    expect(pageSource).toContain(
+      "<RunSystemPreview formData={runPreview ?? formData} />"
+    );
+    expect(pageSource).toMatch(
+      /step === "calculating" \? \([\s\S]*\{runPreviewCard\}\s*\{progress\}/
+    );
+    expect(pageSource).not.toContain("onToggleScene");
+    expect(pageSource).not.toContain("sceneOpen={runSceneOpen}");
     expect(pageSource).toContain("pendingScrollToRunRef.current = true");
     expect(pageSource).toContain("setRunSceneOpen(false)");
     expect(pageSource).toContain("useLayoutEffect");
@@ -69,7 +75,6 @@ describe("calculate page preview wiring", () => {
     expect(pageSource).not.toContain("scroll-mt-sg-sticky");
     expect(pageSource).toContain("ResultNavigation");
     expect(pageSource).toContain("sg-run-focus flex flex-col");
-    expect(pageSource).toContain('showColumnHeader={step !== "results"}');
     expect(pageSource).toContain('label: "Ergebnis"');
     expect(pageSource).not.toContain("Designentwurf");
     expect(pageSource).not.toContain("useCalculateHeaderStatus");

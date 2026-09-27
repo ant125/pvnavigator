@@ -357,14 +357,7 @@ export default function SpeicherCalculatePage() {
       : false;
   const includeEvProfile = previewForm.evEnabled === true;
 
-  const runPreviewCard = (
-    <RunSystemPreview
-      formData={runPreview ?? formData}
-      sceneOpen={runSceneOpen}
-      onToggleScene={() => setRunSceneOpen((open) => !open)}
-      showColumnHeader={step !== "results"}
-    />
-  );
+  const runPreviewCard = <RunSystemPreview formData={runPreview ?? formData} />;
 
   const progress = (
     <CalculationProgressList
