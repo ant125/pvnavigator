@@ -84,6 +84,8 @@ describe("deriveSpeicherBusinessMetrics", () => {
     expect(result.physicalKpiLookupSize).toBe(0);
     expect(result.recommendedEV).toBe(0);
     expect(result.batteryGeladenAvgKwh).toBeUndefined();
+    expect(result.autarkieOhneUnroundedPct).toBeNull();
+    expect(result.autarkieMitUnroundedPct).toBeNull();
     expect(result.autarkieOhnePct).toBeNull();
     expect(result.autarkieMitPct).toBeNull();
     expect(result.deltaAutarkiePctPoints).toBeNull();
@@ -170,6 +172,8 @@ describe("deriveSpeicherBusinessMetrics", () => {
       })
     );
 
+    expect(result.autarkieOhneUnroundedPct).toBeCloseTo(50.4, 5);
+    expect(result.autarkieMitUnroundedPct).toBeCloseTo(64.6, 5);
     expect(result.autarkieOhnePct).toBe(50);
     expect(result.autarkieMitPct).toBe(65);
     expect(result.autarkieMitPct! - result.autarkieOhnePct!).toBe(15);

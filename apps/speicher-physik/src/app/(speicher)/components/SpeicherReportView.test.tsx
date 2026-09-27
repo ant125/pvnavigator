@@ -174,6 +174,33 @@ describe("SpeicherReportView workspace layout", () => {
 
     expect(html).toContain("Quellen &amp; wissenschaftliche Grundlagen");
 
+    const overviewHtml = html.slice(overview, storage);
+    expect(overviewHtml).toContain("Was bringt Ihnen der Speicher?");
+    expect(overviewHtml).toContain("Mehr Solarstrom selbst nutzen");
+    expect(overviewHtml).toContain("Weniger Strom aus dem Netz");
+    expect(overviewHtml).toContain("Für die Kaufplanung bei angenommenen 75");
+    expect(overviewHtml).toContain("Restkapazität");
+    expect(overviewHtml).not.toContain("Für die Kaufplanung mit 25");
+    expect(overviewHtml).toContain("1 800");
+    expect(overviewHtml).toContain("2 280");
+    expect(overviewHtml).toContain("45");
+    expect(overviewHtml).toContain("57");
+    expect(overviewHtml).not.toContain("Eigenverbrauch ohne Speicher (jährlich)");
+    expect(overviewHtml).not.toContain("Autarkie ohne Speicher:");
+    expect(overviewHtml).not.toContain("Autarkie mit Speicher:");
+    expect(overviewHtml).not.toContain("Prozentpunkte");
+    expect(overviewHtml).not.toContain("3109");
+    expect(overviewHtml).not.toContain("6508");
+    expect(overviewHtml.match(/Eigener Solarstrom/g)).toHaveLength(1);
+    expect(html).toContain(
+      'class="sg-speicher-bar mt-2 h-2.5 w-full overflow-hidden rounded-[2px] bg-transparent"'
+    );
+    expect(html).toContain("bg-chart-grid");
+    expect(html).toContain(
+      "Eigenverbrauch und Autarkie beziehen sich auf die technische"
+    );
+    expect(html).toContain("Berechnungsgrundlage: BDEW H25");
+
     expect(indexOf(html, "Unsere Einschätzung")).toBeLessThan(
       indexOf(html, "Eigenverbrauch vs Speichergröße")
     );
@@ -207,6 +234,17 @@ describe("SpeicherReportView saved report variant", () => {
 
     expect(html).toContain("Gespeicherter Bericht");
     expect(html).toContain("02 / Ergebnis · Berechnung nach BDEW H25");
+    expect(html).toContain("Was bringt Ihnen der Speicher?");
+    expect(html).toContain("Für die Kaufplanung bei angenommenen 75");
+    expect(html).toContain("Restkapazität");
+    expect(html).not.toContain("Für die Kaufplanung mit 25");
+    expect(html).toContain(
+      'class="sg-speicher-bar mt-2 h-2.5 w-full overflow-hidden rounded-[2px] bg-transparent"'
+    );
+    expect(html).toContain("bg-chart-grid");
+    expect(html).not.toContain("Eigenverbrauch ohne Speicher (jährlich)");
+    expect(html).not.toContain("Autarkie ohne Speicher:");
+    expect(html).toContain("Berechnungsgrundlage: BDEW H25");
     expect(html).toContain("03 / Ihre Eingabedaten");
     expect(html).toContain("Musterstraße");
     expect(html).toContain("04 / Technische Kennzahlen");

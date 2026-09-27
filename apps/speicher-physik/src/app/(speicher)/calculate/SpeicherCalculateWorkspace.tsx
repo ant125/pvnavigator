@@ -180,7 +180,7 @@ export function SpeicherCalculateWorkspace({
           onClick={closeMobileForm}
         />
       ) : null}
-      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(22rem,32%)_minmax(0,68%)] lg:items-start lg:gap-column-gap">
+      <div className="sg-calculate-layout grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(22rem,32%)_minmax(0,68%)] lg:items-start lg:gap-column-gap">
         <section
           ref={panelRef}
           id="inputs-panel"

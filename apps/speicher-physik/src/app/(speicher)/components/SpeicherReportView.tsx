@@ -33,6 +33,7 @@ import {
   formatQuantityWithUnit,
 } from "@/lib/formatQuantityDe";
 import type { FrozenSpeicherPresentation } from "@/lib/persistCompletedCalculation";
+import { SpeicherBenefitComparison } from "./SpeicherBenefitComparison";
 
 const PLACEHOLDER = "—";
 
@@ -112,10 +113,6 @@ function WorkspaceChapter({
 const REPORT_SECTION_TITLE =
   "font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink-secondary";
 
-/** Label of a group nested inside a section — one step darker than a micro label. */
-const REPORT_GROUP_TITLE =
-  "sg-metric-title font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink";
-
 const BTN_PRIMARY =
   "inline-flex items-center justify-center rounded-sm bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent-hover";
 
@@ -144,9 +141,6 @@ const REPORT_METRIC_LIST =
 /** Metric row: label left, value aligned to the right edge of its track. */
 const REPORT_METRIC_ROW =
   "grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-6 py-3";
-
-const REPORT_COMPARE_VALUE =
-  "flex min-w-0 shrink-0 flex-col items-end text-right tabular-nums";
 
 const REPORT_METRIC_LABEL = "min-w-0 leading-snug text-ink-secondary";
 
@@ -281,17 +275,16 @@ export function SpeicherReportView({
     recommendedPlanningSize,
     physicalKpiLookupSize,
     planningExceedsSimulatedRange,
-    recommendedEV,
     batteryGeladenAvgKwh,
     batteryAnVerbrauchAvgKwh,
     batterieverlusteModellGesamtKwh,
     avgSelfDischargeLossDisplayKwh,
     avgAuxiliaryConsumptionDisplayKwh,
+    eigenverbrauchOhneSpeicher,
     eigenverbrauchMitSpeicher,
-    autarkieOhnePct,
+    autarkieOhneUnroundedPct,
+    autarkieMitUnroundedPct,
     autarkieMitPct,
-    deltaAutarkiePctPoints,
-    deltaEigenverbrauch,
     resolvedBackupReserveKwh,
     pvYieldKwhAnnual,
     specificYieldKwhPerKwp,
@@ -408,8 +401,7 @@ export function SpeicherReportView({
                         <span className="text-lg font-medium">kWh</span>
                       </p>
                       <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
-                        Mit Alterungsreserve. Annahme: 75&nbsp;% nach ca. 10
-                        Jahren. Keine Herstellergarantie.
+                        Für die Kaufplanung bei angenommenen 75&nbsp;% Restkapazität
                       </p>
                     </div>
                   </div>
@@ -465,76 +457,38 @@ export function SpeicherReportView({
   );
 
   const comparisonInner = (
-    <>
-              <div>
-                <h3 className={`mb-3 ${REPORT_GROUP_TITLE}`}>
-                  Eigenverbrauch
-                </h3>
-                <div className={REPORT_METRIC_LIST}>
-                  <div className={REPORT_METRIC_ROW}>
-                    <span className={REPORT_METRIC_LABEL}>
-                      Eigenverbrauch ohne Speicher (jährlich)
-                    </span>
-                    <span className={`${REPORT_COMPARE_VALUE} text-base font-medium text-ink`}>
-                      {formatKwh(
-                        verifiedResult?.energy.year
-                          .selfConsumptionWithoutStorage
-                      )}
-                    </span>
-                  </div>
-                  <div className={REPORT_METRIC_ROW}>
-                    <span className={REPORT_METRIC_LABEL}>
-                      Eigenverbrauch mit Speicher
-                    </span>
-                    <span className={REPORT_COMPARE_VALUE}>
-                      <span className="sg-compare-primary block font-mono text-lg font-semibold text-accent-text">
-                        {formatKwh(recommendedEV)}
-                      </span>
-                      {deltaEigenverbrauch !== null && (
-                        <span className="sg-compare-delta mt-0.5 block text-xs font-medium text-success">
-                          ({deltaEigenverbrauch >= 0 ? "+" : ""}
-                          {formatQuantityWithUnit(deltaEigenverbrauch, "kWh")})
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
+    <SpeicherBenefitComparison
+      eigenverbrauchOhneKwh={eigenverbrauchOhneSpeicher}
+      eigenverbrauchMitKwh={
+        speicherGrenz == null ? null : eigenverbrauchMitSpeicher
+      }
+      autarkieOhneUnroundedPct={autarkieOhneUnroundedPct}
+      autarkieMitUnroundedPct={
+        speicherGrenz == null ? null : autarkieMitUnroundedPct
+      }
+    />
+  );
 
-              <div>
-                <h3 className={`mb-3 ${REPORT_GROUP_TITLE}`}>Autarkie</h3>
-                <div className={REPORT_METRIC_LIST}>
-                  <div className={REPORT_METRIC_ROW}>
-                    <span className={REPORT_METRIC_LABEL}>
-                      Autarkie ohne Speicher:
-                    </span>
-                    <span className={`${REPORT_COMPARE_VALUE} text-base font-medium text-ink`}>
-                      {formatPct(autarkieOhnePct)}
-                    </span>
-                  </div>
-                  <div className={REPORT_METRIC_ROW}>
-                    <span className={REPORT_METRIC_LABEL}>
-                      Autarkie mit Speicher:
-                    </span>
-                    <span className={REPORT_COMPARE_VALUE}>
-                      <span className="sg-compare-primary block font-mono text-lg font-semibold text-accent-text">
-                        {formatPct(autarkieMitPct)}
-                      </span>
-                      {deltaAutarkiePctPoints !== null && (
-                        <span className="sg-compare-delta mt-0.5 block text-xs font-medium text-success">
-                          ({deltaAutarkiePctPoints >= 0 ? "+" : ""}
-                          {formatQuantityWithUnit(
-                            deltaAutarkiePctPoints,
-                            "Prozentpunkte"
-                          )}
-                          )
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-    </>
+  const overviewClosing = (
+    <div className="mt-6 max-w-reading space-y-2">
+      {recommendedTechnicalSize > 0 ? (
+        <p className="text-sm leading-relaxed text-ink-secondary">
+          Eigenverbrauch und Autarkie beziehen sich auf die technische
+          Speichergrenze
+          {hasActiveBackupReserve ? (
+            <>
+              {" "}
+              und berücksichtigen eine Notstromreserve von{" "}
+              {formatQuantityWithUnit(resolvedBackupReserveKwh, "kWh")}
+            </>
+          ) : null}
+          .
+        </p>
+      ) : null}
+      <p className="text-xs leading-relaxed text-ink-muted">
+        Berechnungsgrundlage: BDEW H25
+      </p>
+    </div>
   );
 
   const foundationInner = speicherGrenz ? (
@@ -1337,7 +1291,8 @@ export function SpeicherReportView({
         first
       >
         {recommendationBody}
-        <div className={`mt-8 ${REPORT_TWO_TRACKS}`}>{comparisonInner}</div>
+        <div className="mt-8">{comparisonInner}</div>
+        {overviewClosing}
         <div className={REPORT_SECTION}>
           <h2 className={WORKSPACE_CHAPTER_TITLE}>Unsere Einschätzung</h2>
           <div className="mt-6">{assessmentBody}</div>
@@ -1401,9 +1356,8 @@ export function SpeicherReportView({
         </h2>
         {recommendationBody}
       </section>
-      <section className={`${REPORT_SECTION} ${REPORT_TWO_TRACKS}`}>
-        {comparisonInner}
-      </section>
+      <section className={REPORT_SECTION}>{comparisonInner}</section>
+      {overviewClosing}
       {speicherGrenz ? (
         <>
           <section className={REPORT_SECTION}>

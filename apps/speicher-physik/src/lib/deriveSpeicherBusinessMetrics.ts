@@ -66,6 +66,12 @@ export type DeriveSpeicherBusinessMetricsOutput = {
   totalConsumption: number;
   eigenverbrauchOhneSpeicher: number | undefined;
   eigenverbrauchMitSpeicher: number | undefined;
+  /**
+   * Autarkie in percent before display rounding.
+   * Null when household load or Eigenverbrauch is missing — never coerced to 0.
+   */
+  autarkieOhneUnroundedPct: number | null;
+  autarkieMitUnroundedPct: number | null;
   autarkieOhnePct: number | null;
   autarkieMitPct: number | null;
   /** Percentage-point change from unrounded ratios, then rounded. */
@@ -193,19 +199,29 @@ export function deriveSpeicherBusinessMetrics(
     verifiedResult?.energy.year.selfConsumptionWithoutStorage;
   const eigenverbrauchMitSpeicher = recommendedEV;
 
-  const autarkieOhnePct =
+  const autarkieOhneUnroundedPct =
     autarkieDenominatorKwh > 0 &&
     typeof eigenverbrauchOhneSpeicher === "number" &&
     Number.isFinite(eigenverbrauchOhneSpeicher)
-      ? Math.round((eigenverbrauchOhneSpeicher / autarkieDenominatorKwh) * 100)
+      ? (eigenverbrauchOhneSpeicher / autarkieDenominatorKwh) * 100
       : null;
 
-  const autarkieMitPct =
+  const autarkieMitUnroundedPct =
     autarkieDenominatorKwh > 0 &&
     typeof eigenverbrauchMitSpeicher === "number" &&
     Number.isFinite(eigenverbrauchMitSpeicher)
-      ? Math.round((eigenverbrauchMitSpeicher / autarkieDenominatorKwh) * 100)
+      ? (eigenverbrauchMitSpeicher / autarkieDenominatorKwh) * 100
       : null;
+
+  const autarkieOhnePct =
+    autarkieOhneUnroundedPct === null
+      ? null
+      : Math.round(autarkieOhneUnroundedPct);
+
+  const autarkieMitPct =
+    autarkieMitUnroundedPct === null
+      ? null
+      : Math.round(autarkieMitUnroundedPct);
 
   const deltaAutarkiePctPoints =
     autarkieDenominatorKwh > 0 &&
@@ -297,6 +313,8 @@ export function deriveSpeicherBusinessMetrics(
     totalConsumption,
     eigenverbrauchOhneSpeicher,
     eigenverbrauchMitSpeicher,
+    autarkieOhneUnroundedPct,
+    autarkieMitUnroundedPct,
     autarkieOhnePct,
     autarkieMitPct,
     deltaAutarkiePctPoints,

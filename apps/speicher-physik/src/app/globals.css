@@ -736,6 +736,29 @@ summary:focus:not(:focus-visible),
   .sg-table-scroll tr {
     break-inside: avoid;
   }
+
+  .sg-speicher-nutzen,
+  .sg-speicher-nutzen * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sg-speicher-nutzen {
+    break-inside: avoid;
+    overflow: visible;
+    max-width: 100%;
+  }
+
+  .sg-speicher-nutzen-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    column-gap: 2rem;
+    overflow: visible;
+  }
+
+  .sg-calculate-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
 }
 
 @media print {
