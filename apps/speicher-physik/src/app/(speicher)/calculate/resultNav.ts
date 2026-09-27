@@ -10,7 +10,7 @@ export const RESULT_SECTION_IDS = {
 export const RESULT_NAV_ITEMS = [
   { id: RESULT_SECTION_IDS.overview, label: "Überblick" },
   { id: RESULT_SECTION_IDS.storageSize, label: "Speichergröße" },
-  { id: RESULT_SECTION_IDS.profiles, label: "Profile" },
+  { id: RESULT_SECTION_IDS.profiles, label: "Robustheit" },
   { id: RESULT_SECTION_IDS.balance, label: "Bilanz" },
   { id: RESULT_SECTION_IDS.sources, label: "Quellen" },
 ] as const;

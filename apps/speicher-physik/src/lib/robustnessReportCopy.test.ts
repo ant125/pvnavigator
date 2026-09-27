@@ -14,11 +14,17 @@ import {
   formatReportRangeKwh,
   formatReportRangePct,
   householdDefaultViewText,
+  householdOverviewSentence,
   householdRobustnessConclusion,
   householdRobustnessExplanation,
   recommendationSizeStability,
+  robustnessKpiFollow,
+  robustnessStabilityLabel,
+  robustnessStabilityNote,
   shouldShowWwRobustnessSection,
+  technicalSizeRangeLead,
   wwDefaultViewText,
+  wwOverviewSentence,
   wwRobustnessConclusion,
   wwRobustnessExplanation,
 } from "./robustnessReportCopy";
@@ -72,6 +78,64 @@ describe("data-driven ranges (D)", () => {
     expect(text).toContain("42\u00A0%");
     expect(text).toContain("36\u00A0%");
     expect(text).not.toContain("8–12\u00A0kWh");
+  });
+});
+
+describe("overview sentences name the technical range without a third recommendation", () => {
+  it("keeps the household span inside one sentence", () => {
+    expect(
+      householdOverviewSentence({
+        cohortSize: 27,
+        technicalSizeMinKwh: 19,
+        technicalSizeMaxKwh: 21,
+      })
+    ).toBe(
+      "Bei 27 realen Haushaltsprofilen liegt sie zwischen 19 und 21 kWh."
+    );
+    expect(
+      householdOverviewSentence({
+        cohortSize: 27,
+        technicalSizeMinKwh: 14,
+        technicalSizeMaxKwh: 14,
+      })
+    ).toBe("Bei 27 realen Haushaltsprofilen liegt sie bei 14 kWh.");
+  });
+
+  it("names the water/water span the same way", () => {
+    expect(
+      wwOverviewSentence({
+        cohortSize: 24,
+        technicalSizeMinKwh: 12,
+        technicalSizeMaxKwh: 17,
+      })
+    ).toBe(
+      "Bei 24 realen Wasser/Wasser-Profilen liegt sie zwischen 12 und 17 kWh."
+    );
+  });
+
+  it("leads the chapter with the existing span and explains the existing class", () => {
+    expect(technicalSizeRangeLead(19, 21, "Haushaltsprofile")).toBe(
+      "Die technische Speichergrenze bleibt über die getesteten Haushaltsprofile zwischen 19 und 21 kWh."
+    );
+    expect(
+      robustnessKpiFollow({ cohortSize: 27, sizeUnchangedCount: 20 })
+    ).toMatch(/Eigenverbrauch und Autarkie/);
+    expect(
+      robustnessKpiFollow({ cohortSize: 27, sizeUnchangedCount: 10 })
+    ).toBeNull();
+    expect(
+      robustnessStabilityNote(
+        { cohortSize: 27, sizeUnchangedCount: 12 },
+        "Profile"
+      )
+    ).toMatch(/Stärker lastabhängig/);
+    expect(
+      robustnessStabilityNote(
+        { cohortSize: 27, sizeUnchangedCount: 12 },
+        "Profile"
+      )
+    ).toMatch(/12 von 27/);
+    expect(robustnessStabilityLabel("sensitive")).toBe("Stärker lastabhängig");
   });
 });
 

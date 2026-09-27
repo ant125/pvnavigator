@@ -46,6 +46,10 @@ describe("SpeicherCalculateWorkspace pinMain", () => {
     expect(input).not.toContain("Eingabedaten anzeigen");
     expect(result).toContain("form-body");
     expect(result).toContain("Eingabedaten anzeigen");
+    expect(result).toContain(
+      "sg-mobile-inputs mb-3 inline-flex border border-line bg-transparent"
+    );
+    expect(result).not.toContain("bg-accent-soft");
     expect(result).toContain("sg-form-pin");
     expect(result).not.toContain("Einklappen");
     expect(result).not.toContain("WÄRMEPUMPE · JA");

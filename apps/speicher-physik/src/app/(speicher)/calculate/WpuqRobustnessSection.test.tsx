@@ -109,6 +109,33 @@ describe("WpuqRobustnessSection mobile overflow containment", () => {
     expect(html).toContain("relative min-w-0 max-w-reading");
   });
 
+  it("leads with the conclusion, then the table, then the method", () => {
+    const html = renderSection(true);
+    const householdConclusion = html.indexOf(
+      "getesteten Haushaltsprofile zwischen 8 und 16 kWh"
+    );
+    const householdTable = html.indexOf("Hauptrechnung BDEW H25 im Vergleich");
+    const householdMethod = html.indexOf("Was ändert sich, wenn Ihr Haushalt");
+    const wwConclusion = html.indexOf(
+      "getesteten Wasser/Wasser-Profile zwischen 8 und 16 kWh"
+    );
+    const wwTable = html.indexOf(
+      "Hauptrechnung Wasser/Wasser-Referenzprofil im Vergleich"
+    );
+    const wwMethod = html.indexOf("Was ändert sich, wenn Ihre Wasser/Wasser");
+
+    expect(householdConclusion).toBeGreaterThanOrEqual(0);
+    expect(householdConclusion).toBeLessThan(householdTable);
+    expect(householdTable).toBeLessThan(householdMethod);
+    expect(wwConclusion).toBeGreaterThan(householdMethod);
+    expect(wwConclusion).toBeLessThan(wwTable);
+    expect(wwTable).toBeLessThan(wwMethod);
+    expect(html).toContain("Haushaltsprofile");
+    expect(html).toContain("Wasser/Wasser-Wärmepumpenprofile");
+    expect(html).not.toContain("Verteilung der technischen Speichergrenze");
+    expect(html).toContain("Details anzeigen");
+  });
+
   it("lets comparison tables shrink and scroll locally", () => {
     const html = renderSection(true);
 

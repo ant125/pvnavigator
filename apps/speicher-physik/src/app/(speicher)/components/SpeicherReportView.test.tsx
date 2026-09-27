@@ -147,10 +147,11 @@ describe("SpeicherReportView workspace layout", () => {
     expect(html).not.toContain('hidden=""');
 
     expect(html).toContain("Überblick");
-    expect(html).toContain("Berechnung nach BDEW H25");
-    expect(html).toContain("Unsere Einschätzung");
+    expect(html).not.toContain("Berechnung nach BDEW H25");
+    expect(html).toContain("Berechnungsgrundlage: BDEW H25");
+    expect(html).not.toContain("Unsere Einschätzung");
     expect(html).toContain("Speichergröße");
-    expect(html).toContain("Profile");
+    expect(html).toContain("Robustheit");
     expect(html).toContain("Bilanz");
     expect(html).toContain("Grundlage der Berechnung");
     expect(html).toContain("original-system-scene");
@@ -175,12 +176,31 @@ describe("SpeicherReportView workspace layout", () => {
     expect(html).toContain("Quellen &amp; wissenschaftliche Grundlagen");
 
     const overviewHtml = html.slice(overview, storage);
+    const storageHtml = html.slice(storage, profiles);
+    expect(overviewHtml).toContain("Technische Speichergrenze");
+    expect(overviewHtml).toContain("Planerische Anfangskapazität");
+    expect(overviewHtml).toContain(
+      "Für die Kaufplanung bei angenommenen 75"
+    );
+    expect(overviewHtml).toContain("Restkapazität");
+    expect(overviewHtml).not.toContain("Alterungsreserve");
+    expect(html).toContain(
+      'class="sg-speicher-bar mt-2 h-2.5 w-full overflow-hidden rounded-[2px] bg-transparent"'
+    );
+    expect(html).toContain("bg-chart-grid");
+    expect(overviewHtml).toContain("Robustheit der technischen Speichergrenze");
+    expect(overviewHtml).toContain(
+      "Bei 2 realen Haushaltsprofilen liegt sie zwischen 5 und 7 kWh."
+    );
+    expect(overviewHtml).not.toContain("Stärker lastabhängig");
+    expect(overviewHtml).toContain("Haushaltsprofile");
+    expect(overviewHtml).not.toContain("Planerische Anfangskapazität =");
+    expect(overviewHtml).not.toContain("75-%-Annahme");
+    expect(overviewHtml.match(/Technische Speichergrenze/g)).toHaveLength(1);
+    expect(overviewHtml.match(/Planerische Anfangskapazität/g)).toHaveLength(1);
     expect(overviewHtml).toContain("Was bringt Ihnen der Speicher?");
     expect(overviewHtml).toContain("Mehr Solarstrom selbst nutzen");
     expect(overviewHtml).toContain("Weniger Strom aus dem Netz");
-    expect(overviewHtml).toContain("Für die Kaufplanung bei angenommenen 75");
-    expect(overviewHtml).toContain("Restkapazität");
-    expect(overviewHtml).not.toContain("Für die Kaufplanung mit 25");
     expect(overviewHtml).toContain("1 800");
     expect(overviewHtml).toContain("2 280");
     expect(overviewHtml).toContain("45");
@@ -193,17 +213,16 @@ describe("SpeicherReportView workspace layout", () => {
     expect(overviewHtml).not.toContain("6508");
     expect(overviewHtml.match(/Eigener Solarstrom/g)).toHaveLength(1);
     expect(html).toContain(
-      'class="sg-speicher-bar mt-2 h-2.5 w-full overflow-hidden rounded-[2px] bg-transparent"'
-    );
-    expect(html).toContain("bg-chart-grid");
-    expect(html).toContain(
       "Eigenverbrauch und Autarkie beziehen sich auf die technische"
     );
     expect(html).toContain("Berechnungsgrundlage: BDEW H25");
-
-    expect(indexOf(html, "Unsere Einschätzung")).toBeLessThan(
-      indexOf(html, "Eigenverbrauch vs Speichergröße")
+    expect(storageHtml).toContain(
+      "Die technische Speichergrenze liegt bei"
     );
+    expect(storageHtml).toContain("Planerische Anfangskapazität =");
+    expect(storageHtml).toContain("75-%-Annahme");
+    expect(html).not.toContain("einschließlich Wärmepumpe");
+
     expect(indexOf(html, "Eigenverbrauch vs Speichergröße")).toBeLessThan(
       indexOf(html, "Technische Kennzahlen")
     );
@@ -233,7 +252,9 @@ describe("SpeicherReportView saved report variant", () => {
     );
 
     expect(html).toContain("Gespeicherter Bericht");
-    expect(html).toContain("02 / Ergebnis · Berechnung nach BDEW H25");
+    expect(html).toContain("02 / Ergebnis");
+    expect(html).not.toContain("Berechnung nach BDEW H25");
+    expect(html).toContain("Berechnungsgrundlage: BDEW H25");
     expect(html).toContain("Was bringt Ihnen der Speicher?");
     expect(html).toContain("Für die Kaufplanung bei angenommenen 75");
     expect(html).toContain("Restkapazität");
@@ -244,7 +265,6 @@ describe("SpeicherReportView saved report variant", () => {
     expect(html).toContain("bg-chart-grid");
     expect(html).not.toContain("Eigenverbrauch ohne Speicher (jährlich)");
     expect(html).not.toContain("Autarkie ohne Speicher:");
-    expect(html).toContain("Berechnungsgrundlage: BDEW H25");
     expect(html).toContain("03 / Ihre Eingabedaten");
     expect(html).toContain("Musterstraße");
     expect(html).toContain("04 / Technische Kennzahlen");
@@ -265,5 +285,29 @@ describe("SpeicherReportView saved report variant", () => {
     expect(indexOf(html, "05 / Eigenverbrauch vs Speichergröße")).toBeLessThan(
       indexOf(html, "06 / Unsere Einschätzung")
     );
+  });
+});
+
+describe("SpeicherReportView balance helper", () => {
+  it("mentions the heat pump in grid import only when one is part of the run", () => {
+    const withoutHeatPump = renderToStaticMarkup(
+      <SpeicherReportView mode="live" variant="workspace" {...sharedProps} />
+    );
+    const withHeatPump = renderToStaticMarkup(
+      <SpeicherReportView
+        mode="live"
+        variant="workspace"
+        {...sharedProps}
+        input={{
+          ...sharedProps.input,
+          heatPumpEnabled: true,
+          heatPumpConsumptionKwh: 4500,
+          heatPumpTechnology: "luftwasser",
+        }}
+      />
+    );
+
+    expect(withoutHeatPump).not.toContain("einschließlich Wärmepumpe");
+    expect(withHeatPump).toContain("einschließlich Wärmepumpe");
   });
 });

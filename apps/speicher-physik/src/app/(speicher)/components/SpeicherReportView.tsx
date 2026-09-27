@@ -32,6 +32,11 @@ import {
   formatQuantityDe,
   formatQuantityWithUnit,
 } from "@/lib/formatQuantityDe";
+import {
+  ROBUSTNESS_OVERVIEW_TITLE,
+  householdOverviewSentence,
+  wwOverviewSentence,
+} from "@/lib/robustnessReportCopy";
 import type { FrozenSpeicherPresentation } from "@/lib/persistCompletedCalculation";
 import { SpeicherBenefitComparison } from "./SpeicherBenefitComparison";
 
@@ -119,15 +124,6 @@ const BTN_PRIMARY =
 
 
 /**
- * Main + aside split of a section: the primary result on the left, the
- * reference value and its caveats on the right, divided by a hairline.
- */
-const REPORT_SPLIT = "grid gap-8 lg:grid-cols-[3fr_2fr] lg:gap-12";
-
-const REPORT_SPLIT_ASIDE =
-  "border-t border-line-soft pt-6 lg:border-t-0 lg:border-l lg:border-line-soft lg:pt-0 lg:pl-8";
-
-/**
  * Two side-by-side metric/comparison tracks. Each track is an independent
  * closed table, so the report width carries two columns of metrics instead of
  * one long single-column list.
@@ -173,15 +169,7 @@ const REPORT_BAND =
 const REPORT_BAND_GRID =
   "mt-5 grid gap-x-8 gap-y-4 border-t border-line pt-5 sm:grid-cols-2 lg:grid-cols-3";
 
-/**
- * Written conclusion of the report: prose on the left, key figures in the
- * split aside. Hierarchy comes from colour and spacing within the prose track.
- */
-const REPORT_CONCLUSION_BODY = "text-sm leading-relaxed text-ink";
-
-const REPORT_CONCLUSION_CONTEXT = "text-sm leading-relaxed text-ink-secondary";
-
-/** Methodological note closing the conclusion — demoted footnote prose. */
+/** Methodological note — demoted footnote prose. */
 const REPORT_NOTE = "text-xs leading-relaxed text-ink-muted";
 
 const SPEICHER_REPORT_HELPER_TEXT =
@@ -372,77 +360,85 @@ export function SpeicherReportView({
             </div>
   );
 
+  const householdSummary = robustness
+    ? householdOverviewSentence({
+        cohortSize: robustness.cohortSize,
+        technicalSizeMinKwh: robustness.ranges.technicalSpeichergrenzeKwh.min,
+        technicalSizeMaxKwh: robustness.ranges.technicalSpeichergrenzeKwh.max,
+      })
+    : null;
+  const wwSummary =
+    wasserWasserRobustness != null
+      ? wwOverviewSentence({
+          cohortSize: wasserWasserRobustness.cohortSize,
+          technicalSizeMinKwh:
+            wasserWasserRobustness.aggregates.technicalSpeichergrenzeKwh.min,
+          technicalSizeMaxKwh:
+            wasserWasserRobustness.aggregates.technicalSpeichergrenzeKwh.max,
+        })
+      : null;
+
+  const calculationBasisNote = (
+    <p className="text-xs leading-relaxed text-ink-muted">
+      Berechnungsgrundlage: BDEW H25
+    </p>
+  );
+
   const recommendationBody = (
     <>
               {recommendedTechnicalSize > 0 ? (
-                <div className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-sm border border-line bg-accent-soft/70 p-5">
-                      <p className={`${REPORT_SECTION_TITLE} sg-kpi-name`}>
-                        Technische Speichergrenze
-                      </p>
-                      <p className="sg-kpi-value mt-2 whitespace-nowrap font-mono text-4xl font-semibold tabular-nums tracking-tight text-ink">
-                        {formatQuantityDe(recommendedTechnicalSize)}
-                        {"\u00A0"}
-                        <span className="text-lg font-medium">kWh</span>
-                      </p>
-                      <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
-                        Nutzbare Kapazität heute. Alle technischen Kennzahlen
-                        beziehen sich auf diesen Wert.
-                      </p>
-                    </div>
-                    <div className="rounded-sm border border-line bg-surface-muted p-5">
-                      <p className={`${REPORT_SECTION_TITLE} sg-kpi-name`}>
+                <div className="max-w-reading">
+                  <p className={`${REPORT_SECTION_TITLE} sg-kpi-name`}>
+                    Technische Speichergrenze
+                  </p>
+                  <p className="sg-kpi-value mt-2 whitespace-nowrap font-mono text-4xl font-semibold tabular-nums tracking-tight text-ink">
+                    {formatQuantityDe(recommendedTechnicalSize)}
+                    {"\u00A0"}
+                    <span className="text-lg font-medium">kWh</span>
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-ink-secondary">
+                    Nutzbare Kapazität heute.
+                  </p>
+
+                  <div className="mt-5 border-t border-line-soft pt-4">
+                    <div className="flex items-baseline justify-between gap-4">
+                      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink-muted">
                         Planerische Anfangskapazität
                       </p>
-                      <p className="sg-kpi-value mt-2 whitespace-nowrap font-mono text-4xl font-semibold tabular-nums tracking-tight text-ink">
+                      <p className="shrink-0 whitespace-nowrap font-sans text-xl font-medium tabular-nums text-ink-secondary">
                         {formatQuantityDe(recommendedPlanningSize)}
                         {"\u00A0"}
-                        <span className="text-lg font-medium">kWh</span>
-                      </p>
-                      <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
-                        Für die Kaufplanung bei angenommenen 75&nbsp;% Restkapazität
+                        <span className="text-sm font-medium">kWh</span>
                       </p>
                     </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
+                      Für die Kaufplanung bei angenommenen 75&nbsp;% Restkapazität
+                    </p>
                   </div>
 
-                  <div className="space-y-4 text-sm leading-relaxed text-ink-secondary">
-                    <p>
-                      Die physikalische Simulation ermittelt für die heutigen
-                      Bedingungen eine technische Speichergrenze von{" "}
-                      <strong className="font-semibold text-ink">
-                        {recommendedTechnicalSize} kWh nutzbarer Kapazität
-                      </strong>
-                      .
-                    </p>
-                    <p>
-                      Für die Kaufplanung wird zusätzlich eine pauschale
-                      Alterungsreserve berücksichtigt. Dabei wird angenommen,
-                      dass nach einem Planungszeitraum von etwa 10 Jahren noch
-                      75&nbsp;% der anfänglichen nutzbaren Kapazität verfügbar
-                      sind.
-                    </p>
-                    <p className="rounded-sm border border-line-soft bg-surface-muted px-4 py-3 font-mono font-medium tabular-nums text-ink">
-                      Planerische Anfangskapazität = ⌈{" "}
-                      {formatQuantityWithUnit(recommendedTechnicalSize, "kWh")} / 0,75 ⌉ ={" "}
-                      {formatQuantityWithUnit(recommendedPlanningSize, "kWh")}
-                    </p>
-                    <p className="text-xs italic leading-relaxed text-ink-muted">
-                      Die 75-%-Annahme ist keine Prognose für einen bestimmten
-                      Batteriespeicher und keine Herstellergarantie. Sie
-                      beeinflusst ausschließlich die planerische
-                      Kaufempfehlung. Die technische Simulation und sämtliche
-                      technischen Kennzahlen werden weiterhin mit der
-                      technischen Speichergrenze von {recommendedTechnicalSize}{" "}
-                      kWh berechnet.
-                    </p>
-                    {planningExceedsSimulatedRange && (
-                      <p className="rounded-sm border border-warning/40 bg-warning-soft px-4 py-3 text-sm leading-relaxed text-warning">
-                        Die planerische Anfangskapazität liegt außerhalb des
-                        simulierten Speicherbereichs von 5–30 kWh.
+                  {householdSummary ? (
+                    <div className="mt-5 border-t border-line-soft pt-4">
+                      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink-muted">
+                        {ROBUSTNESS_OVERVIEW_TITLE}
                       </p>
-                    )}
-                  </div>
+                      <div className="mt-3 space-y-3 text-sm leading-snug text-ink-secondary">
+                        <p>
+                          <span className="block text-xs font-medium text-ink">
+                            Haushaltsprofile
+                          </span>
+                          {householdSummary}
+                        </p>
+                        {wwSummary ? (
+                          <p>
+                            <span className="block text-xs font-medium text-ink">
+                              Wasser/Wasser-Wärmepumpenprofile
+                            </span>
+                            {wwSummary}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <div className="max-w-reading">
@@ -467,28 +463,6 @@ export function SpeicherReportView({
         speicherGrenz == null ? null : autarkieMitUnroundedPct
       }
     />
-  );
-
-  const overviewClosing = (
-    <div className="mt-6 max-w-reading space-y-2">
-      {recommendedTechnicalSize > 0 ? (
-        <p className="text-sm leading-relaxed text-ink-secondary">
-          Eigenverbrauch und Autarkie beziehen sich auf die technische
-          Speichergrenze
-          {hasActiveBackupReserve ? (
-            <>
-              {" "}
-              und berücksichtigen eine Notstromreserve von{" "}
-              {formatQuantityWithUnit(resolvedBackupReserveKwh, "kWh")}
-            </>
-          ) : null}
-          .
-        </p>
-      ) : null}
-      <p className="text-xs leading-relaxed text-ink-muted">
-        Berechnungsgrundlage: BDEW H25
-      </p>
-    </div>
   );
 
   const foundationInner = speicherGrenz ? (
@@ -818,9 +792,11 @@ export function SpeicherReportView({
                           <span
                             className={`block ${SPEICHER_REPORT_HELPER_TEXT} mt-0.5`}
                           >
-                            Nur Netzbezug des Haushalts einschließlich
-                            Wärmepumpe; Netzbezug des Speichersystems ist nicht
-                            enthalten.
+                            Nur Netzbezug des Haushalts
+                            {input.heatPumpEnabled === true
+                              ? " einschließlich Wärmepumpe"
+                              : ""}
+                            ; Netzbezug des Speichersystems ist nicht enthalten.
                           </span>
                         </dt>
                         <dd className={REPORT_METRIC_VALUE}>
@@ -994,12 +970,79 @@ export function SpeicherReportView({
                     recommendedTechnicalSize={recommendedTechnicalSize}
                   />
 
-                  <div className="mt-4 max-w-reading text-sm leading-relaxed text-ink-secondary">
-                    Der zusätzliche Eigenverbrauch nimmt mit wachsender
-                    Speichergröße deutlich ab. Ab einem bestimmten Punkt bringt
-                    mehr Speicher nur noch geringen Mehrwert.
-                  </div>
+                  {recommendedTechnicalSize > 0 ? (
+                    <div className="mt-4 max-w-reading space-y-4 text-sm leading-relaxed text-ink-secondary">
+                      <p className="text-ink">
+                        Die technische Speichergrenze liegt bei{" "}
+                        {formatQuantityWithUnit(recommendedTechnicalSize, "kWh")}.
+                        Oberhalb dieses Punktes nimmt der zusätzliche
+                        Eigenverbrauch nur noch gering zu.
+                      </p>
+                      <p>
+                        Für die Kaufplanung wird zusätzlich eine pauschale
+                        Alterungsreserve berücksichtigt. Dabei wird angenommen,
+                        dass nach einem Planungszeitraum von etwa 10 Jahren noch
+                        75&nbsp;% der anfänglichen nutzbaren Kapazität verfügbar
+                        sind.
+                      </p>
+                      <p className="rounded-sm border border-line-soft bg-surface-muted px-4 py-3 font-mono font-medium tabular-nums text-ink">
+                        Planerische Anfangskapazität = ⌈{" "}
+                        {formatQuantityWithUnit(recommendedTechnicalSize, "kWh")} / 0,75 ⌉ ={" "}
+                        {formatQuantityWithUnit(recommendedPlanningSize, "kWh")}
+                      </p>
+                      <p className="text-xs italic leading-relaxed text-ink-muted">
+                        Die 75-%-Annahme ist keine Prognose für einen bestimmten
+                        Batteriespeicher und keine Herstellergarantie. Sie
+                        beeinflusst ausschließlich die planerische
+                        Kaufempfehlung. Die technische Simulation und sämtliche
+                        technischen Kennzahlen werden weiterhin mit der
+                        technischen Speichergrenze von {recommendedTechnicalSize}{" "}
+                        kWh berechnet.
+                      </p>
+                      {planningExceedsSimulatedRange && (
+                        <p className="rounded-sm border border-warning/40 bg-warning-soft px-4 py-3 text-sm leading-relaxed text-warning">
+                          Die planerische Anfangskapazität liegt außerhalb des
+                          simulierten Speicherbereichs von 5–30 kWh.
+                        </p>
+                      )}
+                      {hasActiveBackupReserve && (
+                        <>
+                          <p className="text-xs leading-relaxed text-ink-muted">
+                            Durch die aktivierte Notstromreserve steht ein Teil
+                            des Speichers im Alltag nicht zur Verfügung. Dadurch
+                            sinken Eigenverbrauch und Autarkie leicht.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-4 max-w-reading text-sm leading-relaxed text-ink-secondary">
+                      Der zusätzliche Eigenverbrauch nimmt mit wachsender
+                      Speichergröße deutlich ab. Ab einem bestimmten Punkt bringt
+                      mehr Speicher nur noch geringen Mehrwert.
+                    </div>
+                  )}
     </>
+  );
+
+  const overviewClosing = (
+    <div className="mt-6 max-w-reading space-y-2">
+      {recommendedTechnicalSize > 0 ? (
+        <p className="text-sm leading-relaxed text-ink-secondary">
+          Eigenverbrauch und Autarkie beziehen sich auf die technische
+          Speichergrenze
+          {hasActiveBackupReserve ? (
+            <>
+              {" "}
+              und berücksichtigen eine Notstromreserve von{" "}
+              {formatQuantityWithUnit(resolvedBackupReserveKwh, "kWh")}
+            </>
+          ) : null}
+          .
+        </p>
+      ) : null}
+      {calculationBasisNote}
+    </div>
   );
 
   const robustnessBlock = robustness ? (
@@ -1017,154 +1060,25 @@ export function SpeicherReportView({
   const assessmentBody = (
     <>
               {recommendedTechnicalSize > 0 ? (
-                <>
-                  <div className={REPORT_SPLIT}>
-                    <div className="min-w-0">
-                      {/* The result of the report, restated in one compact group. */}
-                      <div className="space-y-3">
-                        <p className={REPORT_CONCLUSION_BODY}>
-                          Die planerische Kaufempfehlung für Ihr Gebäude beträgt{" "}
-                          <strong className="font-semibold text-ink">
-                            {recommendedPlanningSize} kWh
-                          </strong>{" "}
-                          (planerische Anfangskapazität).
-                        </p>
-                        <p className={REPORT_CONCLUSION_BODY}>
-                          Die physikalische Simulation ermittelt eine technische
-                          Speichergrenze von{" "}
-                          <strong className="font-semibold text-ink">
-                            {recommendedTechnicalSize} kWh nutzbarer Kapazität
-                          </strong>
-                          .
-                        </p>
-                        <p className={REPORT_CONCLUSION_CONTEXT}>
-                          Die planerische Anfangskapazität von{" "}
-                          <strong className="font-semibold text-ink">
-                            {recommendedPlanningSize} kWh
-                          </strong>{" "}
-                          enthält zusätzlich eine pauschale Alterungsreserve
-                          (Planungsannahme: ca. 75&nbsp;% Restkapazität nach etwa
-                          10 Jahren).
-                        </p>
-                        {hasActiveBackupReserve && (
-                          <p className={REPORT_CONCLUSION_CONTEXT}>
-                            Die Berechnung berücksichtigt eine Notstromreserve von{" "}
-                            {formatQuantityWithUnit(resolvedBackupReserveKwh, "kWh")}.
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Caveat on the result above — ruled, not boxed. */}
-                      {planningExceedsSimulatedRange && (
-                        <p className="mt-5 border-l-2 border-warning pl-5 text-sm leading-relaxed text-warning">
-                          Die planerische Anfangskapazität liegt außerhalb des
-                          simulierten Speicherbereichs von 5–30 kWh.
-                        </p>
-                      )}
-
-                      {/* What the simulation adds, ending in the Plateau finding. */}
-                      <p className={`mt-8 ${REPORT_CONCLUSION_CONTEXT}`}>
-                        Gleichzeitig zeigt die Simulation:
-                      </p>
-                      <p className={`mt-1 ${REPORT_CONCLUSION_BODY}`}>
-                        Ab etwa{" "}
-                        <strong className="font-semibold text-ink">
-                          {recommendedTechnicalSize} kWh
-                        </strong>{" "}
-                        nimmt der zusätzliche Nutzen deutlich ab.
-                      </p>
-
-                      <div className="mt-5 border-l-2 border-accent pl-5">
-                        <p className="text-sm font-semibold text-accent-text">
-                          Plateau erreicht
-                        </p>
-                        <p className={`mt-1.5 ${REPORT_CONCLUSION_BODY}`}>
-                          Ab diesem Punkt bringt zusätzlicher Speicher nur noch
-                          sehr geringen Mehrwert.
-                        </p>
-                        <p className="mt-2 text-sm leading-relaxed text-ink-secondary">
-                          Die technische Speichergrenze liegt unmittelbar vor dem
-                          ersten weiteren Kapazitätsschritt, der den jährlichen
-                          Eigenverbrauch um weniger als 50&nbsp;kWh erhöht.
-                        </p>
-                      </div>
-
-                      {/* What that means in practice — run-in, not a pseudo-heading. */}
-                      <p className={`mt-8 ${REPORT_CONCLUSION_BODY}`}>
-                        <strong className="font-semibold">Das bedeutet:</strong>{" "}
-                        Ein größerer Speicher wäre technisch möglich, würde unter
-                        den heutigen Bedingungen jedoch nur einen geringen
-                        zusätzlichen Nutzen bringen.
-                      </p>
-                    </div>
-
-                    <dl className={`${REPORT_SPLIT_ASIDE} space-y-0`}>
-                      <div className={`${REPORT_DATA_ITEM} lg:border-t-0 lg:pt-0`}>
-                        <dt className={REPORT_DATA_LABEL}>
-                          Planerische Kaufempfehlung
-                        </dt>
-                        <dd
-                          className={`${REPORT_DATA_VALUE} font-semibold text-accent-text`}
-                        >
-                          {formatQuantityWithUnit(recommendedPlanningSize, "kWh")}
-                        </dd>
-                      </div>
-                      <div className={REPORT_DATA_ITEM}>
-                        <dt className={REPORT_DATA_LABEL}>
-                          Technische Speichergrenze
-                        </dt>
-                        <dd className={REPORT_DATA_VALUE}>
-                          {formatQuantityWithUnit(recommendedTechnicalSize, "kWh")}
-                        </dd>
-                      </div>
-                      <div className={REPORT_DATA_ITEM}>
-                        <dt className={REPORT_DATA_LABEL}>Plateau ab</dt>
-                        <dd className={REPORT_DATA_VALUE}>
-                          {formatQuantityWithUnit(recommendedTechnicalSize, "kWh")}
-                        </dd>
-                      </div>
-                      {hasActiveBackupReserve && (
-                        <div className={REPORT_DATA_ITEM}>
-                          <dt className={REPORT_DATA_LABEL}>Notstromreserve</dt>
-                          <dd className={REPORT_DATA_VALUE}>
-                            {formatQuantityWithUnit(resolvedBackupReserveKwh, "kWh")}
-                          </dd>
-                        </div>
-                      )}
-                    </dl>
-                  </div>
-
-                  <div className="mt-10 max-w-reading space-y-2.5 border-t border-line-soft pt-6">
-                    <p className={REPORT_NOTE}>
-                      Die technische Speichergrenze wird ausschließlich anhand
-                      der physikalischen Simulation berechnet.
-                    </p>
-                    <p className={REPORT_NOTE}>
-                      Die planerische Kaufempfehlung berücksichtigt zusätzlich
-                      eine einheitliche Alterungsreserve. Sie ist keine Prognose
-                      der tatsächlichen Batteriealterung und keine
-                      Herstellergarantie.
-                    </p>
-                    <p className={REPORT_NOTE}>
-                      Die Berechnung basiert auf einer Simulation in
-                      15-Minuten-Schritten ({formatQuantityDe(35040)} Zeitschritte pro Jahr). Die
-                      75-%-Planungsannahme
-                      beeinflusst die Simulation nicht, sondern ausschließlich
-                      die planerische Kaufempfehlung.
-                    </p>
-                    {hasActiveBackupReserve && (
-                      <>
-                        <p className={REPORT_NOTE}>
-                          Durch die aktivierte Notstromreserve steht ein Teil
-                          des Speichers im Alltag nicht zur Verfügung.
-                        </p>
-                        <p className={REPORT_NOTE}>
-                          Dadurch sinken Eigenverbrauch und Autarkie leicht.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </>
+                <div className="max-w-reading space-y-2.5">
+                  <p className={REPORT_NOTE}>
+                    Die technische Speichergrenze wird ausschließlich anhand
+                    der physikalischen Simulation berechnet.
+                  </p>
+                  <p className={REPORT_NOTE}>
+                    Die planerische Kaufempfehlung berücksichtigt zusätzlich
+                    eine einheitliche Alterungsreserve. Sie ist keine Prognose
+                    der tatsächlichen Batteriealterung und keine
+                    Herstellergarantie.
+                  </p>
+                  <p className={REPORT_NOTE}>
+                    Die Berechnung basiert auf einer Simulation in
+                    15-Minuten-Schritten ({formatQuantityDe(35040)} Zeitschritte pro Jahr). Die
+                    75-%-Planungsannahme
+                    beeinflusst die Simulation nicht, sondern ausschließlich
+                    die planerische Kaufempfehlung.
+                  </p>
+                </div>
               ) : (
                 <p className="max-w-reading text-sm leading-relaxed text-ink">
                   Unter den aktuellen Annahmen ist kein Batteriespeicher
@@ -1287,16 +1201,11 @@ export function SpeicherReportView({
       <WorkspaceChapter
         id={RESULT_SECTION_IDS.overview}
         eyebrow="Überblick"
-        title="Berechnung nach BDEW H25"
         first
       >
         {recommendationBody}
         <div className="mt-8">{comparisonInner}</div>
         {overviewClosing}
-        <div className={REPORT_SECTION}>
-          <h2 className={WORKSPACE_CHAPTER_TITLE}>Unsere Einschätzung</h2>
-          <div className="mt-6">{assessmentBody}</div>
-        </div>
       </WorkspaceChapter>
       {speicherGrenz ? (
         <WorkspaceChapter
@@ -1312,7 +1221,7 @@ export function SpeicherReportView({
           className="sg-result-anchor"
         />
       )}
-      <WorkspaceChapter id={RESULT_SECTION_IDS.profiles} eyebrow="Profile">
+      <WorkspaceChapter id={RESULT_SECTION_IDS.profiles} eyebrow="Robustheit">
         {robustnessBlock}
       </WorkspaceChapter>
       {speicherGrenz ? (
@@ -1352,7 +1261,7 @@ export function SpeicherReportView({
       {masthead}
       <section className={REPORT_SECTION}>
         <h2 className={`mb-6 ${REPORT_SECTION_HEADING}`}>
-          02 / Ergebnis · Berechnung nach BDEW H25
+          02 / Ergebnis
         </h2>
         {recommendationBody}
       </section>

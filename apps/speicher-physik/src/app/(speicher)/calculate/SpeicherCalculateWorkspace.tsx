@@ -163,7 +163,7 @@ export function SpeicherCalculateWorkspace({
       {pinForm ? (
         <button
           type="button"
-          className="sg-mobile-inputs mb-3 w-full border border-accent bg-accent-soft px-4 py-3 text-left font-semibold text-accent lg:hidden"
+          className="sg-mobile-inputs mb-3 inline-flex border border-line bg-transparent px-3 py-1.5 text-left text-sm font-medium text-ink-secondary lg:hidden"
           aria-controls="inputs-panel"
           aria-expanded={mobileFormOpen}
           onMouseDown={suppressPointerFocus}

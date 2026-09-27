@@ -25,13 +25,15 @@ export function CompletedCalculationRow({
   return (
     <div className="sg-completed-bar border-b border-line bg-accent-soft px-3 py-2">
       <p className="sg-completed-main text-sm text-ink">
-        <span
-          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] text-white"
-          aria-hidden
-        >
-          ✓
+        <span className="sg-completed-status inline-flex items-center gap-2">
+          <span
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] text-white"
+            aria-hidden
+          >
+            ✓
+          </span>
+          <span className="font-semibold">Berechnung abgeschlossen</span>
         </span>
-        <span className="font-semibold">Berechnung abgeschlossen</span>
         {durationLabel ? (
           <span className="font-mono text-xs tabular-nums text-ink-secondary">
             {durationLabel}

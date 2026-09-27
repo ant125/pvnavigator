@@ -98,6 +98,107 @@ export function wwRobustnessConclusion(counts: RobustnessSizeCounts): string {
   return WW_CONCLUSION_SENSITIVE;
 }
 
+/**
+ * Short label for an existing stability class. No new threshold.
+ * Wording follows the conclusions already used in the report.
+ */
+export function robustnessStabilityLabel(stability: SizeStability): string {
+  if (stability === "unchanged") return "Unverändert";
+  if (stability === "majority") return "Weitgehend stabil";
+  return "Stärker lastabhängig";
+}
+
+export const ROBUSTNESS_OVERVIEW_TITLE =
+  "Robustheit der technischen Speichergrenze";
+
+export const ROBUSTNESS_KPI_FOLLOW =
+  "Eigenverbrauch und Autarkie reagieren stärker auf das zeitliche Verbrauchsprofil als die empfohlene Speichergröße.";
+
+function roundedSizeSpan(min: number, max: number): { lo: number; hi: number } {
+  return { lo: Math.round(min), hi: Math.round(max) };
+}
+
+/** Sentence for the overview. The range stays inside the sentence, not as its own figure. */
+export function overviewSizeSpanSentence(
+  min: number,
+  max: number,
+  cohortSize: number,
+  profilePhrase: string
+): string {
+  const { lo, hi } = roundedSizeSpan(min, max);
+  if (lo === hi) {
+    return `Bei ${cohortSize} ${profilePhrase} liegt sie bei ${formatQuantityDe(lo)} kWh.`;
+  }
+  return `Bei ${cohortSize} ${profilePhrase} liegt sie zwischen ${formatQuantityDe(lo)} und ${formatQuantityDe(hi)} kWh.`;
+}
+
+export function householdOverviewSentence(input: {
+  cohortSize: number;
+  technicalSizeMinKwh: number;
+  technicalSizeMaxKwh: number;
+}): string {
+  return overviewSizeSpanSentence(
+    input.technicalSizeMinKwh,
+    input.technicalSizeMaxKwh,
+    input.cohortSize,
+    "realen Haushaltsprofilen"
+  );
+}
+
+export function wwOverviewSentence(input: {
+  cohortSize: number;
+  technicalSizeMinKwh: number;
+  technicalSizeMaxKwh: number;
+}): string {
+  return overviewSizeSpanSentence(
+    input.technicalSizeMinKwh,
+    input.technicalSizeMaxKwh,
+    input.cohortSize,
+    "realen Wasser/Wasser-Profilen"
+  );
+}
+
+/** Lead above the comparison table. Uses the existing min/max, not a new rating. */
+export function technicalSizeRangeLead(
+  min: number,
+  max: number,
+  group: "Haushaltsprofile" | "Wasser/Wasser-Profile"
+): string {
+  const { lo, hi } = roundedSizeSpan(min, max);
+  if (lo === hi) {
+    return `Die technische Speichergrenze bleibt über alle getesteten ${group} bei ${formatQuantityDe(lo)} kWh.`;
+  }
+  return `Die technische Speichergrenze bleibt über die getesteten ${group} zwischen ${formatQuantityDe(lo)} und ${formatQuantityDe(hi)} kWh.`;
+}
+
+/**
+ * The follow-up is the existing stable reading: size holds, other KPIs move.
+ * It is omitted when the existing class already says the size itself moves.
+ */
+export function robustnessKpiFollow(counts: RobustnessSizeCounts): string | null {
+  const stability = recommendationSizeStability(counts);
+  if (stability === "sensitive") return null;
+  return ROBUSTNESS_KPI_FOLLOW;
+}
+
+/** Secondary note. Restates the existing class and the count it is based on. */
+export function robustnessStabilityNote(
+  counts: RobustnessSizeCounts,
+  profileWord: "Profile" | "Wärmepumpenprofile"
+): string {
+  const stability = recommendationSizeStability(counts);
+  const label = robustnessStabilityLabel(stability);
+  const { cohortSize, sizeUnchangedCount } = counts;
+  const kept = `${sizeUnchangedCount} von ${cohortSize} ${profileWord} behalten die technische Speichergrenze der Hauptrechnung.`;
+  if (stability === "unchanged") {
+    return `Einordnung: ${label}. Alle ${cohortSize} ${profileWord} behalten die technische Speichergrenze der Hauptrechnung.`;
+  }
+  if (stability === "majority") {
+    return `Einordnung: ${label}. ${kept} Weitgehend stabil heißt: mehr als die Hälfte bleibt bei dieser Größe.`;
+  }
+  return `Einordnung: ${label}. ${kept} Stärker lastabhängig heißt: höchstens die Hälfte bleibt bei dieser Größe.`;
+}
+
 export function shouldShowWwRobustnessSection(
   wasserWasserRobustness: unknown
 ): boolean {

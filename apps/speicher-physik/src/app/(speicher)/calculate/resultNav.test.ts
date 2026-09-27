@@ -15,7 +15,7 @@ describe("resultNav", () => {
     expect(RESULT_NAV_ITEMS.map((item) => item.label)).toEqual([
       "Überblick",
       "Speichergröße",
-      "Profile",
+      "Robustheit",
       "Bilanz",
       "Quellen",
     ]);
@@ -82,7 +82,7 @@ describe("resultNav", () => {
     ).toBe(RESULT_SECTION_IDS.storageSize);
   });
 
-  it("clicking Profile immediately becomes active even if Überblick still wins the spy", () => {
+  it("clicking Robustheit immediately becomes active even if Überblick still wins the spy", () => {
     expect(
       applyPinnedNavSpy(
         RESULT_SECTION_IDS.profiles,

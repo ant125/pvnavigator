@@ -3,8 +3,12 @@
 import { useId, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Info } from "lucide-react";
-import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
+import {
+  sizeFrequency,
+  type WpuqRobustnessPayload,
+} from "@/lib/wpuqRobustnessStats";
 import type { WwRobustnessPayload } from "@/lib/wpuqWwRobustnessStats";
+import { formatQuantityDe } from "@/lib/formatQuantityDe";
 import {
   BDEW_STANDARDPROFIL_HINT,
   WW_HEAT_PUMP_DIFFER_EXPLANATION,
@@ -16,10 +20,11 @@ import {
   formatReportPct,
   formatReportRangeKwh,
   formatReportRangePct,
-  householdRobustnessConclusion,
   householdRobustnessExplanation,
+  robustnessKpiFollow,
+  robustnessStabilityNote,
   shouldShowWwRobustnessSection,
-  wwRobustnessConclusion,
+  technicalSizeRangeLead,
   wwRobustnessExplanation,
 } from "@/lib/robustnessReportCopy";
 import {
@@ -136,6 +141,52 @@ function RobustnessCompareTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+function countNoun(count: number, singular: string, plural: string): string {
+  return `${formatQuantityDe(count)} ${count === 1 ? singular : plural}`;
+}
+
+function SizeDistribution({
+  rows,
+  singular,
+  plural,
+}: {
+  rows: readonly { sizeKwh: number; count: number }[];
+  singular: string;
+  plural: string;
+}) {
+  const ordered = [...rows].sort((a, b) => a.sizeKwh - b.sizeKwh);
+  const max = Math.max(1, ...ordered.map((row) => row.count));
+
+  return (
+    <ul className="min-w-0 space-y-3">
+      {ordered.map((row) => {
+        const width = Math.max(8, Math.round((row.count / max) * 100));
+        return (
+          <li key={row.sizeKwh} className="min-w-0">
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="tabular-nums text-ink">
+                {formatQuantityDe(row.sizeKwh)} kWh
+              </span>
+              <span className="shrink-0 tabular-nums text-ink-secondary">
+                {countNoun(row.count, singular, plural)}
+              </span>
+            </div>
+            <div
+              className="mt-1.5 h-2 overflow-hidden rounded-sm bg-surface-muted"
+              aria-hidden
+            >
+              <div
+                className="h-full rounded-sm bg-accent"
+                style={{ width: `${width}%` }}
+              />
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -261,31 +312,31 @@ function HouseholdRobustnessBlock({
     typeof bdew.technicalSpeichergrenzeKwh === "number"
       ? bdew.technicalSpeichergrenzeKwh
       : robustness.bdewTechnicalSizeKwh;
+  const follow = robustnessKpiFollow(robustness);
 
   return (
     <section
       aria-labelledby="household-robustness-heading"
       className="mt-8 min-w-0 max-w-full border-t border-line pt-8 lg:mt-10 lg:pt-10"
     >
+      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-ink-muted">
+        Haushaltsprofile
+      </p>
       <h2
         id="household-robustness-heading"
-        className="relative min-w-0 max-w-reading text-lg font-semibold leading-snug text-ink"
+        className="mt-2 max-w-reading text-base font-semibold leading-snug text-ink"
       >
-        Was ändert sich, wenn Ihr Haushalt Strom anders verbraucht als das{" "}
-        <span className="whitespace-nowrap">
-          BDEW-Standardprofil
-          <InfoHint label="Was ist das BDEW-Standardprofil?">
-            {BDEW_STANDARDPROFIL_HINT}
-          </InfoHint>
-        </span>
-        ?
+        {technicalSizeRangeLead(
+          robustness.ranges.technicalSpeichergrenzeKwh.min,
+          robustness.ranges.technicalSpeichergrenzeKwh.max,
+          "Haushaltsprofile"
+        )}
       </h2>
-
-      <div className="mt-4 max-w-reading space-y-5 text-sm leading-relaxed text-ink-secondary">
-        {householdRobustnessExplanation(n).map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
-        ))}
-      </div>
+      {follow ? (
+        <p className="mt-2 max-w-reading text-sm leading-snug text-ink-secondary">
+          {follow}
+        </p>
+      ) : null}
 
       <RobustnessCompareTable
         caption={`Hauptrechnung BDEW H25 im Vergleich mit ${n} realen Haushaltsprofilen`}
@@ -319,9 +370,24 @@ function HouseholdRobustnessBlock({
         ]}
       />
 
-      <p className="mt-6 max-w-reading text-sm leading-relaxed text-ink">
-        {householdRobustnessConclusion(robustness)}
-      </p>
+      <div className="mt-8 max-w-reading space-y-4 text-sm leading-relaxed text-ink-secondary">
+        <h3 className="relative min-w-0 max-w-reading text-sm font-semibold leading-snug text-ink">
+          Was ändert sich, wenn Ihr Haushalt Strom anders verbraucht als das{" "}
+          <span className="whitespace-nowrap">
+            BDEW-Standardprofil
+            <InfoHint label="Was ist das BDEW-Standardprofil?">
+              {BDEW_STANDARDPROFIL_HINT}
+            </InfoHint>
+          </span>
+          ?
+        </h3>
+        {householdRobustnessExplanation(n).map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
+        <p className="text-xs leading-relaxed text-ink-muted">
+          {robustnessStabilityNote(robustness, "Profile")}
+        </p>
+      </div>
 
       <DetailsToggle
         open={showDetails}
@@ -329,22 +395,23 @@ function HouseholdRobustnessBlock({
         closedLabel="Details anzeigen"
         openLabel="Details ausblenden"
       >
-        <ul className="divide-y divide-line-soft border-y border-line-soft">
-          {robustness.sizeFrequency.map((row) => (
-            <li
-              key={row.sizeKwh}
-              className="flex items-baseline justify-between gap-4 py-2.5"
-            >
-              <span className="text-sm tabular-nums text-ink">
-                {row.sizeKwh} kWh
-              </span>
-              <span className="text-sm tabular-nums text-ink-secondary">
-                {row.householdCount}{" "}
-                {row.householdCount === 1 ? "Haushalt" : "Haushalte"}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <h3 className="text-sm font-semibold text-ink">
+          Verteilung der technischen Speichergrenze
+        </h3>
+        <div className="mt-4 min-w-0">
+          <SizeDistribution
+            singular="Haushalt"
+            plural="Haushalte"
+            rows={robustness.sizeFrequency.map((row) => ({
+              sizeKwh: row.sizeKwh,
+              count: row.householdCount,
+            }))}
+          />
+        </div>
+        <div className="my-6 border-t border-line" />
+        <h3 className="text-sm font-semibold text-ink">
+          Einzelergebnisse der {n} Haushaltsprofile
+        </h3>
         <div className={`mt-4 ${TABLE_SCROLL}`}>
           <table className="w-full min-w-[32rem] border-collapse text-sm">
             <caption className="sr-only">
@@ -415,25 +482,34 @@ function WwRobustnessBlock({
 }) {
   const [showDetails, setShowDetails] = useState(false);
   const n = ww.cohortSize;
+  const follow = robustnessKpiFollow(ww);
+  const distribution = sizeFrequency(
+    ww.profiles.map((profile) => profile.technicalSpeichergrenzeKwh)
+  );
 
   return (
     <section
       aria-labelledby="ww-robustness-heading"
       className="mt-8 min-w-0 max-w-full border-t border-line pt-8 lg:mt-10 lg:pt-10"
     >
+      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-ink-muted">
+        Wasser/Wasser-Wärmepumpenprofile
+      </p>
       <h2
         id="ww-robustness-heading"
-        className="max-w-reading text-lg font-semibold leading-snug text-ink"
+        className="mt-2 max-w-reading text-base font-semibold leading-snug text-ink"
       >
-        {WW_ROBUSTNESS_QUESTION}
+        {technicalSizeRangeLead(
+          ww.aggregates.technicalSpeichergrenzeKwh.min,
+          ww.aggregates.technicalSpeichergrenzeKwh.max,
+          "Wasser/Wasser-Profile"
+        )}
       </h2>
-
-      <div className="mt-4 max-w-reading space-y-5 text-sm leading-relaxed text-ink-secondary">
-        {wwRobustnessExplanation(n).map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
-        ))}
-        <p>{WW_HEAT_PUMP_DIFFER_EXPLANATION}</p>
-      </div>
+      {follow ? (
+        <p className="mt-2 max-w-reading text-sm leading-snug text-ink-secondary">
+          {follow}
+        </p>
+      ) : null}
 
       <RobustnessCompareTable
         caption={`Hauptrechnung Wasser/Wasser-Referenzprofil im Vergleich mit ${n} realen Wasser/Wasser-Profilen`}
@@ -471,9 +547,18 @@ function WwRobustnessBlock({
         ]}
       />
 
-      <p className="mt-6 max-w-reading text-sm leading-relaxed text-ink">
-        {wwRobustnessConclusion(ww)}
-      </p>
+      <div className="mt-8 max-w-reading space-y-4 text-sm leading-relaxed text-ink-secondary">
+        <h3 className="text-sm font-semibold leading-snug text-ink">
+          {WW_ROBUSTNESS_QUESTION}
+        </h3>
+        {wwRobustnessExplanation(n).map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
+        <p>{WW_HEAT_PUMP_DIFFER_EXPLANATION}</p>
+        <p className="text-xs leading-relaxed text-ink-muted">
+          {robustnessStabilityNote(ww, "Wärmepumpenprofile")}
+        </p>
+      </div>
 
       <DetailsToggle
         open={showDetails}
@@ -481,7 +566,24 @@ function WwRobustnessBlock({
         closedLabel="Details anzeigen"
         openLabel="Details ausblenden"
       >
-        <div className={TABLE_SCROLL}>
+        <h3 className="text-sm font-semibold text-ink">
+          Verteilung der technischen Speichergrenze
+        </h3>
+        <div className="mt-4 min-w-0">
+          <SizeDistribution
+            singular="Profil"
+            plural="Profile"
+            rows={distribution.map((row) => ({
+              sizeKwh: row.sizeKwh,
+              count: row.householdCount,
+            }))}
+          />
+        </div>
+        <div className="my-6 border-t border-line" />
+        <h3 className="text-sm font-semibold text-ink">
+          Einzelergebnisse der {n} Wasser/Wasser-Profile
+        </h3>
+        <div className={`mt-4 ${TABLE_SCROLL}`}>
           <table className="w-full min-w-[32rem] border-collapse text-sm">
             <caption className="sr-only">
               Einzelergebnisse der {n} gemessenen Wasser/Wasser-Profile
