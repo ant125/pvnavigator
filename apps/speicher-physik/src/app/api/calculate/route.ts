@@ -15,7 +15,7 @@ const UNAUTHENTICATED_MESSAGE =
 
 type StreamMessage =
   | { type: "progress"; event: CalculationProgressEvent }
-  | { type: "complete"; payload: unknown }
+  | { type: "complete"; payload: unknown; calculationId: string | null }
   | { type: "error"; message: string };
 
 export async function POST(request: Request): Promise<Response> {
@@ -77,12 +77,12 @@ export async function POST(request: Request): Promise<Response> {
           }).then((payload) => ({ input, payload }))
         )
         .then(async ({ input, payload }) => {
-          await persistCompletedCalculation({
+          const calculationId = await persistCompletedCalculation({
             userId: user.id,
             input,
             payload,
           });
-          send({ type: "complete", payload });
+          send({ type: "complete", payload, calculationId });
         })
         .catch((error: unknown) => {
           send({

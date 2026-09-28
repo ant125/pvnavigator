@@ -99,6 +99,9 @@ export default function SpeicherCalculatePage() {
   const [evResult, setEvResult] = useState<
     HouseholdCalculationPayload["ev"]
   >(null);
+  const [completedCalculationId, setCompletedCalculationId] = useState<
+    string | null
+  >(null);
   const [resultPresentation, setResultPresentation] = useState<{
     surfaces: ReturnType<typeof surfacesOrDefault>;
     annualConsumptionKwh: number | undefined;
@@ -246,6 +249,7 @@ export default function SpeicherCalculatePage() {
           setCalculationProgress((prev) => applyCalculationProgress(prev, event));
         }
       );
+      const completed = response.payload;
 
       const startedAt = calculationStartedAtRef.current ?? Date.now();
       const durationMs = Date.now() - startedAt;
@@ -254,17 +258,18 @@ export default function SpeicherCalculatePage() {
       setCalculationComplete(true);
       setCalculatedFingerprint(calculationInputFingerprint(formData));
 
-      setVerifiedResult(response.verifiedResult);
-      setSpeicherGrenz(response.speicherGrenz);
-      setRobustness(response.robustness);
-      setWasserWasserRobustness(response.wasserWasserRobustness);
-      setDisplayAddress(response.displayAddress);
+      setCompletedCalculationId(response.calculationId);
+      setVerifiedResult(completed.verifiedResult);
+      setSpeicherGrenz(completed.speicherGrenz);
+      setRobustness(completed.robustness);
+      setWasserWasserRobustness(completed.wasserWasserRobustness);
+      setDisplayAddress(completed.displayAddress);
       setHeatPumpCitation(
-        response.heatPump
-          ? { methodologySourceId: response.heatPump.methodologySourceId }
+        completed.heatPump
+          ? { methodologySourceId: completed.heatPump.methodologySourceId }
           : null
       );
-      setEvResult(response.ev);
+      setEvResult(completed.ev);
       setResultPresentation({
         surfaces: surfacesOrDefault(formData),
         annualConsumptionKwh: formData.annualConsumptionKwh,
@@ -315,6 +320,7 @@ export default function SpeicherCalculatePage() {
     setDisplayAddress(null);
     setHeatPumpCitation(null);
     setEvResult(null);
+    setCompletedCalculationId(null);
     setResultPresentation(null);
     setRunPreview(null);
     setRunSceneOpen(false);
@@ -373,17 +379,7 @@ export default function SpeicherCalculatePage() {
 
   const report =
     step === "results" && verifiedResult && resultPresentation ? (
-      <div
-        className={
-          editing
-            ? isStale
-              ? "pointer-events-none opacity-[0.72]"
-              : "opacity-80"
-            : ""
-        }
-        aria-hidden={isStale || undefined}
-      >
-        <SpeicherReportView
+      <SpeicherReportView
           mode="live"
           variant="workspace"
           verifiedResult={verifiedResult}
@@ -405,6 +401,15 @@ export default function SpeicherCalculatePage() {
           }}
           totalKwPConfigured={resultPresentation.totalKwPConfigured}
           calculationDurationMs={calculationDurationMs}
+          pdfCalculationId={completedCalculationId}
+          bodyClassName={
+            editing
+              ? isStale
+                ? "pointer-events-none opacity-[0.72]"
+                : "opacity-80"
+              : undefined
+          }
+          bodyHidden={isStale}
           anlageOpen={runSceneOpen}
           anlageScene={
             <SystemScene
@@ -415,7 +420,6 @@ export default function SpeicherCalculatePage() {
             />
           }
         />
-      </div>
     ) : null;
 
   let main: React.ReactNode;

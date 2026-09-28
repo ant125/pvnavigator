@@ -174,7 +174,7 @@ describe("buildSpeicherBenefitComparison", () => {
         averageSelfDischargeLossKwh: {},
         averageSelfConsumptionWithoutStorageKwh: 2520,
         averagePvYieldKwhAnnual: 8000,
-        batteryModelVersion: "test",
+        batteryModelVersion: "1.1.0",
       },
       annualConsumptionKwh: 5000,
       heatPumpEnabled: false,

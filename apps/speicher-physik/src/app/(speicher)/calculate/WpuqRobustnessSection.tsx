@@ -1,8 +1,7 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Info } from "lucide-react";
 import {
   sizeFrequency,
   type WpuqRobustnessPayload,
@@ -10,7 +9,7 @@ import {
 import type { WwRobustnessPayload } from "@/lib/wpuqWwRobustnessStats";
 import { formatQuantityDe } from "@/lib/formatQuantityDe";
 import {
-  BDEW_STANDARDPROFIL_HINT,
+  HOUSEHOLD_ROBUSTNESS_QUESTION,
   WW_HEAT_PUMP_DIFFER_EXPLANATION,
   WW_ROBUSTNESS_QUESTION,
   anonymizedProfileLabel,
@@ -47,36 +46,6 @@ type WpuqRobustnessSectionProps = {
 
 /** Local scroller for tables that are intentionally wider than a phone. */
 const TABLE_SCROLL = "sg-table-scroll min-w-0 max-w-full overflow-x-auto";
-
-function InfoHint({
-  label,
-  children,
-}: {
-  label: string;
-  children: string;
-}) {
-  const tooltipId = useId();
-
-  return (
-    <span className="group ml-1 inline-flex align-middle">
-      <button
-        type="button"
-        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-ink-muted/80 transition-colors hover:text-ink-secondary focus-visible:text-ink-secondary"
-        aria-label={label}
-        aria-describedby={tooltipId}
-      >
-        <Info className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-      </button>
-      <span
-        id={tooltipId}
-        role="tooltip"
-        className="pointer-events-none absolute left-0 right-0 top-full z-20 mt-2 hidden max-w-full whitespace-normal rounded-md border border-tooltip-border bg-tooltip-bg px-3 py-2 text-left text-xs font-normal leading-relaxed text-tooltip-ink shadow-sm group-hover:block group-focus-within:block sm:right-auto sm:w-72 sm:max-w-72"
-      >
-        {children}
-      </span>
-    </span>
-  );
-}
 
 type CompareRow = {
   label: string;
@@ -371,15 +340,8 @@ function HouseholdRobustnessBlock({
       />
 
       <div className="mt-8 max-w-reading space-y-4 text-sm leading-relaxed text-ink-secondary">
-        <h3 className="relative min-w-0 max-w-reading text-sm font-semibold leading-snug text-ink">
-          Was ändert sich, wenn Ihr Haushalt Strom anders verbraucht als das{" "}
-          <span className="whitespace-nowrap">
-            BDEW-Standardprofil
-            <InfoHint label="Was ist das BDEW-Standardprofil?">
-              {BDEW_STANDARDPROFIL_HINT}
-            </InfoHint>
-          </span>
-          ?
+        <h3 className="text-sm font-semibold leading-snug text-ink">
+          {HOUSEHOLD_ROBUSTNESS_QUESTION}
         </h3>
         {householdRobustnessExplanation(n).map((paragraph) => (
           <p key={paragraph}>{paragraph}</p>

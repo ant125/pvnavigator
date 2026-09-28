@@ -177,6 +177,11 @@ describe("SpeicherReportView workspace layout", () => {
 
     const overviewHtml = html.slice(overview, storage);
     const storageHtml = html.slice(storage, profiles);
+    expect(overviewHtml).toContain("sg-result-pair");
+    expect(overviewHtml).toContain("sg-result-value-technical");
+    expect(overviewHtml).toContain("sg-result-value-planning");
+    expect(overviewHtml).toContain("sg-result-planning");
+    expect(overviewHtml).not.toContain("justify-between gap-4");
     expect(overviewHtml).toContain("Technische Speichergrenze");
     expect(overviewHtml).toContain("Planerische Anfangskapazität");
     expect(overviewHtml).toContain(
@@ -236,6 +241,10 @@ describe("SpeicherReportView workspace layout", () => {
     expect(html).toContain("text-[11px]");
     expect(html).toContain("tracking-[0.14em]");
     expect(html).not.toContain('id="report-quellen-heading"');
+    expect(indexOf(html, "Quellen &amp; wissenschaftliche Grundlagen")).toBeLessThan(
+      indexOf(html, "PDF herunterladen"),
+    );
+    expect(indexOf(html, "Hinweis:")).toBeLessThan(indexOf(html, "PDF herunterladen"));
   });
 });
 
@@ -275,6 +284,10 @@ describe("SpeicherReportView saved report variant", () => {
     expect(html).not.toContain(`id="${RESULT_SECTION_IDS.sources}"`);
     expect(html).toContain('id="report-quellen-heading"');
     expect(html).toContain("Quellen &amp; wissenschaftliche Grundlagen");
+    expect(indexOf(html, "Hinweis:")).toBeLessThan(indexOf(html, "PDF herunterladen"));
+    expect(indexOf(html, "PDF herunterladen")).toBeLessThan(
+      indexOf(html, "Neue Berechnung"),
+    );
 
     expect(indexOf(html, "03 / Ihre Eingabedaten")).toBeLessThan(
       indexOf(html, "04 / Technische Kennzahlen")

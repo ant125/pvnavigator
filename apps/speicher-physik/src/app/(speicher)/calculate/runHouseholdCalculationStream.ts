@@ -3,7 +3,11 @@ import type { CalculationProgressEvent } from "@/lib/calculationProgress";
 
 type StreamMessage =
   | { type: "progress"; event: CalculationProgressEvent }
-  | { type: "complete"; payload: HouseholdCalculationPayload }
+  | {
+      type: "complete";
+      payload: HouseholdCalculationPayload;
+      calculationId?: string | null;
+    }
   | { type: "error"; message: string };
 
 function parseSseChunk(chunk: string): StreamMessage[] {
@@ -31,7 +35,10 @@ function parseSseChunk(chunk: string): StreamMessage[] {
 export async function runHouseholdCalculationStream(
   body: unknown,
   onProgress: (event: CalculationProgressEvent) => void
-): Promise<HouseholdCalculationPayload> {
+): Promise<{
+  payload: HouseholdCalculationPayload;
+  calculationId: string | null;
+}> {
   const response = await fetch("/api/calculate", {
     method: "POST",
     headers: {
@@ -57,6 +64,7 @@ export async function runHouseholdCalculationStream(
   const decoder = new TextDecoder();
   let buffer = "";
   let payload: HouseholdCalculationPayload | null = null;
+  let calculationId: string | null = null;
   let streamError: string | null = null;
 
   while (true) {
@@ -71,6 +79,8 @@ export async function runHouseholdCalculationStream(
           onProgress(message.event);
         } else if (message.type === "complete") {
           payload = message.payload;
+          calculationId =
+            typeof message.calculationId === "string" ? message.calculationId : null;
         } else if (message.type === "error") {
           streamError = message.message;
         }
@@ -81,8 +91,11 @@ export async function runHouseholdCalculationStream(
   if (buffer.trim()) {
     for (const message of parseSseChunk(`${buffer}\n\n`)) {
       if (message.type === "progress") onProgress(message.event);
-      else if (message.type === "complete") payload = message.payload;
-      else if (message.type === "error") streamError = message.message;
+      else if (message.type === "complete") {
+        payload = message.payload;
+        calculationId =
+          typeof message.calculationId === "string" ? message.calculationId : null;
+      } else if (message.type === "error") streamError = message.message;
     }
   }
 
@@ -94,5 +107,5 @@ export async function runHouseholdCalculationStream(
       "Die Berechnung ist fehlgeschlagen. Bitte versuchen Sie es erneut."
     );
   }
-  return payload;
+  return { payload, calculationId };
 }

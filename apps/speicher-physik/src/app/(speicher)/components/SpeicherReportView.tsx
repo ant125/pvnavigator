@@ -37,6 +37,7 @@ import {
   householdOverviewSentence,
   wwOverviewSentence,
 } from "@/lib/robustnessReportCopy";
+import { PdfDownloadButton } from "./PdfDownloadButton";
 import type { FrozenSpeicherPresentation } from "@/lib/persistCompletedCalculation";
 import { SpeicherBenefitComparison } from "./SpeicherBenefitComparison";
 
@@ -213,6 +214,13 @@ export type SpeicherReportViewProps = {
   calculationDurationMs?: number | null;
   savedAt?: string | null;
   batteryModelVersion?: string | null;
+  pdfCalculationId?: string | null;
+  /**
+   * Live /calculate dims the finished report while inputs change. Applied to
+   * the report body only, so the PDF action under the notes stays usable.
+   */
+  bodyClassName?: string;
+  bodyHidden?: boolean;
   mastheadRef?: RefObject<HTMLDivElement | null>;
   variant?: "page" | "workspace";
   /**
@@ -239,6 +247,9 @@ export function SpeicherReportView({
   calculationDurationMs = null,
   savedAt = null,
   batteryModelVersion = null,
+  pdfCalculationId = null,
+  bodyClassName,
+  bodyHidden = false,
   mastheadRef,
   variant = "page",
   anlageScene = null,
@@ -387,33 +398,39 @@ export function SpeicherReportView({
   const recommendationBody = (
     <>
               {recommendedTechnicalSize > 0 ? (
-                <div className="max-w-reading">
-                  <p className={`${REPORT_SECTION_TITLE} sg-kpi-name`}>
-                    Technische Speichergrenze
-                  </p>
-                  <p className="sg-kpi-value mt-2 whitespace-nowrap font-mono text-4xl font-semibold tabular-nums tracking-tight text-ink">
-                    {formatQuantityDe(recommendedTechnicalSize)}
-                    {"\u00A0"}
-                    <span className="text-lg font-medium">kWh</span>
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-ink-secondary">
-                    Nutzbare Kapazität heute.
-                  </p>
-
-                  <div className="mt-5 border-t border-line-soft pt-4">
-                    <div className="flex items-baseline justify-between gap-4">
-                      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-ink-muted">
-                        Planerische Anfangskapazität
+                <div className="sg-result-pair max-w-reading">
+                  <div className="sg-result-pair-grid">
+                    <div className="sg-result-col">
+                      <p className="sg-result-figure">
+                        <span className="sg-result-value sg-result-value-technical">
+                          {formatQuantityDe(recommendedTechnicalSize)}
+                        </span>
+                        <span className="sg-result-unit sg-result-unit-technical">
+                          kWh
+                        </span>
                       </p>
-                      <p className="shrink-0 whitespace-nowrap font-sans text-xl font-medium tabular-nums text-ink-secondary">
-                        {formatQuantityDe(recommendedPlanningSize)}
-                        {"\u00A0"}
-                        <span className="text-sm font-medium">kWh</span>
+                      <p className="sg-result-title">Technische Speichergrenze</p>
+                      <p className="sg-result-caption">
+                        Nutzbare Kapazität heute.
                       </p>
                     </div>
-                    <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
-                      Für die Kaufplanung bei angenommenen 75&nbsp;% Restkapazität
-                    </p>
+                    <div className="sg-result-col sg-result-planning">
+                      <p className="sg-result-figure">
+                        <span className="sg-result-value sg-result-value-planning">
+                          {formatQuantityDe(recommendedPlanningSize)}
+                        </span>
+                        <span className="sg-result-unit sg-result-unit-planning">
+                          kWh
+                        </span>
+                      </p>
+                      <p className="sg-result-title">
+                        Planerische Anfangskapazität
+                      </p>
+                      <p className="sg-result-caption">
+                        Für die Kaufplanung bei angenommenen 75&nbsp;%
+                        Restkapazität
+                      </p>
+                    </div>
                   </div>
 
                   {householdSummary ? (
@@ -1307,7 +1324,12 @@ export function SpeicherReportView({
   return (
         <div className={variant === "workspace" ? "min-w-0 w-full" : "mx-auto min-w-0 w-full max-w-frame px-4 sm:px-6 lg:px-8"}>
           <div className={variant === "workspace" ? REPORT_SHEET_WORKSPACE : REPORT_SHEET}>
-            {chapters}
+            <div className={bodyClassName} aria-hidden={bodyHidden || undefined}>
+              {chapters}
+            </div>
+            <div className="mt-8">
+              <PdfDownloadButton calculationId={pdfCalculationId} />
+            </div>
           </div>
           {mode === "historical" ? (
             <div className="mx-auto mt-8 flex min-w-0 w-full max-w-sheet flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">

@@ -11,9 +11,14 @@ const nextConfig: NextConfig = {
     "@heatpump-profile/loader",
     "@ev-profile/loader",
   ],
+  serverExternalPackages: ["@react-pdf/renderer", "fontkit"],
   outputFileTracingIncludes: {
     "/calculate": ["./data/wpuq/**/*"],
     "/api/calculate": ["./data/wpuq/**/*"],
+    "/api/calculations/[id]/pdf": [
+      "./src/pdf/assets/**/*",
+      "./public/system-scene/base-house-no-label.png",
+    ],
     "/methodik/[slug]": ["../../docs/public/methodik/examples/**/*"],
     "/methodik/examples/[file]": ["../../docs/public/methodik/examples/**/*"],
   },

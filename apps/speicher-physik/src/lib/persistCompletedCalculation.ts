@@ -119,16 +119,23 @@ export async function persistCompletedCalculation(args: {
   userId: string;
   input: HouseholdCalculationInput;
   payload: HouseholdCalculationPayload;
-}): Promise<void> {
+}): Promise<string | null> {
   try {
     const { createServerSupabaseClient } = await import("@/lib/supabase/server");
     const supabase = await createServerSupabaseClient();
     const row = mapCompletedCalculation(args);
-    const { error } = await supabase.from("calculations").insert(row);
-    if (error) {
+    const { data, error } = await supabase
+      .from("calculations")
+      .insert(row)
+      .select("id")
+      .single();
+    if (error || !data || typeof data.id !== "string") {
       console.error("Failed to persist completed calculation", error);
+      return null;
     }
+    return data.id;
   } catch (error) {
     console.error("Failed to persist completed calculation", error);
+    return null;
   }
 }

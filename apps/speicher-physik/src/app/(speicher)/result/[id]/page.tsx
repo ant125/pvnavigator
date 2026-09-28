@@ -142,6 +142,7 @@ export default async function HistoricalSpeicherResultPage({
         presentationOverride={report.presentationOverride}
         savedAt={report.createdAt}
         batteryModelVersion={report.batteryModelVersion}
+        pdfCalculationId={report.id}
       />
     </div>
   );

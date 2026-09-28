@@ -93,20 +93,22 @@ function renderSection(includeWw = false) {
 }
 
 describe("WpuqRobustnessSection mobile overflow containment", () => {
-  it("keeps the idle BDEW tooltip out of document overflow", () => {
+  it("keeps the household question as plain text without the BDEW hint", () => {
     const html = renderSection();
-    const tooltip = html.match(/role="tooltip"[^>]*>/)?.[0];
+    const heading = html.slice(
+      html.indexOf("Was ändert sich, wenn Ihr Haushalt"),
+      html.indexOf("Die Hauptrechnung verwendet das BDEW-H25-Standardprofil"),
+    );
 
-    expect(tooltip).toBeDefined();
-    expect(tooltip).toContain("hidden");
-    expect(tooltip).toContain("max-w-full");
-    expect(tooltip).toContain("whitespace-normal");
-    expect(tooltip).toContain("left-0");
-    expect(tooltip).toContain("right-0");
-    expect(tooltip).not.toContain("invisible");
-    expect(tooltip).not.toContain("opacity-0");
-    expect(tooltip).not.toContain("100vw");
-    expect(html).toContain("relative min-w-0 max-w-reading");
+    expect(heading).toContain("BDEW-Standardprofil?");
+    expect(heading).not.toContain("<button");
+    expect(heading).not.toContain("role=\"tooltip\"");
+    expect(heading).not.toContain("title=");
+    expect(heading).not.toContain("Was ist das BDEW-Standardprofil?");
+    expect(html).not.toContain("standardisiertes Haushaltslastprofil");
+    expect(html).toContain(
+      "Die Hauptrechnung verwendet das BDEW-H25-Standardprofil",
+    );
   });
 
   it("leads with the conclusion, then the table, then the method", () => {

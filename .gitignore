@@ -6,6 +6,9 @@
 
 # Local design handoff (preview ZIP / designer drop, not app source)
 apps/speicher-physik/design-handoff/
+
+# Local PDF sample: real customer snapshot, not a product export
+apps/speicher-physik/.pdf-sample/
 /system-scene-chatgpt-handoff.zip
 /.pnp
 .pnp.*
