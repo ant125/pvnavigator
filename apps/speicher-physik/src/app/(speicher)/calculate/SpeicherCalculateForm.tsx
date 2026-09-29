@@ -43,7 +43,7 @@ import {
   FORM_FIELD,
   FORM_SUBMIT_ZONE,
   fieldInputClassName,
-  NUMBER_INPUT_NO_SPIN,
+  quantityInputProps,
   UNIT_FIELD_INPUT_CLASS,
   UNIT_FIELD_SUFFIX_CLASS,
   suppressPointerFocus,
@@ -433,9 +433,7 @@ export function SpeicherCalculateForm({
                 <div className={unitFieldControlClassName(false)}>
                   <input
                     id={kwpId}
-                    type="text"
-                    inputMode="decimal"
-                    autoComplete="off"
+                    {...quantityInputProps("decimal")}
                     value={kwpInputStrings[planeIndex] ?? ""}
                     onChange={(e) => {
                       const v = e.target.value;
@@ -532,9 +530,7 @@ export function SpeicherCalculateForm({
                   </label>
                   <input
                     id={`exact-azimut-${planeIndex}`}
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
+                    {...quantityInputProps("numeric")}
                     value={azimuthInputStrings[planeIndex] ?? ""}
                     onChange={(e) => {
                       const raw = e.target.value;
@@ -571,9 +567,7 @@ export function SpeicherCalculateForm({
                   </label>
                   <input
                     id={`exact-neigung-${planeIndex}`}
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
+                    {...quantityInputProps("numeric")}
                     value={tiltInputStrings[planeIndex] ?? ""}
                     onChange={(e) => {
                       const raw = e.target.value;
@@ -632,12 +626,9 @@ export function SpeicherCalculateForm({
                 ref={fieldInputRefs.annualConsumptionKwh}
                 id="annualConsumptionKwh"
                 name="annualConsumptionKwh"
-                type="number"
-                inputMode="numeric"
-                autoComplete="off"
+                {...quantityInputProps("numeric")}
                 autoCorrect="off"
                 spellCheck={false}
-                step={1}
                 min={ANNUAL_CONSUMPTION_KWH_MIN}
                 max={ANNUAL_CONSUMPTION_KWH_MAX}
                 value={
@@ -663,7 +654,7 @@ export function SpeicherCalculateForm({
                     ? "annualConsumptionKwh-unit annualConsumptionKwh-error"
                     : "annualConsumptionKwh-unit"
                 }
-                className={`${UNIT_FIELD_INPUT_CLASS} ${NUMBER_INPUT_NO_SPIN}`}
+                className={UNIT_FIELD_INPUT_CLASS}
                 placeholder="z.B. 4500"
               />
               <span

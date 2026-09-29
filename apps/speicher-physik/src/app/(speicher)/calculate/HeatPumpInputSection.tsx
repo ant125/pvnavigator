@@ -11,7 +11,7 @@ import {
   FORM_HELP,
   FORM_LABEL,
   FORM_RADIO_LABEL,
-  NUMBER_INPUT_NO_SPIN,
+  quantityInputProps,
   UNIT_FIELD_INPUT_CLASS,
   UNIT_FIELD_SUFFIX_CLASS,
   suppressPointerFocus,
@@ -268,7 +268,7 @@ export function HeatPumpInputSection({
         >
           <input
             id="heatPumpConsumptionKwh"
-            type="number"
+            {...quantityInputProps("numeric")}
             name="heatPumpConsumptionKwh"
             min="1"
             value={formData.heatPumpConsumptionKwh ?? ""}
@@ -288,7 +288,7 @@ export function HeatPumpInputSection({
                 ? `${consumptionUnitId} heatPumpConsumptionKwh-error ${consumptionHelpId}`
                 : `${consumptionUnitId} ${consumptionHelpId}`
             }
-            className={`${UNIT_FIELD_INPUT_CLASS} ${NUMBER_INPUT_NO_SPIN}`}
+            className={UNIT_FIELD_INPUT_CLASS}
             placeholder={HEAT_PUMP_FORM_COPY.consumptionPlaceholder}
           />
           <span id={consumptionUnitId} className={UNIT_FIELD_SUFFIX_CLASS}>

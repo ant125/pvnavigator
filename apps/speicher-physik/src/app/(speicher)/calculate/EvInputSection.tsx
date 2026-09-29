@@ -22,6 +22,7 @@ import {
   FORM_HELP,
   FORM_LABEL,
   FORM_RADIO_LABEL,
+  quantityInputProps,
   UNIT_FIELD_INPUT_CLASS,
   UNIT_FIELD_SUFFIX_CLASS,
   suppressPointerFocus,
@@ -110,9 +111,7 @@ function UnitField({
       <div className={unitFieldControlClassName(!!error)}>
         <input
           id={id}
-          type="text"
-          inputMode={inputMode}
-          autoComplete="off"
+          {...quantityInputProps(inputMode)}
           value={raw}
           onChange={(e) => {
             const next = e.target.value;

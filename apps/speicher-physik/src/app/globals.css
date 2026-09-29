@@ -329,20 +329,6 @@ summary:focus:not(:focus-visible),
   color-scheme: light;
 }
 
-/*
-  Hide native stepper arrows on large annual kWh number fields.
-  Keeps type="number" / keyboard entry; ±1 is not a useful control there.
-*/
-.sg-number-no-spin {
-  appearance: textfield;
-}
-
-.sg-number-no-spin::-webkit-inner-spin-button,
-.sg-number-no-spin::-webkit-outer-spin-button {
-  appearance: none;
-  margin: 0;
-}
-
 .sg-ev-time:focus-visible {
   outline: none;
   background: color-mix(in srgb, var(--color-accent-soft) 55%, transparent);

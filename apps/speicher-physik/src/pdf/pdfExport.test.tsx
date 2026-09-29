@@ -219,6 +219,9 @@ describe("buildSpeicherPdfModel", () => {
     expect(model.chart.points.find((point) => point.size === 6)?.eigenverbrauch).toBe(
       2200,
     );
+    expect(model.chart.markerCaption).toMatch(/Technische Speichergrenze · \d/);
+    expect(model.chart.afterBoundary).toBeNull();
+    expect(model.chart.lead).toContain("nur noch gering zu");
     expect(model.balance.rowsLeft.find((row) => row.label === "Jahresertrag PV")?.value).toContain(
       "9",
     );
@@ -273,6 +276,35 @@ describe("buildSpeicherPdfModel", () => {
     expect(model.scene.ev).toBe(true);
     expect(model.scene.backup).toBe(true);
     expect(model.scene.src).toContain("base-house-no-label.png");
+  });
+
+  it("quotes the stored gain past the boundary and keeps the curve", () => {
+    const row = historyRow();
+    const snapshot = row.result_snapshot as Record<string, unknown>;
+    const speicherGrenz = {
+      ...(snapshot.speicherGrenz as Record<string, unknown>),
+    };
+    speicherGrenz.average = { 5: 2100, 6: 2200.4, 7: 2230.9 };
+    snapshot.speicherGrenz = speicherGrenz;
+    snapshot.presentation = {
+      recommendedTechnicalSize: 6,
+      recommendedPlanningSize: 8,
+    };
+
+    const model = buildSpeicherPdfModel(row);
+    expect(model.chart.points.map((point) => point.eigenverbrauch)).toEqual([
+      2100, 2200.4, 2230.9,
+    ]);
+    expect(model.chart.yMin).toBeLessThan(2100);
+    expect(model.chart.yMax).toBeGreaterThan(2230.9);
+    expect(model.chart.markerCaption).toBe(
+      "Technische Speichergrenze · 6\u00A0kWh",
+    );
+    expect(model.chart.afterBoundary).toBe(
+      "Von 6 auf 7\u00A0kWh: zusätzlich 31\u00A0kWh Solarstrom pro Jahr selbst genutzt.",
+    );
+    expect(model.chart.lead).toContain("nur noch gering zu");
+    expect(model.chart.lead).not.toContain("Optimum");
   });
 
   it("does not invent missing optional fields or loss components", () => {

@@ -17,6 +17,11 @@ import {
   View,
 } from "@react-pdf/renderer";
 
+import {
+  boundaryLabelLeft,
+  placeBoundaryLabel,
+} from "@/lib/speicherChartCaption";
+
 import { pdfAsset } from "./pdfAssets";
 
 // Inside <Svg>, react-pdf renders <Text> as SVG text with x/y/transform.
@@ -720,6 +725,8 @@ export type PdfModel = {
     yTicks: { value: number; label: string }[];
     markerSize: number;
     markerIndex: number;
+    markerCaption: string | null;
+    afterBoundary: string | null;
     markerAnchor: "start" | "end" | "middle";
     lead: string;
     ageing: string;
@@ -976,15 +983,25 @@ function Formula({ chart }: { chart: PdfModel["chart"] }) {
   );
 }
 
+/**
+ * Plot band only. Top and bottom chrome stay 22pt and 44pt, so tick labels
+ * and the boundary caption keep their size and clearance.
+ * 122pt is 10% under the previous 136pt plot.
+ */
+const CHART_PLOT_TOP = 22;
+const CHART_PLOT_BOTTOM = 44;
+const CHART_PLOT_H = 122;
+const CHART_SVG_H = CHART_PLOT_TOP + CHART_PLOT_H + CHART_PLOT_BOTTOM;
+const CHART_LABEL_FONT = 8;
+
 function Chart({ chart }: { chart: PdfModel["chart"] }) {
   const width = CONTENT_W;
-  const height = 268;
+  const height = CHART_SVG_H;
   const left = 64;
   const right = 8;
-  const top = 22;
-  const bottom = 44;
+  const top = CHART_PLOT_TOP;
   const plotW = width - left - right;
-  const plotH = height - top - bottom;
+  const plotH = CHART_PLOT_H;
   const xOf = (index: number) =>
     left + (chart.points.length === 1 ? plotW / 2 : (index / (chart.points.length - 1)) * plotW);
   const yOf = (value: number) => {
@@ -995,6 +1012,23 @@ function Chart({ chart }: { chart: PdfModel["chart"] }) {
     .map((point, index) => `${xOf(index)},${yOf(point.eigenverbrauch)}`)
     .join(" ");
   const markerX = chart.markerIndex >= 0 ? xOf(chart.markerIndex) : null;
+  const markerCaption = markerX !== null ? chart.markerCaption : null;
+  const markerLabelWidth = markerCaption
+    ? textWidth(interRegular, t(markerCaption), CHART_LABEL_FONT)
+    : 0;
+  const markerLabelLeft =
+    markerX !== null && markerCaption
+      ? boundaryLabelLeft(
+          placeBoundaryLabel({
+            markerX,
+            labelWidth: markerLabelWidth,
+            boundsLeft: left,
+            boundsRight: width - right,
+            gap: 4,
+          }),
+          markerLabelWidth,
+        )
+      : null;
 
   return (
     <View wrap={false} style={{ position: "relative" }}>
@@ -1096,19 +1130,19 @@ function Chart({ chart }: { chart: PdfModel["chart"] }) {
         >
           {chart.xAxisLabel}
         </Text>
-        {markerX !== null ? (
+        {markerLabelLeft !== null && markerCaption ? (
           <Text
             style={{
               position: "absolute",
-              left: Math.min(Math.max(markerX + 8, left), width - 132),
+              left: markerLabelLeft,
               top: 2,
-              width: 128,
+              width: markerLabelWidth + 2,
               fontFamily: "Inter",
-              fontSize: 8,
+              fontSize: CHART_LABEL_FONT,
               color: chartMarker,
             }}
           >
-            Technische Speichergrenze
+            {t(markerCaption)}
           </Text>
         ) : null}
       </View>
@@ -1177,7 +1211,7 @@ const INPUT_ROW_PADDING = 3.5 * 2 + 0.5; // paddingVertical ×2 + border
 const HEADING_H = 8 * 1.4 + 4 + 15 * 1.2 + SP_AFTER_H2; // eyebrow + h2
 const SECTION_TOP_H = SP_SECTION + SP_SECTION_INNER + 0.8; // rule block
 // Heading + chart + short conclusion (kept together as one block).
-const CHART_BLOCK_H = SECTION_TOP_H + HEADING_H + 268 + SP_BLOCK + 2 * 10.5 * 1.4;
+const CHART_BLOCK_H = SECTION_TOP_H + HEADING_H + CHART_SVG_H + SP_BLOCK + 4 * 10.5 * 1.4;
 
 function inputRowHeight(row: InputRow, columnWidth: number): number {
   if (row.label === "Adresse") {
@@ -1587,6 +1621,9 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
           <SectionHeading eyebrow="Speichergröße" title="Eigenverbrauch vs Speichergröße" />
           <View style={styles.blocks}>
             <Chart chart={model.chart} />
+            {model.chart.afterBoundary ? (
+              <Text style={styles.body}>{t(model.chart.afterBoundary)}</Text>
+            ) : null}
             <Text style={styles.body}>{t(model.chart.lead)}</Text>
           </View>
         </View>

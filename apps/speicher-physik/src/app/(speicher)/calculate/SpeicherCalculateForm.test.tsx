@@ -9,6 +9,7 @@ import {
   buildTiltDropdownOptions,
   DEFAULT_SURFACE,
 } from "./calculateFormModel";
+import { quantityInputProps } from "./formStyles";
 import {
   exactAnglesForcedOpen,
   FOCUS_FIELD_ORDER,
@@ -287,8 +288,10 @@ describe("SpeicherCalculateForm C3+C4", () => {
     expect(html).toContain("value=\"4500\"");
     expect(html).toContain(`min="${500}"`);
     expect(html).toContain(`max="${50000}"`);
-    expect(html).toContain('type="number"');
-    expect(html).toContain("sg-number-no-spin");
+    expect(html).toContain('id="annualConsumptionKwh"');
+    expect(html).toContain('inputMode="numeric"');
+    expect(html).not.toContain('type="number"');
+    expect(html).not.toContain("sg-number-no-spin");
   });
 
   it("shows Hausverbrauch errors inline only when the field is invalid", () => {
@@ -464,5 +467,79 @@ describe("SpeicherCalculateForm C3+C4", () => {
     expect(evChunk).not.toContain("<select");
     expect(evChunk).toContain("Laden am Arbeitsplatz");
     expect(evChunk).not.toContain("Für eine realistische Berücksichtigung Ihres Elektroautos");
+  });
+});
+
+function inputTags(html: string): string[] {
+  return html.match(/<input\b[^>]*>/g) ?? [];
+}
+
+function inputAttr(tag: string, name: string): string | undefined {
+  return tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
+}
+
+describe("quantity fields ignore wheel and trackpad scroll", () => {
+  /*
+    A focused input type="number" steps its value on wheel and trackpad
+    scroll in Chromium, Firefox, and WebKit. jsdom does not implement that
+    user-agent behavior, so a synthetic wheel event cannot catch a
+    regression. The guard is the rendered control.
+  */
+  it("renders every free-entry quantity as text with a mobile keyboard mode", () => {
+    expect(quantityInputProps("numeric")).toEqual({
+      type: "text",
+      inputMode: "numeric",
+      autoComplete: "off",
+    });
+    expect(quantityInputProps("decimal").type).toBe("text");
+    expect(quantityInputProps("decimal").inputMode).toBe("decimal");
+
+    const html = renderForm({
+      surfaces: [{ systemSizeKwP: 10.5, tiltDeg: 33, azimuthDeg: 203 }],
+      formOverrides: {
+        heatPumpEnabled: true,
+        heatPumpConsumptionKwh: 5000,
+        evEnabled: true,
+        evWorkplaceEnabled: true,
+        backupReserveKwh: 2,
+      },
+    });
+    const inputs = inputTags(html);
+    expect(inputs.some((tag) => inputAttr(tag, "type") === "number")).toBe(
+      false
+    );
+    expect(html).not.toContain("sg-number-no-spin");
+
+    const quantityFields: Array<{ id: string; inputMode: "numeric" | "decimal" }> =
+      [
+        { id: "pvLeistung-0", inputMode: "decimal" },
+        { id: "exact-azimut-0", inputMode: "numeric" },
+        { id: "exact-neigung-0", inputMode: "numeric" },
+        { id: "annualConsumptionKwh", inputMode: "numeric" },
+        { id: "heatPumpConsumptionKwh", inputMode: "numeric" },
+        { id: "evAnnualKm", inputMode: "numeric" },
+        { id: "evConsumptionKwhPer100Km", inputMode: "decimal" },
+        { id: "evUsableBatteryCapacityKwh", inputMode: "decimal" },
+        { id: "evTypicalDailyKmWd", inputMode: "numeric" },
+        { id: "evTypicalDailyKmSa", inputMode: "numeric" },
+        { id: "evTypicalDailyKmSu", inputMode: "numeric" },
+        { id: "evWorkplaceKwhPerMonth", inputMode: "decimal" },
+        { id: "evWorkplaceChargingDaysPerMonth", inputMode: "numeric" },
+      ];
+
+    for (const field of quantityFields) {
+      const tag = inputs.find((candidate) => inputAttr(candidate, "id") === field.id);
+      expect(tag, field.id).toBeDefined();
+      expect(inputAttr(tag ?? "", "type"), field.id).toBe("text");
+      expect(inputAttr(tag ?? "", "inputMode"), field.id).toBe(field.inputMode);
+    }
+
+    const reserve = inputs.filter(
+      (tag) => inputAttr(tag, "name") === "backupReserveKwhOption"
+    );
+    expect(reserve.length).toBeGreaterThan(0);
+    expect(reserve.every((tag) => inputAttr(tag, "type") === "radio")).toBe(
+      true
+    );
   });
 });

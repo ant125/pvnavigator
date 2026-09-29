@@ -12,6 +12,10 @@ import {
   type WwRobustnessPayload,
 } from "../calculate/actions";
 import { deriveSpeicherBusinessMetrics } from "@/lib/deriveSpeicherBusinessMetrics";
+import {
+  afterBoundaryEigenverbrauch,
+  formatAfterBoundaryEigenverbrauch,
+} from "@/lib/speicherChartCaption";
 import SpeicherChart from "@/components/SpeicherChart";
 import {
   ReportQuellenSection,
@@ -980,6 +984,14 @@ export function SpeicherReportView({
     </>
   );
 
+  const afterBoundaryGain = afterBoundaryEigenverbrauch(
+    chart.data,
+    recommendedTechnicalSize,
+  );
+  const afterBoundaryText = afterBoundaryGain
+    ? formatAfterBoundaryEigenverbrauch(afterBoundaryGain)
+    : null;
+
   const chartInner = (
     <>
                   <SpeicherChart
@@ -989,6 +1001,9 @@ export function SpeicherReportView({
 
                   {recommendedTechnicalSize > 0 ? (
                     <div className="mt-4 max-w-reading space-y-4 text-sm leading-relaxed text-ink-secondary">
+                      {afterBoundaryText ? (
+                        <p className="text-ink">{afterBoundaryText}</p>
+                      ) : null}
                       <p className="text-ink">
                         Die technische Speichergrenze liegt bei{" "}
                         {formatQuantityWithUnit(recommendedTechnicalSize, "kWh")}.

@@ -224,6 +224,10 @@ describe("SpeicherReportView workspace layout", () => {
     expect(storageHtml).toContain(
       "Die technische Speichergrenze liegt bei"
     );
+    expect(storageHtml).toContain("nur noch gering zu");
+    expect(storageHtml).not.toContain(
+      "Solarstrom pro Jahr selbst genutzt"
+    );
     expect(storageHtml).toContain("Planerische Anfangskapazität =");
     expect(storageHtml).toContain("75-%-Annahme");
     expect(html).not.toContain("einschließlich Wärmepumpe");
@@ -298,6 +302,37 @@ describe("SpeicherReportView saved report variant", () => {
     expect(indexOf(html, "05 / Eigenverbrauch vs Speichergröße")).toBeLessThan(
       indexOf(html, "06 / Unsere Einschätzung")
     );
+  });
+});
+
+describe("SpeicherReportView chart caption", () => {
+  it("quotes the measured gain after the boundary from stored points", () => {
+    const html = renderToStaticMarkup(
+      <SpeicherReportView
+        mode="historical"
+        variant="page"
+        savedAt="2026-09-01T10:00:00.000Z"
+        batteryModelVersion="1.1.0"
+        presentationOverride={{
+          recommendedTechnicalSize: 6,
+          recommendedPlanningSize: 8,
+        }}
+        {...sharedProps}
+        speicherGrenz={{
+          ...speicherGrenz,
+          average: { 5: 2100, 6: 2200.4, 7: 2230.9 },
+        }}
+      />
+    );
+
+    expect(html).toContain(
+      "Von 6 auf 7\u00A0kWh: zusätzlich 31\u00A0kWh Solarstrom pro Jahr selbst genutzt."
+    );
+    expect(html).not.toContain("30,5");
+    expect(html).not.toContain("30.5");
+    expect(html).toContain("nur noch gering zu");
+    expect(html).not.toContain("kein zusätzlicher");
+    expect(html).not.toContain("Optimum");
   });
 });
 

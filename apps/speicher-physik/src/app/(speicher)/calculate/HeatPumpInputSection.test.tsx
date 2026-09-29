@@ -138,8 +138,10 @@ describe("HeatPumpInputSection compact layout", () => {
     expect(html).toContain("Auswählen");
     expect(html).toContain(">Stromverbrauch<");
     expect(html).toContain('id="heatPumpConsumptionKwh"');
-    expect(html).toContain('type="number"');
-    expect(html).toContain("sg-number-no-spin");
+    expect(html).toContain('type="text"');
+    expect(html).toContain('inputMode="numeric"');
+    expect(html).not.toContain('type="number"');
+    expect(html).not.toContain("sg-number-no-spin");
     expect(html).toContain('name="heatPumpConsumptionKwh"');
     expect(html).toContain('min="1"');
     expect(html).toContain('id="heatPumpConsumptionKwh-unit"');

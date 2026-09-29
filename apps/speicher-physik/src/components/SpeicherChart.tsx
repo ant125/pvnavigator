@@ -2,6 +2,11 @@
 
 import { formatQuantityDe, formatQuantityWithUnit } from "@/lib/formatQuantityDe";
 import {
+  estimateBoundaryLabelWidth,
+  formatTechnicalBoundaryLabel,
+  placeBoundaryLabel,
+} from "@/lib/speicherChartCaption";
+import {
   LineChart,
   Line,
   XAxis,
@@ -11,6 +16,8 @@ import {
   CartesianGrid,
   ReferenceLine,
   Label,
+  useChartWidth,
+  usePlotArea,
   type LabelProps,
 } from "recharts";
 
@@ -56,40 +63,60 @@ function buildYAxisScale(values: number[]): { domain: [number, number]; ticks: n
   return { domain: [min, max], ticks };
 }
 
+const BOUNDARY_LABEL_FONT_PX = 12;
+
 /**
- * The label is centred on the marker, so at the first and last visible capacity
- * it would reach past the plot into the Y-axis labels or the right edge. There
- * it is anchored to the inner side of the line instead.
+ * Plot band only. Margins, the 30px category axis and the boundary caption
+ * stay put, so a shorter box shortens the curve and not the type.
+ * Desktop plot is 193px: 10% under the previous 214px (288px box).
+ * Below `lg` the box stays 392px and the plot stays 318px.
  */
-function TechnicalPlateauReferenceLabel(props: LabelProps) {
-  const { offset = 5, viewBox, textAnchor = "middle" } = props;
+const CHART_BOX_CLASS = "h-[392px] w-full min-w-0 max-w-full lg:h-[267px]";
+const CHART_MARGIN = { top: 32, right: 24, left: 8, bottom: 12 } as const;
+
+function TechnicalBoundaryLabel({
+  viewBox,
+  caption,
+}: LabelProps & { caption: string }) {
+  const plot = usePlotArea();
+  const chartWidth = useChartWidth();
   if (
     !viewBox ||
     typeof viewBox !== "object" ||
     !("width" in viewBox) ||
     typeof viewBox.x !== "number" ||
-    !Number.isFinite(viewBox.x)
+    !Number.isFinite(viewBox.x) ||
+    !plot ||
+    plot.width <= 0 ||
+    typeof chartWidth !== "number" ||
+    !Number.isFinite(chartWidth) ||
+    chartWidth <= 0
   ) {
     return null;
   }
 
   const { x: vx, y: vy, width: vw, height: vh } = viewBox;
-  const cx = vx + vw / 2;
+  const markerX = vx + vw / 2;
   const verticalSign = vh >= 0 ? 1 : -1;
-  const labelY = vy - verticalSign * offset;
-  const labelX =
-    textAnchor === "start" ? cx + 6 : textAnchor === "end" ? cx - 6 : cx;
+  const labelY = vy - verticalSign * 10;
+  const labelWidth = estimateBoundaryLabelWidth(caption, BOUNDARY_LABEL_FONT_PX);
+  const placement = placeBoundaryLabel({
+    markerX,
+    labelWidth,
+    boundsLeft: plot.x,
+    boundsRight: Math.max(plot.x + 1, chartWidth - 4),
+  });
 
   return (
     <text
-      x={labelX}
+      x={placement.x}
       y={labelY}
-      textAnchor={textAnchor}
+      textAnchor={placement.textAnchor}
       className="recharts-text recharts-label"
       fill={CHART.marker}
-      fontSize={12}
+      fontSize={BOUNDARY_LABEL_FONT_PX}
     >
-      Technische Speichergrenze
+      {caption}
     </text>
   );
 }
@@ -122,23 +149,18 @@ export default function SpeicherChart({
     visibleData.map((point) => point.eigenverbrauch)
   );
 
-  const markerIndex = visibleData.findIndex(
-    (point) => point.size === recommendedTechnicalSize
-  );
-  const markerLabelAnchor =
-    markerIndex === 0
-      ? "start"
-      : markerIndex === visibleData.length - 1
-        ? "end"
-        : "middle";
+  const boundaryCaption =
+    recommendedTechnicalSize > 0
+      ? formatTechnicalBoundaryLabel(recommendedTechnicalSize)
+      : null;
 
   return (
     <div className="w-full min-w-0 max-w-full">
-      <div className="h-[380px] w-full min-w-0 max-w-full">
+      <div className={CHART_BOX_CLASS}>
         <ResponsiveContainer>
           <LineChart
             data={visibleData}
-            margin={{ top: 20, right: 24, left: 8, bottom: 12 }}
+            margin={CHART_MARGIN}
           >
             <CartesianGrid vertical={false} stroke={CHART.grid} />
 
@@ -167,14 +189,17 @@ export default function SpeicherChart({
                 strokeWidth={2}
                 strokeDasharray="4 4"
                 label={
-                  <Label
-                    position="top"
-                    fill={CHART.marker}
-                    fontSize={12}
-                    offset={5}
-                    textAnchor={markerLabelAnchor}
-                    content={TechnicalPlateauReferenceLabel}
-                  />
+                  boundaryCaption ? (
+                    <Label
+                      position="top"
+                      fill={CHART.marker}
+                      fontSize={BOUNDARY_LABEL_FONT_PX}
+                      offset={10}
+                      content={
+                        <TechnicalBoundaryLabel caption={boundaryCaption} />
+                      }
+                    />
+                  ) : undefined
                 }
               />
             )}

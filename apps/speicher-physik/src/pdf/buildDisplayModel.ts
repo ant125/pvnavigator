@@ -34,6 +34,11 @@ import {
   robustnessStabilityNote,
   technicalSizeRangeLead,
 } from "@/lib/robustnessReportCopy";
+import {
+  afterBoundaryEigenverbrauch,
+  formatAfterBoundaryEigenverbrauch,
+  formatTechnicalBoundaryLabel,
+} from "@/lib/speicherChartCaption";
 import { PLANNING_REMAINING_CAPACITY_FRACTION } from "@/lib/speicherRecommendation";
 import { buildSpeicherBenefitComparison } from "@/lib/speicherBenefitComparison";
 import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
@@ -431,6 +436,10 @@ export function buildSpeicherPdfModel(row: CalculationHistoryRow): PdfModel {
   const markerIndex = visible.findIndex(
     (point) => point.size === recommendedTechnicalSize,
   );
+  const afterBoundary = afterBoundaryEigenverbrauch(
+    metrics.chart.data,
+    recommendedTechnicalSize,
+  );
 
   const planningQuotient =
     recommendedTechnicalSize / PLANNING_REMAINING_CAPACITY_FRACTION;
@@ -547,6 +556,13 @@ export function buildSpeicherPdfModel(row: CalculationHistoryRow): PdfModel {
       })),
       markerSize: recommendedTechnicalSize,
       markerIndex,
+      markerCaption:
+        recommendedTechnicalSize > 0
+          ? formatTechnicalBoundaryLabel(recommendedTechnicalSize)
+          : null,
+      afterBoundary: afterBoundary
+        ? formatAfterBoundaryEigenverbrauch(afterBoundary)
+        : null,
       markerAnchor:
         markerIndex <= 0
           ? "start"

@@ -67,8 +67,28 @@ export const UNIT_FIELD_INPUT_CLASS =
 
 export const UNIT_FIELD_SUFFIX_CLASS = `inline-flex shrink-0 items-center whitespace-nowrap border-l border-line ${FORM_ADDON_BG} px-2 font-mono text-xs text-ink-muted`;
 
-/** type="number" fields where native ±1 steppers are not useful (annual kWh). */
-export const NUMBER_INPUT_NO_SPIN = "sg-number-no-spin";
+/**
+ * Free-entry quantities stay `type="text"`.
+ *
+ * A focused `input type="number"` steps its value on mouse-wheel and trackpad
+ * scroll in Chromium, Firefox, and WebKit. Hiding the spin buttons does not
+ * stop that. `preventDefault` on wheel stops the step and also stops the page
+ * or the form panel from scrolling.
+ *
+ * `inputMode` keeps the mobile numeric or decimal keyboard. Parsing and
+ * validation stay in each field's existing change handler.
+ */
+export function quantityInputProps(inputMode: "numeric" | "decimal"): {
+  type: "text";
+  inputMode: "numeric" | "decimal";
+  autoComplete: "off";
+} {
+  return {
+    type: "text",
+    inputMode,
+    autoComplete: "off",
+  };
+}
 
 /** Pointer activation should not move focus; keyboard Tab still can. */
 export function suppressPointerFocus(event: { preventDefault(): void }): void {
