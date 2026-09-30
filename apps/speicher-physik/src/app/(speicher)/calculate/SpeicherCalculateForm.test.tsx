@@ -147,24 +147,33 @@ describe("SpeicherCalculateForm C1+C2", () => {
     expect(html).toContain("value=\"30\"");
   });
 
-  it("shows Individuell values in the dropdowns for 203° / 33° while collapsed", () => {
+  it("shows bare degree values in the dropdowns for 203° / 33° while collapsed", () => {
     const html = renderForm({
       surfaces: [{ systemSizeKwP: 10, tiltDeg: 33, azimuthDeg: 203 }],
     });
-    expect(html).toContain("Individuell (203°)");
-    expect(html).toContain("Individuell (33°)");
+    expect(html).toContain("203°");
+    expect(html).toContain("33°");
+    expect(html).not.toContain("Individuell");
+    expect(html).not.toContain("0° = Nord");
+    expect(html).not.toContain("0° = flach");
     expect(html).toContain("Exakte Winkel anzeigen");
     expect(html).toMatch(/id="exact-angles-0"[^>]*hidden/);
     expect(html).toContain("value=\"203\"");
     expect(html).toContain("value=\"33\"");
     expect(buildAzimuthDropdownOptions(203)[0]).toEqual({
       value: 203,
-      label: "Individuell (203°)",
+      label: "203°",
     });
     expect(buildTiltDropdownOptions(33)[0]).toEqual({
       value: 33,
-      label: "Individuell (33°)",
+      label: "33°",
     });
+    expect(buildAzimuthDropdownOptions(180).map((option) => option.label)).toContain(
+      "Süd (180°)",
+    );
+    expect(buildTiltDropdownOptions(30).map((option) => option.label)).toContain(
+      "30°",
+    );
   });
 
   it("opens exact fields when locked with custom angles", () => {
@@ -173,6 +182,11 @@ describe("SpeicherCalculateForm C1+C2", () => {
       locked: true,
     });
     expect(html).toContain("Exakte Winkel ausblenden");
+    expect(html).toContain("203°");
+    expect(html).toContain("33°");
+    expect(html).not.toContain("Individuell");
+    expect(html).not.toContain("0° = Nord");
+    expect(html).not.toContain("0° = flach");
     expect(html).toContain('aria-expanded="true"');
     expect(html).not.toMatch(/id="exact-angles-0"[^>]*hidden/);
     expect(html).toContain('disabled=""');

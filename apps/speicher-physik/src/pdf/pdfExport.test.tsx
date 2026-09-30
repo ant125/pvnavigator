@@ -465,6 +465,6 @@ describe("renderSpeicherPdf", () => {
     const complexPdf = await renderSpeicherPdf(complexModel);
 
     expect((await PDFDocument.load(heatPumpPdf)).getPageCount()).toBe(6);
-    expect((await PDFDocument.load(complexPdf)).getPageCount()).toBe(7);
+    expect((await PDFDocument.load(complexPdf)).getPageCount()).toBe(6);
   }, 30000);
 });

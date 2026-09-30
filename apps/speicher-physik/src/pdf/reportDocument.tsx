@@ -1264,8 +1264,13 @@ const CHIP_PAD_X = 14;
 const CHIP_PAD_Y = 6;
 const CHIP_FONT = 9.5;
 const CHIP_LINE = CHIP_FONT * 1.3;
-// About three single-line rows. Anything taller continues on the next page.
-const FIRST_PAGE_CHIP_H = 84;
+const SINGLE_LINE_CHIP_H = CHIP_LINE + CHIP_PAD_Y + 1.2;
+// Four single-line rows: one roof, heat pump, and backup still sit under the
+// cover. A fifth row no longer fits above the footer, so it continues later.
+const FIRST_PAGE_CHIP_ROWS = 4;
+const FIRST_PAGE_CHIP_H =
+  SINGLE_LINE_CHIP_H * FIRST_PAGE_CHIP_ROWS +
+  CHIP_GAP * (FIRST_PAGE_CHIP_ROWS - 1);
 
 function chipBox(text: string): { w: number; h: number } {
   const inner = CONTENT_W - CHIP_PAD_X - 1.2;
@@ -1309,7 +1314,7 @@ function paginateChips(chips: { text: string }[]) {
   let open = true;
   for (const row of rows) {
     const add = (used > 0 ? CHIP_GAP : 0) + row.h;
-    if (open && used + add <= FIRST_PAGE_CHIP_H) {
+    if (open && used + add <= FIRST_PAGE_CHIP_H + 0.25) {
       firstRows.push(row);
       used += add;
     } else {
@@ -1596,35 +1601,30 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
           </View>
         </View>
 
-        {/* Continuation is decided only from the final chip list. An empty
-            remainder draws neither the eyebrow nor an extra page. The heading
-            stays with the first data row so it cannot sit alone at the bottom
-            of the cover. */}
-        {chips.restRows.length > 0 ? (
-          <>
-            <View wrap={false} style={styles.section}>
-              <SectionHeading eyebrow="Eingaben" title="Eingaben — Fortsetzung" />
-              <FactChips chips={chips.restRows[0].items} />
+        {/* Chips that do not fit under the cover continue on the next page
+            as the same block. Speichergröße starts that page when nothing
+            remains; otherwise it follows the remaining chips, so one leftover
+            row does not occupy a page of its own. */}
+        <View
+          break
+          wrap={chips.restRows.length === 0 ? false : undefined}
+          style={chips.restRows.length === 0 ? styles.sectionStart : undefined}
+        >
+          {chips.restRows.length > 0 ? (
+            <FactChips chips={chips.restRows.flatMap((row) => row.items)} />
+          ) : null}
+          <View
+            wrap={false}
+            style={chips.restRows.length > 0 ? styles.section : undefined}
+          >
+            <SectionHeading eyebrow="Speichergröße" title="Eigenverbrauch vs Speichergröße" />
+            <View style={styles.blocks}>
+              <Chart chart={model.chart} />
+              {model.chart.afterBoundary ? (
+                <Text style={styles.body}>{t(model.chart.afterBoundary)}</Text>
+              ) : null}
+              <Text style={styles.body}>{t(model.chart.lead)}</Text>
             </View>
-            {chips.restRows.length > 1 ? (
-              <View style={{ marginTop: CHIP_GAP }}>
-                <FactChips
-                  chips={chips.restRows.slice(1).flatMap((row) => row.items)}
-                />
-              </View>
-            ) : null}
-          </>
-        ) : null}
-
-        {/* Speichergröße starts a page; the chart and short conclusion stay together. */}
-        <View break style={styles.sectionStart} wrap={false}>
-          <SectionHeading eyebrow="Speichergröße" title="Eigenverbrauch vs Speichergröße" />
-          <View style={styles.blocks}>
-            <Chart chart={model.chart} />
-            {model.chart.afterBoundary ? (
-              <Text style={styles.body}>{t(model.chart.afterBoundary)}</Text>
-            ) : null}
-            <Text style={styles.body}>{t(model.chart.lead)}</Text>
           </View>
         </View>
         {/* Planning explanation: one short block (paragraph, formula, caveat). */}

@@ -557,9 +557,6 @@ export function SpeicherCalculateForm({
                     }}
                     className={fieldInputClassName(false)}
                   />
-                  <p className={FORM_HELP}>
-                    0° = Nord, 90° = Ost, 180° = Süd, 270° = West.
-                  </p>
                 </div>
                 <div className={`min-w-0 ${FORM_FIELD}`}>
                   <label className={FORM_LABEL} htmlFor={`exact-neigung-${planeIndex}`}>
@@ -594,9 +591,6 @@ export function SpeicherCalculateForm({
                     }}
                     className={fieldInputClassName(false)}
                   />
-                  <p className={FORM_HELP}>
-                    0° = flach, 90° = senkrecht.
-                  </p>
                 </div>
               </div>
             </div>

@@ -61,7 +61,7 @@ const REPORT_SHEET =
   "mx-auto min-w-0 w-full max-w-sheet rounded-sm border border-line bg-surface p-5 sm:p-8 lg:p-10";
 
 const REPORT_SHEET_WORKSPACE =
-  "sg-workspace-report min-w-0 w-full bg-surface p-5 sm:p-6";
+  "sg-workspace-report min-w-0 w-full bg-surface p-5 sm:p-6 lg:pb-3";
 
 /**
  * Major section boundary inside the sheet: one rule with symmetric space above

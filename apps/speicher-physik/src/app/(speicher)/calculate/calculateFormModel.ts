@@ -152,7 +152,7 @@ export function buildAzimuthDropdownOptions(
 ): PresetDropdownOption<number>[] {
   if (Number.isFinite(azimuthDeg) && !isPresetAzimuth(azimuthDeg)) {
     return [
-      { value: azimuthDeg, label: `Individuell (${azimuthDeg}°)` },
+      { value: azimuthDeg, label: `${azimuthDeg}°` },
       ...AZIMUTH_PRESET_OPTIONS,
     ];
   }
@@ -164,7 +164,7 @@ export function buildTiltDropdownOptions(
 ): PresetDropdownOption<number>[] {
   if (Number.isFinite(tiltDeg) && !isPresetTilt(tiltDeg)) {
     return [
-      { value: tiltDeg, label: `Individuell (${tiltDeg}°)` },
+      { value: tiltDeg, label: `${tiltDeg}°` },
       ...TILT_PRESET_OPTIONS,
     ];
   }
