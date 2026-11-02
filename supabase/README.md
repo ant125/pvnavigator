@@ -52,20 +52,15 @@ therefore kept in different directories so that no single command can run both:
    `insert into supabase_migrations.schema_migrations (version, name) values ('20261012200000', 'access_rules');`
 2. **Deploy** the code that uses `check_calculation_access` / `record_completed_calculation`
    (both apps: speicher-physik and the hub, which reads `access_tier` and the access tables).
-3. **Step 2 – lockdown.** `git mv supabase/post-deploy/20261012200100_access_rules_lockdown.sql supabase/migrations/`,
-   remove the `./post-deploy/*.sql` entry from `[db.seed] sql_paths` in `config.toml`, then
-   `supabase db push --dry-run` (must list only the lockdown file) and `supabase db push`.
-   Without the CLI: paste it
-   into the SQL editor and `insert into supabase_migrations.schema_migrations (version, name) values ('20261012200100', 'access_rules_lockdown');`
+3. **Step 2 – lockdown.** Apply `migrations/20261102202308_access_rules_lockdown.sql`
+   with `supabase db push --dry-run` (must list only that file) and then `supabase db push`.
+   Leave `post-deploy/20261012200100_access_rules_lockdown.sql` where it is. Its old
+   version must not be inserted into `migrations/` or into `schema_migrations`.
 
-Do not run `supabase db push` with the lockdown file already inside `migrations/` before
-the deployment in step 2 is live.
-
-`migrations/20261014173515_stripe_billing.sql` is additive and may be applied
-with later schema pushes. It does not replace the lockdown step and must not
-be used as a reason to move `post-deploy/` into `migrations/` early. Local
-only: `supabase migration up` against the local stack. Do not push it to
-production from this phase.
+The lockdown is already applied in production as
+`20261102202308_access_rules_lockdown.sql`. Keep that file in `migrations/`.
+Do not move the older post-deploy file into `migrations/` or record its old
+version in `schema_migrations`.
 
 ## Local development: local Supabase stack
 

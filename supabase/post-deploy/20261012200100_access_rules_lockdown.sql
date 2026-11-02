@@ -1,10 +1,9 @@
 -- PVNAVIGATOR_ access rules, step 2: close the direct INSERT path.
 --
--- Lives in supabase/post-deploy/ on purpose: `supabase db push` applies every
--- pending file in supabase/migrations/, and this one must NOT run before the
--- code that calls record_completed_calculation() is deployed. After that
--- deployment, move the file into supabase/migrations/ and push (or run it in
--- the SQL editor and record the version) — see supabase/README.md.
+-- Lives in supabase/post-deploy/ so the local seed reaches the final state.
+-- Its version is older than migrations already applied in production, so this
+-- file must stay here. The production statement is
+-- supabase/migrations/20261102202308_access_rules_lockdown.sql.
 --
 -- Code that still inserts into public.calculations directly fails with
 -- "permission denied" from here on.
