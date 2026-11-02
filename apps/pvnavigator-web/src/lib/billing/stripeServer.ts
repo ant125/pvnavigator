@@ -12,11 +12,28 @@ import Stripe from "stripe";
 import type { AllowedPrice } from "./stripeEvents";
 
 let stripeClient: Stripe | null = null;
+let stripeClientKey = "";
 const verifiedPriceIds = new Set<string>();
+
+export type StripeRuntimeMode = "test" | "live";
+
+/** The secret key selects one Stripe account. Anything else leaves billing closed. */
+export function stripeRuntimeMode(key = process.env.STRIPE_SECRET_KEY?.trim() ?? ""): StripeRuntimeMode | null {
+  if (key.startsWith("sk_test_")) return "test";
+  if (key.startsWith("sk_live_")) return "live";
+  return null;
+}
+
+export function expectedLivemode(): boolean | null {
+  const mode = stripeRuntimeMode();
+  if (mode === "live") return true;
+  if (mode === "test") return false;
+  return null;
+}
 
 export class BillingNotConfiguredError extends Error {
   constructor() {
-    super("Stripe sandbox is not configured");
+    super("Stripe billing is not configured");
     this.name = "BillingNotConfiguredError";
   }
 }
@@ -28,12 +45,14 @@ export class BillingPriceError extends Error {
   }
 }
 
-/** Test secret key only. A live key is refused so this phase cannot charge for real. */
+/** One client for the configured account. A missing or malformed key leaves billing closed. */
 export function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY?.trim() ?? "";
-  if (!key.startsWith("sk_test_")) return null;
-  if (!stripeClient) {
+  if (!stripeRuntimeMode(key)) return null;
+  if (!stripeClient || stripeClientKey !== key) {
     stripeClient = new Stripe(key);
+    stripeClientKey = key;
+    verifiedPriceIds.clear();
   }
   return stripeClient;
 }
@@ -74,12 +93,13 @@ export function catalogEntryForPlan(plan: PaidPlanId): AllowedPrice | null {
 }
 
 /**
- * Confirms the configured Price is the monthly sandbox price for this tariff.
- * Does not create a product or price.
+ * Confirms the configured Price is the monthly EUR price for this tariff
+ * in the same Stripe mode as the secret key. Does not create a product or price.
  */
 export async function assertPlanPrice(stripe: Stripe, plan: PaidPlanId): Promise<AllowedPrice> {
   const entry = catalogEntryForPlan(plan);
-  if (!entry) throw new BillingNotConfiguredError();
+  const livemode = expectedLivemode();
+  if (!entry || livemode === null) throw new BillingNotConfiguredError();
   if (verifiedPriceIds.has(entry.priceId)) return entry;
   const price = await stripe.prices.retrieve(entry.priceId, { expand: ["product"] });
   const product = price.product;
@@ -89,7 +109,7 @@ export async function assertPlanPrice(stripe: Stripe, plan: PaidPlanId): Promise
       : "";
   const recurring = price.recurring;
   if (
-    price.livemode ||
+    price.livemode !== livemode ||
     !price.active ||
     price.currency !== entry.currency ||
     price.unit_amount !== entry.amount ||

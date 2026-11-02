@@ -1,6 +1,9 @@
 /**
- * Turns a verified Stripe event object (API 2026-09-30.endive, stripe@23)
- * into a billing command. Period bounds come only from the invoice line's
+ * Turns a verified Stripe event object into a billing command.
+ * stripe@23 calls the API as 2026-09-30.endive. The live webhook sends
+ * snapshot events as 2026-10-28.endive. Both versions still expose the
+ * invoice parent, line price and subscription item fields read below.
+ * Period bounds come only from the invoice line's
  * service period, never from "now + 30 days". This module does not grant
  * access; the database does, and only when the invoice matches an allowed
  * price, currency and subscription. A matching amount by itself is not enough.

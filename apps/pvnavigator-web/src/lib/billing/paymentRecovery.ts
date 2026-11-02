@@ -98,6 +98,8 @@ export function checkoutSessionListParams(customerId: string): {
 }
 
 export type CheckoutRecoveryDeps = {
+  /** Stripe mode of this server. Session, subscription and invoice must match it. */
+  livemode: boolean;
   catalog: readonly AllowedPrice[];
   retrieveSession: (sessionId: string) => Promise<unknown>;
   retrieveInvoice: (invoiceId: string) => Promise<unknown>;
@@ -146,7 +148,7 @@ export async function recoverPaidCheckout(
     const applied = await deps.apply({
       eventId: recoveryEventId(command.invoiceId),
       eventType: "invoice.paid",
-      livemode: false,
+      livemode: deps.livemode,
       command,
     });
     if (!applied.ok) return { status: "retry", reason: "database" };
@@ -212,7 +214,7 @@ async function preparePaidCheckout(
   const session = await deps.retrieveSession(input.sessionId);
   if (!isRecord(session)) return stop(refused("session_shape"));
   if (idOf(session.id) !== input.sessionId) return stop(refused("session_mismatch"));
-  if (session.livemode === true) return stop(refused("livemode"));
+  if (session.livemode !== deps.livemode) return stop(refused("livemode"));
   if (session.mode !== "subscription") return stop(refused("not_subscription"));
 
   const metadata = isRecord(session.metadata) ? session.metadata : null;
@@ -240,6 +242,7 @@ async function preparePaidCheckout(
   if (!isRecord(subscription) || idOf(subscription.id) !== subscriptionId) {
     return stop(refused("subscription_mismatch"));
   }
+  if (subscription.livemode !== deps.livemode) return stop(refused("livemode"));
   if (idOf(subscription.customer) !== customerId) return stop(refused("subscription_customer"));
   const subscriptionUser = isRecord(subscription.metadata) ? subscription.metadata.user_id : null;
   if (subscriptionUser !== undefined && subscriptionUser !== null && subscriptionUser !== input.userId) {
@@ -290,7 +293,7 @@ async function resolveCheckoutInvoice(
     const listed = await deps.listSubscriptionInvoices(subscriptionId);
     const ids: string[] = [];
     for (const item of listed) {
-      if (!isRecord(item) || item.billing_reason !== "subscription_create" || item.livemode === true) continue;
+      if (!isRecord(item) || item.billing_reason !== "subscription_create" || item.livemode !== deps.livemode) continue;
       if (invoiceSubscriptionId(item) !== subscriptionId || idOf(item.customer) !== customerId) continue;
       const id = idOf(item.id);
       if (id?.startsWith("in_") && !ids.includes(id)) ids.push(id);
@@ -303,7 +306,7 @@ async function resolveCheckoutInvoice(
 
   const loaded = await deps.retrieveInvoice(invoiceId);
   if (!isRecord(loaded) || idOf(loaded.id) !== invoiceId) return stop(refused("invoice_shape"));
-  if (loaded.livemode === true) return stop(refused("livemode"));
+  if (loaded.livemode !== deps.livemode) return stop(refused("livemode"));
   if (invoiceSubscriptionId(loaded) !== subscriptionId) return stop(refused("invoice_subscription"));
   if (idOf(loaded.customer) !== customerId) return stop(refused("invoice_customer"));
   if (loaded.billing_reason !== "subscription_create") return stop(refused("not_checkout_invoice"));

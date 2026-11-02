@@ -14,6 +14,7 @@ import {
   assertPlanPrice,
   catalogEntryForPlan,
   checkoutSubmitMessage,
+  expectedLivemode,
   getStripe,
 } from "@/lib/billing/stripeServer";
 import { getServerUser } from "@/lib/auth";
@@ -81,9 +82,14 @@ export async function POST(request: NextRequest): Promise<Response> {
         { idempotencyKey: `pvn-customer-${user.id}` },
       );
       customerId = customer.id;
+      if (customer.livemode !== expectedLivemode()) {
+        await admin.rpc("release_stripe_checkout_claim", { p_user: user.id });
+        return redirectTarife("zahlung-fehler");
+      }
       const linked = await admin.rpc("link_stripe_customer", {
         p_user: user.id,
         p_customer_id: customerId,
+        p_livemode: customer.livemode,
       });
       const result =
         linked.data && typeof linked.data === "object"

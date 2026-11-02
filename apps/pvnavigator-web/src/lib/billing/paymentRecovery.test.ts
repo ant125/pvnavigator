@@ -105,6 +105,7 @@ function buildCheckout(spec: Spec) {
     id: subscriptionId,
     customer: customerId,
     status: "active",
+    livemode: spec.livemode ?? false,
     metadata,
     latest_invoice: "in_later_renewal",
   };
@@ -127,7 +128,7 @@ function catalogAccepts(command: Extract<BillingCommand, { action: "invoice_paid
   });
 }
 
-function memoryBilling(options?: { ignoreGrants?: boolean; cancelFailures?: number }) {
+function memoryBilling(options?: { ignoreGrants?: boolean; cancelFailures?: number; livemode?: boolean }) {
   const periods = new Map<string, { userId: string; invoiceId: string }>();
   const events: string[] = [];
   const commands: BillingCommand[] = [];
@@ -165,7 +166,7 @@ function memoryBilling(options?: { ignoreGrants?: boolean; cancelFailures?: numb
     }) {
       applyCount += 1;
       commands.push(args.command);
-      if (args.livemode || args.command.action !== "invoice_paid") {
+      if (args.livemode !== (options?.livemode ?? false) || args.command.action !== "invoice_paid") {
         if (!events.includes(args.eventId)) events.push(args.eventId);
         return { ok: true as const, outcome: "ignored" };
       }
@@ -217,17 +218,20 @@ function harness(
     ignoreGrants?: boolean;
     cancelFailures?: number;
     listedInvoices?: Record<string, unknown>[];
+    configuredLivemode?: boolean;
     resolve?: CheckoutRecoveryDeps["resolveUser"];
     replacesOwner?: CheckoutRecoveryDeps["replacesOwner"];
     retrieveSession?: CheckoutRecoveryDeps["retrieveSession"];
   },
 ) {
   const built = buildCheckout(spec);
-  const ledger = memoryBilling(options);
+  const livemode = options?.configuredLivemode ?? spec.livemode ?? false;
+  const ledger = memoryBilling({ ...options, livemode });
   const retrievedInvoices: string[] = [];
   const retrievedSessions: string[] = [];
   const listed: string[] = [];
   const deps: CheckoutRecoveryDeps = {
+    livemode,
     catalog: CATALOG,
     async retrieveSession(sessionId) {
       retrievedSessions.push(sessionId);
@@ -543,11 +547,37 @@ describe("recoverPaidCheckout", () => {
     expect(databaseDown.ledger.periods.size).toBe(0);
   });
 
-  it("refuses a live-mode session", async () => {
-    const { ledger, recover } = harness({ ...abo, livemode: true });
-    expect(await recover()).toEqual({ status: "refused", reason: "livemode" });
-    expect(ledger.applyCount).toBe(0);
-    expect(ledger.cancels).toEqual([]);
+  it("refuses a session from the other Stripe mode", async () => {
+    const sandbox = harness({ ...abo, livemode: true }, { configuredLivemode: false });
+    expect(await sandbox.recover()).toEqual({ status: "refused", reason: "livemode" });
+    expect(sandbox.ledger.applyCount).toBe(0);
+    expect(sandbox.ledger.cancels).toEqual([]);
+
+    const live = harness(
+      { ...abo, livemode: false, sessionId: "cs_test_on_live", invoiceId: "in_test_on_live" },
+      { configuredLivemode: true },
+    );
+    expect(await live.recover()).toEqual({ status: "refused", reason: "livemode" });
+    expect(live.ledger.applyCount).toBe(0);
+  });
+
+  it("grants a live checkout when the server is in live mode", async () => {
+    const { ledger, recover } = harness(
+      {
+        ...abo,
+        livemode: true,
+        sessionId: "cs_live_abo",
+        invoiceId: "in_live_abo",
+        subscriptionId: "sub_live_abo",
+      },
+      { configuredLivemode: true },
+    );
+    const result = await recover();
+    expect(result).toMatchObject({ status: "granted", invoiceId: "in_live_abo" });
+    expect(ledger.periods.size).toBe(1);
+    const again = await recover();
+    expect(again).toMatchObject({ status: "already_granted", invoiceId: "in_live_abo" });
+    expect(ledger.periods.size).toBe(1);
   });
 });
 
@@ -573,6 +603,7 @@ describe("recoverOutstandingCheckouts", () => {
     const retrievedSessions: string[] = [];
     let listedCustomers: string[] = [];
     const deps = {
+      livemode: false,
       catalog: CATALOG,
       async retrieveSession(sessionId: string) {
         retrievedSessions.push(sessionId);
@@ -648,6 +679,7 @@ describe("recoverOutstandingCheckouts", () => {
     const ledger = memoryBilling();
     let listed = false;
     const deps = {
+      livemode: false,
       catalog: CATALOG,
       async retrieveSession() {
         return paid.session;

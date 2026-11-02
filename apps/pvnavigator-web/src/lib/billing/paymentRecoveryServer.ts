@@ -27,7 +27,7 @@ import {
   type AccountRecoveryOutcome,
   type AccountRecoveryStamp,
 } from "./accountCheckoutRecovery";
-import { getStripe, loadPriceCatalog, BillingPriceError } from "./stripeServer";
+import { expectedLivemode, getStripe, loadPriceCatalog, BillingPriceError } from "./stripeServer";
 import { createServiceRoleClient } from "../supabase/serviceRole";
 
 /**
@@ -89,7 +89,8 @@ export async function recoverAccountCheckouts(userId: string): Promise<AccountRe
 function recoveryDeps(userId: string): WiredDeps | null {
   const stripe = getStripe();
   const admin = createServiceRoleClient();
-  if (!stripe || !admin) return null;
+  const livemode = expectedLivemode();
+  if (!stripe || !admin || livemode === null) return null;
   let catalog: CheckoutRecoveryDeps["catalog"];
   try {
     catalog = loadPriceCatalog();
@@ -100,6 +101,7 @@ function recoveryDeps(userId: string): WiredDeps | null {
   if (catalog.length === 0) return null;
 
   return {
+    livemode,
     catalog,
     retrieveSession: (sessionId) => stripe.checkout.sessions.retrieve(sessionId),
     retrieveInvoice: (invoiceId) => stripe.invoices.retrieve(invoiceId),

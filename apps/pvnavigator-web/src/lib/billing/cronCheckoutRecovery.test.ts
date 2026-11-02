@@ -97,6 +97,7 @@ function buildCheckout(spec: Spec) {
     id: spec.subscriptionId,
     customer: customerId,
     status: "active",
+    livemode: spec.livemode ?? false,
     metadata,
     latest_invoice: "in_later_renewal",
   };
@@ -119,7 +120,7 @@ function catalogAccepts(command: Extract<BillingCommand, { action: "invoice_paid
   });
 }
 
-function billingWorld(options?: { cancelFailures?: number }) {
+function billingWorld(options?: { cancelFailures?: number; livemode?: boolean }) {
   const customers: CronCustomer[] = [];
   const sessions = new Map<string, unknown[]>();
   const built = new Map<string, ReturnType<typeof buildCheckout>>();
@@ -140,6 +141,7 @@ function billingWorld(options?: { cancelFailures?: number }) {
     customerIdForUser: (userId: string) => Promise<string | null>;
     listCheckoutSessions: (customerId: string) => Promise<unknown[]>;
   } = {
+    livemode: options?.livemode ?? false,
     catalog: CATALOG,
     async retrieveSession(sessionId) {
       const row = built.get(sessionId);
@@ -175,7 +177,7 @@ function billingWorld(options?: { cancelFailures?: number }) {
     async apply(args) {
       applyCount += 1;
       commands.push(args.command);
-      if (args.livemode || args.command.action !== "invoice_paid") {
+      if (args.livemode !== (options?.livemode ?? false) || args.command.action !== "invoice_paid") {
         return { ok: true as const, outcome: "ignored" };
       }
       if (events.includes(args.eventId)) return { ok: true as const, outcome: "duplicate" };
@@ -314,6 +316,7 @@ describe("cron checkout recovery", () => {
     let retrieved = false;
     const found = await recoverOutstandingCheckouts(
       {
+        livemode: false,
         catalog: CATALOG,
         async retrieveSession() {
           retrieved = true;
@@ -549,6 +552,38 @@ describe("cron checkout recovery", () => {
     expect(summary.reasons).toContain("livemode");
     expect(summary.reasons).toContain("unpaid_invoice");
     expect(summary.reasons).toContain("replaces_foreign");
+  });
+
+  it("grants one live period and does not grant it again on the next run", async () => {
+    const world = billingWorld({ livemode: true });
+    world.addCustomer(A, "cus_live", "2026-01-01T00:00:00.000Z");
+    world.own("sub_old");
+    world.addCheckout(A, "cus_live", {
+      sessionId: "cs_live_starter",
+      invoiceId: "in_live_starter",
+      subscriptionId: "sub_live_starter",
+      priceId: "price_starter",
+      amount: 900,
+      planKey: "pvnavigator_starter",
+      livemode: true,
+    });
+    world.addCheckout(A, "cus_live", {
+      sessionId: "cs_test_on_live_server",
+      invoiceId: "in_test_on_live_server",
+      subscriptionId: "sub_test_on_live_server",
+      priceId: "price_starter",
+      amount: 900,
+      planKey: "pvnavigator_starter",
+      livemode: false,
+    });
+    const first = await world.sweep();
+    expect(first.recovered).toBe(1);
+    expect(first.reasons).toContain("livemode");
+    expect(world.periods.size).toBe(1);
+    const second = await world.sweep();
+    expect(second.alreadyGranted).toBe(1);
+    expect(world.periods.size).toBe(1);
+    expect(world.applyCount).toBe(1);
   });
 
   it("F. keeps going when one customer hits a Stripe error", async () => {

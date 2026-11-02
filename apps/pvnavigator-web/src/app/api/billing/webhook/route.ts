@@ -13,7 +13,13 @@ import {
   type BillingCommand,
 } from "@/lib/billing/stripeEvents";
 import { readScheduledPlan } from "@/lib/billing/stripePlanChange";
-import { loadPriceCatalog, getStripe, getWebhookSecret, BillingPriceError } from "@/lib/billing/stripeServer";
+import {
+  loadPriceCatalog,
+  getStripe,
+  getWebhookSecret,
+  expectedLivemode,
+  BillingPriceError,
+} from "@/lib/billing/stripeServer";
 import type { AllowedPrice } from "@/lib/billing/stripeEvents";
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 
@@ -59,6 +65,11 @@ export async function POST(request: Request): Promise<Response> {
     return new Response("Invalid signature", { status: 400 });
   }
 
+  const livemode = expectedLivemode();
+  if (livemode === null || event.livemode !== livemode) {
+    return Response.json({ received: true });
+  }
+
   try {
     const command = await commandForEvent(stripe, event, catalog, admin);
     if (command === "retry") {
@@ -91,8 +102,6 @@ async function commandForEvent(
   catalog: readonly AllowedPrice[],
   admin: NonNullable<ReturnType<typeof createServiceRoleClient>>,
 ): Promise<BillingCommand | "retry"> {
-  if (event.livemode) return { action: "ignore", reason: "livemode" };
-
   switch (event.type) {
     case "checkout.session.completed": {
       let command = normalizeCheckoutSession(event.data.object);

@@ -13,6 +13,7 @@ import {
   BillingPriceError,
   assertPlanPrice,
   checkoutSubmitMessage,
+  expectedLivemode,
   getStripe,
 } from "@/lib/billing/stripeServer";
 import {
@@ -170,9 +171,14 @@ export async function POST(request: NextRequest): Promise<Response> {
         { idempotencyKey: `pvn-customer-${account.id}` },
       );
       customerId = customer.id;
+      if (customer.livemode !== expectedLivemode()) {
+        await billingAdmin.rpc("release_stripe_checkout_claim", { p_user: account.id });
+        return redirectTarife("zahlung-fehler");
+      }
       const linked = await billingAdmin.rpc("link_stripe_customer", {
         p_user: account.id,
         p_customer_id: customerId,
+        p_livemode: customer.livemode,
       });
       const result =
         linked.data && typeof linked.data === "object"

@@ -71,6 +71,44 @@ describe("normalizePaidInvoice", () => {
     expect(result.command.replacesSubscriptionId).toBeNull();
   });
 
+  it("reads the invoice fields shared by API 2026-09-30.endive and 2026-10-28.endive", () => {
+    const current = normalizePaidInvoice(
+      paidInvoice({ livemode: true }),
+      CATALOG,
+      USER,
+    );
+    const legacy = normalizePaidInvoice(
+      {
+        id: "in_legacy",
+        amount_paid: 2900,
+        currency: "eur",
+        billing_reason: "subscription_cycle",
+        customer: "cus_1",
+        subscription: "sub_1",
+        livemode: false,
+        lines: {
+          data: [
+            {
+              period: PERIOD,
+              price: PRICE,
+            },
+          ],
+        },
+      },
+      CATALOG,
+      USER,
+    );
+    for (const result of [current, legacy]) {
+      expect(result.status).toBe("command");
+      if (result.status !== "command" || result.command.action !== "invoice_paid") {
+        throw new Error("expected invoice_paid");
+      }
+      expect(result.command.priceId).toBe(PRICE);
+      expect(result.command.subscriptionId).toBe("sub_1");
+      expect(result.command.amountPaid).toBe(2900);
+    }
+  });
+
   it("carries an ABO subscription id from Checkout metadata and ignores anything else", () => {
     const withMeta = normalizePaidInvoice(
       paidInvoice({

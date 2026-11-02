@@ -417,15 +417,15 @@ export function tariffViewer(signedIn: boolean, summary: AccessSummary | null): 
 
 export const TARIFF_HINTS: Record<string, string> = {
   "nicht-konfiguriert":
-    "Die Testzahlung ist auf diesem Server noch nicht eingerichtet. Es wurde kein Abo freigeschaltet.",
+    "Die Zahlung ist auf diesem Server noch nicht eingerichtet. Es wurde kein Abo freigeschaltet.",
   "bitte-warten":
     "Die Kasse wird bereits geöffnet. Bitte einen Moment warten und es dann erneut versuchen.",
   "bereits-aktiv": "Für dieses Konto läuft bereits ein Abo. Ein zweites Abo wird nicht gestartet.",
   "portal-fehlt": "Die Verwaltung des Abos ist für dieses Konto noch nicht verfügbar.",
   preis:
-    "Der hinterlegte Testpreis passt nicht zum gewählten Tarif. STARTER ist 9 €, ABO ist 29 €, PRO ist 59 € im Monat. Es wurde nichts freigeschaltet.",
+    "Der hinterlegte Preis passt nicht zum gewählten Tarif. STARTER ist 9 €, ABO ist 29 €, PRO ist 59 € im Monat. Es wurde nichts freigeschaltet.",
   "pro-preis":
-    "Der Testpreis für PRO fehlt. Tragen Sie die Sandbox-Price von 59 € im Monat als STRIPE_PRICE_PRO_ID in apps/pvnavigator-web/.env.development.local ein. Es wurde nichts freigeschaltet.",
+    "Der Preis für PRO fehlt oder passt nicht zu 59 € im Monat. Es wurde nichts freigeschaltet.",
   "kein-abo": "Ein Tarifwechsel ist nur für ein laufendes Abo möglich.",
   gekuendigt: "Das Abo endet mit dem bezahlten Zeitraum. Ein Wechsel ist dafür nicht vorgemerkt.",
   wechsel:

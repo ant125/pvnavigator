@@ -15,7 +15,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-Lokales Stripe-Sandbox (nur `apps/pvnavigator-web/.env.development.local`, nie committen, nie `sk_live_`):
+Lokales Stripe-Sandbox (nur `apps/pvnavigator-web/.env.development.local`, nie committen). Der lokale Schlüssel beginnt mit `sk_test_`. Ein `sk_live_` gehört nur in die Production-Umgebung und nicht in diese Datei oder in Git:
 
 ```bash
 STRIPE_SECRET_KEY=

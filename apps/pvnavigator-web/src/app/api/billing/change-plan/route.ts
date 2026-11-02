@@ -10,6 +10,7 @@ import {
   BillingPriceError,
   assertPlanPrice,
   catalogEntryForPlan,
+  expectedLivemode,
   getStripe,
   loadPriceCatalog,
 } from "@/lib/billing/stripeServer";
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const catalog = loadPriceCatalog();
     const target = await assertPlanPrice(stripe, plan);
     const subscription = await stripe.subscriptions.retrieve(current.stripe_subscription_id);
+    if (subscription.livemode !== expectedLivemode()) return redirectTarife("wechsel-fehler");
     const stripeCustomer = typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id;
     if (stripeCustomer !== customerId) return redirectTarife("wechsel-fehler");
     if (subscription.cancel_at_period_end) return redirectTarife("gekuendigt");
@@ -88,7 +90,15 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (currentPriceId === target.priceId) {
       if (scheduleId) {
         const released = await stripe.subscriptionSchedules.release(scheduleId);
-        await recordPlanChange(admin, user.id, customerId, current.stripe_subscription_id, released, catalog);
+        await recordPlanChange(
+          admin,
+          user.id,
+          customerId,
+          current.stripe_subscription_id,
+          released,
+          catalog,
+          subscription.livemode,
+        );
       }
       return redirectTarife("wechsel");
     }
@@ -112,7 +122,15 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (view.kind !== "scheduled" || view.planKey !== PAID_PLANS[plan].planKey) {
       return redirectTarife("wechsel-fehler");
     }
-    await recordPlanChange(admin, user.id, customerId, current.stripe_subscription_id, updated, catalog);
+    await recordPlanChange(
+      admin,
+      user.id,
+      customerId,
+      current.stripe_subscription_id,
+      updated,
+      catalog,
+      subscription.livemode,
+    );
     return redirectTarife("wechsel");
   } catch (error) {
     if (error instanceof BillingNotConfiguredError) {
@@ -147,13 +165,14 @@ async function recordPlanChange(
   subscriptionId: string,
   schedule: Stripe.SubscriptionSchedule,
   catalog: readonly AllowedPrice[],
+  livemode: boolean,
 ): Promise<void> {
   const view = readScheduledPlan(schedule, catalog);
   if (view.kind === "unchanged") return;
   const applied = await applyBillingEvent(admin, {
     eventId: `app_plan_${subscriptionId}_${schedule.id}_${Math.floor(Date.now() / 1000)}`,
     eventType: "app.plan_change",
-    livemode: false,
+    livemode,
     command: {
       action: "sync_plan_change",
       userId,
