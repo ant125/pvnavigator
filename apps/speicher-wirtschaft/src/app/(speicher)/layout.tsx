@@ -8,14 +8,14 @@ import Link from "next/link";
  * Accessible via: speicher.pvnavigator.de
  *
  * ARCHITECTURE NOTES:
- * - This module is part of PVNavigator platform but has its own subdomain
+ * - This module is part of PVNAVIGATOR_ platform but has its own subdomain
  * - Shares authentication/billing with main app (future)
  * - No Bavaria restriction - Speicher module works globally
  * - Designed for future: subscription checks, paywall, PDF export
  */
 
 export const metadata: Metadata = {
-  title: "PV Speicher Rechner | PVNavigator",
+  title: "PV Speicher Rechner | PVNAVIGATOR_",
   description:
     "Unabhängige Wirtschaftlichkeitsanalyse für Stromspeicher. Wir zeigen, ob sich ein Speicher für Ihr Haus lohnt – in Zahlen.",
   keywords: [
@@ -58,7 +58,7 @@ export default function SpeicherLayout({
               </div>
               <div>
                 <span className="font-semibold text-slate-100">PV Speicher</span>
-                <span className="text-xs text-slate-500 ml-2">by PVNavigator</span>
+                <span className="text-xs text-slate-500 ml-2">by PVNAVIGATOR_</span>
               </div>
             </Link>
 
@@ -98,7 +98,7 @@ export default function SpeicherLayout({
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="text-sm text-slate-500">
-              © {new Date().getFullYear()} PVNavigator. Alle Rechte vorbehalten.
+              © {new Date().getFullYear()} PVNAVIGATOR_. Alle Rechte vorbehalten.
             </div>
             <div className="flex items-center gap-4 text-sm text-slate-500">
               <Link href="/" className="hover:text-slate-300 transition-colors">

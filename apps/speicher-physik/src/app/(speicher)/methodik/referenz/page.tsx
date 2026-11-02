@@ -9,9 +9,9 @@ import { MethodikToc } from "@/components/methodik/MethodikToc";
 import { collectMethodikHeadings } from "@/lib/methodik/headings";
 
 export const metadata: Metadata = {
-  title: "Referenz | SpeicherGrenze",
+  title: "Referenz | SPEICHERGRENZE",
   description:
-    "Diese Referenz erklärt die verwendeten Fachbegriffe, Kennzahlen, Formeln und technischen Begriffe von SpeicherGrenze.",
+    "Diese Referenz erklärt die verwendeten Fachbegriffe, Kennzahlen, Formeln und technischen Begriffe von SPEICHERGRENZE.",
 };
 
 export default function ReferenzPage() {
@@ -47,7 +47,7 @@ export default function ReferenzPage() {
           <div className="mt-5 space-y-4">
             <MethodikP>
               Diese Referenz erklärt die verwendeten Fachbegriffe, Kennzahlen,
-              Formeln und technischen Begriffe von SpeicherGrenze.
+              Formeln und technischen Begriffe von SPEICHERGRENZE.
             </MethodikP>
           </div>
         </header>

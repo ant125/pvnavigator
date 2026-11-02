@@ -58,7 +58,7 @@ export function ElektroautoLadeprofilArticle({
       <MethodikSection title="Zweck dieser Methodik">
         <MethodikP>
           Diese Methodik beschreibt das Berechnungsverfahren, mit dem
-          SpeicherGrenze ein individuelles Heimladeprofil für Elektrofahrzeuge
+          SPEICHERGRENZE ein individuelles Heimladeprofil für Elektrofahrzeuge
           erzeugt.
         </MethodikP>
         <MethodikP>
@@ -76,13 +76,13 @@ export function ElektroautoLadeprofilArticle({
         <MethodikMinorHeading title="Grundprinzip">
           <MethodikP>
             <strong>
-              SpeicherGrenze versucht nicht, das Verhalten eines durchschnittlichen
+              SPEICHERGRENZE versucht nicht, das Verhalten eines durchschnittlichen
               Haushalts vorherzusagen.
             </strong>
           </MethodikP>
           <MethodikP>
             <strong>
-              SpeicherGrenze berechnet den konkreten Haushalt anhand der vom
+              SPEICHERGRENZE berechnet den konkreten Haushalt anhand der vom
               Nutzer angegebenen Daten.
             </strong>
           </MethodikP>
@@ -108,7 +108,7 @@ export function ElektroautoLadeprofilArticle({
           regelmäßige Lademöglichkeiten am Arbeitsplatz.
         </MethodikP>
         <MethodikP>
-          SpeicherGrenze berücksichtigt das Elektrofahrzeug deshalb nicht als
+          SPEICHERGRENZE berücksichtigt das Elektrofahrzeug deshalb nicht als
           pauschalen Zusatzverbrauch. Stattdessen wird aus den vom Nutzer
           angegebenen Eingabedaten zunächst ein individuelles Heimladeprofil
           erzeugt. Erst dieses Ladeprofil wird anschließend gemeinsam mit der
@@ -129,7 +129,7 @@ export function ElektroautoLadeprofilArticle({
       <MethodikSection title="Welche Eingabedaten werden verwendet?">
         <MethodikP>
           Die Qualität eines berechneten Ladeprofils hängt unmittelbar von den
-          verfügbaren Eingabedaten ab. SpeicherGrenze verwendet deshalb
+          verfügbaren Eingabedaten ab. SPEICHERGRENZE verwendet deshalb
           ausschließlich Parameter, die einen nachweisbaren Einfluss auf den
           Energiebedarf oder auf den zeitlichen Verlauf der Heimladung haben.
         </MethodikP>
@@ -204,7 +204,7 @@ export function ElektroautoLadeprofilArticle({
           <MethodikP>
             Die typischen Tagesfahrstrecken beschreiben ausschließlich die
             zeitliche Verteilung der Fahrleistung innerhalb einer Woche.
-            SpeicherGrenze skaliert diese Verteilung automatisch so, dass sie
+            SPEICHERGRENZE skaliert diese Verteilung automatisch so, dass sie
             exakt zur angegebenen Jahresfahrleistung passt.
           </MethodikP>
         </MethodikMinorHeading>
@@ -251,7 +251,7 @@ export function ElektroautoLadeprofilArticle({
           </MethodikP>
           <MethodikP>
             Dabei handelt es sich ausdrücklich nicht um eine PV-optimierte
-            Ladesteuerung. SpeicherGrenze berücksichtigt bei der Erzeugung des
+            Ladesteuerung. SPEICHERGRENZE berücksichtigt bei der Erzeugung des
             Heimladeprofils weder die aktuelle PV-Erzeugung noch dynamische
             Stromtarife oder den Ladezustand des Heimspeichers.
           </MethodikP>
@@ -307,7 +307,7 @@ export function ElektroautoLadeprofilArticle({
 
         <MethodikMinorHeading title="Warum werden keine weiteren Daten abgefragt?">
           <MethodikP>
-            SpeicherGrenze beschränkt die Eingaben bewusst auf Parameter, die
+            SPEICHERGRENZE beschränkt die Eingaben bewusst auf Parameter, die
             einen direkten Einfluss auf das Ladeprofil haben. Informationen wie
             Fahrzeugmodell, Hersteller oder Batterietechnologie werden für die
             Berechnung des Heimladeprofils nicht benötigt und deshalb nicht
@@ -322,7 +322,7 @@ export function ElektroautoLadeprofilArticle({
         </MethodikMinorHeading>
       </MethodikSection>
 
-      <MethodikSection title="Wie berechnet SpeicherGrenze das Ladeprofil?">
+      <MethodikSection title="Wie berechnet SPEICHERGRENZE das Ladeprofil?">
         <MethodikP>
           Das Heimladeprofil entsteht in mehreren aufeinander aufbauenden
           Berechnungsschritten. Jeder Schritt verwendet ausschließlich die zuvor
@@ -371,7 +371,7 @@ export function ElektroautoLadeprofilArticle({
           />
           <MethodikP>
             Falls regelmäßig am Arbeitsplatz geladen wird, berücksichtigt
-            SpeicherGrenze diese Energiemenge als zusätzliche Energiequelle
+            SPEICHERGRENZE diese Energiemenge als zusätzliche Energiequelle
             außerhalb des Hauses. Dadurch reduziert sich der spätere
             Heimladebedarf entsprechend der tatsächlichen Ladevorgänge.
           </MethodikP>
@@ -423,7 +423,7 @@ export function ElektroautoLadeprofilArticle({
                 join: ["Wärmepumpe", "Elektroauto"],
               },
               { label: "Gesamtlastprofil" },
-              { label: "SpeicherGrenze" },
+              { label: "SPEICHERGRENZE" },
             ]}
           />
           <MethodikP>
@@ -438,7 +438,7 @@ export function ElektroautoLadeprofilArticle({
       <MethodikSection title="Rechenbeispiel">
         <MethodikP>
           Die folgenden Eingabedaten dienen ausschließlich zur Veranschaulichung
-          der Berechnung. Für jeden Haushalt erzeugt SpeicherGrenze ein eigenes
+          der Berechnung. Für jeden Haushalt erzeugt SPEICHERGRENZE ein eigenes
           Ladeprofil auf Grundlage der tatsächlich eingegebenen Nutzerdaten.
         </MethodikP>
 
@@ -544,7 +544,7 @@ export function ElektroautoLadeprofilArticle({
           </MethodikP>
           <MethodikDownloadBox
             title="Vollständiges Referenzprofil"
-            description="Diese Ergebnisse werden vollständig aus den oben gezeigten Eingabedaten berechnet. Das daraus erzeugte Heimladeprofil bildet die Grundlage für alle weiteren Berechnungen innerhalb von SpeicherGrenze."
+            description="Diese Ergebnisse werden vollständig aus den oben gezeigten Eingabedaten berechnet. Das daraus erzeugte Heimladeprofil bildet die Grundlage für alle weiteren Berechnungen innerhalb von SPEICHERGRENZE."
             href={EV_HOME_CHARGING_EXAMPLE_DOWNLOAD_PATH}
             fileLabel={EV_HOME_CHARGING_EXAMPLE_FILENAME}
           />
@@ -562,7 +562,7 @@ export function ElektroautoLadeprofilArticle({
             <p>
               <strong>
                 Das hier veröffentlichte CSV wurde direkt mit der produktiven
-                Berechnungslogik von SpeicherGrenze erzeugt. Es handelt sich
+                Berechnungslogik von SPEICHERGRENZE erzeugt. Es handelt sich
                 nicht um eine Beispielsimulation oder um manuell erzeugte
                 Testdaten.
               </strong>
@@ -595,7 +595,7 @@ export function ElektroautoLadeprofilArticle({
           </MethodikP>
           <MethodikP>
             Für die Heimladung verbleiben <strong>2.618,8 kWh</strong>, die
-            SpeicherGrenze entsprechend der angegebenen Ladefenster auf das
+            SPEICHERGRENZE entsprechend der angegebenen Ladefenster auf das
             gesamte Kalenderjahr verteilt.
           </MethodikP>
           <MethodikP>
@@ -614,7 +614,7 @@ export function ElektroautoLadeprofilArticle({
             Im vorliegenden Beispiel können <strong>908,8 kWh</strong> der
             theoretisch verfügbaren Arbeitsplatzladung nicht genutzt werden.
             Ursache ist die begrenzte Speicherkapazität der Fahrzeugbatterie.
-            SpeicherGrenze berücksichtigt deshalb ausschließlich die
+            SPEICHERGRENZE berücksichtigt deshalb ausschließlich die
             Energiemenge, die physikalisch tatsächlich aufgenommen werden kann.
           </MethodikP>
           <MethodikP>
@@ -627,7 +627,7 @@ export function ElektroautoLadeprofilArticle({
 
       <MethodikSection title="Grenzen des Modells">
         <MethodikP>
-          Das EV-Modell von SpeicherGrenze bildet den Energiebedarf und die
+          Das EV-Modell von SPEICHERGRENZE bildet den Energiebedarf und die
           Heimladung eines Elektrofahrzeugs auf Basis der angegebenen Nutzerdaten
           ab. Es ist für die Dimensionierung eines Heimspeichers ausgelegt. Eine
           vollständige Fahrzeugsimulation ist nicht Ziel des Modells.
@@ -639,7 +639,7 @@ export function ElektroautoLadeprofilArticle({
 
         <MethodikMinorHeading title="Keine exakten Abfahrts- und Ankunftszeiten">
           <MethodikP>
-            SpeicherGrenze fragt keine einzelnen Fahrten oder festen
+            SPEICHERGRENZE fragt keine einzelnen Fahrten oder festen
             Abfahrtszeiten ab. Die typischen Fahrstrecken für Montag bis
             Freitag, Samstag und Sonntag beschreiben die Verteilung der
             Fahrleistung innerhalb des Jahres.
@@ -662,7 +662,7 @@ export function ElektroautoLadeprofilArticle({
             Energiemenge und die Anzahl der Ladetage berücksichtigt.
           </MethodikP>
           <MethodikP>
-            SpeicherGrenze kennt jedoch nicht die tatsächlichen Kalendertage, an
+            SPEICHERGRENZE kennt jedoch nicht die tatsächlichen Kalendertage, an
             denen das Fahrzeug am Arbeitsplatz geladen wird. Die Ladevorgänge
             werden deshalb innerhalb der möglichen Werktage eines Monats nach
             einem festen, reproduzierbaren Verfahren verteilt.
@@ -760,7 +760,7 @@ export function ElektroautoLadeprofilArticle({
             Methodik.
           </p>
           <p>
-            SpeicherGrenze verwendet das EV-Modell, um den für die
+            SPEICHERGRENZE verwendet das EV-Modell, um den für die
             Speicherberechnung relevanten{" "}
             <strong>zeitlichen Heimladebedarf</strong> aus den tatsächlich
             verfügbaren Kundendaten abzuleiten. Wo keine Kundendaten vorliegen,
@@ -779,7 +779,7 @@ export function ElektroautoLadeprofilArticle({
 
         <MethodikMinorHeading title="Deterministische Berechnung">
           <MethodikP>
-            Bei identischen Eingabedaten erzeugt SpeicherGrenze immer dasselbe
+            Bei identischen Eingabedaten erzeugt SPEICHERGRENZE immer dasselbe
             Ladeprofil.
           </MethodikP>
           <MethodikP>
@@ -890,7 +890,7 @@ export function ElektroautoLadeprofilArticle({
             Samstagsprofil berechnet und ein Sonntag mit dem Sonntagsprofil.
           </MethodikP>
           <MethodikP>
-            Für die Speicherberechnung verwendet SpeicherGrenze damit kein
+            Für die Speicherberechnung verwendet SPEICHERGRENZE damit kein
             abstraktes Standardjahr mit einer immer gleichen Wochenfolge.
           </MethodikP>
         </MethodikMinorHeading>
@@ -902,7 +902,7 @@ export function ElektroautoLadeprofilArticle({
             gestartet wird.
           </MethodikP>
           <MethodikP>
-            SpeicherGrenze behandelt das Fahrzeug deshalb als wiederkehrendes
+            SPEICHERGRENZE behandelt das Fahrzeug deshalb als wiederkehrendes
             Jahressystem. Die Berechnung wird so lange auf das gleiche Jahr
             angewendet, bis sich der Batteriezustand an der Jahresgrenze
             stabilisiert hat.
@@ -924,7 +924,7 @@ export function ElektroautoLadeprofilArticle({
           </MethodikP>
           <MethodikP>
             Die Datei wurde direkt mit der produktiven Berechnungslogik von
-            SpeicherGrenze erzeugt. Bei unveränderter Methodik und identischen
+            SPEICHERGRENZE erzeugt. Bei unveränderter Methodik und identischen
             Eingabedaten muss das gleiche Ladeprofil erneut entstehen.
           </MethodikP>
           <MethodikP>
@@ -936,7 +936,7 @@ export function ElektroautoLadeprofilArticle({
 
       <MethodikSection title="Transparenz">
         <MethodikP>
-          SpeicherGrenze veröffentlicht die verwendeten Berechnungsmethoden
+          SPEICHERGRENZE veröffentlicht die verwendeten Berechnungsmethoden
           bewusst offen.
         </MethodikP>
         <MethodikP>

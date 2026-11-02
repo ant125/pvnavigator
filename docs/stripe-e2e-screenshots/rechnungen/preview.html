@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rechnungszugang – Integrationstest</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f4f4f4;
+      color: #222;
+      font: 16px/1.45 system-ui, sans-serif;
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 650;
+    }
+    .intro {
+      margin: 0 0 28px;
+      color: #444;
+    }
+    section {
+      margin: 0 0 36px;
+    }
+    h2 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      font-weight: 650;
+    }
+    p {
+      margin: 0 0 12px;
+    }
+    a {
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+    }
+    img {
+      display: block;
+      height: auto;
+      max-width: 100%;
+      background: #fff;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Rechnungszugang – Integrationstest</h1>
+    <p class="intro">
+      Lokale Anwendung, lokale Datenbank, Stripe-Testmodus.
+      Ein Klick öffnet die Datei in der Originalauflösung.
+      Breite Stripe-Seiten sind am rechten Rand angeschnitten, weil das Aufnahmefenster schmaler ist als das Portal.
+    </p>
+
+    <section>
+      <h2>Aktives ABO</h2>
+      <p>neu@example.com. ABO aktiv bis 14.11.2026. „Abo verwalten“ und „Rechnungen ansehen“ stehen untereinander.</p>
+      <a href="08-aktives-abo-rechnungen.png" target="_blank">
+        <img src="08-aktives-abo-rechnungen.png" alt="Konto mit aktivem ABO, Abo verwalten und Rechnungen ansehen">
+      </a>
+    </section>
+
+    <section>
+      <h2>Kostenloses Konto</h2>
+      <p>test@example.com. Kostenloser Zugang. Kein Bereich „Rechnungen“, kein „Abo verwalten“.</p>
+      <a href="05-kostenloses-konto.png" target="_blank">
+        <img src="05-kostenloses-konto.png" alt="Kostenloses Konto ohne Rechnungen">
+      </a>
+    </section>
+
+    <section>
+      <h2>Separates Rechnungsportal</h2>
+      <p>Überschrift „Ihre PVNAVIGATOR_-Rechnungen“. Sandbox. Linke Spalte der Portalansicht.</p>
+      <a href="06-rechnungsportal.png" target="_blank">
+        <img src="06-rechnungsportal.png" alt="Stripe-Portal mit der Überschrift Ihre PVNAVIGATOR_-Rechnungen">
+      </a>
+    </section>
+
+    <section>
+      <h2>Rechnungshistorie</h2>
+      <p>Eine bezahlte Rechnung vom 14.10. über 29,00 € für PVNAVIGATOR_ ABO. Keine weitere Rechnung.</p>
+      <a href="07-rechnungshistorie.png" target="_blank">
+        <img src="07-rechnungshistorie.png" width="840" height="440" alt="Rechnungshistorie mit einer bezahlten ABO-Rechnung">
+      </a>
+    </section>
+
+    <section>
+      <h2>Geöffnete Rechnung</h2>
+      <p>Rechnung VXQWDVJR-0001, 29,00 €, bezahlt am 14. Oktober 2026. Download der Rechnung und des Zahlungsbelegs.</p>
+      <a href="04-rechnung-pdf-seite.png" target="_blank">
+        <img src="04-rechnung-pdf-seite.png" alt="Gehostete Stripe-Rechnung mit Download">
+      </a>
+    </section>
+
+    <section>
+      <h2>Abgelaufenes ABO</h2>
+      <p>invoice-expired-20261018@example.com. Kostenloser Zugang, Abo abgelaufen am 03.10.2026. Kein „Abo verwalten“.</p>
+      <a href="09-abgelaufen-konto.png" target="_blank">
+        <img src="09-abgelaufen-konto.png" alt="Konto nach Ablauf des ABO ohne Abo verwalten">
+      </a>
+    </section>
+
+    <section>
+      <h2>Rechnungen nach Ablauf</h2>
+      <p>„Rechnungen ansehen“ bleibt sichtbar. Es gibt keine gespeicherten Berechnungen.</p>
+      <a href="10-abgelaufen-rechnungen.png" target="_blank">
+        <img src="10-abgelaufen-rechnungen.png" alt="Rechnungsbereich und leere Berechnungsliste nach Ablauf">
+      </a>
+    </section>
+
+    <section>
+      <h2>Portal nach Ablauf</h2>
+      <p>Rechnungshistorie vom 03.09 über 29,00 € für PVNAVIGATOR_ ABO. Keine Kündigung und kein Tarifwechsel.</p>
+      <a href="12-abgelaufen-portal.png" target="_blank">
+        <img src="12-abgelaufen-portal.png" alt="Rechnungsportal mit der alten ABO-Rechnung">
+      </a>
+    </section>
+
+    <section>
+      <h2>Alte Rechnung</h2>
+      <p>Rechnung VXQWDVJR-0027, 29,00 €, bezahlt am 3. September 2026.</p>
+      <a href="11-abgelaufene-rechnung.png" target="_blank">
+        <img src="11-abgelaufene-rechnung.png" alt="Geöffnete alte Rechnung nach Ablauf des ABO">
+      </a>
+    </section>
+  </main>
+</body>
+</html>

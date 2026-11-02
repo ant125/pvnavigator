@@ -37,7 +37,7 @@ export function SpeicherHeader() {
             </div>
             <div>
               <span className="font-semibold text-slate-100">PV Speicher</span>
-              <span className="text-xs text-slate-500 ml-2">by PVNavigator</span>
+              <span className="text-xs text-slate-500 ml-2">by PVNAVIGATOR_</span>
             </div>
           </Link>
 

@@ -151,6 +151,21 @@ describe("SpeicherShell overflow chain", () => {
     expect(headerHtml).not.toContain("flex-wrap");
   });
 
+  it("uses the calculate frame for a saved report", () => {
+    usePathname.mockReturnValue(
+      "/result/22222222-2222-4222-8222-222222222222"
+    );
+    const html = renderShell();
+    expect(html).toContain("border border-line-strong");
+    expect(html).toContain("min-h-sg-calculate-header");
+    expect(html).toContain("Neue Berechnung");
+    expect(html).toContain('href="/calculate"');
+    const footerHtml = html.slice(html.indexOf("<footer"));
+    expect(footerHtml).toContain("Kontakt");
+    expect(footerHtml).not.toContain("15-Minuten-Zeitschritte");
+    expect(footerHtml).not.toContain("Unterlagen");
+  });
+
   it("keeps email, sign-out, and the calculator link off /calculate", () => {
     usePathname.mockReturnValue("/");
     const html = renderShell();
@@ -171,7 +186,7 @@ describe("SpeicherShell overflow chain", () => {
     expect(headerHtml).not.toContain("min-h-sg-calculate-header");
     expect(headerHtml).not.toContain("Methodik");
     expect(html).not.toContain("border border-line-strong");
-    expect(footerHtml).toContain("SpeicherGrenze");
+    expect(footerHtml).toContain("SPEICHERGRENZE");
     expect(footerHtml).toContain("Unterlagen");
     expect(footerHtml).toContain('href="/methodik"');
     expect(footerHtml).toContain("Methodik");

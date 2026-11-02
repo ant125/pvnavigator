@@ -13,6 +13,7 @@
     "@ev-profile/loader": "*",
     "@geocoding/core": "*",
     "@heatpump-profile/loader": "*",
+    "@pv-access/core": "*",
     "@pv-auth/session": "*",
     "@pv-methodology/registry": "*",
     "@react-pdf/renderer": "^4.3.1",

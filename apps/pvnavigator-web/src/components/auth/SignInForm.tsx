@@ -57,7 +57,14 @@ export function SignInForm({
       </button>
       <p className="text-center text-sm text-[#64748B]">
         Noch kein Konto?{" "}
-        <Link href="/konto-erstellen" className="font-semibold text-[#b45309] hover:underline">
+        <Link
+          href={
+            nextPath && nextPath !== "/"
+              ? `/konto-erstellen?next=${encodeURIComponent(nextPath)}`
+              : "/konto-erstellen"
+          }
+          className="font-semibold text-[#b45309] hover:underline"
+        >
           Konto erstellen
         </Link>
       </p>

@@ -13,6 +13,10 @@ export default defineConfig({
         __dirname,
         "../../packages/auth-session/src/index.ts"
       ),
+      "@pv-access/core": path.resolve(
+        __dirname,
+        "../../packages/pv-access/src/index.ts"
+      ),
       "@heatpump-profile/loader": path.resolve(
         __dirname,
         "../../packages/heatpump-profile/src/index.ts"

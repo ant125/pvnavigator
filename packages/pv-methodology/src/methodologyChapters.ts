@@ -8,7 +8,7 @@
 export const METHODOLOGY_PAGE_TITLE = "Methodik";
 
 export const METHODOLOGY_PAGE_SUBTITLE =
-  "Wie PVNavigator rechnet und auf welchen wissenschaftlichen Grundlagen die Berechnung basiert.";
+  "Wie PVNAVIGATOR_ rechnet und auf welchen wissenschaftlichen Grundlagen die Berechnung basiert.";
 
 export const METHODOLOGY_SECTION_TITLE = "Methodik";
 
@@ -50,7 +50,7 @@ export const METHODOLOGY_CHAPTERS: readonly MethodologyChapter[] = [
     title: "15-Minuten-Simulation",
     figure: "simulation",
     paragraphs: [
-      "PVNavigator berechnet PV-Erzeugung, Haushaltsverbrauch und Batteriespeicher als physikalische Zeitschrittsimulation. Die Kennzahlen entstehen aus dieser Jahresreihe, nicht aus typischen Monatstagen oder gemittelten Lastgängen.",
+      "PVNAVIGATOR_ berechnet PV-Erzeugung, Haushaltsverbrauch und Batteriespeicher als physikalische Zeitschrittsimulation. Die Kennzahlen entstehen aus dieser Jahresreihe, nicht aus typischen Monatstagen oder gemittelten Lastgängen.",
       "Jedes modellierte Jahr besteht aus 35.040 Intervallen von je 15 Minuten. Die Rechnung verwendet 15 unabhängige Wetterjahre. Jedes Wetterjahr wird vollständig und getrennt simuliert. Es findet keine monatliche Mittelwertbildung statt.",
       "Die Batterie wird in jedem Viertelstundenintervall physikalisch bilanziert: Ladung, Entladung, Verluste und Ladezustand.",
       "Ein Stundenmodell mittelt Erzeugung und Verbrauch innerhalb der Stunde. Kurze Überschüsse und Defizite, die für die Batterie entscheidend sind, gehen dabei verloren. In 15-Minuten-Schritten bleibt sichtbar, wann der Speicher tatsächlich laden oder entladen kann. Das ergibt ein realistischeres Speichermodell als eine stündliche Rechnung.",
@@ -94,7 +94,7 @@ export const METHODOLOGY_CHAPTERS: readonly MethodologyChapter[] = [
     number: 3,
     title: "Haushaltsverbrauch",
     paragraphs: [
-      "Für den zeitlichen Verlauf des Haushaltsverbrauchs verwendet PVNavigator das offizielle BDEW-Standardlastprofil H25.",
+      "Für den zeitlichen Verlauf des Haushaltsverbrauchs verwendet PVNAVIGATOR_ das offizielle BDEW-Standardlastprofil H25.",
       "BDEW H25 ist das amtliche deutsche Standardlastprofil für Haushalte. Es beruht auf einer umfangreichen statistischen Auswertung realer Haushaltsmessungen. Es ist der akzeptierte technische Standard und wird in der professionellen Planungssoftware breit eingesetzt.",
       "Das Profil liegt in 15-Minuten-Auflösung vor und wird auf den angegebenen Jahresverbrauch skaliert. Einzelne Haushalte weichen von diesem Standardprofil naturgemäß ab.",
     ],

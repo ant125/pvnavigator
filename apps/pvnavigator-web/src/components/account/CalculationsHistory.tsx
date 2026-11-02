@@ -1,3 +1,4 @@
+import { calculationAccessBadge } from "@/lib/accessSummary";
 import {
   calculationDisplayName,
   calculationResultHref,
@@ -14,6 +15,9 @@ const card =
 const badge =
   "inline-flex w-fit rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ring-1 bg-emerald-50 text-emerald-800 ring-emerald-100/90";
 
+const accessBadge =
+  "inline-flex w-fit rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ring-1 bg-slate-50 text-slate-600 ring-slate-200/90";
+
 const primaryBtn =
   "inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-[1.03] active:brightness-[0.98]";
 
@@ -24,7 +28,7 @@ export function CalculationsEmptyState({ calculateUrl }: { calculateUrl: string 
         Noch keine Berechnungen vorhanden.
       </p>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#64748B]">
-        Ihre abgeschlossenen PVNavigator-Analysen werden künftig hier gespeichert.
+        Ihre abgeschlossenen PVNAVIGATOR_-Analysen werden künftig hier gespeichert.
       </p>
       <a href={calculateUrl} className={`${primaryBtn} mt-6`}>
         Neue Berechnung
@@ -41,6 +45,7 @@ export function CalculationsHistory({ rows }: { rows: CalculationListRow[] }) {
         const kwh = formatListingKwh(row.summary_consumption_kwh);
         const meta = [kwp, kwh].filter(Boolean).join(" · ");
         const href = calculationResultHref(row);
+        const access = calculationAccessBadge(row.access_tier);
         const inner = (
             <>
             <div className="flex flex-wrap items-center gap-2">
@@ -48,6 +53,18 @@ export function CalculationsHistory({ rows }: { rows: CalculationListRow[] }) {
                 {productLabel(row.product_key)}
               </p>
               <span className={badge}>Abgeschlossen</span>
+              {access ? (
+                <span
+                  className={accessBadge}
+                  title={
+                    access === "Privat"
+                      ? "Kostenloser Bericht – nur zur privaten Nutzung"
+                      : "Bericht aus dem PVNAVIGATOR_ Abo"
+                  }
+                >
+                  {access}
+                </span>
+              ) : null}
             </div>
             <p className="mt-2 text-sm text-[#0F172A]">
               {calculationDisplayName(row)}

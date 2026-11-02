@@ -429,7 +429,7 @@ function WhatWeActuallyCalculateSection() {
           Speichergröße zusätzliche Kapazität nur noch wenig Mehrwert bringt.
         </p>
         <p className="text-sm font-medium text-accent-text">
-          Diese Schwelle wird als SpeicherGrenze ausgewiesen.
+          Diese Schwelle wird als SPEICHERGRENZE ausgewiesen.
         </p>
       </div>
     </LandingSection>
@@ -556,7 +556,7 @@ function ConsumptionPatternsSection() {
     {
       title: "Haushalt mit Wärmepumpe",
       description:
-        "Separater Stromverbrauch der Wärmepumpe als zusätzliches Lastprofil. Dadurch verändert sich der Lastgang in 15-Minuten-Schritten und damit auch die berechnete SpeicherGrenze.",
+        "Separater Stromverbrauch der Wärmepumpe als zusätzliches Lastprofil. Dadurch verändert sich der Lastgang in 15-Minuten-Schritten und damit auch die berechnete SPEICHERGRENZE.",
       icon: Thermometer,
     },
     {
@@ -630,7 +630,7 @@ function ConsumptionPatternsSection() {
 function RecommendationSection() {
   const statements = [
     "Es gibt keine universell richtige Speichergröße. Welche Kapazität sinnvoll ist, hängt von Ihrem Haushalt, Ihrem Strombedarf, Ihren zukünftigen Plänen und Ihren persönlichen Zielen ab.",
-    "Die SpeicherGrenze beantwortet genau eine Frage: Ab welcher Größe liefert zusätzliche Kapazität für Ihre heutigen Annahmen nur noch wenig zusätzlichen Eigenverbrauch?",
+    "Die SPEICHERGRENZE beantwortet genau eine Frage: Ab welcher Größe liefert zusätzliche Kapazität für Ihre heutigen Annahmen nur noch wenig zusätzlichen Eigenverbrauch?",
     "Sie ist ein technischer Orientierungspunkt aus der Simulation – keine Kaufempfehlung und keine allgemeingültige Speichergröße.",
   ];
 
@@ -656,14 +656,14 @@ function RecommendationSection() {
           Für Ihren heutigen Haushalt bedeutet das konkret:
         </p>
         <p className="mt-3 text-base font-semibold leading-relaxed text-accent-text">
-          Oberhalb der SpeicherGrenze steigt der Eigenverbrauch mit jeder
+          Oberhalb der SPEICHERGRENZE steigt der Eigenverbrauch mit jeder
           weiteren kWh nur noch langsam an.
         </p>
         <p className="mt-4 text-sm leading-relaxed text-ink-secondary">
           Ein größerer Speicher kann dennoch sinnvoll sein – etwa bei höherem
           Haushaltsbedarf, einer Wärmepumpe (heute oder geplant), einem
           zukünftigen Elektroauto, weiterer Elektrifizierung oder einer größeren
-          Notstromreserve. Die SpeicherGrenze ist ein technischer Bezugspunkt,
+          Notstromreserve. Die SPEICHERGRENZE ist ein technischer Bezugspunkt,
           keine Kaufempfehlung. Sie unterstützt Ihre Entscheidung, indem sie den
           messbaren Mehr-Eigenverbrauch der Simulation von Ihren persönlichen
           Planungszielen trennt.

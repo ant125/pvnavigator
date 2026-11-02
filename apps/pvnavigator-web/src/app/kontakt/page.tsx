@@ -16,7 +16,7 @@ export default function KontaktPage() {
         </nav>
         <h1 className="text-2xl sm:text-3xl font-bold text-[#0F172A] mb-6">Kontakt</h1>
         <p className="text-[#64748B] mb-8">
-          PVNavigator ist eine unabhängige Analyseplattform für Photovoltaik, Speicher und Energieanalysen.
+          PVNAVIGATOR_ ist eine unabhängige Analyseplattform für Photovoltaik, Speicher und Energieanalysen.
         </p>
 
         <dl className="mb-8 space-y-4 text-[#64748B]">

@@ -20,10 +20,10 @@ export async function generateMetadata({
   const { slug } = await params;
   const article = getMethodikArticle(slug);
   if (!article) {
-    return { title: "Methodik | SpeicherGrenze" };
+    return { title: "Methodik | SPEICHERGRENZE" };
   }
   return {
-    title: `${article.title} | Methodik | SpeicherGrenze`,
+    title: `${article.title} | Methodik | SPEICHERGRENZE`,
     description: article.summary,
   };
 }

@@ -33,8 +33,8 @@ const secondRow: CalculationListRow = {
 
 describe("product_key labels", () => {
   it("maps known products without importing physics packages", () => {
-    expect(productLabel("speicher_grenze")).toBe("SpeicherGrenze");
-    expect(productLabel("wirtschaftlichkeit")).toBe("Wirtschaftlichkeitsanalyse");
+    expect(productLabel("speicher_grenze")).toBe("SPEICHERGRENZE");
+    expect(productLabel("wirtschaftlichkeit")).toBe("RENDITEGUIDE");
     expect(productLabel("pvshadow")).toBe("PVShadow");
     expect(productLabel("future_tool")).toBe("future_tool");
   });
@@ -71,7 +71,7 @@ describe("CalculationsHistory", () => {
     const html = renderToStaticMarkup(
       <CalculationsHistory rows={[speicherRow]} />,
     );
-    expect(html).toContain("SpeicherGrenze");
+    expect(html).toContain("SPEICHERGRENZE");
     expect(html).toContain("Musterstraße 1, 80331 München");
     expect(html).toContain("kWp");
     expect(html).toContain("kWh/a");
@@ -87,7 +87,7 @@ describe("CalculationsHistory", () => {
     const html = renderToStaticMarkup(
       <CalculationsHistory rows={[speicherRow, secondRow]} />,
     );
-    expect(html).toContain("SpeicherGrenze");
+    expect(html).toContain("SPEICHERGRENZE");
     expect(html).toContain("PVShadow");
     expect(html).toContain("Dach A");
     expect(html).not.toContain("/result/b");

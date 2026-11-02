@@ -14,7 +14,7 @@ import type { Metadata } from "next";
  */
 
 export const metadata: Metadata = {
-  title: "PV Speicher Rechner | PVNavigator",
+  title: "PV Speicher Rechner | PVNAVIGATOR_",
   description:
     "Unabhängige Wirtschaftlichkeitsanalyse für Stromspeicher. Wir zeigen, ob sich ein Speicher für Ihr Haus lohnt – in Zahlen.",
   keywords: [

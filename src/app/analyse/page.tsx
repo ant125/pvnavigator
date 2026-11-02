@@ -530,7 +530,7 @@ export default function AnalysePage() {
                           Außerhalb des unterstützten Gebiets
                         </p>
                         <p className="text-sm text-rose-200/70">
-                          PVNavigator unterstützt derzeit nur Standorte in Bayern.
+                          PVNAVIGATOR_ unterstützt derzeit nur Standorte in Bayern.
                           Bitte überprüfen Sie die Adresse oder wählen Sie einen Standort innerhalb Bayerns.
                         </p>
                       </div>

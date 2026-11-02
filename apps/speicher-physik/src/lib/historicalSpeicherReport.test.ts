@@ -213,6 +213,24 @@ describe("resolveHistoricalSpeicherReport", () => {
     ).toBe("not_found");
   });
 
+  it("does not invent roof angles that were not stored", () => {
+    const mapped = mapCompletedCalculation({
+      userId: USER_ID,
+      input,
+      payload,
+    });
+    const stored = { ...(mapped.input as Record<string, unknown>) };
+    delete stored.pvSurfaces;
+    delete stored.tiltDeg;
+    const outcome = resolveHistoricalSpeicherReport({
+      requestedId: CALC_ID,
+      row: rowFromInsert({ input: stored }),
+    });
+    expect(outcome.status).toBe("ok");
+    if (outcome.status !== "ok") return;
+    expect(outcome.report.input.surfaces).toEqual([]);
+  });
+
   it("treats a wrong product_key as not found", () => {
     expect(
       resolveHistoricalSpeicherReport({

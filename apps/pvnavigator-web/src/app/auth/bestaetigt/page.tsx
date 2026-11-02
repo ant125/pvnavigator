@@ -7,8 +7,8 @@ import { getServerUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "E-Mail-Bestätigung | PVNavigator",
-  description: "E-Mail-Adresse für Ihr PVNavigator-Konto bestätigen.",
+  title: "E-Mail-Bestätigung | PVNAVIGATOR_",
+  description: "E-Mail-Adresse für Ihr PVNAVIGATOR_-Konto bestätigen.",
 };
 
 const primaryBtn =

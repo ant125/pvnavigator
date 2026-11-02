@@ -57,7 +57,9 @@ pvnavigator/
 │   ├── bdew-profile/           # Load profiles
 │   ├── geocoding/              # Address / geocoding
 │   ├── heatpump-profile/       # Measured heat-pump electrical profiles
-│   └── pv-methodology/         # Methodik & Quellen registry (SSOT for sources)
+│   ├── pv-methodology/         # Methodik & Quellen registry (SSOT for sources)
+│   ├── auth-session/           # Shared Auth cookie / redirect helpers
+│   └── pv-access/              # Access rules vocabulary: address key, tiers, German copy
 
 ---
 
@@ -115,6 +117,7 @@ Rules:
 - Pure presentation layer
 - Acts as routing hub between services
 - May import `@pv-auth/session` for the shared Auth cookie/redirect helpers
+  and `@pv-access/core` for the access-rule vocabulary shown in `/konto`
 
 This app must remain lightweight and independent of core logic.
 
@@ -177,6 +180,77 @@ Hub `/konto` links SpeicherGrenze rows there. Live calculation remains
 
 Shared cookie/redirect helpers: `packages/auth-session` (`@pv-auth/session`).
 Schema SQL: `supabase/migrations/`.
+
+---
+
+## Access rules (PVNAVIGATOR_)
+
+One account, two kinds of access. The decision is taken **in the database**
+(`SECURITY DEFINER` functions, per-user advisory lock), never in the browser.
+The vocabulary (address key, tiers, German copy) lives in `packages/pv-access`
+(`@pv-access/core`).
+
+| Relation | Role |
+|---|---|
+| `public.free_addresses` | The single pinned free address per account |
+| `public.subscription_periods` | One row per paid period (`period_start <= now() < period_end`), `address_limit` = 50 |
+| `public.subscription_period_addresses` | Unique addresses that consumed a slot of a paid period |
+| `public.calculations.access_tier` | `free` \| `paid` decided when the row was recorded; `null` = legacy |
+
+**Free access.** After registration a user may pin one address for
+SpeicherGrenze. It is pinned by the **first successful** calculation (a failed
+run — geocoding, physics, validation — never pins). For that address any
+parameters may be recalculated. Another address requires a subscription. No
+monthly reset.
+
+**Address identity.** `buildAddressKey()` normalises the *entered* fields
+(case, whitespace, umlauts, `Str.` → `strasse`), so spelling variants do not
+create a new object while different house numbers (`12`, `12a`, `12b`) stay
+distinct. The geocoder's formatted address is used for display only, so a
+later change in its formatting cannot silently turn a pinned address into a
+new one.
+
+**Subscription.** One paid period = 50 unique addresses across SpeicherGrenze
+and the future RENDITEGUIDE. Re-calculating a known address inside the period
+does not consume a slot; a new paid period counts an address once again.
+Viewing and downloading saved reports never touches the quota. When the quota
+is exhausted or the period is over, the free rules apply; saved reports stay
+readable and their tier does not change.
+
+**Flow.** `POST /api/calculate`: session → validation →
+`check_calculation_access(address_key)` (read only, 403 with a German
+explanation if refused) → physics → `record_completed_calculation(...)`
+(atomic: re-check under lock, insert with tier, pin / count). Only the record
+step pins or counts, so parallel requests and failed runs cannot over-consume.
+If the check or the record step is technically unavailable (503 / stream
+`code: "service_unavailable"`), the result is withheld — never shown without
+accounting. The form shows such refusals (and access refusals, 403 /
+`code: <reason>`) in a separate notice box, not as input errors.
+Clients have **no** `INSERT` on `calculations` after the lockdown migration
+(step 1 already excludes `access_tier` / `address_key` from the column grant)
+and no write access to the access tables; `access_tier` is not in the
+`UPDATE` column grant. The lockdown SQL lives in `supabase/post-deploy/`, not
+in `supabase/migrations/`, so `supabase db push` cannot apply it before the
+deployment it depends on. Rollout order: `supabase/README.md › Production
+rollout order`.
+
+**Reports.** The tier is stored with the calculation and read from there for
+the PDF: free reports carry the marking "Nur zur privaten Nutzung" (one pale
+diagonal outline beneath the content plus a footer caption on every page);
+paid reports never do, also after the subscription ended; a free report does
+not become paid because of a later subscription.
+
+**Legacy rows** (`access_tier is null`, created before these rules) are shown
+and exported unchanged, never re-marked, and never pin an address. Existing
+users pin their free address with their next successful calculation.
+
+Billing is connected in test mode only. The hub creates a Stripe Checkout
+Session and a Customer Portal Session on the server; access is granted only
+when the signed webhook records a paid invoice as one `subscription_periods`
+row (`source = 'stripe'`, `external_ref` = invoice id, bounds from the invoice
+line). The browser cannot insert a period. Live keys are refused. Rollout of
+the additive Stripe migration stays in `migrations/` and does not move the
+access lockdown out of `post-deploy/`.
 
 ---
 

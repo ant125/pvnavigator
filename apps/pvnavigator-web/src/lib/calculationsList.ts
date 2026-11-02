@@ -11,11 +11,13 @@ export type CalculationListRow = {
   summary_consumption_kwh: number | null;
   created_at: string;
   updated_at: string;
+  /** free | paid, decided server-side; null for rows before the access rules. */
+  access_tier?: string | null;
 };
 
 const PRODUCT_LABELS: Record<string, string> = {
-  [SPEICHER_GRENZE_PRODUCT_KEY]: "SpeicherGrenze",
-  wirtschaftlichkeit: "Wirtschaftlichkeitsanalyse",
+  [SPEICHER_GRENZE_PRODUCT_KEY]: "SPEICHERGRENZE",
+  wirtschaftlichkeit: "RENDITEGUIDE",
   pvshadow: "PVShadow",
 };
 
@@ -50,7 +52,7 @@ export function formatListingKwh(value: number | null): string | null {
 }
 
 export const CALCULATION_LIST_SELECT =
-  "id, product_key, name, summary_address, summary_pv_kwp, summary_consumption_kwh, created_at, updated_at";
+  "id, product_key, name, summary_address, summary_pv_kwp, summary_consumption_kwh, created_at, updated_at, access_tier";
 
 export function calculationResultHref(row: CalculationListRow): string | null {
   if (row.product_key !== SPEICHER_GRENZE_PRODUCT_KEY) return null;

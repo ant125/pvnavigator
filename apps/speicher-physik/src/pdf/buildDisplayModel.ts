@@ -3,6 +3,7 @@
  * Reads the saved input and result snapshot only. Does not run the physics
  * model and does not look at the live form.
  */
+import { reportRequiresPrivateUseMarking } from "@pv-access/core";
 import { METHODOLOGY_PRINCIPLES } from "@pv-methodology/registry";
 
 import type { PvSurfaceInput } from "@/app/(speicher)/types/speicher";
@@ -490,6 +491,7 @@ export function buildSpeicherPdfModel(row: CalculationHistoryRow): PdfModel {
   return {
     savedAt: savedAtLabel(row.created_at),
     batteryModelVersion: row.battery_model_version,
+    privateUse: reportRequiresPrivateUseMarking(row.access_tier ?? null),
     address: displayAddress || PLACEHOLDER,
     technical: {
       value: formatQuantityDe(recommendedTechnicalSize),

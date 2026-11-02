@@ -5,7 +5,7 @@ export default function Home() {
     <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
       <div className="max-w-2xl text-center space-y-6">
         <p className="text-sm uppercase tracking-[0.25em] text-sky-400">
-          PV Navigator
+          PVNAVIGATOR_
         </p>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
           Ihr smarter Weg zur richtigen Photovoltaik-Anlage.

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PV Speicher Rechner | PVNavigator",
+  title: "PV Speicher Rechner | PVNAVIGATOR_",
   description: "Unabhängige Wirtschaftlichkeitsanalyse für Stromspeicher.",
 };
 

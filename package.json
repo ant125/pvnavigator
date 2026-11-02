@@ -4,8 +4,9 @@
   "private": true,
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "npm run dev --workspace=apps/speicher-physik",
-    "dev:speicher-physik": "npm run dev --workspace=apps/speicher-physik",
+    "dev": "npm run dev:speicher-physik",
+    "dev:hub": "npm run dev --workspace=apps/pvnavigator-web -- -p 3000",
+    "dev:speicher-physik": "npm run dev --workspace=apps/speicher-physik -- -p 3001",
     "dev:speicher-wirtschaft": "npm run dev --workspace=apps/speicher-wirtschaft",
     "dev:pvshadow": "npm run dev --workspace=apps/pvshadow",
     "dev:pvnavigator-web": "npm run dev --workspace=apps/pvnavigator-web",

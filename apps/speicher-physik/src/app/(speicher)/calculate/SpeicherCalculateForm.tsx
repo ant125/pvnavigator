@@ -29,6 +29,14 @@ import {
 } from "./calculateFormModel";
 import { PresetDropdown } from "./PresetDropdown";
 import {
+  NOTICE_HEADINGS,
+  UNAVAILABLE_NOTICE_DETAIL,
+  type CalculationNotice,
+  type PinnedAddressFields,
+} from "./calculationNotice";
+import { AddressQuotaCard } from "./AddressQuotaCard";
+import { FreeAddressLimitCard } from "./FreeAddressLimitCard";
+import {
   BTN_PRIMARY,
   BTN_SECONDARY,
   FORM_HELP,
@@ -97,6 +105,16 @@ export function exactAnglesForcedOpen(
 const PV_PLANE_ACTION =
   "block w-fit text-sm font-medium text-accent-text hover:text-accent-hover disabled:cursor-not-allowed disabled:opacity-100";
 
+const UNRECORDED_INPUT = "Nicht im gespeicherten Bericht.";
+
+function recordedChoice(
+  value: boolean | undefined,
+  unrecorded: boolean
+): boolean | null {
+  if (unrecorded && value == null) return null;
+  return value === true;
+}
+
 export const FOCUS_FIELD_ORDER = [
   "postalCode",
   "city",
@@ -126,6 +144,8 @@ export type SpeicherCalculateFormProps = {
   tiltInputStrings: string[];
   setTiltInputStrings: (updater: string[] | ((prev: string[]) => string[])) => void;
   errors: string[];
+  /** Server refusal that is not an input mistake; shown in its own box. */
+  notice?: CalculationNotice | null;
   fieldErrors: SpeicherFieldErrors;
   clearFieldError: (field: SpeicherFieldErrorKey) => void;
   locked: boolean;
@@ -135,8 +155,20 @@ export type SpeicherCalculateFormProps = {
   onEditInputs?: () => void;
   /** Result panel: the field list is the only scrollport. */
   fieldsScrollable?: boolean;
+  /**
+   * Gaps from a saved calculation that are still empty. They are listed
+   * instead of being filled with form defaults.
+   */
+  missingInputLabels?: readonly string[];
+  /** Ids of those gaps. Only these controls stay unset instead of reading as Nein. */
+  unrecordedGapIds?: readonly string[];
   errorBoxRef: RefObject<HTMLDivElement | null>;
   fieldInputRefs: CalculateFormFieldRefs;
+  /** Hub tariffs page. Used only by the free-address limit card. */
+  tariffsUrl?: string;
+  onUsePinnedAddress?: (address: PinnedAddressFields) => void;
+  /** Persist the draft before leaving for the hub. */
+  onBeforeLeave?: () => void;
 };
 
 export function SpeicherCalculateForm({
@@ -149,6 +181,7 @@ export function SpeicherCalculateForm({
   tiltInputStrings,
   setTiltInputStrings,
   errors,
+  notice = null,
   fieldErrors,
   clearFieldError,
   locked,
@@ -157,8 +190,13 @@ export function SpeicherCalculateForm({
   onSubmit,
   onEditInputs,
   fieldsScrollable = false,
+  missingInputLabels = [],
+  unrecordedGapIds = [],
   errorBoxRef,
   fieldInputRefs,
+  tariffsUrl,
+  onUsePinnedAddress,
+  onBeforeLeave,
 }: SpeicherCalculateFormProps) {
   const surfaces = surfacesOrDefault(formData);
   const [exactAnglesOpen, setExactAnglesOpen] = useState<boolean[]>(() =>
@@ -240,6 +278,43 @@ export function SpeicherCalculateForm({
       className="sg-calculate-form space-y-6"
       noValidate
     >
+      {notice && errors.length === 0 && notice.code === "free_address_mismatch" && notice.freeAddress ? (
+        <div ref={errorBoxRef}>
+          <FreeAddressLimitCard
+            address={notice.freeAddress}
+            tariffsUrl={tariffsUrl ?? "/tarife"}
+            onUsePinnedAddress={onUsePinnedAddress}
+            onBeforeLeave={onBeforeLeave}
+          />
+        </div>
+      ) : notice && errors.length === 0 && notice.code === "subscription_limit_reached" ? (
+        <div ref={errorBoxRef}>
+          <AddressQuotaCard
+            addressLimit={notice.addressLimit ?? null}
+            tariffsUrl={tariffsUrl ?? "/tarife"}
+            onBeforeLeave={onBeforeLeave}
+          />
+        </div>
+      ) : notice && errors.length === 0 ? (
+        <div
+          ref={errorBoxRef}
+          role="status"
+          aria-live="polite"
+          data-testid={`calculation-notice-${notice.kind}`}
+          className="rounded-sm border border-warning/50 bg-warning-soft p-4"
+        >
+          <p className="mb-1 text-sm font-semibold text-ink">
+            {NOTICE_HEADINGS[notice.kind]}
+          </p>
+          <p className="text-sm text-ink-secondary">{notice.message}</p>
+          {notice.kind === "unavailable" && (
+            <p className="mt-1 text-sm text-ink-muted">
+              {UNAVAILABLE_NOTICE_DETAIL}
+            </p>
+          )}
+        </div>
+      ) : null}
+
       {errors.length > 0 && (
         <div
           ref={errorBoxRef}
@@ -269,6 +344,22 @@ export function SpeicherCalculateForm({
         role={fieldsScrollable ? "region" : undefined}
         aria-label={fieldsScrollable ? "Eingabefelder" : undefined}
       >
+      {missingInputLabels.length > 0 ? (
+        <div
+          role="status"
+          className="mb-3 rounded-sm border border-warning/40 bg-warning-soft px-4 py-3 text-sm text-warning"
+        >
+          <p>
+            Einige Eingaben sind in diesem Bericht nicht gespeichert und wurden
+            nicht ergänzt:
+          </p>
+          <ul className="mt-2 list-disc pl-4">
+            {missingInputLabels.map((label) => (
+              <li key={label}>{label}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <fieldset
         disabled={locked}
         className={`min-w-0 border-0 p-0 ${
@@ -670,14 +761,20 @@ export function SpeicherCalculateForm({
           title="Wärmepumpe"
           headingExtra={
             <HeatPumpEnableToggle
-              heatPumpEnabled={formData.heatPumpEnabled === true}
+              heatPumpEnabled={recordedChoice(
+                formData.heatPumpEnabled,
+                unrecordedGapIds.includes("heatPumpEnabled")
+              )}
               onChange={(patch) =>
                 setFormData((prev) => ({ ...prev, ...patch }))
               }
             />
           }
         >
-          {formData.heatPumpEnabled === true ? (
+          {unrecordedGapIds.includes("heatPumpEnabled") &&
+          formData.heatPumpEnabled == null ? (
+            <p className={FORM_HELP}>{UNRECORDED_INPUT}</p>
+          ) : formData.heatPumpEnabled === true ? (
             <HeatPumpInputSection
               formData={formData}
               fieldErrors={fieldErrors}
@@ -693,14 +790,19 @@ export function SpeicherCalculateForm({
           title="Elektroauto"
           headingExtra={
             <EvEnableToggle
-              evEnabled={formData.evEnabled === true}
+              evEnabled={recordedChoice(
+                formData.evEnabled,
+                unrecordedGapIds.includes("evEnabled")
+              )}
               onChange={(patch) =>
                 setFormData((prev) => ({ ...prev, ...patch }))
               }
             />
           }
         >
-          {formData.evEnabled === true ? (
+          {unrecordedGapIds.includes("evEnabled") && formData.evEnabled == null ? (
+            <p className={FORM_HELP}>{UNRECORDED_INPUT}</p>
+          ) : formData.evEnabled === true ? (
             <EvInputSection
               formData={formData}
               fieldErrors={fieldErrors}
@@ -714,6 +816,10 @@ export function SpeicherCalculateForm({
 
         <FormSection title="Notstromreserve">
           <div className={FORM_OPTIONAL_BLOCK}>
+            {unrecordedGapIds.includes("backupReserveKwh") &&
+            formData.backupReserveKwh == null ? (
+              <p className={FORM_HELP}>{UNRECORDED_INPUT}</p>
+            ) : null}
             <label className="flex cursor-pointer items-start gap-3">
               <input
                 type="checkbox"

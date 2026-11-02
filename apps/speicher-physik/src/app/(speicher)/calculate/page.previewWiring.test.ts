@@ -83,14 +83,20 @@ describe("calculate page preview wiring", () => {
     );
   });
 
-  it("does not attach calculate result navigation to saved /result/[id] pages", () => {
+  it("opens a saved report in the same calculate workspace", () => {
     const resultPage = readFileSync(
       path.join(__dirname, "../result/[id]/page.tsx"),
       "utf8"
     );
-    expect(resultPage).not.toContain("ResultNavigation");
-    expect(resultPage).not.toContain("sg-result-nav");
-    expect(resultPage).not.toContain('variant="workspace"');
+    expect(resultPage).toContain("SpeicherCalculatePage");
+    expect(resultPage).toContain("hydrateSavedCalculationInput");
+    expect(resultPage).not.toContain("<SpeicherReportView");
+    expect(resultPage).not.toContain("Ihre Eingabedaten");
+    expect(pageSource).toContain("ResultNavigation");
+    expect(pageSource).toContain('variant="workspace"');
+    expect(pageSource).toContain("pdfCalculationId={completedCalculationId}");
+    expect(pageSource).toContain("router.replace(`/result/${response.calculationId}`)");
+    expect(pageSource).toContain("savedInputGapIsOpen");
   });
 
   it("disables scroll anchoring only on the calculate page wrapper", () => {

@@ -21,6 +21,23 @@ body {
   font-family: var(--font-inter, system-ui, sans-serif);
 }
 
+.hub-wordmark {
+  font-family: var(--font-hub-mono), "IBM Plex Mono", ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .hub-wordmark {
+    font-size: 1rem;
+    letter-spacing: 0.14em;
+  }
+}
+
 @media (min-width: 768px) {
   :root {
     --header-offset: 4.5rem;

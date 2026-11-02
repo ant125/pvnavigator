@@ -10,9 +10,11 @@ const passwordMismatchGerman = "Die Passwörter stimmen nicht überein.";
 export function SignUpForm({
   error,
   needsConfirmation,
+  nextPath = "/konto",
 }: {
   error?: string;
   needsConfirmation?: boolean;
+  nextPath?: string;
 }) {
   const [pending, setPending] = useState(false);
   const [passwordMismatch, setPasswordMismatch] = useState(false);
@@ -31,7 +33,10 @@ export function SignUpForm({
         </div>
         <p className="text-sm text-[#64748B]">
           Danach können Sie sich{" "}
-          <Link href="/anmelden" className="font-semibold text-[#b45309] hover:underline">
+          <Link
+            href={nextPath && nextPath !== "/konto" ? `/anmelden?next=${encodeURIComponent(nextPath)}` : "/anmelden"}
+            className="font-semibold text-[#b45309] hover:underline"
+          >
             anmelden
           </Link>
           .
@@ -62,6 +67,7 @@ export function SignUpForm({
         setPending(true);
       }}
     >
+      <input type="hidden" name="next" value={nextPath} readOnly />
       <div>
         <label htmlFor="signup-email" className="block text-sm font-medium text-[#0F172A]">
           E-Mail
@@ -118,7 +124,10 @@ export function SignUpForm({
       </button>
       <p className="text-center text-sm text-[#64748B]">
         Bereits registriert?{" "}
-        <Link href="/anmelden" className="font-semibold text-[#b45309] hover:underline">
+        <Link
+          href={nextPath && nextPath !== "/konto" ? `/anmelden?next=${encodeURIComponent(nextPath)}` : "/anmelden"}
+          className="font-semibold text-[#b45309] hover:underline"
+        >
           Anmelden
         </Link>
       </p>

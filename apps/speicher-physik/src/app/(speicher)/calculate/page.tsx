@@ -8,6 +8,10 @@ import {
   useCallback,
   type RefObject,
 } from "react";
+import { useRouter } from "next/navigation";
+import type { ReportAccessKind } from "@pv-access/core";
+import { getHubOrigin } from "@pv-auth/session";
+
 import { SpeicherInput } from "../types/speicher";
 import {
   validateInput,
@@ -28,6 +32,16 @@ import {
   applyCalculationProgress,
 } from "@/lib/calculationProgress";
 import { runHouseholdCalculationStream } from "./runHouseholdCalculationStream";
+import {
+  CalculationNoticeError,
+  type CalculationNotice,
+  type PinnedAddressFields,
+} from "./calculationNotice";
+import {
+  clearCalculateDraft,
+  readCalculateDraft,
+  writeCalculateDraft,
+} from "./calculateDraft";
 import {
   useReportHeaderCta,
   type CalculateHeaderStatus,
@@ -57,18 +71,32 @@ import { ResultNavigation } from "./ResultNavigation";
 import { scrollPageToTop } from "./scrollPageToTop";
 import { SelectedSystemChips } from "./SelectedSystemChips";
 import { SystemScene, systemSceneFromForm } from "./SystemScene";
+import {
+  savedInputGapIsOpen,
+  type SavedCalculationView,
+} from "./savedCalculationForm";
+import type { FrozenSpeicherPresentation } from "@/lib/persistCompletedCalculation";
 
 type Step = "input" | "calculating" | "results";
+
+const TARIFFS_URL = `${getHubOrigin()}/tarife`;
 
 const POSTAL_CODE_MISMATCH_GENERAL_MESSAGE =
   "Die eingegebene PLZ stimmt nicht mit der gefundenen Adresse überein. Bitte prüfen Sie die PLZ.";
 
-export default function SpeicherCalculatePage() {
-  const [step, setStep] = useState<Step>("input");
+export default function SpeicherCalculatePage({
+  saved = null,
+}: {
+  /** Set on /result/[id]. Viewing this snapshot does not start a calculation. */
+  saved?: SavedCalculationView | null;
+}) {
+  const router = useRouter();
+  const savedForm = saved?.hydrated.formData;
+  const [step, setStep] = useState<Step>(saved ? "results" : "input");
   const [editing, setEditing] = useState(false);
   const [calculatedFingerprint, setCalculatedFingerprint] = useState<
     string | null
-  >(null);
+  >(() => (savedForm ? calculationInputFingerprint(savedForm) : null));
   const [calculationProgress, setCalculationProgress] = useState(
     INITIAL_CALCULATION_PROGRESS
   );
@@ -82,26 +110,38 @@ export default function SpeicherCalculatePage() {
   const pendingScrollToRunRef = useRef(false);
   const [runSceneOpen, setRunSceneOpen] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  /** Server refusal that is not an input mistake (service down, access rule). */
+  const [notice, setNotice] = useState<CalculationNotice | null>(null);
   const [fieldErrors, setFieldErrors] = useState<SpeicherFieldErrors>({});
   const [verifiedResult, setVerifiedResult] = useState<VerifiedResult | null>(
-    null
+    saved?.verifiedResult ?? null
   );
   const [speicherGrenz, setSpeicherGrenz] =
-    useState<SpeicherGrenzPayload | null>(null);
+    useState<SpeicherGrenzPayload | null>(saved?.speicherGrenz ?? null);
   const [robustness, setRobustness] = useState<WpuqRobustnessPayload | null>(
-    null
+    saved?.robustness ?? null
   );
   const [wasserWasserRobustness, setWasserWasserRobustness] =
-    useState<WwRobustnessPayload | null>(null);
-  const [displayAddress, setDisplayAddress] = useState<string | null>(null);
+    useState<WwRobustnessPayload | null>(
+      saved?.wasserWasserRobustness ?? null
+    );
+  const [displayAddress, setDisplayAddress] = useState<string | null>(
+    saved?.displayAddress ?? null
+  );
   const [heatPumpCitation, setHeatPumpCitation] =
-    useState<ReportHeatPumpCitation>(null);
+    useState<ReportHeatPumpCitation>(saved?.heatPumpCitation ?? null);
   const [evResult, setEvResult] = useState<
     HouseholdCalculationPayload["ev"]
-  >(null);
+  >(saved?.ev ?? null);
   const [completedCalculationId, setCompletedCalculationId] = useState<
     string | null
-  >(null);
+  >(saved?.id ?? null);
+  const [completedAccessTier, setCompletedAccessTier] =
+    useState<ReportAccessKind | null>(saved?.accessKind ?? null);
+  const [presentationOverride, setPresentationOverride] =
+    useState<FrozenSpeicherPresentation | null>(
+      saved?.presentationOverride ?? null
+    );
   const [resultPresentation, setResultPresentation] = useState<{
     surfaces: ReturnType<typeof surfacesOrDefault>;
     annualConsumptionKwh: number | undefined;
@@ -112,9 +152,29 @@ export default function SpeicherCalculatePage() {
     evEnabled: boolean | undefined;
     backupReserveKwh: number | undefined;
     totalKwPConfigured: number;
-  } | null>(null);
+  } | null>(
+    saved
+      ? {
+          surfaces: saved.hydrated.surfaces.map((surface) => ({ ...surface })),
+          annualConsumptionKwh: saved.hydrated.annualConsumptionKwh,
+          heatPumpEnabled: saved.hydrated.heatPumpEnabled,
+          heatPumpConsumptionKwh: saved.hydrated.heatPumpConsumptionKwh,
+          heatPumpTechnology: saved.hydrated.heatPumpTechnology,
+          heatPumpDhwService: saved.hydrated.heatPumpDhwService,
+          evEnabled: saved.hydrated.evEnabled,
+          backupReserveKwh: saved.hydrated.backupReserveKwh,
+          totalKwPConfigured: saved.hydrated.totalKwPConfigured,
+        }
+      : null
+  );
   const [runPreview, setRunPreview] = useState<Partial<SpeicherInput> | null>(
-    null
+    () =>
+      savedForm
+        ? {
+            ...savedForm,
+            pvSurfaces: savedForm.pvSurfaces?.map((surface) => ({ ...surface })),
+          }
+        : null
   );
   const errorBoxRef = useRef<HTMLDivElement | null>(null);
   const mainPaneRef = useRef<HTMLDivElement | null>(null);
@@ -144,17 +204,60 @@ export default function SpeicherCalculatePage() {
     });
   };
 
-  const [formData, setFormData] = useState<Partial<SpeicherInput>>({
-    ...INITIAL_FORM_DATA,
-    pvSurfaces: [{ ...DEFAULT_SURFACE }],
-  });
-  const [kwpInputStrings, setKwpInputStrings] = useState<string[]>([""]);
-  const [azimuthInputStrings, setAzimuthInputStrings] = useState<string[]>([
-    String(DEFAULT_SURFACE.azimuthDeg),
-  ]);
-  const [tiltInputStrings, setTiltInputStrings] = useState<string[]>([
-    String(DEFAULT_SURFACE.tiltDeg),
-  ]);
+  const [formData, setFormData] = useState<Partial<SpeicherInput>>(() =>
+    savedForm
+      ? {
+          ...savedForm,
+          pvSurfaces: savedForm.pvSurfaces?.map((surface) => ({ ...surface })),
+        }
+      : {
+          ...INITIAL_FORM_DATA,
+          pvSurfaces: [{ ...DEFAULT_SURFACE }],
+        }
+  );
+  const [kwpInputStrings, setKwpInputStrings] = useState<string[]>(
+    saved?.hydrated.kwpInputStrings ?? [""]
+  );
+  const [azimuthInputStrings, setAzimuthInputStrings] = useState<string[]>(
+    saved?.hydrated.azimuthInputStrings ?? [String(DEFAULT_SURFACE.azimuthDeg)]
+  );
+  const [tiltInputStrings, setTiltInputStrings] = useState<string[]>(
+    saved?.hydrated.tiltInputStrings ?? [String(DEFAULT_SURFACE.tiltDeg)]
+  );
+  const [draftReady, setDraftReady] = useState(false);
+
+  useLayoutEffect(() => {
+    if (saved) return;
+    const draft = readCalculateDraft();
+    if (draft) {
+      setFormData(draft.formData);
+      setKwpInputStrings(draft.kwpInputStrings);
+      setAzimuthInputStrings(draft.azimuthInputStrings);
+      setTiltInputStrings(draft.tiltInputStrings);
+    }
+    setDraftReady(true);
+  }, [saved]);
+
+  const persistDraft = useCallback(() => {
+    if (saved) return;
+    writeCalculateDraft({
+      formData,
+      kwpInputStrings,
+      azimuthInputStrings,
+      tiltInputStrings,
+    });
+  }, [saved, formData, kwpInputStrings, azimuthInputStrings, tiltInputStrings]);
+
+  useEffect(() => {
+    if (saved || !draftReady) return;
+    persistDraft();
+  }, [saved, draftReady, persistDraft]);
+
+  const openSavedGaps = (saved?.hydrated.missing ?? []).filter((item) =>
+    savedInputGapIsOpen(formData, item.id)
+  );
+  const missingInputLabels = openSavedGaps.map((item) => item.label);
+  const unrecordedGapIds = openSavedGaps.map((item) => item.id);
 
   const formLocked = step === "calculating" || (step === "results" && !editing);
   const isStale =
@@ -185,7 +288,7 @@ export default function SpeicherCalculatePage() {
   }, [step]);
 
   useEffect(() => {
-    if (errors.length === 0 || formLocked) return;
+    if ((errors.length === 0 && !notice) || formLocked) return;
 
     const scrollFrame = requestAnimationFrame(() => {
       errorBoxRef.current?.scrollIntoView({
@@ -206,7 +309,7 @@ export default function SpeicherCalculatePage() {
     });
 
     return () => cancelAnimationFrame(scrollFrame);
-  }, [errors, fieldErrors, formLocked]);
+  }, [errors, notice, fieldErrors, formLocked]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,6 +325,7 @@ export default function SpeicherCalculatePage() {
 
     submitInFlightRef.current = true;
     setErrors([]);
+    setNotice(null);
     setFieldErrors({});
     setCalculationProgress(INITIAL_CALCULATION_PROGRESS);
     setElapsedSeconds(0);
@@ -259,6 +363,7 @@ export default function SpeicherCalculatePage() {
       setCalculatedFingerprint(calculationInputFingerprint(formData));
 
       setCompletedCalculationId(response.calculationId);
+      setCompletedAccessTier(response.accessTier);
       setVerifiedResult(completed.verifiedResult);
       setSpeicherGrenz(completed.speicherGrenz);
       setRobustness(completed.robustness);
@@ -270,6 +375,7 @@ export default function SpeicherCalculatePage() {
           : null
       );
       setEvResult(completed.ev);
+      setPresentationOverride(null);
       setResultPresentation({
         surfaces: surfacesOrDefault(formData),
         annualConsumptionKwh: formData.annualConsumptionKwh,
@@ -285,17 +391,33 @@ export default function SpeicherCalculatePage() {
         setTimeout(resolve, CALCULATION_COMPLETE_PAUSE_MS)
       );
       setStep("results");
+      if (saved?.id && response.calculationId) {
+        router.replace(`/result/${response.calculationId}`);
+      }
     } catch (err) {
       pendingScrollToRunRef.current = false;
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Die Berechnung ist fehlgeschlagen. Bitte versuchen Sie es erneut.";
-      setErrors([message]);
-      if (message === POSTAL_CODE_MISMATCH_GENERAL_MESSAGE) {
-        setFieldErrors({ postalCode: "Bitte prüfen Sie die PLZ." });
-      } else {
+      if (err instanceof CalculationNoticeError) {
+        // Not an input mistake: own box, no "Bitte korrigieren Sie ..." heading.
+        setNotice({
+          kind: err.kind,
+          message: err.message,
+          code: err.code,
+          freeAddress: err.freeAddress,
+          addressLimit: err.addressLimit,
+        });
+        setErrors([]);
         setFieldErrors({});
+      } else {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Die Berechnung ist fehlgeschlagen. Bitte versuchen Sie es erneut.";
+        setErrors([message]);
+        if (message === POSTAL_CODE_MISMATCH_GENERAL_MESSAGE) {
+          setFieldErrors({ postalCode: "Bitte prüfen Sie die PLZ." });
+        } else {
+          setFieldErrors({});
+        }
       }
       setCalculationComplete(false);
       setCalculationDurationMs(null);
@@ -321,6 +443,8 @@ export default function SpeicherCalculatePage() {
     setHeatPumpCitation(null);
     setEvResult(null);
     setCompletedCalculationId(null);
+    setCompletedAccessTier(null);
+    setPresentationOverride(null);
     setResultPresentation(null);
     setRunPreview(null);
     setRunSceneOpen(false);
@@ -330,8 +454,10 @@ export default function SpeicherCalculatePage() {
     calculationStartedAtRef.current = null;
     setElapsedSeconds(0);
     setErrors([]);
+    setNotice(null);
     setFieldErrors({});
     setCalculationProgress(INITIAL_CALCULATION_PROGRESS);
+    clearCalculateDraft();
     setFormData({
       ...INITIAL_FORM_DATA,
       pvSurfaces: [{ ...DEFAULT_SURFACE }],
@@ -400,8 +526,10 @@ export default function SpeicherCalculatePage() {
             backupReserveKwh: resultPresentation.backupReserveKwh,
           }}
           totalKwPConfigured={resultPresentation.totalKwPConfigured}
+          presentationOverride={presentationOverride}
           calculationDurationMs={calculationDurationMs}
           pdfCalculationId={completedCalculationId}
+          accessKind={completedAccessTier}
           bodyClassName={
             editing
               ? isStale
@@ -503,6 +631,7 @@ export default function SpeicherCalculatePage() {
             tiltInputStrings={tiltInputStrings}
             setTiltInputStrings={setTiltInputStrings}
             errors={errors}
+            notice={notice}
             fieldErrors={fieldErrors}
             clearFieldError={clearFieldError}
             locked={formLocked}
@@ -512,6 +641,8 @@ export default function SpeicherCalculatePage() {
             showSubmit={!formLocked}
             onSubmit={handleSubmit}
             fieldsScrollable={step !== "input"}
+            missingInputLabels={missingInputLabels}
+            unrecordedGapIds={unrecordedGapIds}
             onEditInputs={
               step === "results" && formLocked
                 ? () => setEditing(true)
@@ -519,6 +650,27 @@ export default function SpeicherCalculatePage() {
             }
             errorBoxRef={errorBoxRef}
             fieldInputRefs={fieldInputRefs}
+            tariffsUrl={TARIFFS_URL}
+            onBeforeLeave={persistDraft}
+            onUsePinnedAddress={(address: PinnedAddressFields) => {
+              setFormData((prev) => ({
+                ...prev,
+                street: address.street,
+                houseNumber: address.houseNumber,
+                postalCode: address.postalCode,
+                city: address.city,
+              }));
+              setNotice(null);
+              setErrors([]);
+              setFieldErrors((prev) => {
+                const next = { ...prev };
+                delete next.street;
+                delete next.houseNumber;
+                delete next.postalCode;
+                delete next.city;
+                return next;
+              });
+            }}
           />
         }
         main={main}

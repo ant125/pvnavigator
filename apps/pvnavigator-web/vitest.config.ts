@@ -12,6 +12,10 @@ export default defineConfig({
         __dirname,
         "../../packages/auth-session/src/index.ts",
       ),
+      "@pv-access/core": path.resolve(
+        __dirname,
+        "../../packages/pv-access/src/index.ts",
+      ),
     },
   },
 });

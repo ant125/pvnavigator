@@ -126,7 +126,8 @@ export function HeatPumpEnableToggle({
   heatPumpEnabled,
   onChange,
 }: {
-  heatPumpEnabled: boolean;
+  /** `null` when a saved calculation did not record the choice. */
+  heatPumpEnabled: boolean | null;
   onChange: (patch: Partial<SpeicherInput>) => void;
 }) {
   return (
@@ -137,7 +138,7 @@ export function HeatPumpEnableToggle({
           <input
             type="radio"
             name="heatPumpEnabled"
-            checked={!heatPumpEnabled}
+            checked={heatPumpEnabled === false}
             onChange={() => onChange(patchForHeatPumpEnabled(false))}
             className="h-4 w-4 shrink-0 border-field-border accent-accent"
           />
@@ -147,7 +148,7 @@ export function HeatPumpEnableToggle({
           <input
             type="radio"
             name="heatPumpEnabled"
-            checked={heatPumpEnabled}
+            checked={heatPumpEnabled === true}
             onChange={() => onChange(patchForHeatPumpEnabled(true))}
             className="h-4 w-4 shrink-0 border-field-border accent-accent"
           />

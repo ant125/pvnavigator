@@ -152,7 +152,8 @@ export function EvEnableToggle({
   evEnabled,
   onChange,
 }: {
-  evEnabled: boolean;
+  /** `null` when a saved calculation did not record the choice. */
+  evEnabled: boolean | null;
   onChange: (patch: Partial<SpeicherInput>) => void;
 }) {
   return (
@@ -163,7 +164,7 @@ export function EvEnableToggle({
           <input
             type="radio"
             name="evEnabled"
-            checked={!evEnabled}
+            checked={evEnabled === false}
             onChange={() => onChange(patchForEvEnabled(false))}
             className="h-4 w-4 shrink-0 border-field-border accent-accent"
           />
@@ -173,7 +174,7 @@ export function EvEnableToggle({
           <input
             type="radio"
             name="evEnabled"
-            checked={evEnabled}
+            checked={evEnabled === true}
             onChange={() => onChange(patchForEvEnabled(true))}
             className="h-4 w-4 shrink-0 border-field-border accent-accent"
           />

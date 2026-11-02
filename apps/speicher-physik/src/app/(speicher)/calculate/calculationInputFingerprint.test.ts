@@ -69,6 +69,24 @@ describe("calculationInputFingerprint", () => {
     expect(calculationInputsAreStale(original, fingerprint)).toBe(false);
   });
 
+  it("treats an unrecorded component as different from an explicit no", () => {
+    const recorded = calculationInputFingerprint(
+      baseForm({
+        heatPumpEnabled: false,
+        evEnabled: false,
+        backupReserveKwh: 0,
+      })
+    );
+    const unrecorded = calculationInputFingerprint(
+      baseForm({
+        heatPumpEnabled: undefined,
+        evEnabled: undefined,
+        backupReserveKwh: undefined,
+      })
+    );
+    expect(recorded).not.toBe(unrecorded);
+  });
+
   it("does not mark stale before a calculation exists", () => {
     expect(calculationInputsAreStale(baseForm(), null)).toBe(false);
   });

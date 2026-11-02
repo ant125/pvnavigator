@@ -27,7 +27,7 @@ export default function HomePage() {
         />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <p className="text-sm font-medium text-[#b45309]">PVNavigator</p>
+          <p className="text-sm font-medium text-[#b45309]">PVNAVIGATOR_</p>
           <h1 className="mt-3 text-[1.65rem] font-semibold leading-snug tracking-tight text-[#0F172A] sm:text-3xl md:text-[2rem]">
             Unabhängige Werkzeuge für fundierte Photovoltaik-Entscheidungen.
           </h1>
@@ -65,7 +65,7 @@ export default function HomePage() {
               />
               <span className={`${badgeBase} bg-emerald-50 text-emerald-800 ring-emerald-100/90`}>Live</span>
               <h3 className="mt-4 pr-12 text-lg font-semibold text-[#0F172A] transition-colors group-hover:text-[#b45309]">
-                SpeicherGrenze
+                SPEICHERGRENZE
               </h3>
               <p className="mt-3 flex-1 text-sm leading-relaxed text-[#64748B]">
                 Simuliert den real nutzbaren Speicherbeitrag auf Basis von Verbrauch und PV-Erzeugung.
@@ -89,9 +89,10 @@ export default function HomePage() {
               <span className={`${badgeBase} bg-slate-50 text-slate-600 ring-slate-200/90`}>
                 In Entwicklung
               </span>
-              <h3 className="mt-4 pr-12 text-lg font-semibold text-[#0F172A]">Wirtschaftlichkeitsanalyse</h3>
+              <h3 className="mt-4 pr-12 text-lg font-semibold text-[#0F172A]">RENDITEGUIDE</h3>
               <p className="mt-3 flex-1 text-sm leading-relaxed text-[#64748B]">
-                Analysiert Wirtschaftlichkeit, Amortisation und Energieszenarien für PV und Speicher.
+                Wirtschaftlichkeitsanalyse für PV-Anlagen und Batteriespeicher. Vergleichen Sie
+                Investitionen, Amortisation und den finanziellen Vorteil nach 10 und 20 Jahren.
               </p>
               <div className="mt-6 border-t border-[#E2E8F0] pt-4">
                 <span className="inline-flex rounded-full bg-slate-50 px-3.5 py-2 text-sm font-semibold text-[#94a3b8] ring-1 ring-[#E2E8F0]">
@@ -133,7 +134,7 @@ export default function HomePage() {
       >
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-xl font-semibold tracking-tight text-[#0F172A] sm:text-2xl md:text-[1.65rem]">
-            Warum PVNavigator?
+            Warum PVNAVIGATOR_?
           </h2>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:mt-9 lg:grid-cols-4">
@@ -194,7 +195,7 @@ export default function HomePage() {
               {
                 step: "02",
                 title: "Analyse berechnen",
-                text: "PVNavigator verarbeitet die Eingaben mit technischen Modellen.",
+                text: "PVNAVIGATOR_ verarbeitet die Eingaben mit technischen Modellen.",
               },
               {
                 step: "03",

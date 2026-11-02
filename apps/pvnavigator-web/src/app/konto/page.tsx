@@ -3,15 +3,30 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AUTH_SIGN_OUT_PATH, getSpeicherGrenzeCalculateUrl, getSpeicherGrenzeOrigin } from "@pv-auth/session";
 
+import { AccessCard } from "@/components/account/AccessCard";
+import { InvoiceHistoryCard } from "@/components/account/InvoiceHistoryCard";
 import { CalculationsEmptyState, CalculationsHistory } from "@/components/account/CalculationsHistory";
 import { AuthEnvMissing } from "@/components/auth/AuthEnvMissing";
+import { INVOICE_HISTORY_HINTS } from "@/lib/billing/invoicePortal";
+import { recoverAccountCheckouts } from "@/lib/billing/paymentRecoveryServer";
+import {
+  FREE_ADDRESS_SELECT,
+  STRIPE_SUBSCRIPTION_SELECT,
+  SUBSCRIPTION_PERIOD_SELECT,
+  pickStripeSubscription,
+  summarizeAccess,
+  type FreeAddressRow,
+  type StripeSubscriptionRow,
+  type SubscriptionPeriodRow,
+} from "@/lib/accessSummary";
 import { CALCULATION_LIST_SELECT, type CalculationListRow } from "@/lib/calculationsList";
 import { getServerUser } from "@/lib/auth";
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 
 export const metadata: Metadata = {
-  title: "Mein Konto | PVNavigator",
-  description: "PVNavigator-Konto: Berechnungen und Werkzeuge verwalten.",
+  title: "Mein Konto | PVNAVIGATOR_",
+  description: "PVNAVIGATOR_-Konto: Berechnungen und Werkzeuge verwalten.",
 };
 
 const badgeBase =
@@ -23,7 +38,13 @@ const card =
 const ghostBtn =
   "inline-flex items-center justify-center rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-medium text-[#64748B] shadow-sm transition hover:bg-[#FAFBFC] hover:text-[#0F172A]";
 
-export default async function KontoPage() {
+type SearchParams = Promise<{ hinweis?: string | string[] }>;
+
+export default async function KontoPage({ searchParams }: { searchParams: SearchParams }) {
+  const hintParam = await searchParams;
+  const hintKey = Array.isArray(hintParam.hinweis) ? hintParam.hinweis[0] : hintParam.hinweis;
+  const invoiceHint = hintKey ? INVOICE_HISTORY_HINTS[hintKey] : undefined;
+
   if (!isSupabaseConfigured()) {
     return (
       <div className="px-4 py-8 md:py-10">
@@ -47,16 +68,76 @@ export default async function KontoPage() {
   const speicherOrigin = getSpeicherGrenzeOrigin();
   const calculateUrl = getSpeicherGrenzeCalculateUrl();
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
+  const admin = createServiceRoleClient();
+  const calculationsPromise = supabase
     .from("calculations")
     .select(CALCULATION_LIST_SELECT)
     .order("updated_at", { ascending: false });
-
-  if (error) {
-    console.error("Failed to load calculations", error);
+  if (admin) {
+    try {
+      await recoverAccountCheckouts(user.id);
+    } catch (error) {
+      console.error("account checkout recovery failed", error instanceof Error ? error.name : "error");
+    }
   }
+  const [calculationsResult, periodsResult, usageResult, freeAddressResult, billingResult, customerResult, invoiceResult] =
+    await Promise.all([
+      calculationsPromise,
+      supabase
+        .from("subscription_periods")
+        .select(SUBSCRIPTION_PERIOD_SELECT)
+        .order("period_end", { ascending: false }),
+      supabase.from("subscription_period_addresses").select("period_id"),
+      supabase.from("free_addresses").select(FREE_ADDRESS_SELECT).maybeSingle(),
+      supabase.from("stripe_subscriptions").select(STRIPE_SUBSCRIPTION_SELECT),
+      supabase.from("stripe_customers").select("user_id").maybeSingle(),
+      admin
+        ? admin.from("stripe_invoices").select("stripe_invoice_id").eq("user_id", user.id).limit(1)
+        : Promise.resolve({ data: [] as { stripe_invoice_id: string }[], error: null }),
+    ]);
 
-  const calculations = (data ?? []) as CalculationListRow[];
+  if (calculationsResult.error) {
+    console.error("Failed to load calculations", calculationsResult.error);
+  }
+  if (periodsResult.error) {
+    console.error("Failed to load subscription periods", periodsResult.error);
+  }
+  if (usageResult.error) {
+    console.error("Failed to load subscription usage", usageResult.error);
+  }
+  if (freeAddressResult.error) {
+    console.error("Failed to load free address", freeAddressResult.error);
+  }
+  if (billingResult.error) {
+    console.error("Failed to load subscription status", billingResult.error);
+  }
+  if (customerResult.error) {
+    console.error("Failed to load billing customer", customerResult.error);
+  }
+  if (invoiceResult.error) {
+    console.error("Failed to load invoice history", invoiceResult.error);
+  }
+  const hasInvoices =
+    !customerResult.error &&
+    Boolean(customerResult.data) &&
+    !invoiceResult.error &&
+    (invoiceResult.data?.length ?? 0) > 0;
+
+  const calculations = (calculationsResult.data ?? []) as CalculationListRow[];
+  const usedAddressesByPeriod: Record<string, number> = {};
+  for (const row of (usageResult.data ?? []) as { period_id: string }[]) {
+    usedAddressesByPeriod[row.period_id] = (usedAddressesByPeriod[row.period_id] ?? 0) + 1;
+  }
+  const accessSummary = summarizeAccess({
+    now: new Date(),
+    periods: (periodsResult.data ?? []) as SubscriptionPeriodRow[],
+    usedAddressesByPeriod,
+    freeAddress: (freeAddressResult.data as FreeAddressRow | null) ?? null,
+    billing: billingResult.error
+      ? null
+      : pickStripeSubscription((billingResult.data ?? []) as StripeSubscriptionRow[]),
+    canManagePortal: !customerResult.error && Boolean(customerResult.data),
+  });
 
   return (
     <div className="px-4 py-8 md:py-10">
@@ -66,12 +147,39 @@ export default async function KontoPage() {
             Mein Konto
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-[#64748B] sm:text-base">
-            Verwalten Sie Ihre PVNavigator-Berechnungen und Werkzeuge.
+            Verwalten Sie Ihre PVNAVIGATOR_-Berechnungen und Werkzeuge.
           </p>
           <p className="mt-2 truncate text-xs text-[#94a3b8]" title={user.email}>
             Angemeldet als {user.email}
           </p>
         </header>
+
+        {invoiceHint ? (
+          <p
+            role="status"
+            className="mt-6 max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm leading-relaxed text-[#334155]"
+          >
+            {invoiceHint}
+          </p>
+        ) : null}
+
+        <section className="mt-8" aria-labelledby="access-heading">
+          <h2
+            id="access-heading"
+            className="text-xs font-semibold uppercase tracking-wide text-[#94a3b8]"
+          >
+            Zugang
+          </h2>
+          <div className="mt-3">
+            <AccessCard summary={accessSummary} />
+          </div>
+        </section>
+
+        {hasInvoices ? (
+          <section className="mt-8" aria-labelledby="invoices-heading">
+            <InvoiceHistoryCard />
+          </section>
+        ) : null}
 
         <section className="mt-8 md:mt-10" aria-labelledby="calculations-heading">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -106,7 +214,7 @@ export default async function KontoPage() {
                   Live
                 </span>
                 <p className="mt-3 text-[0.95rem] font-semibold text-[#0F172A] group-hover:text-[#b45309]">
-                  SpeicherGrenze
+                  SPEICHERGRENZE
                 </p>
                 <p className="mt-1.5 flex-1 text-sm leading-relaxed text-[#64748B]">
                   Real nutzbarer Speicherbeitrag aus Verbrauch und PV-Erzeugung.
@@ -119,10 +227,11 @@ export default async function KontoPage() {
                 In Entwicklung
               </span>
               <p className="mt-3 text-[0.95rem] font-semibold text-[#0F172A]">
-                Wirtschaftlichkeitsanalyse
+                RENDITEGUIDE
               </p>
               <p className="mt-1.5 flex-1 text-sm leading-relaxed text-[#64748B]">
-                Wirtschaftlichkeit, Amortisation und Energieszenarien.
+                Wirtschaftlichkeitsanalyse für PV-Anlagen und Batteriespeicher. Vergleichen Sie
+                Investitionen, Amortisation und den finanziellen Vorteil nach 10 und 20 Jahren.
               </p>
               <span className="mt-4 text-sm font-medium text-[#94a3b8]">Demnächst</span>
             </li>

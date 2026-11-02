@@ -42,6 +42,7 @@ import {
   wwOverviewSentence,
 } from "@/lib/robustnessReportCopy";
 import { PdfDownloadButton } from "./PdfDownloadButton";
+import { PRIVATE_USE_LABEL, type ReportAccessKind } from "@pv-access/core";
 import type { FrozenSpeicherPresentation } from "@/lib/persistCompletedCalculation";
 import { SpeicherBenefitComparison } from "./SpeicherBenefitComparison";
 
@@ -185,6 +186,12 @@ function formatKwpDisplay(n: number): string {
   return parseFloat((Math.round(n * 100) / 100).toFixed(2)).toString();
 }
 
+function formatStoredAngle(value: number | undefined): string {
+  return typeof value === "number" && Number.isFinite(value)
+    ? `${value}°`
+    : PLACEHOLDER;
+}
+
 function formatSavedAtDe(iso: string): string {
   return new Intl.DateTimeFormat("de-DE", {
     dateStyle: "medium",
@@ -220,6 +227,11 @@ export type SpeicherReportViewProps = {
   batteryModelVersion?: string | null;
   pdfCalculationId?: string | null;
   /**
+   * Access tier decided on the server when the report was saved. Free
+   * reports get a short note that the PDF carries the private-use marking.
+   */
+  accessKind?: ReportAccessKind | null;
+  /**
    * Live /calculate dims the finished report while inputs change. Applied to
    * the report body only, so the PDF action under the notes stays usable.
    */
@@ -228,8 +240,8 @@ export type SpeicherReportViewProps = {
   mastheadRef?: RefObject<HTMLDivElement | null>;
   variant?: "page" | "workspace";
   /**
-   * Live /calculate only. When set, Grundlage is mounted under this scene
-   * instead of as a trailing report chapter. Saved /result/[id] omits it.
+   * When set, Grundlage is mounted under this scene instead of as a
+   * trailing report chapter. Both /calculate and /result/[id] pass it.
    */
   anlageScene?: ReactNode;
   anlageOpen?: boolean;
@@ -252,6 +264,7 @@ export function SpeicherReportView({
   savedAt = null,
   batteryModelVersion = null,
   pdfCalculationId = null,
+  accessKind = null,
   bodyClassName,
   bodyHidden = false,
   mastheadRef,
@@ -520,7 +533,7 @@ export function SpeicherReportView({
                               {surfaces.map((s, i) => (
                                 <div key={i}>
                                   Dachfläche {i + 1}: {Number.isFinite(s.systemSizeKwP) ? formatKwpDisplay(s.systemSizeKwP) : PLACEHOLDER} kWp,
-                                  {" "}{s.tiltDeg}°, {s.azimuthDeg}°
+                                  {" "}{formatStoredAngle(s.tiltDeg)}, {formatStoredAngle(s.azimuthDeg)}
                                 </div>
                               ))}
                             </div>
@@ -533,7 +546,7 @@ export function SpeicherReportView({
                           <div className={REPORT_DATA_ITEM}>
                             <dt className={REPORT_DATA_LABEL}>Neigung:</dt>
                             <dd className={REPORT_DATA_VALUE}>
-                              {surfaces[0]?.tiltDeg}°
+                              {formatStoredAngle(surfaces[0]?.tiltDeg)}
                             </dd>
                           </div>
 
@@ -542,7 +555,7 @@ export function SpeicherReportView({
                               Ausrichtung:
                             </dt>
                             <dd className={REPORT_DATA_VALUE}>
-                              {surfaces[0]?.azimuthDeg}°
+                              {formatStoredAngle(surfaces[0]?.azimuthDeg)}
                             </dd>
                           </div>
                         </>
@@ -1342,8 +1355,13 @@ export function SpeicherReportView({
             <div className={bodyClassName} aria-hidden={bodyHidden || undefined}>
               {chapters}
             </div>
-            <div className="mt-8">
+            <div className="mt-8 flex min-w-0 flex-col gap-2">
               <PdfDownloadButton calculationId={pdfCalculationId} />
+              {accessKind === "free" ? (
+                <p className="min-w-0 text-xs leading-relaxed text-ink-muted">
+                  Kostenloser Bericht · {PRIVATE_USE_LABEL}
+                </p>
+              ) : null}
             </div>
           </div>
           {mode === "historical" ? (

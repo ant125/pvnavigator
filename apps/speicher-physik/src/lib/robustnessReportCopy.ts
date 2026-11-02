@@ -67,7 +67,7 @@ export function recommendationSizeStability(
 export function householdRobustnessExplanation(cohortSize: number): string[] {
   return [
     "Die Hauptrechnung verwendet das BDEW-H25-Standardprofil für den Haushaltsverbrauch.",
-    `PVNavigator wiederholt dieselbe Berechnung anschließend mit ${cohortSize} gemessenen realen Haushaltsprofilen.`,
+    `PVNAVIGATOR_ wiederholt dieselbe Berechnung anschließend mit ${cohortSize} gemessenen realen Haushaltsprofilen.`,
     "Geändert wird nur der zeitliche Verlauf des Haushaltsverbrauchs. PV-Anlage, Jahresstromverbrauch des Haushalts, Wärmepumpe, Wetterdaten, Batteriemodell und alle übrigen Annahmen bleiben unverändert.",
     ROBUSTNESS_DOES_NOT_REPLACE_RECOMMENDATION,
   ];
@@ -76,7 +76,7 @@ export function householdRobustnessExplanation(cohortSize: number): string[] {
 export function wwRobustnessExplanation(cohortSize: number): string[] {
   return [
     "Die Hauptrechnung verwendet ein gemessenes Wasser/Wasser-Referenzprofil.",
-    `PVNavigator wiederholt dieselbe Berechnung anschließend mit ${cohortSize} weiteren gemessenen Wasser/Wasser-Wärmepumpenprofilen.`,
+    `PVNAVIGATOR_ wiederholt dieselbe Berechnung anschließend mit ${cohortSize} weiteren gemessenen Wasser/Wasser-Wärmepumpenprofilen.`,
     "Geändert wird nur der zeitliche Strombedarf der Wärmepumpe. Haushaltsprofil, Jahresverbrauch von Haushalt und Wärmepumpe, PV-Anlage, Wetterjahre, Batteriemodell und alle übrigen Angaben bleiben unverändert.",
     ROBUSTNESS_DOES_NOT_REPLACE_RECOMMENDATION,
   ];

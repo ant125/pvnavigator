@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UI-Screenshots</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f4f4f4;
+      color: #222;
+      font: 16px/1.45 system-ui, sans-serif;
+    }
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 650;
+    }
+    .intro {
+      margin: 0 0 28px;
+      color: #444;
+    }
+    section {
+      margin: 0 0 36px;
+    }
+    h2 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      font-weight: 650;
+    }
+    p {
+      margin: 0 0 12px;
+    }
+    a {
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+    }
+    .desktop a {
+      width: 100%;
+    }
+    img {
+      display: block;
+      height: auto;
+      background: #fff;
+      border: 1px solid #ddd;
+    }
+    .desktop img {
+      width: 100%;
+      max-width: 1440px;
+    }
+    .mobile-390 img {
+      width: 390px;
+      max-width: none;
+    }
+    .mobile-320 img {
+      width: 320px;
+      max-width: none;
+    }
+    .mobile a {
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>UI-Screenshots</h1>
+    <p class="intro">Ein Klick öffnet die Datei in der Originalauflösung.</p>
+
+    <section class="desktop">
+      <h2>Tarifseite mit aktivem ABO</h2>
+      <p>1440 × 1100. „Aktueller Tarif“ und „Abo verwalten“ stehen in der ABO-Karte. PRO zeigt „Zu PRO wechseln“.</p>
+      <a href="tarife-abo-aktiv.png" target="_blank">
+        <img src="tarife-abo-aktiv.png" width="1440" height="1100" alt="Tarifseite mit aktivem ABO">
+      </a>
+    </section>
+
+    <section class="desktop">
+      <h2>Tarifseite mit aktivem PRO</h2>
+      <p>1440 × 1100. „Aktueller Tarif“ und „Abo verwalten“ stehen in der PRO-Karte. Die ABO-Karte sagt „Sie nutzen bereits den PRO-Tarif.“</p>
+      <a href="tarife-pro-aktiv.png" target="_blank">
+        <img src="tarife-pro-aktiv.png?v=2" width="1440" height="1100" alt="Tarifseite mit aktivem PRO">
+      </a>
+    </section>
+
+    <section class="mobile mobile-390">
+      <h2>Mobiler Upgrade-Dialog, 390 × 844</h2>
+      <p>390 × 844. Titel, vollständiger Warnhinweis und beide Buttons sind ohne Scrollen sichtbar.</p>
+      <a href="upgrade-dialog-390x844.png" target="_blank">
+        <img src="upgrade-dialog-390x844.png?v=2" width="390" height="844" alt="Upgrade-Dialog auf 390 mal 844">
+      </a>
+    </section>
+
+    <section class="mobile mobile-320">
+      <h2>Mobiler Upgrade-Dialog, 320 × 568</h2>
+      <p>320 × 568. Beim Öffnen steht der Dialog am Anfang: Titel und die vier Angaben. Hinweis und Buttons liegen darunter.</p>
+      <a href="upgrade-dialog-320x568.png" target="_blank">
+        <img src="upgrade-dialog-320x568.png?v=2" width="320" height="568" alt="Upgrade-Dialog auf 320 mal 568">
+      </a>
+    </section>
+  </main>
+</body>
+</html>

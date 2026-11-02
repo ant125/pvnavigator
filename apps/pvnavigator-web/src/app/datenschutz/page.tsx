@@ -19,7 +19,7 @@ export default function DatenschutzPage() {
           <section>
             <h2 className="text-sm font-semibold text-[#0F172A] mb-2">Einleitung</h2>
             <p className="leading-relaxed">
-              Bei PVNavigator verarbeiten wir personenbezogene Daten nur, soweit das für unsere Photovoltaik- und
+              Bei PVNAVIGATOR_ verarbeiten wir personenbezogene Daten nur, soweit das für unsere Photovoltaik- und
               Energieanalyseleistungen nötig ist. Die folgenden Angaben beschreiben den wesentlichen Umgang mit Ihren
               Daten in einer für ein frühes SaaS-Angebot angemessen kompakten Form.
             </p>

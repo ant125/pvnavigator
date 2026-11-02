@@ -8,8 +8,8 @@ import { SignInForm } from "@/components/auth/SignInForm";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Anmelden | PVNavigator",
-  description: "Bei PVNavigator mit E-Mail und Passwort anmelden.",
+  title: "Anmelden | PVNAVIGATOR_",
+  description: "Bei PVNAVIGATOR_ mit E-Mail und Passwort anmelden.",
 };
 
 type SearchParams = Promise<{ next?: string | string[]; error?: string | string[] }>;

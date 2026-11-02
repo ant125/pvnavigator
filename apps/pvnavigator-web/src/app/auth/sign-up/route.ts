@@ -3,6 +3,7 @@ import { getHubOrigin, isAllowedHubFormOrigin } from "@pv-auth/session";
 
 import {
   getEmailConfirmationRedirectUrl,
+  hubPostLoginLocation,
   hubSignUpConfirmUrl,
   hubSignUpErrorUrl,
   mapSupabaseAuthErrorToSignUpCode,
@@ -19,6 +20,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const formData = await request.formData();
+  const next = formData.get("next");
+
   if (
     !isAllowedHubFormOrigin(
       request.headers.get("origin"),
@@ -27,24 +31,23 @@ export async function POST(request: NextRequest) {
       request.nextUrl.origin,
     )
   ) {
-    return NextResponse.redirect(hubSignUpErrorUrl("generic"), 303);
+    return NextResponse.redirect(hubSignUpErrorUrl("generic", next), 303);
   }
 
   if (!isSupabaseConfigured()) {
-    return NextResponse.redirect(hubSignUpErrorUrl("config"), 303);
+    return NextResponse.redirect(hubSignUpErrorUrl("config", next), 303);
   }
 
-  const formData = await request.formData();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const passwordConfirm = String(formData.get("password_confirm") ?? "");
 
   if (!email || !password) {
-    return NextResponse.redirect(hubSignUpErrorUrl("missing"), 303);
+    return NextResponse.redirect(hubSignUpErrorUrl("missing", next), 303);
   }
 
   if (password !== passwordConfirm) {
-    return NextResponse.redirect(hubSignUpErrorUrl("mismatch"), 303);
+    return NextResponse.redirect(hubSignUpErrorUrl("mismatch", next), 303);
   }
 
   const setCookies: string[] = [];
@@ -59,14 +62,14 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      hubSignUpErrorUrl(mapSupabaseAuthErrorToSignUpCode(error)),
+      hubSignUpErrorUrl(mapSupabaseAuthErrorToSignUpCode(error), next),
       303,
     );
   }
 
   if (data.session) {
     expireLegacyCookiesOn(request, setCookies);
-    return redirectWithSetCookies(new URL("/konto", getHubOrigin()).toString(), setCookies);
+    return redirectWithSetCookies(hubPostLoginLocation(next), setCookies);
   }
 
   return redirectWithSetCookies(hubSignUpConfirmUrl(), setCookies);

@@ -23,6 +23,13 @@ import {
 } from "@/lib/speicherChartCaption";
 
 import { pdfAsset } from "./pdfAssets";
+import {
+  PRIVATE_USE_LABEL,
+  PRIVATE_USE_MARK,
+  privateUseOutline,
+  privateUseTileTransform,
+  privateUseTiles,
+} from "./privateUseMarking";
 
 // Inside <Svg>, react-pdf renders <Text> as SVG text with x/y/transform.
 const SvgText = Text as unknown as React.ComponentType<Record<string, unknown>>;
@@ -141,6 +148,27 @@ const styles = StyleSheet.create({
     lineHeight: 1.2,
     color: accent,
     textDecoration: "underline",
+  },
+  // Free reports: compact caption centred between footer link and page number.
+  footerPrivateUse: {
+    position: "absolute",
+    left: MARGIN_LEFT,
+    right: MARGIN_RIGHT,
+    bottom: FOOTER_BOTTOM,
+    fontFamily: "Plex",
+    fontSize: 7.5,
+    lineHeight: 1.2,
+    letterSpacing: 0.6,
+    textAlign: "center",
+    color: secondary,
+  },
+  // Free reports: repeating marking beneath the content (vector outlines).
+  privateUseLayer: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    width: PAGE_W,
+    height: PAGE_H,
   },
   testBanner: {
     position: "absolute",
@@ -686,6 +714,12 @@ type InputRow = { label: string; value: string; help?: string };
 export type PdfModel = {
   savedAt: string;
   batteryModelVersion: string | null;
+  /**
+   * True for free reports only: repeating "Nur zur privaten Nutzung" marking
+   * plus a footer caption on every page. Paid and legacy reports stay clean.
+   * Decided by the stored access tier, never by a request parameter.
+   */
+  privateUse: boolean;
   address: string;
   technical: { value: string; unit: string; caption: string };
   planning: { value: string; unit: string; caption: string };
@@ -1460,6 +1494,30 @@ function Scene({ scene, width }: { scene: PdfModel["scene"]; width: number }) {
   );
 }
 
+/**
+ * Single pale private-use marking. Rendered first inside the page so every
+ * later element paints over it; glyph outlines, so it is neither selectable
+ * nor part of the extractable text.
+ */
+function PrivateUseMarking() {
+  const outline = privateUseOutline();
+  return (
+    <View fixed style={styles.privateUseLayer}>
+      <Svg width={PAGE_W} height={PAGE_H} viewBox={`0 0 ${PAGE_W} ${PAGE_H}`}>
+        {privateUseTiles().map((tile) => (
+          <G key={`${tile.x}-${tile.y}`} transform={privateUseTileTransform(tile)}>
+            <Path
+              d={outline.d}
+              fill={PRIVATE_USE_MARK.color}
+              fillOpacity={PRIVATE_USE_MARK.fillOpacity}
+            />
+          </G>
+        ))}
+      </Svg>
+    </View>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Report
 // ---------------------------------------------------------------------------
@@ -1470,11 +1528,12 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
 
   return (
     <Document
-      title="SpeicherGrenze – Ihre Speicher-Analyse"
-      author="PVNavigator"
+      title="SPEICHERGRENZE – Ihre Speicher-Analyse"
+      author="PVNAVIGATOR_"
       language="de"
     >
       <Page size="A4" style={styles.page}>
+        {model.privateUse ? <PrivateUseMarking /> : null}
         <View fixed style={styles.pageHeader}>
           <Text style={styles.pageHeaderMark}>PVNAVIGATOR_</Text>
           <Text style={styles.pageHeaderMark}>SPEICHERGRENZE</Text>
@@ -1483,6 +1542,11 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
         <Link fixed style={styles.footerLink} src="https://speicher.pvnavigator.de">
           speicher.pvnavigator.de
         </Link>
+        {model.privateUse ? (
+          <Text fixed style={styles.footerPrivateUse}>
+            {PRIVATE_USE_LABEL}
+          </Text>
+        ) : null}
         {model.layoutTest ? (
           <View fixed style={styles.testBanner}>
             <Text>{model.layoutTest.banner}</Text>

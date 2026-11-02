@@ -214,8 +214,8 @@ export function getPublicMethodologySections(): PublicMethodologySection[] {
       entries: [
         {
           id: "public-simulation",
-          title: "PVNavigator Simulationsmethodik",
-          organization: "PVNavigator",
+          title: "PVNAVIGATOR_ Simulationsmethodik",
+          organization: "PVNAVIGATOR_",
           description:
             "PV-Erzeugung, Verbrauch und Speicher werden in 15-Minuten-Schritten über jedes Wetterjahr hinweg abgeglichen. Die Kennzahlen entstehen aus dieser Simulation, nicht aus typischen Monatstagen oder Durchschnittsprofilen.",
           bullets: [

@@ -15,6 +15,19 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
+Lokales Stripe-Sandbox (nur `apps/pvnavigator-web/.env.development.local`, nie committen, nie `sk_live_`):
+
+```bash
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_ID=
+STRIPE_PRICE_PRO_ID=
+STRIPE_PRICE_STARTER_ID=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+`STRIPE_PRICE_ID` ist die bestehende monatliche Sandbox-Price von 29 EUR (ABO, 50 Adressen). `STRIPE_PRICE_PRO_ID` ist die bestehende monatliche Sandbox-Price von 59 EUR (PRO, 200 Adressen). `STRIPE_PRICE_STARTER_ID` ist die monatliche Sandbox-Price von 9 EUR (STARTER, 10 Adressen). Die Price IDs werden nur serverseitig einem Tarif zugeordnet; der Browser sendet weder Betrag noch Adresslimit. Fehlt `STRIPE_PRICE_PRO_ID`, bleibt ABO nutzbar und PRO wird nicht freigeschaltet. Fehlt `STRIPE_PRICE_STARTER_ID`, bleiben ABO und PRO nutzbar und STARTER wird nicht freigeschaltet. `SUPABASE_SERVICE_ROLE_KEY` ist der lokale Service-Role-Schlüssel und wird nur vom Webhook-Route-Handler gelesen.
+
 In Produktion (sowohl `pvnavigator.de` als auch `speicher.pvnavigator.de`) zusätzlich:
 
 ```bash

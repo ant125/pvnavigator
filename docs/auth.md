@@ -196,7 +196,11 @@ These are not required when hosts are `pvnavigator.de` /
 | `NEXT_PUBLIC_SITE_URL` | Hub site origin (email redirects). Set on Hub to `https://pvnavigator.de`. Do not set a product origin here. |
 | `NEXT_PUBLIC_SPEICHER_GRENZE_URL` | SpeicherGrenze origin override |
 
-Do not put a `service_role` key in any Next.js application.
+Do not put a `service_role` key in any browser bundle or `NEXT_PUBLIC_*`
+variable. The hub webhook is the one exception: `SUPABASE_SERVICE_ROLE_KEY`
+is read only by server route handlers (`import "server-only"`) so Stripe
+events can call the billing functions. It belongs in the gitignored local
+env, never in the client.
 
 ---
 

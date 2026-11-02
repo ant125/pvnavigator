@@ -21,6 +21,11 @@ import {
   type CalculationPdfRow,
 } from "./pdfAccess";
 import { PDF_DOWNLOAD_FILENAME } from "./pdfDownload";
+import {
+  PRIVATE_USE_MARK,
+  privateUseOutline,
+  privateUseTiles,
+} from "./privateUseMarking";
 import { renderSpeicherPdf } from "./renderSpeicherPdf";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
@@ -467,4 +472,53 @@ describe("renderSpeicherPdf", () => {
     expect((await PDFDocument.load(heatPumpPdf)).getPageCount()).toBe(6);
     expect((await PDFDocument.load(complexPdf)).getPageCount()).toBe(6);
   }, 30000);
+});
+
+describe("private-use marking", () => {
+  it("is decided by the stored access tier only", () => {
+    expect(buildSpeicherPdfModel(historyRow({ access_tier: "free" })).privateUse).toBe(true);
+    expect(buildSpeicherPdfModel(historyRow({ access_tier: "paid" })).privateUse).toBe(false);
+    expect(buildSpeicherPdfModel(historyRow({ access_tier: null })).privateUse).toBe(false);
+    expect(buildSpeicherPdfModel(historyRow()).privateUse).toBe(false);
+  });
+
+  it("places one pale mark inside the content area, clear of header and footer", () => {
+    const tiles = privateUseTiles();
+    const outline = privateUseOutline();
+    expect(tiles).toHaveLength(1);
+    expect(outline.d.length).toBeGreaterThan(500);
+    expect(outline.width).toBeGreaterThan(200);
+    const mm = 72 / 25.4;
+    const angle = (Math.abs(PRIVATE_USE_MARK.rotateDeg) * Math.PI) / 180;
+    const halfH = (outline.width * Math.sin(angle) + outline.capHeight * Math.cos(angle)) / 2;
+    const halfW = (outline.width * Math.cos(angle) + outline.capHeight * Math.sin(angle)) / 2;
+    for (const tile of tiles) {
+      expect(tile.y - halfH).toBeGreaterThan(20 * mm);
+      expect(tile.y + halfH).toBeLessThan(297 * mm - 20 * mm);
+      expect(tile.x - halfW).toBeGreaterThan(0);
+      expect(tile.x + halfW).toBeLessThan(210 * mm);
+    }
+    expect(PRIVATE_USE_MARK.fillOpacity).toBeLessThanOrEqual(0.08);
+  });
+
+  it("marks every page of a free report as text caption plus vector outlines, and leaves paid and legacy reports clean", async () => {
+    const free = await renderSpeicherPdf(buildSpeicherPdfModel(historyRow({ access_tier: "free" })));
+    const paid = await renderSpeicherPdf(buildSpeicherPdfModel(historyRow({ access_tier: "paid" })));
+    const legacy = await renderSpeicherPdf(buildSpeicherPdfModel(historyRow()));
+
+    const freeDoc = await PDFDocument.load(free);
+    const freeText = inflatePdfStreams(free);
+    const paidText = inflatePdfStreams(paid);
+    const legacyText = inflatePdfStreams(legacy);
+
+    // The marking is drawn as outlines through a fill-opacity graphics state;
+    // glyph text itself is subset-encoded and not greppable.
+    const opacity = PRIVATE_USE_MARK.fillOpacity.toString();
+    expect(freeText).toMatch(new RegExp(`/ca ${opacity}\\b`));
+    expect(paidText).not.toMatch(new RegExp(`/ca ${opacity}\\b`));
+    expect(legacyText).not.toMatch(new RegExp(`/ca ${opacity}\\b`));
+    expect(freeDoc.getPageCount()).toBe((await PDFDocument.load(paid)).getPageCount());
+    // One outline per page: the free file is larger, paid and legacy are not marked.
+    expect(free.length).toBeGreaterThan(paid.length);
+  }, 60000);
 });

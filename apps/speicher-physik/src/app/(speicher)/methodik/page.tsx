@@ -6,9 +6,9 @@ import { MethodikPageFrame } from "@/components/methodik/MethodikPageFrame";
 import { METHODIK_ARTICLES } from "@/lib/methodik/catalog";
 
 export const metadata: Metadata = {
-  title: "Methodik | SpeicherGrenze",
+  title: "Methodik | SPEICHERGRENZE",
   description:
-    "Diese Dokumentation beschreibt die Berechnungsverfahren von SpeicherGrenze.",
+    "Diese Dokumentation beschreibt die Berechnungsverfahren von SPEICHERGRENZE.",
 };
 
 export default function MethodikIndexPage() {
@@ -21,7 +21,7 @@ export default function MethodikIndexPage() {
         <div className="mt-5 space-y-4">
           <MethodikP>
             Diese Dokumentation beschreibt die Berechnungsverfahren von
-            SpeicherGrenze.
+            SPEICHERGRENZE.
           </MethodikP>
           <MethodikP>
             Ziel ist es, alle Ergebnisse nachvollziehbar, reproduzierbar und

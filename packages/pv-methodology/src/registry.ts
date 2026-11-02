@@ -1,7 +1,7 @@
 import type { MethodologySource } from "./types";
 
 /**
- * Single source of truth for every official engineering source cited by PVNavigator.
+ * Single source of truth for every official engineering source cited by PVNAVIGATOR_.
  *
  * To register a new assumption:
  * 1. Add a source object below (or in a focused file that you re-export into this array).
@@ -16,7 +16,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     title: "PVGIS (Photovoltaic Geographical Information System)",
     organization: "European Commission – Joint Research Centre (JRC)",
     description:
-      "Offizielle EU-JRC-Plattform für PV-Ertragsabschätzung. PVNavigator bezieht stündliche Erzeugungsserien über die PVGIS-API (seriescalc) und gleicht sie auf Europe/Berlin an.",
+      "Offizielle EU-JRC-Plattform für PV-Ertragsabschätzung. PVNAVIGATOR_ bezieht stündliche Erzeugungsserien über die PVGIS-API (seriescalc) und gleicht sie auf Europe/Berlin an.",
     url: "https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis_en",
     official: true,
     sourceType: "documentation",
@@ -30,7 +30,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     title: "PVGIS-SARAH2 Solar Radiation Data",
     organization: "European Commission – Joint Research Centre (JRC) / CM SAF",
     description:
-      "Satellitenbasierte Strahlungsdatenbank SARAH-2, in PVNavigator als raddatabase=PVGIS-SARAH2 für die Produktionsphysik verwendet.",
+      "Satellitenbasierte Strahlungsdatenbank SARAH-2, in PVNAVIGATOR_ als raddatabase=PVGIS-SARAH2 für die Produktionsphysik verwendet.",
     url: "https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis/general-information/geospatial-data-download/sarah-2-solar-radiation-data_en",
     official: true,
     sourceType: "dataset",
@@ -42,7 +42,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "weather-years-2006-2020",
     category: "weather",
     title: "15 Wetterjahre (2006–2020)",
-    organization: "PVNavigator / PVGIS-SARAH2",
+    organization: "PVNAVIGATOR_ / PVGIS-SARAH2",
     description:
       "Die physikalische Mehrjahressimulation nutzt die historischen Wetterjahre 2006 bis 2020 inklusive. Jedes Jahr wird unabhängig simuliert; es gibt keine monatliche Mittelwertbildung über die Jahre.",
     url: "https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis/using-pvgis-5/pvgis-5-user-manual_en",
@@ -60,7 +60,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     title: "BDEW Standardlastprofil H25",
     organization: "BDEW Bundesverband der Energie- und Wasserwirtschaft e.V.",
     description:
-      "Aktualisiertes Haushalts-Standardlastprofil 2025. PVNavigator skaliert das H25-Profil auf den angegebenen Jahresverbrauch.",
+      "Aktualisiertes Haushalts-Standardlastprofil 2025. PVNAVIGATOR_ skaliert das H25-Profil auf den angegebenen Jahresverbrauch.",
     url: "https://www.bdew.de/energie/standardlastprofile-strom/",
     official: true,
     sourceType: "documentation",
@@ -88,7 +88,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     title: "ThermBuild TwinHouse Wärmepumpenmessungen",
     organization: "Fraunhofer IBP / Fordatis",
     description:
-      "Gemessene 15-Minuten-Stromaufnahme von Luft/Wasser-Wärmepumpen aus der ThermBuild-Messkampagne (Fraunhofer IBP). PVNavigator verwendet das Profil als repräsentatives ingenieurtechnisches Referenzprofil und skaliert es gleichmäßig auf den angegebenen Jahresstromverbrauch der Wärmepumpe. Es handelt sich nicht um den Lastgang der Nutzer-Wärmepumpe. Der Haushaltsstrom bleibt BDEW H25.",
+      "Gemessene 15-Minuten-Stromaufnahme von Luft/Wasser-Wärmepumpen aus der ThermBuild-Messkampagne (Fraunhofer IBP). PVNAVIGATOR_ verwendet das Profil als repräsentatives ingenieurtechnisches Referenzprofil und skaliert es gleichmäßig auf den angegebenen Jahresstromverbrauch der Wärmepumpe. Es handelt sich nicht um den Lastgang der Nutzer-Wärmepumpe. Der Haushaltsstrom bleibt BDEW H25.",
     url: "https://fordatis.fraunhofer.de/handle/fordatis/486",
     official: true,
     sourceType: "dataset",
@@ -102,7 +102,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     title: "WPuQ Wasser/Wasser-Wärmepumpenmessungen",
     organization: "Schlemminger et al., Scientific Data (2022)",
     description:
-      "Gemessene 15-Minuten-Stromaufnahme von Wasser/Wasser-Wärmepumpen in bewohnten deutschen Einfamilienhäusern (WPuQ-Projekt, eigener HEATPUMP-Zähler, kaltes Nahwärmenetz). Das Profil ist als Wasser/Wasser-Referenzprofil für SpeicherGrenze vorgesehen und wird gleichmäßig auf den angegebenen Jahresstromverbrauch der Wärmepumpe skaliert. Es handelt sich nicht um den Lastgang der Nutzer-Wärmepumpe. Der Haushaltsstrom bleibt BDEW H25. Getrennt von der WPuQ-Haushalts-Robustheit (`wpuq-scientific-data`).",
+      "Gemessene 15-Minuten-Stromaufnahme von Wasser/Wasser-Wärmepumpen in bewohnten deutschen Einfamilienhäusern (WPuQ-Projekt, eigener HEATPUMP-Zähler, kaltes Nahwärmenetz). Das Profil ist als Wasser/Wasser-Referenzprofil für SPEICHERGRENZE vorgesehen und wird gleichmäßig auf den angegebenen Jahresstromverbrauch der Wärmepumpe skaliert. Es handelt sich nicht um den Lastgang der Nutzer-Wärmepumpe. Der Haushaltsstrom bleibt BDEW H25. Getrennt von der WPuQ-Haushalts-Robustheit (`wpuq-scientific-data`).",
     url: "https://www.nature.com/articles/s41597-022-01156-1",
     official: true,
     sourceType: "dataset",
@@ -114,9 +114,9 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "ev-v1-generated-load",
     category: "load_profiles",
     title: "EV v1 – generiertes Heimladeprofil",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
-      "SpeicherGrenze EV v1 erzeugt für jedes Wetterjahr ein deterministisches 15-Minuten-Heimladeprofil (35.040 Schritte). Es handelt sich um ein zustandsbehaftetes generiertes Lastprofil, nicht um ein gemessenes Template mit einheitlicher Jahresskalierung. Nur die Heimladung geht in die Haushaltslast; Arbeitsplatzladung erscheint nicht im Lastprofil.",
+      "SPEICHERGRENZE EV v1 erzeugt für jedes Wetterjahr ein deterministisches 15-Minuten-Heimladeprofil (35.040 Schritte). Es handelt sich um ein zustandsbehaftetes generiertes Lastprofil, nicht um ein gemessenes Template mit einheitlicher Jahresskalierung. Nur die Heimladung geht in die Haushaltslast; Arbeitsplatzladung erscheint nicht im Lastprofil.",
     url: null,
     official: false,
     sourceType: "methodology",
@@ -128,7 +128,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "ev-v1-annual-km-normalization",
     category: "load_profiles",
     title: "EV v1 – Jahreskilometer als Energiemenge",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "Die eingegebene Jahresfahrleistung ist die maßgebliche Energiemenge. Typische WD-/SA-/SU-Tagesstrecken bestimmen nur die zeitliche Verteilung und werden je Zieljahr so skaliert, dass die Summe der modellierten Tageskilometer der Jahresfahrleistung entspricht. Ein fester 261/52/52-Referenzmix dient nur der Metadaten-Konsistenz, nicht als physikalischer Schwellenwert.",
     url: null,
@@ -142,7 +142,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "ev-v1-wd-sa-su-timing",
     category: "load_profiles",
     title: "EV v1 – WD/SA/SU-Zeitverhalten",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "EV nutzt dieselbe kanonische Europe/Berlin-Tagesklassifikation wie das Haushalts-BDEW-Profil: Werktag (Montag–Freitag), Samstag, Sonntag. Feiertage werden nicht umbelegt. Der 29. Februar entfällt. Das EV-Profil wird für jedes Wetterjahr neu aus dessen Kalender erzeugt.",
     url: null,
@@ -156,7 +156,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "ev-v1-workplace-event-placement",
     category: "load_profiles",
     title: "EV v1 – deterministische Arbeitsplatz-Ladeereignisse",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "Arbeitsplatzenergie wird nicht auf alle Werktage geglättet. Je Monat werden n Ladeereignisse auf die modellierten Montag–Freitag-Tage gesetzt: idx(k) = floor(((2k+1)·W)/(2n)). Keine Zufälligkeit, keine Wochentagspräferenz, keine Freitagsregel. Die Monatsenergie wird gleichmäßig auf die Ereignisse verteilt.",
     url: null,
@@ -170,7 +170,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "ev-v1-vehicle-energy-buffer",
     category: "load_profiles",
     title: "EV v1 – Fahrzeug-Energiepuffer",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "Die nutzbare EV-Batterie ist ein interner Energiezustand 0 ≤ E_vehicle ≤ nutzbare Kapazität. Sie ist kein zweiter Heimspeicher in pv-core und kein V2H. Fahren, Arbeitsplatzladung und Heimladung ändern nur diesen Puffer. Nicht bedienbare Fahrenergie ist physikalische Unzulässigkeit, keine stillschweigende Kilometerkürzung.",
     url: null,
@@ -184,7 +184,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "ev-v1-cyclic-year-boundary",
     category: "load_profiles",
     title: "EV v1 – zyklische Jahresgrenze",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "Das ausgewiesene EV-Jahr darf nicht von einem willkürlichen 1.-Januar-Ladezustand abhängen. Jedes Wetterjahr wird unabhängig per Wiederholungsjahr / Fixpunkt-Warm-up gelöst, bis E_end ≈ E_start. Der Startwert 0 der ersten verworfenen Passage ist nur ein numerischer Seed. Es gibt keinen Energieübertrag von 2006 nach 2007.",
     url: null,
@@ -198,7 +198,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "ev-v1-unmanaged-home-charging",
     category: "load_profiles",
     title: "EV v1 – ungesteuerte Heimladung in Nutzerfenstern",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "Heimladung findet nur in den explizit angegebenen WD-/SA-/SU-Ladefenstern statt, ungesteuert und ohne PV-, Strahlungs-, Tarif- oder Heimspeicher-SOC-abhängige Dispatch-Logik. Jeder Tag hat ein begrenztes oder über Mitternacht reichendes Fenster. start = end ist ungültig und bedeutet nicht 24 Stunden. Es gibt keinen versteckten Ganztagszustand und keine Mitternachtskonvention für die Heimladung. Geladen wird nur innerhalb des Fensters, wenn der EV-Energiepuffer Energie benötigt.",
     url: null,
@@ -212,7 +212,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "ev-v1-consumption-as-charging-energy",
     category: "load_profiles",
     title: "EV v1 – kWh/100 km als Ladeenergie",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "Der eingegebene Verbrauch in kWh/100 km ist die Ladeenergie des Modells. Fahrenergie = Jahreskilometer × Verbrauch / 100. Es wird kein zusätzlicher versteckter Ladeverlustfaktor auf Heim- oder Arbeitsplatzladung angewendet.",
     url: null,
@@ -228,7 +228,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "sim-35040-steps",
     category: "battery_simulation",
     title: "35.040 Simulationsschritte pro Jahr",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "Jedes modellierte Jahr besteht aus genau 35.040 Intervallen à 15 Minuten (Δt = 0,25 h). Die Batteriesimulation läuft auf diesem Raster, nicht auf Monatsmitteln.",
     url: null,
@@ -242,7 +242,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "sim-15-minute",
     category: "battery_simulation",
     title: "15-Minuten-Simulation",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "PV-Erzeugung (stündlich von PVGIS, energieerhaltend auf 15 Minuten verteilt) und Haushaltslast (nativ 15 Minuten) werden in jedem Viertelstundenintervall mit dem Speicher abgeglichen.",
     url: null,
@@ -256,7 +256,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "sim-no-monthly-averaging",
     category: "battery_simulation",
     title: "Keine monatliche Mittelwertbildung",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "Eigenverbrauch, Autarkie und Speicherflüsse entstehen aus der vollständigen Zeitschrittsimulation. Es werden keine typischen Monatstage oder monatlichen Durchschnittsprofile als Ersatz für die Jahresreihe verwendet.",
     url: null,
@@ -270,7 +270,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     id: "sim-independent-weather-years",
     category: "battery_simulation",
     title: "Unabhängige Wetterjahre",
-    organization: "PVNavigator",
+    organization: "PVNAVIGATOR_",
     description:
       "Jedes Wetterjahr 2006–2020 wird separat simuliert. Kennzahlen werden anschließend über die Jahre aggregiert; die Jahre werden nicht zu einem künstlichen Klimamitteljahr vermischt.",
     url: null,
@@ -402,7 +402,7 @@ export const METHODOLOGY_SOURCES: readonly MethodologySource[] = [
     title: "WPuQ Smart-Meter-Datensatz",
     organization: "Schlemminger et al., Scientific Data (2022)",
     description:
-      "Wissenschaftliche Publikation zu gemessenen Smart-Meter-Lastgängen deutscher Einfamilienhäuser. PVNavigator nutzt 27 vollständige NO_PV-Haushalte des Messjahres 2019 für die Robustheitsprüfung der Speicherempfehlung.",
+      "Wissenschaftliche Publikation zu gemessenen Smart-Meter-Lastgängen deutscher Einfamilienhäuser. PVNAVIGATOR_ nutzt 27 vollständige NO_PV-Haushalte des Messjahres 2019 für die Robustheitsprüfung der Speicherempfehlung.",
     url: "https://www.nature.com/articles/s41597-022-01156-1",
     official: true,
     sourceType: "research",

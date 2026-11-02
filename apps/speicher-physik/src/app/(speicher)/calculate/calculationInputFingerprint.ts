@@ -23,30 +23,39 @@ export function calculationInputFingerprint(
     azimuthDeg: finiteOrNull(surface.azimuthDeg),
   }));
 
-  const heatPumpEnabled = form.heatPumpEnabled === true;
-  let ev: unknown = { enabled: false };
-  try {
-    ev = mapEvFormToCalculationInput(form);
-  } catch {
-    ev = {
-      enabled: form.evEnabled === true,
-      incomplete: true,
-      annualKm: finiteOrNull(form.evAnnualKm),
-      consumptionKwhPer100Km: finiteOrNull(form.evConsumptionKwhPer100Km),
-      usableBatteryCapacityKwh: finiteOrNull(form.evUsableBatteryCapacityKwh),
-      typicalDailyKmWd: finiteOrNull(form.evTypicalDailyKmWd),
-      typicalDailyKmSa: finiteOrNull(form.evTypicalDailyKmSa),
-      typicalDailyKmSu: finiteOrNull(form.evTypicalDailyKmSu),
-      maxHomeChargePowerKw: finiteOrNull(form.evMaxHomeChargePowerKw),
-      homeWindowWd: form.evHomeWindowWd ?? null,
-      homeWindowSa: form.evHomeWindowSa ?? null,
-      homeWindowSu: form.evHomeWindowSu ?? null,
-      workplaceEnabled: form.evWorkplaceEnabled ?? null,
-      workplaceKwhPerMonth: finiteOrNull(form.evWorkplaceKwhPerMonth),
-      workplaceChargingDaysPerMonth: finiteOrNull(
-        form.evWorkplaceChargingDaysPerMonth
-      ),
-    };
+  const heatPumpEnabled =
+    form.heatPumpEnabled === true
+      ? true
+      : form.heatPumpEnabled === false
+        ? false
+        : null;
+  let ev: unknown;
+  if (form.evEnabled == null) {
+    ev = { enabled: null };
+  } else {
+    try {
+      ev = mapEvFormToCalculationInput(form);
+    } catch {
+      ev = {
+        enabled: form.evEnabled === true,
+        incomplete: true,
+        annualKm: finiteOrNull(form.evAnnualKm),
+        consumptionKwhPer100Km: finiteOrNull(form.evConsumptionKwhPer100Km),
+        usableBatteryCapacityKwh: finiteOrNull(form.evUsableBatteryCapacityKwh),
+        typicalDailyKmWd: finiteOrNull(form.evTypicalDailyKmWd),
+        typicalDailyKmSa: finiteOrNull(form.evTypicalDailyKmSa),
+        typicalDailyKmSu: finiteOrNull(form.evTypicalDailyKmSu),
+        maxHomeChargePowerKw: finiteOrNull(form.evMaxHomeChargePowerKw),
+        homeWindowWd: form.evHomeWindowWd ?? null,
+        homeWindowSa: form.evHomeWindowSa ?? null,
+        homeWindowSu: form.evHomeWindowSu ?? null,
+        workplaceEnabled: form.evWorkplaceEnabled ?? null,
+        workplaceKwhPerMonth: finiteOrNull(form.evWorkplaceKwhPerMonth),
+        workplaceChargingDaysPerMonth: finiteOrNull(
+          form.evWorkplaceChargingDaysPerMonth
+        ),
+      };
+    }
   }
 
   return JSON.stringify({
@@ -64,7 +73,7 @@ export function calculationInputFingerprint(
       ? finiteOrNull(form.heatPumpConsumptionKwh)
       : null,
     ev,
-    backupReserveKwh: finiteOrNull(form.backupReserveKwh) ?? 0,
+    backupReserveKwh: finiteOrNull(form.backupReserveKwh),
   });
 }
 

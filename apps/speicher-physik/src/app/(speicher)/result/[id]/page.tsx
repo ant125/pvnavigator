@@ -4,7 +4,8 @@ import {
   isPvNavigatorUuid,
 } from "@pv-auth/session";
 
-import { SpeicherReportView } from "../../components/SpeicherReportView";
+import SpeicherCalculatePage from "../../calculate/page";
+import { hydrateSavedCalculationInput } from "../../calculate/savedCalculationForm";
 import { getServerUser } from "@/lib/auth";
 import {
   HISTORICAL_SPEICHER_REPORT_SELECT,
@@ -126,24 +127,29 @@ export default async function HistoricalSpeicherResultPage({
   const { report } = outcome;
 
   return (
-    <div className="min-w-0 max-w-full py-12">
-      <SpeicherReportView
-        mode="historical"
-        verifiedResult={report.verifiedResult}
-        speicherGrenz={report.speicherGrenz}
-        robustness={report.robustness}
-        wasserWasserRobustness={report.wasserWasserRobustness}
-        ev={report.ev}
-        heatPumpCitation={report.heatPumpCitation}
-        displayAddress={report.displayAddress}
-        surfaces={report.input.surfaces}
-        input={report.input}
-        totalKwPConfigured={report.input.totalKwPConfigured}
-        presentationOverride={report.presentationOverride}
-        savedAt={report.createdAt}
-        batteryModelVersion={report.batteryModelVersion}
-        pdfCalculationId={report.id}
-      />
-    </div>
+    <SpeicherCalculatePage
+      key={report.id}
+      saved={{
+        id: report.id,
+        createdAt: report.createdAt,
+        accessKind: report.accessKind,
+        batteryModelVersion: report.batteryModelVersion,
+        displayAddress: report.displayAddress,
+        verifiedResult: report.verifiedResult,
+        speicherGrenz: report.speicherGrenz,
+        robustness: report.robustness,
+        wasserWasserRobustness: report.wasserWasserRobustness,
+        ev: report.ev,
+        heatPumpCitation: report.heatPumpCitation,
+        presentationOverride: report.presentationOverride,
+        hydrated: hydrateSavedCalculationInput(
+          isRecord(data?.input) ? data.input : null
+        ),
+      }}
+    />
   );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }

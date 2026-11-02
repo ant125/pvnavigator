@@ -1,5 +1,10 @@
 import type { HouseholdCalculationInput } from "@/app/(speicher)/calculate/runHouseholdCalculation";
 import type { HouseholdCalculationPayload } from "@/app/(speicher)/calculate/runHouseholdCalculation";
+import {
+  recordCompletedCalculation,
+  type CalculationAddress,
+  type RecordOutcome,
+} from "@/lib/calculationAccess";
 import { deriveSpeicherBusinessMetrics } from "@/lib/deriveSpeicherBusinessMetrics";
 
 export const SPEICHER_GRENZE_PRODUCT_KEY = "speicher_grenze";
@@ -33,7 +38,7 @@ function jsonClone<T>(value: T): T {
 
 function calculationName(displayAddress: string): string {
   const trimmed = displayAddress.trim();
-  return trimmed.length > 0 ? trimmed : "SpeicherGrenze";
+  return trimmed.length > 0 ? trimmed : "SPEICHERGRENZE";
 }
 
 function evEnabledFromInput(input: HouseholdCalculationInput): boolean {
@@ -115,27 +120,30 @@ export function mapCompletedCalculation(args: {
   };
 }
 
+/**
+ * Persists a successful calculation through `record_completed_calculation`.
+ * The database decides the access tier (free / paid) under a per-user lock
+ * and pins the free address or counts the subscription address in the same
+ * transaction. `user_id` is taken from the session inside the function; the
+ * mapped `user_id` here is informational only.
+ */
 export async function persistCompletedCalculation(args: {
   userId: string;
   input: HouseholdCalculationInput;
   payload: HouseholdCalculationPayload;
-}): Promise<string | null> {
+  address: CalculationAddress;
+}): Promise<RecordOutcome> {
   try {
     const { createServerSupabaseClient } = await import("@/lib/supabase/server");
     const supabase = await createServerSupabaseClient();
-    const row = mapCompletedCalculation(args);
-    const { data, error } = await supabase
-      .from("calculations")
-      .insert(row)
-      .select("id")
-      .single();
-    if (error || !data || typeof data.id !== "string") {
-      console.error("Failed to persist completed calculation", error);
-      return null;
-    }
-    return data.id;
+    const row: Record<string, unknown> = { ...mapCompletedCalculation(args) };
+    delete row.user_id;
+    return await recordCompletedCalculation(supabase, {
+      address: args.address,
+      row,
+    });
   } catch (error) {
     console.error("Failed to persist completed calculation", error);
-    return null;
+    return { status: "failed" };
   }
 }

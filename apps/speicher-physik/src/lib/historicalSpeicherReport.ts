@@ -1,3 +1,4 @@
+import { reportAccessKind, type ReportAccessKind } from "@pv-access/core";
 import { isPvNavigatorUuid } from "@pv-auth/session";
 
 import type { VerifiedResult } from "@/app/(speicher)/calculate/verifiedResultStore.server";
@@ -43,6 +44,11 @@ export type HistoricalSpeicherReport = {
   heatPumpCitation: ReportHeatPumpCitation;
   input: HistoricalSpeicherReportInput;
   presentationOverride: FrozenSpeicherPresentation | null;
+  /**
+   * free | paid as decided on the server when the row was recorded;
+   * legacy for rows created before the access rules (never re-marked).
+   */
+  accessKind: ReportAccessKind;
 };
 
 export type HistoricalSpeicherReportOutcome =
@@ -65,10 +71,12 @@ export type CalculationHistoryRow = {
   result_schema_version: string | null;
   battery_model_version: string | null;
   created_at: string;
+  /** Optional so older fixtures / selects without the column still read as legacy. */
+  access_tier?: string | null;
 };
 
 export const HISTORICAL_SPEICHER_REPORT_SELECT =
-  "id, product_key, input, result_snapshot, input_schema_version, result_schema_version, battery_model_version, created_at";
+  "id, product_key, input, result_snapshot, input_schema_version, result_schema_version, battery_model_version, created_at, access_tier";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -114,25 +122,27 @@ function parseSurface(value: unknown): PvSurfaceInput | null {
   return { systemSizeKwP, tiltDeg, azimuthDeg };
 }
 
-function parseSurfaces(
-  input: Record<string, unknown>,
-  totalKwPConfigured: number,
-): PvSurfaceInput[] {
+/**
+ * Stored roofs only. A missing angle is left out; it is not replaced with a
+ * default tilt or azimuth.
+ */
+function parseSurfaces(input: Record<string, unknown>): PvSurfaceInput[] {
   if (Array.isArray(input.pvSurfaces) && input.pvSurfaces.length > 0) {
-    const parsed = input.pvSurfaces
+    return input.pvSurfaces
       .map(parseSurface)
       .filter((row): row is PvSurfaceInput => row !== null);
-    if (parsed.length > 0) return parsed;
   }
-  const tiltDeg = asFiniteNumber(input.tiltDeg) ?? 30;
-  const azimuthDeg = asFiniteNumber(input.azimuthDeg) ?? 180;
-  return [
-    {
-      systemSizeKwP: totalKwPConfigured,
-      tiltDeg,
-      azimuthDeg,
-    },
-  ];
+  const tiltDeg = asFiniteNumber(input.tiltDeg);
+  const azimuthDeg = asFiniteNumber(input.azimuthDeg);
+  const systemSizeKwP = asFiniteNumber(input.pvSystemKwP);
+  if (
+    tiltDeg === undefined ||
+    azimuthDeg === undefined ||
+    systemSizeKwP === undefined
+  ) {
+    return [];
+  }
+  return [{ systemSizeKwP, tiltDeg, azimuthDeg }];
 }
 
 function parseHeatPumpTechnology(
@@ -286,7 +296,7 @@ export function parseHistoricalSpeicherReport(
         ? { methodologySourceId: heatPump.methodologySourceId ?? null }
         : null,
       input: {
-        surfaces: parseSurfaces(row.input, totalKwPConfigured),
+        surfaces: parseSurfaces(row.input),
         annualConsumptionKwh: asFiniteNumber(row.input.annualConsumptionKWh),
         heatPumpEnabled: row.input.heatPumpEnabled === true,
         heatPumpConsumptionKwh: asFiniteNumber(
@@ -303,6 +313,7 @@ export function parseHistoricalSpeicherReport(
         totalKwPConfigured,
       },
       presentationOverride,
+      accessKind: reportAccessKind(row.access_tier ?? null),
     },
   };
 }

@@ -63,6 +63,14 @@ function HeaderWordmark({ tight = false }: { tight?: boolean }) {
   );
 }
 
+function isAnalysisWorkspace(pathname: string): boolean {
+  return (
+    pathname === "/calculate" ||
+    pathname === "/result" ||
+    pathname.startsWith("/result/")
+  );
+}
+
 function HeaderCta() {
   const pathname = usePathname();
   const { reportActive, resetRef } = useHeaderCtaState();
@@ -116,6 +124,7 @@ function ShellFrame({
 }: ShellFrameProps) {
   const pathname = usePathname();
   const isCalculateRoute = pathname === "/calculate";
+  const workspace = isAnalysisWorkspace(pathname);
   const methodikActive =
     pathname === "/methodik" ||
     (pathname.startsWith("/methodik/") && pathname !== "/methodik/referenz");
@@ -128,7 +137,7 @@ function ShellFrame({
 
       <div
         className={
-          isCalculateRoute
+          workspace
             ? "sg-print-hide flex min-w-0 shrink-0 items-center justify-end gap-3"
             : "flex min-w-0 w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto sm:gap-4"
         }
@@ -140,7 +149,7 @@ function ShellFrame({
           signupHref={signupHref}
           accountHref={accountHref}
           signOutHref={signOutHref}
-          compact={isCalculateRoute}
+          compact={workspace}
         />
         <HeaderCta />
       </div>
@@ -178,7 +187,7 @@ function ShellFrame({
       <div className="max-w-sm">
         <Link href="/" className="inline-flex items-center gap-2.5">
           <BrandMark />
-          <span className="font-semibold text-ink">SpeicherGrenze</span>
+          <span className="font-semibold text-ink">SPEICHERGRENZE</span>
         </Link>
         <div className="mt-1.5 md:mt-0 md:pl-[2.625rem]">
           <Link
@@ -186,7 +195,7 @@ function ShellFrame({
             rel="noopener noreferrer"
             className="block text-xs text-ink-muted transition-colors hover:text-ink hover:underline hover:underline-offset-2 md:mt-0.5"
           >
-            by PVNavigator
+            by PVNAVIGATOR_
           </Link>
           <p className="mt-4 text-sm leading-relaxed text-ink-secondary md:mt-3">
             15-Minuten-Zeitschritte
@@ -228,7 +237,7 @@ function ShellFrame({
     <>
       <header
         className={
-          isCalculateRoute
+          workspace
             ? "sticky top-0 z-50 flex min-h-sg-calculate-header flex-col border-b border-line bg-canvas"
             : "sticky top-0 z-50 bg-canvas"
         }
@@ -240,14 +249,14 @@ function ShellFrame({
               content, so the optional "Neue Berechnung" button of the result
               state cannot move the wordmark or the account link.
             */
-            isCalculateRoute
+            workspace
               ? `flex min-w-0 flex-1 items-center justify-between px-layout-gap py-2 sm:gap-3 ${
                   tightWordmark ? "gap-1" : "gap-2"
                 }`
               : "mx-auto w-full min-w-0 max-w-frame px-4 sm:px-6 lg:px-8"
           }
         >
-          {isCalculateRoute ? (
+          {workspace ? (
             headerNav
           ) : (
             <div className="flex min-w-0 flex-col gap-2 border-b border-line py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:py-2.5">
@@ -261,19 +270,19 @@ function ShellFrame({
 
       <footer
         className={
-          isCalculateRoute
+          workspace
             ? "min-w-0 border-t border-line bg-canvas"
             : "min-w-0 border-t border-line bg-surface"
         }
       >
         <div
           className={
-            isCalculateRoute
+            workspace
               ? "px-layout-gap py-2.5"
               : "mx-auto w-full min-w-0 max-w-frame px-4 py-8 sm:px-6 md:pt-10 md:pb-8 lg:px-8"
           }
         >
-          {isCalculateRoute ? calculateFooterBody : footerBody}
+          {workspace ? calculateFooterBody : footerBody}
         </div>
       </footer>
     </>
@@ -281,7 +290,7 @@ function ShellFrame({
 
   return (
     <div className="flex min-h-screen min-w-0 flex-col overflow-x-clip bg-canvas text-ink">
-      {isCalculateRoute ? (
+      {workspace ? (
         <div className="sg-calculate-chrome mx-auto flex min-h-screen w-full min-w-0 max-w-frame flex-col px-4 py-2 sm:px-6 sm:pt-3 sm:pb-4 lg:px-8">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col border border-line-strong bg-canvas">
             {shell}

@@ -66,9 +66,9 @@ export default function ImpressumPage() {
           </section>
 
           <section>
-            <h2 className="text-sm font-semibold text-[#0F172A] mb-2">Über PVNavigator</h2>
+            <h2 className="text-sm font-semibold text-[#0F172A] mb-2">Über PVNAVIGATOR_</h2>
             <p className="leading-relaxed">
-              „PVNavigator ist eine unabhängige Plattform für technische und wirtschaftliche Analysen im Bereich
+              „PVNAVIGATOR_ ist eine unabhängige Plattform für technische und wirtschaftliche Analysen im Bereich
               Photovoltaik, Speicher und Energieverbrauch.“
             </p>
           </section>
@@ -79,7 +79,7 @@ export default function ImpressumPage() {
               <li>Die Inhalte dieser Website werden mit Sorgfalt erarbeitet.</li>
               <li>Eine Gewähr für Vollständigkeit, Richtigkeit und ständige Aktualität besteht nicht.</li>
               <li>
-                Die Angebote von PVNavigator ersetzen keine verbindliche technische, steuerliche oder finanzielle
+                Die Angebote von PVNAVIGATOR_ ersetzen keine verbindliche technische, steuerliche oder finanzielle
                 Beratung.
               </li>
             </ul>

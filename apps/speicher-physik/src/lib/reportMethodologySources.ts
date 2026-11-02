@@ -120,8 +120,8 @@ function toPublicEvReportSource(
   }
   return {
     id: PUBLIC_EV_REPORT_SOURCE_ID,
-    title: "SpeicherGrenze – Methodik für Elektroauto-Ladeprofile",
-    organization: "PVNavigator",
+    title: "SPEICHERGRENZE – Methodik für Elektroauto-Ladeprofile",
+    organization: "PVNAVIGATOR_",
     url: null,
     linkLabel: null,
     detail:

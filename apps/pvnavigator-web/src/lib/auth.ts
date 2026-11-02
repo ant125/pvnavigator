@@ -128,9 +128,11 @@ export function mapSupabaseAuthErrorToSignUpCode(
   return "generic";
 }
 
-export function hubSignUpErrorUrl(code: string): string {
+export function hubSignUpErrorUrl(code: string, nextRaw?: unknown): string {
   const url = new URL("/konto-erstellen", getHubOrigin());
   url.searchParams.set("error", SIGN_UP_ERROR_MESSAGES[code] ? code : "generic");
+  const next = parseAuthNextParam(nextRaw, "/");
+  if (next && next !== "/") url.searchParams.set("next", next);
   return url.toString();
 }
 

@@ -9,6 +9,7 @@ import {
   buildTiltDropdownOptions,
   DEFAULT_SURFACE,
 } from "./calculateFormModel";
+import type { CalculationNotice } from "./calculationNotice";
 import { quantityInputProps } from "./formStyles";
 import {
   exactAnglesForcedOpen,
@@ -31,18 +32,22 @@ function renderForm({
   surfaces = [{ ...DEFAULT_SURFACE, systemSizeKwP: 10 }],
   locked = false,
   errors = [],
+  notice = null,
   fieldErrors = {},
   azimuthInputStrings,
   tiltInputStrings,
   formOverrides = {},
+  tariffsUrl,
 }: {
   surfaces?: PvSurfaceInput[];
   locked?: boolean;
   errors?: string[];
+  notice?: CalculationNotice | null;
   fieldErrors?: SpeicherFieldErrors;
   azimuthInputStrings?: string[];
   tiltInputStrings?: string[];
   formOverrides?: Partial<SpeicherInput>;
+  tariffsUrl?: string;
 } = {}) {
   const formData: Partial<SpeicherInput> = {
     pvSurfaces: surfaces,
@@ -70,6 +75,7 @@ function renderForm({
       }
       setTiltInputStrings={() => {}}
       errors={errors}
+      notice={notice}
       fieldErrors={fieldErrors}
       clearFieldError={() => {}}
       locked={locked}
@@ -78,6 +84,8 @@ function renderForm({
       onSubmit={() => {}}
       errorBoxRef={createRef<HTMLDivElement>() as RefObject<HTMLDivElement | null>}
       fieldInputRefs={emptyRefs()}
+      tariffsUrl={tariffsUrl}
+      onUsePinnedAddress={() => {}}
     />
   );
 }
@@ -491,6 +499,93 @@ function inputTags(html: string): string[] {
 function inputAttr(tag: string, name: string): string | undefined {
   return tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
 }
+
+describe("SpeicherCalculateForm server notices", () => {
+  const unavailable: CalculationNotice = {
+    kind: "unavailable",
+    message:
+      "Die Zugangsprüfung ist derzeit nicht möglich. Bitte versuchen Sie es in einigen Minuten erneut.",
+  };
+
+  it("shows a temporary-outage notice without the input-error heading", () => {
+    const html = renderForm({ notice: unavailable });
+    expect(html).toContain('data-testid="calculation-notice-unavailable"');
+    expect(html).toContain("Dienst vorübergehend nicht verfügbar");
+    expect(html).toContain("Zugangsprüfung ist derzeit nicht möglich");
+    expect(html).toContain("Ihre Eingaben sind davon nicht betroffen");
+    expect(html).toContain('role="status"');
+    expect(html).toContain("bg-warning-soft");
+    expect(html).not.toContain("Bitte korrigieren Sie folgende Fehler");
+    expect(html).not.toContain("bg-danger-soft");
+  });
+
+  it("shows an access refusal as a notice with its own heading", () => {
+    const html = renderForm({
+      notice: { kind: "access", message: "Der kostenlose Zugang gilt für eine Adresse pro Konto." },
+    });
+    expect(html).toContain('data-testid="calculation-notice-access"');
+    expect(html).toContain("Hinweis zum Zugang");
+    expect(html).toContain("eine Adresse pro Konto");
+    expect(html).not.toContain("Ihre Eingaben sind davon nicht betroffen");
+    expect(html).not.toContain("Bitte korrigieren Sie folgende Fehler");
+  });
+
+  it("replaces a free-address mismatch with the compact tariff card", () => {
+    const html = renderForm({
+      notice: {
+        kind: "access",
+        code: "free_address_mismatch",
+        message: "Der kostenlose Zugang gilt für eine Adresse pro Konto.",
+        freeAddress: {
+          label: "Hauptstraße 1, 80331 München",
+          street: "Hauptstraße",
+          houseNumber: "1",
+          postalCode: "80331",
+          city: "München",
+        },
+      },
+      tariffsUrl: "http://localhost:3000/tarife",
+    });
+    expect(html).toContain('data-testid="free-address-limit-card"');
+    expect(html).toContain("Kostenlose Adresse bereits verwendet");
+    expect(html).toContain("eine Adresse pro Konto");
+    expect(html).toContain("Hauptstraße 1, 80331 München");
+    expect(html).toContain("unterschiedlichen Einstellungen erneut berechnen");
+    expect(html).toContain("STARTER, ABO oder PRO");
+    expect(html).toContain("Tarife ansehen");
+    expect(html).toContain('href="http://localhost:3000/tarife"');
+    expect(html).toContain("Kostenlose Adresse verwenden");
+    expect(html).not.toContain("Hinweis zum Zugang");
+    expect(html).not.toContain("address-quota-card");
+  });
+
+  it("shows an exhausted paid quota with the tariff name and a hub link", () => {
+    const html = renderForm({
+      notice: {
+        kind: "access",
+        code: "subscription_limit_reached",
+        message: "Ihre kostenlose Adresse bleibt weiterhin berechenbar.",
+        addressLimit: 10,
+      },
+      tariffsUrl: "http://localhost:3000/tarife",
+    });
+    expect(html).toContain('data-testid="address-quota-card"');
+    expect(html).toContain("Ihr Adresskontingent ist ausgeschöpft");
+    expect(html).toContain("alle 10 Adressen Ihres STARTER-Tarifs");
+    expect(html).toContain("zu ABO oder PRO wechseln");
+    expect(html).toContain("Tarife und Upgrades ansehen");
+    expect(html).toContain('href="http://localhost:3000/tarife"');
+    expect(html).not.toContain("kostenlose Adresse");
+    expect(html).not.toContain("free-address-limit-card");
+    expect(html).not.toContain("Hinweis zum Zugang");
+  });
+
+  it("lets input errors take precedence over a stale notice", () => {
+    const html = renderForm({ notice: unavailable, errors: ["Testfehler"] });
+    expect(html).toContain("Bitte korrigieren Sie folgende Fehler");
+    expect(html).not.toContain("calculation-notice-unavailable");
+  });
+});
 
 describe("quantity fields ignore wheel and trackpad scroll", () => {
   /*
