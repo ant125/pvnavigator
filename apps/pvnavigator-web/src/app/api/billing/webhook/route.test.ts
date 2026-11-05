@@ -139,11 +139,18 @@ describe("POST /api/billing/webhook", () => {
   });
 
   it("accepts a live event only when the server key is live", async () => {
-    setEnv({ STRIPE_SECRET_KEY: "sk_live_unit" });
+    setEnv({ STRIPE_SECRET_KEY: "rk_live_unit" });
     const payload = eventBody(true);
     const response = await POST(request(payload, signature(payload)));
     expect(response.status).toBe(200);
     expect(apply.mock.calls[0]?.[1]).toMatchObject({ livemode: true, eventType: "charge.succeeded" });
+  });
+
+  it("stays closed for a publishable key and does not grant access", async () => {
+    setEnv({ STRIPE_SECRET_KEY: "pk_live_unit" });
+    const response = await POST(request("{}", "invalid"));
+    expect(response.status).toBe(500);
+    expect(apply).not.toHaveBeenCalled();
   });
 
   it("stays closed when the key, webhook secret, database or price catalog is missing", async () => {

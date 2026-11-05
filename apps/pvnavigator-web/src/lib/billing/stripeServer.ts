@@ -17,10 +17,13 @@ const verifiedPriceIds = new Set<string>();
 
 export type StripeRuntimeMode = "test" | "live";
 
-/** The secret key selects one Stripe account. Anything else leaves billing closed. */
+/**
+ * The secret or restricted key selects one Stripe account. A publishable key
+ * or any other value leaves billing closed.
+ */
 export function stripeRuntimeMode(key = process.env.STRIPE_SECRET_KEY?.trim() ?? ""): StripeRuntimeMode | null {
-  if (key.startsWith("sk_test_")) return "test";
-  if (key.startsWith("sk_live_")) return "live";
+  if (key.startsWith("sk_test_") || key.startsWith("rk_test_")) return "test";
+  if (key.startsWith("sk_live_") || key.startsWith("rk_live_")) return "live";
   return null;
 }
 
@@ -38,12 +41,8 @@ export function expectedLivemode(): boolean | null {
  */
 export const LIVE_CHECKOUT_ACCOUNT_ID = "ecde72b2-f09e-4fcb-b34d-5a83f27ef94e";
 
-/** Keeps every live Checkout closed while the production key is being checked. */
-export const LIVE_CHECKOUT_HOLD = true;
-
 export function liveCheckoutAllowed(userId: string): boolean {
   if (expectedLivemode() !== true) return true;
-  if (LIVE_CHECKOUT_HOLD) return false;
   return userId === LIVE_CHECKOUT_ACCOUNT_ID;
 }
 

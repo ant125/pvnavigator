@@ -52,34 +52,42 @@ afterEach(() => {
 });
 
 describe("live checkout gate", () => {
-  it("keeps sandbox checkout open and holds every live checkout", () => {
-    setEnv({ STRIPE_SECRET_KEY: "sk_test_local" });
+  it("keeps sandbox checkout open and limits live checkout to one account", () => {
+    setEnv({ STRIPE_SECRET_KEY: "rk_test_local" });
     expect(liveCheckoutAllowed("11111111-1111-4111-8111-111111111111")).toBe(true);
 
-    setEnv({ STRIPE_SECRET_KEY: "sk_live_local" });
-    expect(liveCheckoutAllowed(LIVE_CHECKOUT_ACCOUNT_ID)).toBe(false);
+    setEnv({ STRIPE_SECRET_KEY: "rk_live_local" });
+    expect(liveCheckoutAllowed(LIVE_CHECKOUT_ACCOUNT_ID)).toBe(true);
     expect(liveCheckoutAllowed("11111111-1111-4111-8111-111111111111")).toBe(false);
     expect(liveCheckoutAllowed("")).toBe(false);
+
+    setEnv({ STRIPE_SECRET_KEY: "sk_live_local" });
+    expect(liveCheckoutAllowed(LIVE_CHECKOUT_ACCOUNT_ID)).toBe(true);
+    expect(liveCheckoutAllowed("11111111-1111-4111-8111-111111111111")).toBe(false);
   });
 });
 
 describe("stripe mode", () => {
-  it("accepts only a test or live secret and keeps every other key closed", () => {
+  it("accepts secret and restricted keys and keeps every other key closed", () => {
     expect(stripeRuntimeMode("sk_test_local")).toBe("test");
+    expect(stripeRuntimeMode("rk_test_local")).toBe("test");
     expect(stripeRuntimeMode("sk_live_local")).toBe("live");
+    expect(stripeRuntimeMode("rk_live_local")).toBe("live");
+    expect(stripeRuntimeMode("pk_live_local")).toBeNull();
+    expect(stripeRuntimeMode("pk_test_local")).toBeNull();
+    expect(stripeRuntimeMode('"rk_live_local"')).toBeNull();
     expect(stripeRuntimeMode("sk_secret")).toBeNull();
-    expect(stripeRuntimeMode("rk_live_local")).toBeNull();
     expect(stripeRuntimeMode("")).toBeNull();
 
-    setEnv({ STRIPE_SECRET_KEY: "sk_test_local" });
+    setEnv({ STRIPE_SECRET_KEY: "rk_test_local" });
     expect(expectedLivemode()).toBe(false);
     expect(getStripe()).not.toBeNull();
 
-    setEnv({ STRIPE_SECRET_KEY: "sk_live_local" });
+    setEnv({ STRIPE_SECRET_KEY: "rk_live_local" });
     expect(expectedLivemode()).toBe(true);
     expect(getStripe()).not.toBeNull();
 
-    setEnv({ STRIPE_SECRET_KEY: "sk_secret" });
+    setEnv({ STRIPE_SECRET_KEY: "pk_live_local" });
     expect(expectedLivemode()).toBeNull();
     expect(getStripe()).toBeNull();
   });
