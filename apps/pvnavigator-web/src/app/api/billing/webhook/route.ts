@@ -13,6 +13,7 @@ import {
   type BillingCommand,
 } from "@/lib/billing/stripeEvents";
 import { readScheduledPlan } from "@/lib/billing/stripePlanChange";
+import { reportLiveBillingConfig } from "@/lib/billing/liveBillingReport";
 import {
   loadPriceCatalog,
   getStripe,
@@ -54,6 +55,13 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (!stripe || !secret || !admin || catalog.length === 0) {
     return new Response("Billing is not configured", { status: 500 });
+  }
+  if (expectedLivemode() === true) {
+    try {
+      await reportLiveBillingConfig(stripe);
+    } catch (error) {
+      console.error("live billing config check failed", error instanceof Error ? error.name : "error");
+    }
   }
 
   const payload = await request.text();

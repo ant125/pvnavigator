@@ -16,6 +16,7 @@ import {
   checkoutSubmitMessage,
   expectedLivemode,
   getStripe,
+  liveCheckoutAllowed,
 } from "@/lib/billing/stripeServer";
 import { getServerUser } from "@/lib/auth";
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const user = await getServerUser();
   if (!user) return redirectLoginForTariff(plan);
+  if (!liveCheckoutAllowed(user.id)) return redirectTarife("live-gesperrt");
 
   const stripe = getStripe();
   const admin = createServiceRoleClient();

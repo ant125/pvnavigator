@@ -25,6 +25,10 @@ vi.mock("@/lib/supabase/serviceRole", () => ({
   createServiceRoleClient: () => admin(),
 }));
 
+vi.mock("@/lib/billing/liveBillingReport", () => ({
+  reportLiveBillingConfig: vi.fn(async () => null),
+}));
+
 import { POST } from "./route";
 
 const NAMES = [

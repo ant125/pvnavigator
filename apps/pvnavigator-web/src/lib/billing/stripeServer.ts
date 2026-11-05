@@ -31,6 +31,18 @@ export function expectedLivemode(): boolean | null {
   return null;
 }
 
+/**
+ * Temporary gate for the first controlled live payment. Sandbox checkout is
+ * unchanged. A live Checkout is accepted only for this already existing
+ * production account. Remove the gate after that payment has been checked.
+ */
+export const LIVE_CHECKOUT_ACCOUNT_ID = "ecde72b2-f09e-4fcb-b34d-5a83f27ef94e";
+
+export function liveCheckoutAllowed(userId: string): boolean {
+  if (expectedLivemode() !== true) return true;
+  return userId === LIVE_CHECKOUT_ACCOUNT_ID;
+}
+
 export class BillingNotConfiguredError extends Error {
   constructor() {
     super("Stripe billing is not configured");
