@@ -14,6 +14,7 @@ import {
 } from "@/lib/billing/stripeEvents";
 import { readScheduledPlan } from "@/lib/billing/stripePlanChange";
 import { reportLiveBillingConfig } from "@/lib/billing/liveBillingReport";
+import { probeProductionStripe } from "@/lib/billing/stripeKeyProbe";
 import {
   loadPriceCatalog,
   getStripe,
@@ -27,6 +28,16 @@ import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+async function safeProbe(): Promise<string> {
+  try {
+    const report = JSON.stringify(await probeProductionStripe());
+    console.error(report);
+    return report;
+  } catch (error) {
+    return JSON.stringify({ error: error instanceof Error ? error.name : "error" });
+  }
+}
 
 function billingConfigState(catalogLength: number): string {
   return JSON.stringify({
@@ -56,6 +67,7 @@ function idOf(value: unknown): string | null {
  * grants access; only a paid invoice command that the database accepts does.
  */
 export async function POST(request: Request): Promise<Response> {
+  const probe = await safeProbe();
   const stripe = getStripe();
   const secret = getWebhookSecret();
   const admin = createServiceRoleClient();
@@ -68,7 +80,7 @@ export async function POST(request: Request): Promise<Response> {
       console.error(state);
       return new Response("Billing is not configured", {
         status: 500,
-        headers: { "x-pvn-billing": state },
+        headers: { "x-pvn-billing": probe },
       });
     }
     throw error;
@@ -78,7 +90,7 @@ export async function POST(request: Request): Promise<Response> {
     console.error(JSON.stringify({ event: "billing_not_configured", ...JSON.parse(state) }));
     return new Response("Billing is not configured", {
       status: 500,
-      headers: { "x-pvn-billing": state },
+      headers: { "x-pvn-billing": probe },
     });
   }
   if (expectedLivemode() === true) {
@@ -95,7 +107,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     event = stripe.webhooks.constructEvent(payload, signature ?? "", secret);
   } catch {
-    return new Response("Invalid signature", { status: 400 });
+    return new Response("Invalid signature", { status: 400, headers: { "x-pvn-billing": probe } });
   }
 
   const livemode = expectedLivemode();

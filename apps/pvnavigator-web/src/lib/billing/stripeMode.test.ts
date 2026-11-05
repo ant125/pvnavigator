@@ -52,12 +52,12 @@ afterEach(() => {
 });
 
 describe("live checkout gate", () => {
-  it("keeps sandbox checkout open and limits live checkout to one account", () => {
+  it("keeps sandbox checkout open and holds every live checkout", () => {
     setEnv({ STRIPE_SECRET_KEY: "sk_test_local" });
     expect(liveCheckoutAllowed("11111111-1111-4111-8111-111111111111")).toBe(true);
 
     setEnv({ STRIPE_SECRET_KEY: "sk_live_local" });
-    expect(liveCheckoutAllowed(LIVE_CHECKOUT_ACCOUNT_ID)).toBe(true);
+    expect(liveCheckoutAllowed(LIVE_CHECKOUT_ACCOUNT_ID)).toBe(false);
     expect(liveCheckoutAllowed("11111111-1111-4111-8111-111111111111")).toBe(false);
     expect(liveCheckoutAllowed("")).toBe(false);
   });

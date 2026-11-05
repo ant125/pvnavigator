@@ -38,8 +38,12 @@ export function expectedLivemode(): boolean | null {
  */
 export const LIVE_CHECKOUT_ACCOUNT_ID = "ecde72b2-f09e-4fcb-b34d-5a83f27ef94e";
 
+/** Keeps every live Checkout closed while the production key is being checked. */
+export const LIVE_CHECKOUT_HOLD = true;
+
 export function liveCheckoutAllowed(userId: string): boolean {
   if (expectedLivemode() !== true) return true;
+  if (LIVE_CHECKOUT_HOLD) return false;
   return userId === LIVE_CHECKOUT_ACCOUNT_ID;
 }
 
