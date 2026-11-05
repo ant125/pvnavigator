@@ -28,6 +28,20 @@ import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function billingConfigState(catalogLength: number): string {
+  return JSON.stringify({
+    stripeMode: stripeRuntimeMode(),
+    webhookSecret: Boolean(getWebhookSecret()),
+    serviceRole: Boolean(createServiceRoleClient()),
+    catalog: catalogLength,
+    pricePrefix: {
+      starter: (process.env.STRIPE_PRICE_STARTER_ID?.trim() ?? "").startsWith("price_"),
+      abo: (process.env.STRIPE_PRICE_ID?.trim() ?? "").startsWith("price_"),
+      pro: (process.env.STRIPE_PRICE_PRO_ID?.trim() ?? "").startsWith("price_"),
+    },
+  });
+}
+
 function idOf(value: unknown): string | null {
   if (typeof value === "string" && value.trim()) return value.trim();
   if (value && typeof value === "object" && "id" in value) {
@@ -50,27 +64,22 @@ export async function POST(request: Request): Promise<Response> {
     catalog = loadPriceCatalog();
   } catch (error) {
     if (error instanceof BillingPriceError) {
-      console.error(JSON.stringify({ event: "billing_not_configured", reason: "duplicate_price" }));
-      return new Response("Billing is not configured", { status: 500 });
+      const state = JSON.stringify({ event: "billing_not_configured", reason: "duplicate_price" });
+      console.error(state);
+      return new Response("Billing is not configured", {
+        status: 500,
+        headers: { "x-pvn-billing": state },
+      });
     }
     throw error;
   }
   if (!stripe || !secret || !admin || catalog.length === 0) {
-    console.error(
-      JSON.stringify({
-        event: "billing_not_configured",
-        stripeMode: stripeRuntimeMode(),
-        webhookSecret: Boolean(secret),
-        serviceRole: Boolean(admin),
-        catalog: catalog.length,
-        pricePrefix: {
-          starter: (process.env.STRIPE_PRICE_STARTER_ID?.trim() ?? "").startsWith("price_"),
-          abo: (process.env.STRIPE_PRICE_ID?.trim() ?? "").startsWith("price_"),
-          pro: (process.env.STRIPE_PRICE_PRO_ID?.trim() ?? "").startsWith("price_"),
-        },
-      }),
-    );
-    return new Response("Billing is not configured", { status: 500 });
+    const state = billingConfigState(catalog.length);
+    console.error(JSON.stringify({ event: "billing_not_configured", ...JSON.parse(state) }));
+    return new Response("Billing is not configured", {
+      status: 500,
+      headers: { "x-pvn-billing": state },
+    });
   }
   if (expectedLivemode() === true) {
     try {
