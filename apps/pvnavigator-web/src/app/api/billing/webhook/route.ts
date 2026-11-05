@@ -19,6 +19,7 @@ import {
   getStripe,
   getWebhookSecret,
   expectedLivemode,
+  stripeRuntimeMode,
   BillingPriceError,
 } from "@/lib/billing/stripeServer";
 import type { AllowedPrice } from "@/lib/billing/stripeEvents";
@@ -49,11 +50,26 @@ export async function POST(request: Request): Promise<Response> {
     catalog = loadPriceCatalog();
   } catch (error) {
     if (error instanceof BillingPriceError) {
+      console.error(JSON.stringify({ event: "billing_not_configured", reason: "duplicate_price" }));
       return new Response("Billing is not configured", { status: 500 });
     }
     throw error;
   }
   if (!stripe || !secret || !admin || catalog.length === 0) {
+    console.error(
+      JSON.stringify({
+        event: "billing_not_configured",
+        stripeMode: stripeRuntimeMode(),
+        webhookSecret: Boolean(secret),
+        serviceRole: Boolean(admin),
+        catalog: catalog.length,
+        pricePrefix: {
+          starter: (process.env.STRIPE_PRICE_STARTER_ID?.trim() ?? "").startsWith("price_"),
+          abo: (process.env.STRIPE_PRICE_ID?.trim() ?? "").startsWith("price_"),
+          pro: (process.env.STRIPE_PRICE_PRO_ID?.trim() ?? "").startsWith("price_"),
+        },
+      }),
+    );
     return new Response("Billing is not configured", { status: 500 });
   }
   if (expectedLivemode() === true) {
