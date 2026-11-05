@@ -14,7 +14,6 @@ import {
 } from "@/lib/billing/stripeEvents";
 import { readScheduledPlan } from "@/lib/billing/stripePlanChange";
 import { reportLiveBillingConfig } from "@/lib/billing/liveBillingReport";
-import { probeProductionStripe } from "@/lib/billing/stripeKeyProbe";
 import {
   loadPriceCatalog,
   getStripe,
@@ -28,16 +27,6 @@ import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-async function safeProbe(): Promise<string> {
-  try {
-    const report = JSON.stringify(await probeProductionStripe());
-    console.error(report);
-    return report;
-  } catch (error) {
-    return JSON.stringify({ error: error instanceof Error ? error.name : "error" });
-  }
-}
 
 function billingConfigState(catalogLength: number): string {
   return JSON.stringify({
@@ -67,7 +56,6 @@ function idOf(value: unknown): string | null {
  * grants access; only a paid invoice command that the database accepts does.
  */
 export async function POST(request: Request): Promise<Response> {
-  const probe = await safeProbe();
   const stripe = getStripe();
   const secret = getWebhookSecret();
   const admin = createServiceRoleClient();
@@ -78,20 +66,14 @@ export async function POST(request: Request): Promise<Response> {
     if (error instanceof BillingPriceError) {
       const state = JSON.stringify({ event: "billing_not_configured", reason: "duplicate_price" });
       console.error(state);
-      return new Response("Billing is not configured", {
-        status: 500,
-        headers: { "x-pvn-billing": probe },
-      });
+      return new Response("Billing is not configured", { status: 500 });
     }
     throw error;
   }
   if (!stripe || !secret || !admin || catalog.length === 0) {
     const state = billingConfigState(catalog.length);
     console.error(JSON.stringify({ event: "billing_not_configured", ...JSON.parse(state) }));
-    return new Response("Billing is not configured", {
-      status: 500,
-      headers: { "x-pvn-billing": probe },
-    });
+    return new Response("Billing is not configured", { status: 500 });
   }
   if (expectedLivemode() === true) {
     try {
@@ -107,7 +89,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     event = stripe.webhooks.constructEvent(payload, signature ?? "", secret);
   } catch {
-    return new Response("Invalid signature", { status: 400, headers: { "x-pvn-billing": probe } });
+    return new Response("Invalid signature", { status: 400 });
   }
 
   const livemode = expectedLivemode();

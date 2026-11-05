@@ -29,14 +29,6 @@ vi.mock("@/lib/billing/liveBillingReport", () => ({
   reportLiveBillingConfig: vi.fn(async () => null),
 }));
 
-vi.mock("@/lib/billing/stripeKeyProbe", () => ({
-  probeProductionStripe: vi.fn(async () => ({
-    direct: { kind: "sk_test_", quoted: false },
-    runtime: { kind: "sk_test_", quoted: false },
-    reads: null,
-  })),
-}));
-
 import { POST } from "./route";
 
 const NAMES = [
