@@ -418,8 +418,6 @@ export function tariffViewer(signedIn: boolean, summary: AccessSummary | null): 
 export const TARIFF_HINTS: Record<string, string> = {
   "nicht-konfiguriert":
     "Die Zahlung ist auf diesem Server noch nicht eingerichtet. Es wurde kein Abo freigeschaltet.",
-  "live-gesperrt":
-    "Die Live-Zahlung ist vorübergehend nur für das vorgesehene Testkonto möglich. Es wurde kein Abo gestartet.",
   "bitte-warten":
     "Die Kasse wird bereits geöffnet. Bitte einen Moment warten und es dann erneut versuchen.",
   "bereits-aktiv": "Für dieses Konto läuft bereits ein Abo. Ein zweites Abo wird nicht gestartet.",

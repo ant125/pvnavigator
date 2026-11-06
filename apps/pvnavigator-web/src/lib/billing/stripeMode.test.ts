@@ -6,8 +6,6 @@ import {
   expectedLivemode,
   getStripe,
   getWebhookSecret,
-  LIVE_CHECKOUT_ACCOUNT_ID,
-  liveCheckoutAllowed,
   loadPriceCatalog,
   stripeRuntimeMode,
 } from "./stripeServer";
@@ -49,22 +47,6 @@ afterEach(() => {
     if (value === undefined) delete process.env[name];
     else process.env[name] = value;
   }
-});
-
-describe("live checkout gate", () => {
-  it("keeps sandbox checkout open and limits live checkout to one account", () => {
-    setEnv({ STRIPE_SECRET_KEY: "rk_test_local" });
-    expect(liveCheckoutAllowed("11111111-1111-4111-8111-111111111111")).toBe(true);
-
-    setEnv({ STRIPE_SECRET_KEY: "rk_live_local" });
-    expect(liveCheckoutAllowed(LIVE_CHECKOUT_ACCOUNT_ID)).toBe(true);
-    expect(liveCheckoutAllowed("11111111-1111-4111-8111-111111111111")).toBe(false);
-    expect(liveCheckoutAllowed("")).toBe(false);
-
-    setEnv({ STRIPE_SECRET_KEY: "sk_live_local" });
-    expect(liveCheckoutAllowed(LIVE_CHECKOUT_ACCOUNT_ID)).toBe(true);
-    expect(liveCheckoutAllowed("11111111-1111-4111-8111-111111111111")).toBe(false);
-  });
 });
 
 describe("stripe mode", () => {

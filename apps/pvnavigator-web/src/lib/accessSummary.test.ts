@@ -586,8 +586,7 @@ describe("checkout error hints", () => {
     expect(TARIFF_HINTS["upgrade-ausstehend"]).toContain("bereits verarbeitet");
     expect(TARIFF_HINTS["upgrade-ausstehend"]).not.toMatch(/ist aktiv/);
     expect(TARIFF_HINTS["zahlung-fehler"]).not.toMatch(/PRO ist aktiv|freigeschaltet/);
-    expect(TARIFF_HINTS["live-gesperrt"]).toContain("kein Abo gestartet");
-    expect(TARIFF_HINTS["live-gesperrt"]).not.toMatch(/ist aktiv|freigeschaltet/);
+    expect(TARIFF_HINTS).not.toHaveProperty("live-gesperrt");
     expect(TARIFF_HINTS.preis).toContain("STARTER ist 9 €");
     expect(TARIFF_HINTS.preis).toContain("ABO ist 29 €");
     expect(TARIFF_HINTS.preis).toContain("PRO ist 59 €");

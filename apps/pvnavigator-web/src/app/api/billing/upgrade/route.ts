@@ -15,7 +15,6 @@ import {
   checkoutSubmitMessage,
   expectedLivemode,
   getStripe,
-  liveCheckoutAllowed,
 } from "@/lib/billing/stripeServer";
 import {
   storedUpgradeSessionDisposition,
@@ -81,7 +80,6 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const user = await getServerUser();
   if (!user) return redirectLoginForTariff(requested);
-  if (!liveCheckoutAllowed(user.id)) return redirectTarife("live-gesperrt");
 
   const stripe = getStripe();
   const admin = createServiceRoleClient();
