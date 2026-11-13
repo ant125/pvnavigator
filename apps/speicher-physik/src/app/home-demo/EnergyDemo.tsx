@@ -13,8 +13,8 @@ export default function EnergyDemo() {
   return <>
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
       <p className="text-sm text-ink-secondary">Modellbeispiel · 24 Stunden · 96 Intervalle</p>
-      <div className="flex" role="group" aria-label="Beispieltag">
-        {([['summer','Sommertag'],['winter','Wintertag']] as const).map(([value,label]) => <button key={value} type="button" aria-pressed={season===value} onClick={()=>setSeason(value)} className={`min-h-11 border border-line-strong px-4 text-sm ${season===value ? 'bg-accent text-white' : 'bg-surface text-ink'}`}>{label}</button>)}
+      <div className="inline-flex gap-1 rounded-sm border border-line bg-surface-muted p-1" role="group" aria-label="Beispieltag">
+        {([['summer','Sommertag'],['winter','Wintertag']] as const).map(([value,label]) => <button key={value} type="button" aria-pressed={season===value} onClick={()=>setSeason(value)} className={`min-h-11 rounded-sm border px-3 text-sm transition-colors ${season===value ? 'border-line-strong bg-surface font-semibold text-ink shadow-sm' : 'border-transparent bg-transparent text-ink-secondary hover:bg-surface/60'}`}>{label}</button>)}
       </div>
     </div>
     <div className="flex flex-wrap gap-x-6 gap-y-2 px-4 pt-4 text-xs" aria-label="Legende">

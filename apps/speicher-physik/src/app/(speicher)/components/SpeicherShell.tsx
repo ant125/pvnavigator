@@ -98,7 +98,7 @@ function HeaderCta() {
     );
   }
 
-  if (isCalculateRoute) {
+  if (isCalculateRoute || pathname === "/") {
     return null;
   }
 
@@ -178,6 +178,22 @@ function ShellFrame({
         <a href={`${hubOrigin}/datenschutz`} className={footerLink}>
           Datenschutz
         </a>
+      </nav>
+    </div>
+  );
+
+  const homeFooterBody = (
+    <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+      <div className="flex flex-col items-start gap-1">
+        <Link href="/" className={`font-mono text-xs font-semibold tracking-[0.16em] ${brandWordmarkLink}`}>SPEICHERGRENZE</Link>
+        <a href="https://pvnavigator.de" className="text-xs text-ink-muted hover:text-ink hover:underline hover:underline-offset-2">by PVNAVIGATOR_</a>
+      </div>
+      <nav aria-label="Unterlagen und Rechtliches" className="flex flex-wrap items-center gap-x-5 gap-y-1">
+        <Link href="/methodik" className={footerLink}>Methodik</Link>
+        <Link href="/methodik/referenz" className={footerLink}>Referenz</Link>
+        <a href={`${hubOrigin}/kontakt`} className={footerLink}>Kontakt</a>
+        <a href={`${hubOrigin}/impressum`} className={footerLink}>Impressum</a>
+        <a href={`${hubOrigin}/datenschutz`} className={footerLink}>Datenschutz</a>
       </nav>
     </div>
   );
@@ -279,10 +295,12 @@ function ShellFrame({
           className={
             workspace
               ? "px-layout-gap py-2.5"
-              : "mx-auto w-full min-w-0 max-w-frame px-4 py-8 sm:px-6 md:pt-10 md:pb-8 lg:px-8"
+              : pathname === "/"
+                ? "mx-auto w-full min-w-0 max-w-frame px-4 py-4 sm:px-6 lg:px-8"
+                : "mx-auto w-full min-w-0 max-w-frame px-4 py-8 sm:px-6 md:pt-10 md:pb-8 lg:px-8"
           }
         >
-          {workspace ? calculateFooterBody : footerBody}
+          {workspace ? calculateFooterBody : pathname === "/" ? homeFooterBody : footerBody}
         </div>
       </footer>
     </>

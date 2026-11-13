@@ -11,7 +11,7 @@ export default function SpeicherLandingPage() {
       <div><p className="mb-2 font-mono text-xs uppercase tracking-[0.12em] text-ink-secondary">SPEICHERGRENZE / Technische Übersicht</p>
         <h1 className="text-[1.875rem] font-bold leading-none tracking-[-0.035em] sm:text-[2.375rem] lg:text-[2.875rem]">PV, Verbrauch und Speicher<br className="hidden sm:block"/> im zeitlichen Zusammenhang.</h1>
         <p className="mt-4 max-w-3xl text-sm leading-relaxed text-ink-secondary">Die Berechnung vergleicht Erzeugung und Bedarf in 15-Minuten-Schritten über ein Jahr. Unterschiedliche Speicherkapazitäten zeigen, wie viel Solarstrom zusätzlich im Haus genutzt werden kann.</p>
-      </div><Link href="/calculate" className="inline-flex min-h-11 items-center justify-center rounded-sm bg-accent px-5 py-3 text-sm font-semibold text-white hover:bg-accent-hover">Zum Kalkulator →</Link>
+      </div><Link href="/calculate" className="inline-flex min-h-11 w-fit items-center justify-center self-end rounded-sm border border-ink bg-ink px-4 py-2 text-sm font-medium text-surface transition-colors hover:bg-ink-secondary">Speicher berechnen →</Link>
     </header>
     <div className="grid gap-2">
       <Panel title="01 / Energiefluss im Tagesverlauf"><EnergyDemo/></Panel>
@@ -21,7 +21,7 @@ export default function SpeicherLandingPage() {
           <div><h3 className="font-semibold">Die Batterie verschiebt Energie</h3><p className="mt-2 leading-relaxed text-ink-secondary">Grüne Balken in der unteren Spur zeigen das Laden, braune Balken das Entladen. Ein voller Speicher kann keinen weiteren Überschuss aufnehmen; ein leerer keinen Bedarf decken. Dann wird Strom eingespeist oder aus dem Netz bezogen.</p></div>
           <div><h3 className="font-semibold">Ein Intervall genauer ansehen</h3><p className="mt-2 leading-relaxed text-ink-secondary">Bewegen Sie den Zeitregler: Die Werte darunter gehören genau zu dieser Viertelstunde. kW bezeichnet die mittlere Leistung im Intervall; SOC den Ladezustand am Intervallende. Sommer und Winter zeigen, wie unterschiedlich das Zusammenspiel ausfallen kann.</p></div>
         </div>
-        <p className="border-t border-line px-4 py-3 text-xs leading-relaxed text-ink-secondary">Das Diagramm verwendet frei gewählte Modellwerte. Es zeigt das Prinzip, keine Messung Ihres Haushalts und keine PVGIS-Ergebnisse. Ihre individuelle Jahresberechnung starten Sie im Kalkulator.</p>
+        <p className="border-t border-line px-4 py-3 text-xs leading-relaxed text-ink-secondary">Das Diagramm verwendet frei gewählte Modellwerte. Es zeigt das Prinzip, keine Messung Ihres Haushalts und keine PVGIS-Ergebnisse. Ihre individuelle Jahresberechnung starten Sie über „Speicher berechnen“.</p>
       </Panel>
       <Panel title="03 / Von Ihren Angaben zur Speichergröße">
         <ol className="divide-y divide-line">
