@@ -289,7 +289,7 @@ function ShellFrame({
   );
 
   return (
-    <div className="flex min-h-screen min-w-0 flex-col overflow-x-clip bg-canvas text-ink">
+    <div className={`flex min-h-screen min-w-0 flex-col overflow-x-clip bg-canvas text-ink ${pathname === "/" ? "sg-calculate-chrome" : ""}`}>
       {workspace ? (
         <div className="sg-calculate-chrome mx-auto flex min-h-screen w-full min-w-0 max-w-frame flex-col px-4 py-2 sm:px-6 sm:pt-3 sm:pb-4 lg:px-8">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col border border-line-strong bg-canvas">
