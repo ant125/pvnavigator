@@ -3,7 +3,8 @@ import type Stripe from "stripe";
 import { PAID_PLANS, paidPlanById, type PaidPlanId } from "@pv-access/core";
 
 import { applyBillingEvent } from "@/lib/billing/applyBillingEvent";
-import { billingFormAllowed, redirectLoginForTariff, redirectTarife } from "@/lib/billing/billingHttp";
+import { billingFormAllowed, redirectFreeProduct, redirectLoginForTariff, redirectTarife } from "@/lib/billing/billingHttp";
+import { paidBillingPaused } from "@/lib/billing/publicBilling";
 import { planChangeUpdate, readScheduledPlan } from "@/lib/billing/stripePlanChange";
 import {
   BillingNotConfiguredError,
@@ -28,6 +29,7 @@ const OPEN_STATUSES = new Set(["active", "past_due"]);
  * Does not open Checkout and does not prorate the current period.
  */
 export async function POST(request: NextRequest): Promise<Response> {
+  if (paidBillingPaused()) return redirectFreeProduct();
   if (!billingFormAllowed(request)) return redirectTarife();
 
   let plan: PaidPlanId | null = null;
@@ -87,7 +89,13 @@ export async function POST(request: NextRequest): Promise<Response> {
     const scheduleRef = subscription.schedule;
     const scheduleId = !scheduleRef ? null : typeof scheduleRef === "string" ? scheduleRef : scheduleRef.id;
 
-    if (currentPriceId === target.priceId) {
+    const currentEntry = catalog.find((entry) => entry.priceId === currentPriceId) ?? null;
+    const itemAmount = typeof item.price === "object" && item.price && "unit_amount" in item.price ? item.price.unit_amount : null;
+    const staying =
+      currentEntry?.planKey === PAID_PLANS[plan].planKey ||
+      (currentEntry === null && itemAmount === PAID_PLANS[plan].legacyGrossCents);
+
+    if (staying) {
       if (scheduleId) {
         const released = await stripe.subscriptionSchedules.release(scheduleId);
         await recordPlanChange(
@@ -99,6 +107,12 @@ export async function POST(request: NextRequest): Promise<Response> {
           catalog,
           subscription.livemode,
         );
+      }
+      if (currentEntry?.taxable !== true && subscription.automatic_tax?.enabled === true) {
+        await stripe.subscriptions.update(current.stripe_subscription_id, {
+          automatic_tax: { enabled: false },
+          proration_behavior: "none",
+        });
       }
       return redirectTarife("wechsel");
     }
@@ -131,6 +145,12 @@ export async function POST(request: NextRequest): Promise<Response> {
       catalog,
       subscription.livemode,
     );
+    if (subscription.automatic_tax?.enabled !== true) {
+      await stripe.subscriptions.update(current.stripe_subscription_id, {
+        automatic_tax: { enabled: true },
+        proration_behavior: "none",
+      });
+    }
     return redirectTarife("wechsel");
   } catch (error) {
     if (error instanceof BillingNotConfiguredError) {

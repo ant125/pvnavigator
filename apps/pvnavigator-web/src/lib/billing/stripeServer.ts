@@ -4,7 +4,7 @@ import {
   PAID_PLAN_IDS,
   PAID_PLANS,
   SUBSCRIPTION_PRICE_CURRENCY,
-  VAT_EXEMPTION_LABEL,
+  VAT_INCLUDED_LABEL,
   type PaidPlanId,
 } from "@pv-access/core";
 import Stripe from "stripe";
@@ -81,7 +81,24 @@ export function loadPriceCatalog(): AllowedPrice[] {
     seen.add(priceId);
     rows.push({
       priceId,
-      amount: plan.priceCents,
+      amount: plan.grossCents,
+      unitAmount: plan.netCents,
+      taxable: true,
+      vatCents: plan.vatCents,
+      currency: SUBSCRIPTION_PRICE_CURRENCY,
+      planKey: plan.planKey,
+      addressLimit: plan.addressLimit,
+    });
+    const legacyId = process.env[plan.legacyEnvVar]?.trim() ?? "";
+    if (!legacyId.startsWith("price_")) continue;
+    if (seen.has(legacyId)) throw new BillingPriceError();
+    seen.add(legacyId);
+    rows.push({
+      priceId: legacyId,
+      amount: plan.legacyGrossCents,
+      unitAmount: plan.legacyGrossCents,
+      taxable: false,
+      vatCents: 0,
       currency: SUBSCRIPTION_PRICE_CURRENCY,
       planKey: plan.planKey,
       addressLimit: plan.addressLimit,
@@ -92,7 +109,7 @@ export function loadPriceCatalog(): AllowedPrice[] {
 
 export function catalogEntryForPlan(plan: PaidPlanId): AllowedPrice | null {
   const spec = PAID_PLANS[plan];
-  return loadPriceCatalog().find((entry) => entry.planKey === spec.planKey) ?? null;
+  return loadPriceCatalog().find((entry) => entry.planKey === spec.planKey && entry.taxable) ?? null;
 }
 
 /**
@@ -115,7 +132,8 @@ export async function assertPlanPrice(stripe: Stripe, plan: PaidPlanId): Promise
     price.livemode !== livemode ||
     !price.active ||
     price.currency !== entry.currency ||
-    price.unit_amount !== entry.amount ||
+    price.unit_amount !== entry.unitAmount ||
+    price.tax_behavior !== "exclusive" ||
     recurring?.interval !== "month" ||
     (recurring?.interval_count ?? 1) !== 1 ||
     !productName.includes("PVNAVIGATOR")
@@ -126,8 +144,8 @@ export async function assertPlanPrice(stripe: Stripe, plan: PaidPlanId): Promise
   return entry;
 }
 
-export const INVOICE_TAX_FOOTER = VAT_EXEMPTION_LABEL;
+export const INVOICE_TAX_NOTE = VAT_INCLUDED_LABEL;
 
 export function checkoutSubmitMessage(priceLabel: string): string {
-  return `${VAT_EXEMPTION_LABEL} ${priceLabel} pro Monat ist der Endpreis.`;
+  return `${priceLabel} pro Monat für Verbraucher, ${VAT_INCLUDED_LABEL}. Die Umsatzsteuer wird anhand der Rechnungsadresse berechnet.`;
 }

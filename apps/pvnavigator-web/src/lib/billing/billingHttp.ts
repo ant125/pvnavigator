@@ -19,6 +19,11 @@ export function redirectTarife(hint?: string): NextResponse {
   return NextResponse.redirect(url, 303);
 }
 
+/** Landing page while paid billing is separated from the free product. */
+export function redirectFreeProduct(): NextResponse {
+  return NextResponse.redirect(new URL("/", getHubOrigin()), 303);
+}
+
 export function redirectLoginForTariff(plan: PaidPlanId = "abo"): NextResponse {
   const url = new URL("/anmelden", getHubOrigin());
   url.searchParams.set("next", `/tarife?auswahl=${plan}`);

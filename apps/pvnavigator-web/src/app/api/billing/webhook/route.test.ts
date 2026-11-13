@@ -118,6 +118,8 @@ describe("POST /api/billing/webhook", () => {
     const response = await POST(request(payload, signature(payload)));
     expect(response.status).toBe(200);
     expect(apply).toHaveBeenCalledTimes(1);
+    expect(finishReplacements).not.toHaveBeenCalled();
+    expect(finishRenewals).not.toHaveBeenCalled();
     expect(apply.mock.calls[0]?.[1]).toMatchObject({
       eventId: "evt_unit",
       livemode: false,

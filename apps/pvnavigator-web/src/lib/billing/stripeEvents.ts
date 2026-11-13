@@ -28,7 +28,13 @@ export type StripeSubscriptionStatus = (typeof STRIPE_SUBSCRIPTION_STATUSES)[num
 /** Server catalog entry. Price IDs come from the environment, never from the browser. */
 export type AllowedPrice = {
   priceId: string;
+  /** Legacy paid amount, or the German consumer gross for a taxable price. */
   amount: number;
+  /** Stripe `unit_amount`. Net when `taxable`, otherwise equal to `amount`. */
+  unitAmount?: number;
+  /** Stripe Tax decides the VAT. The database accepts any paid total at or above the net price. */
+  taxable?: boolean;
+  vatCents?: number;
   currency: string;
   planKey: string;
   addressLimit: number;
@@ -228,6 +234,7 @@ export function normalizePaidInvoice(
 
   const chosen = matched ?? lines.find((line) => linePeriod(line)) ?? null;
   const period = chosen ? linePeriod(chosen) : null;
+  const priceId = chosen ? (linePriceId(chosen) ?? "") : "";
   return {
     status: "command",
     command: {
@@ -239,7 +246,7 @@ export function normalizePaidInvoice(
       billingReason: reason,
       amountPaid: typeof invoice.amount_paid === "number" ? invoice.amount_paid : 0,
       currency: typeof invoice.currency === "string" ? invoice.currency : "",
-      priceId: chosen ? (linePriceId(chosen) ?? "") : "",
+      priceId,
       allowedPrices: [...catalog],
       periodStart: period?.start ?? "",
       periodEnd: period?.end ?? "",
@@ -377,6 +384,8 @@ export function commandPayload(command: BillingCommand): Record<string, unknown>
         allowed_prices: command.allowedPrices.map((entry) => ({
           price_id: entry.priceId,
           amount: entry.amount,
+          unit_amount: entry.unitAmount ?? null,
+          taxable: entry.taxable === true,
           currency: entry.currency,
           plan_key: entry.planKey,
           address_limit: entry.addressLimit,

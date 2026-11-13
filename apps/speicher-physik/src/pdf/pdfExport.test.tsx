@@ -476,7 +476,7 @@ describe("renderSpeicherPdf", () => {
 
 describe("private-use marking", () => {
   it("is decided by the stored access tier only", () => {
-    expect(buildSpeicherPdfModel(historyRow({ access_tier: "free" })).privateUse).toBe(true);
+    expect(buildSpeicherPdfModel(historyRow({ access_tier: "free" })).privateUse).toBe(false);
     expect(buildSpeicherPdfModel(historyRow({ access_tier: "paid" })).privateUse).toBe(false);
     expect(buildSpeicherPdfModel(historyRow({ access_tier: null })).privateUse).toBe(false);
     expect(buildSpeicherPdfModel(historyRow()).privateUse).toBe(false);
@@ -501,24 +501,17 @@ describe("private-use marking", () => {
     expect(PRIVATE_USE_MARK.fillOpacity).toBeLessThanOrEqual(0.08);
   });
 
-  it("marks every page of a free report as text caption plus vector outlines, and leaves paid and legacy reports clean", async () => {
+  it("leaves free, paid and legacy reports without the private-use mark", async () => {
     const free = await renderSpeicherPdf(buildSpeicherPdfModel(historyRow({ access_tier: "free" })));
     const paid = await renderSpeicherPdf(buildSpeicherPdfModel(historyRow({ access_tier: "paid" })));
     const legacy = await renderSpeicherPdf(buildSpeicherPdfModel(historyRow()));
 
     const freeDoc = await PDFDocument.load(free);
-    const freeText = inflatePdfStreams(free);
-    const paidText = inflatePdfStreams(paid);
-    const legacyText = inflatePdfStreams(legacy);
-
-    // The marking is drawn as outlines through a fill-opacity graphics state;
-    // glyph text itself is subset-encoded and not greppable.
     const opacity = PRIVATE_USE_MARK.fillOpacity.toString();
-    expect(freeText).toMatch(new RegExp(`/ca ${opacity}\\b`));
-    expect(paidText).not.toMatch(new RegExp(`/ca ${opacity}\\b`));
-    expect(legacyText).not.toMatch(new RegExp(`/ca ${opacity}\\b`));
+    const marked = new RegExp(`/ca ${opacity}\\b`);
+    expect(inflatePdfStreams(free)).not.toMatch(marked);
+    expect(inflatePdfStreams(paid)).not.toMatch(marked);
+    expect(inflatePdfStreams(legacy)).not.toMatch(marked);
     expect(freeDoc.getPageCount()).toBe((await PDFDocument.load(paid)).getPageCount());
-    // One outline per page: the free file is larger, paid and legacy are not marked.
-    expect(free.length).toBeGreaterThan(paid.length);
   }, 60000);
 });

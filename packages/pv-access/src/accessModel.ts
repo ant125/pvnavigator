@@ -1,14 +1,10 @@
 /**
- * PVNAVIGATOR_ access rules shared by the hub and the products.
+ * PVNAVIGATOR_ access vocabulary shared by the hub and the products.
  *
- * - Free: one pinned address per account (pinned by the first successful
- *   calculation, any parameters, no monthly reset).
- * - Subscription: one paid period = `address_limit` unique addresses across
- *   all products. Re-calculating a known address inside the period is free of
- *   charge; a new paid period counts an address once again.
- *
- * The decision itself is taken in the database (RPC), never in the browser.
- * This module only carries the vocabulary, limits and German copy.
+ * Every registered account may calculate any number of addresses. The
+ * decision is taken in the database (RPC), never in the browser. Paid plan
+ * prices stay here so the billing code can be turned back on later; they are
+ * not offered in the public product.
  */
 
 /**
@@ -20,10 +16,23 @@ export const SUBSCRIPTION_PLAN_KEY = "pvnavigator_monthly";
 export const PAID_PLAN_IDS = ["abo", "pro", "starter"] as const;
 export type PaidPlanId = (typeof PAID_PLAN_IDS)[number];
 
+/** German standard VAT. Net prices are exclusive; consumers are shown the gross price. */
+export const GERMAN_VAT_RATE_PERCENT = 19;
+
+/** Euro amount with a comma decimal separator, for example `29,75 €`. */
+export function formatEuro(cents: number): string {
+  const sign = cents < 0 ? "-" : "";
+  const abs = Math.abs(cents);
+  const major = Math.trunc(abs / 100).toLocaleString("de-DE");
+  const minor = String(abs % 100).padStart(2, "0");
+  return `${sign}${major},${minor} €`;
+}
+
 /**
- * Final monthly prices in cents. Kleinunternehmer: no VAT is added on top.
- * The browser never chooses the amount or the address limit; the server
- * maps a Stripe Price ID onto one of these rows.
+ * Monthly subscription prices. `netCents` is the Stripe Price `unit_amount`
+ * with `tax_behavior: exclusive`. `grossCents` is what a German customer pays.
+ * `legacyGrossCents` remains valid for subscriptions created before VAT.
+ * The browser never chooses the amount or the address limit.
  */
 export const PAID_PLANS = {
   abo: {
@@ -31,36 +40,52 @@ export const PAID_PLANS = {
     planKey: "pvnavigator_abo",
     label: "ABO",
     addressLimit: 50,
-    priceCents: 2900,
-    priceLabel: "29 €",
+    netCents: 2500,
+    vatCents: 475,
+    grossCents: 2975,
+    legacyGrossCents: 2900,
+    priceLabel: formatEuro(2975),
+    netLabel: formatEuro(2500),
     priceEnvVar: "STRIPE_PRICE_ID",
+    legacyEnvVar: "STRIPE_PRICE_LEGACY_ID",
   },
   pro: {
     id: "pro",
     planKey: "pvnavigator_pro",
     label: "PRO",
     addressLimit: 200,
-    priceCents: 5900,
-    priceLabel: "59 €",
+    netCents: 5000,
+    vatCents: 950,
+    grossCents: 5950,
+    legacyGrossCents: 5900,
+    priceLabel: formatEuro(5950),
+    netLabel: formatEuro(5000),
     priceEnvVar: "STRIPE_PRICE_PRO_ID",
+    legacyEnvVar: "STRIPE_PRICE_PRO_LEGACY_ID",
   },
   starter: {
     id: "starter",
     planKey: "pvnavigator_starter",
     label: "STARTER",
     addressLimit: 10,
-    priceCents: 900,
-    priceLabel: "9 €",
+    netCents: 800,
+    vatCents: 152,
+    grossCents: 952,
+    legacyGrossCents: 900,
+    priceLabel: formatEuro(952),
+    netLabel: formatEuro(800),
     priceEnvVar: "STRIPE_PRICE_STARTER_ID",
+    legacyEnvVar: "STRIPE_PRICE_STARTER_LEGACY_ID",
   },
 } as const;
 
 /** ABO, kept for callers that still refer to the original monthly price. */
 export const SUBSCRIPTION_ADDRESS_LIMIT = PAID_PLANS.abo.addressLimit;
-export const SUBSCRIPTION_PRICE_CENTS = PAID_PLANS.abo.priceCents;
+/** Gross monthly ABO price in cents, including 19 % German VAT. */
+export const SUBSCRIPTION_PRICE_CENTS = PAID_PLANS.abo.grossCents;
 export const SUBSCRIPTION_PRICE_CURRENCY = "eur";
 export const SUBSCRIPTION_PRICE_LABEL = PAID_PLANS.abo.priceLabel;
-export const VAT_EXEMPTION_LABEL = "Umsatzsteuerbefreit gemäß § 19 UStG.";
+export const VAT_INCLUDED_LABEL = "inkl. 19 % MwSt.";
 
 export function paidPlanById(value: unknown): PaidPlanId | null {
   return typeof value === "string" && (PAID_PLAN_IDS as readonly string[]).includes(value)
@@ -99,14 +124,18 @@ export function reportAccessKind(stored: string | null | undefined): ReportAcces
   return "legacy";
 }
 
-/** Only free reports carry the private-use marking. Paid and legacy never do. */
-export function reportRequiresPrivateUseMarking(stored: string | null | undefined): boolean {
-  return reportAccessKind(stored) === "free";
+/**
+ * Reports are free for private and commercial use. Stored tiers are kept for
+ * history and no longer add a private-use restriction.
+ */
+export function reportRequiresPrivateUseMarking(_stored: string | null | undefined): boolean {
+  return false;
 }
 
 export const PRIVATE_USE_LABEL = "Nur zur privaten Nutzung";
 
 export const ACCESS_REASONS = [
+  "open_access",
   "subscription_known_address",
   "subscription_new_address",
   "free_claim_pending",

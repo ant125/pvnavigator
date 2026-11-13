@@ -166,6 +166,80 @@ begin
     raise exception 'PRO payment changed: %', v_result;
   end if;
 
+  v_result := public.apply_stripe_billing_event(
+    'evt_starter_gross', 'invoice.paid', false,
+    jsonb_build_object(
+      'action', 'invoice_paid', 'user_id', v_starter, 'customer_id', 'cus_starter_gross',
+      'subscription_id', 'sub_starter', 'invoice_id', 'in_starter_gross',
+      'billing_reason', 'subscription_cycle', 'amount_paid', 952, 'currency', 'eur',
+      'price_id', 'price_starter_net', 'allowed_prices',
+      jsonb_build_array(jsonb_build_object(
+        'price_id', 'price_starter_net', 'amount', 952, 'unit_amount', 800, 'taxable', true,
+        'currency', 'eur', 'plan_key', 'pvnavigator_starter', 'address_limit', 10
+      )),
+      'period_start', v_end, 'period_end', v_end + interval '30 days'
+    )
+  );
+  if v_result->>'outcome' <> 'processed'
+     or v_result->>'plan_key' <> 'pvnavigator_starter'
+     or v_result->>'address_limit' <> '10' then
+    raise exception 'German gross STARTER payment was not granted: %', v_result;
+  end if;
+
+  v_result := public.apply_stripe_billing_event(
+    'evt_starter_net_only', 'invoice.paid', false,
+    jsonb_build_object(
+      'action', 'invoice_paid', 'user_id', v_pro, 'customer_id', 'cus_starter_net',
+      'subscription_id', 'sub_starter_net', 'invoice_id', 'in_starter_net',
+      'billing_reason', 'subscription_create', 'amount_paid', 800, 'currency', 'eur',
+      'price_id', 'price_starter_net', 'allowed_prices',
+      jsonb_build_array(jsonb_build_object(
+        'price_id', 'price_starter_net', 'amount', 800, 'currency', 'eur',
+        'plan_key', 'pvnavigator_starter', 'address_limit', 10
+      )),
+      'period_start', v_start, 'period_end', v_end
+    )
+  );
+  if v_result->>'outcome' <> 'ignored' or v_result->>'reason' <> 'not_our_price' then
+    raise exception 'unmarked net price was granted: %', v_result;
+  end if;
+
+  v_result := public.apply_stripe_billing_event(
+    'evt_starter_reverse', 'invoice.paid', false,
+    jsonb_build_object(
+      'action', 'invoice_paid', 'user_id', v_starter, 'customer_id', 'cus_starter_gross',
+      'subscription_id', 'sub_starter', 'invoice_id', 'in_starter_reverse',
+      'billing_reason', 'subscription_cycle', 'amount_paid', 800, 'currency', 'eur',
+      'price_id', 'price_starter_net', 'allowed_prices',
+      jsonb_build_array(jsonb_build_object(
+        'price_id', 'price_starter_net', 'amount', 952, 'unit_amount', 800, 'taxable', true,
+        'currency', 'eur', 'plan_key', 'pvnavigator_starter', 'address_limit', 10
+      )),
+      'period_start', v_end + interval '30 days', 'period_end', v_end + interval '60 days'
+    )
+  );
+  if v_result->>'outcome' <> 'processed' or v_result->>'plan_key' <> 'pvnavigator_starter' then
+    raise exception 'reverse-charge STARTER payment was not granted: %', v_result;
+  end if;
+
+  v_result := public.apply_stripe_billing_event(
+    'evt_starter_below_net', 'invoice.paid', false,
+    jsonb_build_object(
+      'action', 'invoice_paid', 'user_id', v_pro, 'customer_id', 'cus_starter_below',
+      'subscription_id', 'sub_starter_pro', 'invoice_id', 'in_starter_below',
+      'billing_reason', 'subscription_cycle', 'amount_paid', 799, 'currency', 'eur',
+      'price_id', 'price_starter_net', 'allowed_prices',
+      jsonb_build_array(jsonb_build_object(
+        'price_id', 'price_starter_net', 'amount', 952, 'unit_amount', 800, 'taxable', true,
+        'currency', 'eur', 'plan_key', 'pvnavigator_starter', 'address_limit', 10
+      )),
+      'period_start', v_end, 'period_end', v_end + interval '30 days'
+    )
+  );
+  if v_result->>'outcome' <> 'ignored' or v_result->>'reason' <> 'not_our_price' then
+    raise exception 'payment below the net price was granted: %', v_result;
+  end if;
+
   delete from public.stripe_events where stripe_event_id like 'evt_starter_%';
   delete from auth.identities where user_id in (v_starter, v_abo, v_pro);
   delete from auth.users where id in (v_starter, v_abo, v_pro);

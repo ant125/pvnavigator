@@ -56,11 +56,7 @@ export function CalculationsHistory({ rows }: { rows: CalculationListRow[] }) {
               {access ? (
                 <span
                   className={accessBadge}
-                  title={
-                    access === "Privat"
-                      ? "Kostenloser Bericht – nur zur privaten Nutzung"
-                      : "Bericht aus dem PVNAVIGATOR_ Abo"
-                  }
+                  title="Gespeicherter Bericht"
                 >
                   {access}
                 </span>

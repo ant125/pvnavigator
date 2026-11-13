@@ -34,32 +34,32 @@ describe("POST /api/billing/checkout", () => {
     user.current = null;
   });
 
-  it("sends a direct call without a signed-in user to the login page", async () => {
+  it("does not start checkout for a signed-out visitor", async () => {
     const response = await POST(checkoutRequest("starter", "http://127.0.0.1:3000"));
     const location = new URL(response.headers.get("location") ?? "");
     expect(response.status).toBe(303);
-    expect(location.pathname).toBe("/anmelden");
-    expect(location.searchParams.get("next")).toBe("/tarife?auswahl=starter");
-    expect(location.searchParams.get("hinweis")).toBeNull();
-  });
-
-  it("rejects a direct call from another origin before any checkout", async () => {
-    user.current = { id: ACCOUNT_A, email: "a@example.com" };
-    const response = await POST(checkoutRequest("abo", "https://example.test"));
-    const location = new URL(response.headers.get("location") ?? "");
-    expect(location.pathname).toBe("/tarife");
+    expect(location.pathname).toBe("/");
     expect(location.search).toBe("");
   });
 
-  it("treats two signed-in accounts the same for every paid tariff", async () => {
+  it("does not start checkout from another origin", async () => {
+    user.current = { id: ACCOUNT_A, email: "a@example.com" };
+    const response = await POST(checkoutRequest("abo", "https://example.test"));
+    const location = new URL(response.headers.get("location") ?? "");
+    expect(location.pathname).toBe("/");
+    expect(location.search).toBe("");
+  });
+
+  it("does not start checkout for any signed-in account or tariff", async () => {
     for (const account of [ACCOUNT_A, ACCOUNT_B]) {
       for (const plan of ["starter", "abo", "pro"]) {
         user.current = { id: account, email: `${account}@example.com` };
         const response = await POST(checkoutRequest(plan, "http://127.0.0.1:3000"));
         const location = new URL(response.headers.get("location") ?? "");
-        expect(location.pathname).toBe("/tarife");
-        expect(location.searchParams.get("hinweis")).toBe("nicht-konfiguriert");
-        expect(location.href).not.toContain("live-gesperrt");
+        expect(response.status).toBe(303);
+        expect(location.pathname).toBe("/");
+        expect(location.search).toBe("");
+        expect(location.href).not.toContain("checkout.stripe.com");
       }
     }
   });

@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getHubOrigin } from "@pv-auth/session";
 import { PAID_PLANS } from "@pv-access/core";
 
-import { billingFormAllowed, redirectLoginForTariff, redirectTarife } from "@/lib/billing/billingHttp";
+import { billingFormAllowed, redirectFreeProduct, redirectLoginForTariff, redirectTarife } from "@/lib/billing/billingHttp";
+import { paidBillingPaused } from "@/lib/billing/publicBilling";
 import {
   existingStripeCustomerInvoiceParams,
   newStripeCustomerParams,
@@ -68,6 +69,7 @@ function isCheckout(reserve: Reserve): reserve is Extract<Reserve, { action: "cr
  * which is what the existing ABO button posts.
  */
 export async function POST(request: NextRequest): Promise<Response> {
+  if (paidBillingPaused()) return redirectFreeProduct();
   if (!billingFormAllowed(request)) return redirectTarife();
 
   let requested: UpgradeTargetId | null;
@@ -162,7 +164,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   let customerId = reserve.customer_id;
   try {
     const price = await assertPlanPrice(stripe, target);
-    if (price.planKey !== PAID_PLANS[target].planKey || price.amount !== PAID_PLANS[target].priceCents) {
+    if (price.planKey !== PAID_PLANS[target].planKey || price.amount !== PAID_PLANS[target].grossCents) {
       throw new BillingPriceError();
     }
     if (!customerId) {

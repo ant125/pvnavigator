@@ -8,6 +8,7 @@ const { sessionsCreate, tables, filters } = vi.hoisted(() => ({
 
 vi.mock("@/lib/billing/billingHttp", () => ({
   billingFormAllowed: vi.fn(() => true),
+  redirectFreeProduct: vi.fn(() => Response.redirect("http://127.0.0.1:3000/", 303)),
   redirectLoginForTariff: vi.fn(() => Response.redirect("http://127.0.0.1:3000/anmelden", 303)),
   redirectTarife: vi.fn((hint?: string) =>
     Response.redirect(`http://127.0.0.1:3000/tarife${hint ? `?hinweis=${hint}` : ""}`, 303),
@@ -79,18 +80,12 @@ describe("POST /api/billing/portal", () => {
     subscriptions([]);
   });
 
-  it("does not open the portal for a Stripe customer without a manageable subscription", async () => {
+  it("does not open the portal for a Stripe customer", async () => {
     const response = await POST(new Request("http://127.0.0.1:3000/api/billing/portal", { method: "POST" }) as never);
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toContain("hinweis=portal-fehlt");
+    expect(new URL(response.headers.get("location") ?? "").pathname).toBe("/");
     expect(sessionsCreate).not.toHaveBeenCalled();
-    expect(filters).toEqual(
-      expect.arrayContaining([
-        { table: "stripe_customers", column: "user_id", value: "user-1" },
-        { table: "subscription_periods", column: "user_id", value: "user-1" },
-        { table: "stripe_subscriptions", column: "user_id", value: "user-1" },
-      ]),
-    );
+    expect(filters).toEqual([]);
   });
 
   it("does not open the portal after the paid period has ended", async () => {
@@ -114,11 +109,11 @@ describe("POST /api/billing/portal", () => {
       },
     ]);
     const response = await POST(new Request("http://127.0.0.1:3000/api/billing/portal", { method: "POST" }) as never);
-    expect(response.headers.get("location")).toContain("hinweis=portal-fehlt");
+    expect(new URL(response.headers.get("location") ?? "").pathname).toBe("/");
     expect(sessionsCreate).not.toHaveBeenCalled();
   });
 
-  it("opens the portal for an active paid period and for a payment that granted none", async () => {
+  it("does not open the portal for an active paid period or a failed payment", async () => {
     periods([
       {
         id: "period-live",
@@ -130,12 +125,9 @@ describe("POST /api/billing/portal", () => {
     ]);
     let response = await POST(new Request("http://127.0.0.1:3000/api/billing/portal", { method: "POST" }) as never);
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("https://billing.stripe.com/p/session/test_123");
-    expect(sessionsCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ customer: "cus_123", locale: "de" }),
-    );
+    expect(new URL(response.headers.get("location") ?? "").pathname).toBe("/");
+    expect(sessionsCreate).not.toHaveBeenCalled();
 
-    sessionsCreate.mockClear();
     periods([]);
     subscriptions([
       {
@@ -148,7 +140,7 @@ describe("POST /api/billing/portal", () => {
       },
     ]);
     response = await POST(new Request("http://127.0.0.1:3000/api/billing/portal", { method: "POST" }) as never);
-    expect(response.headers.get("location")).toBe("https://billing.stripe.com/p/session/test_123");
-    expect(sessionsCreate).toHaveBeenCalledOnce();
+    expect(new URL(response.headers.get("location") ?? "").pathname).toBe("/");
+    expect(sessionsCreate).not.toHaveBeenCalled();
   });
 });

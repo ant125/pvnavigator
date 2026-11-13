@@ -10,7 +10,6 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import type { ReportAccessKind } from "@pv-access/core";
-import { getHubOrigin } from "@pv-auth/session";
 
 import { SpeicherInput } from "../types/speicher";
 import {
@@ -35,7 +34,6 @@ import { runHouseholdCalculationStream } from "./runHouseholdCalculationStream";
 import {
   CalculationNoticeError,
   type CalculationNotice,
-  type PinnedAddressFields,
 } from "./calculationNotice";
 import {
   clearCalculateDraft,
@@ -78,8 +76,6 @@ import {
 import type { FrozenSpeicherPresentation } from "@/lib/persistCompletedCalculation";
 
 type Step = "input" | "calculating" | "results";
-
-const TARIFFS_URL = `${getHubOrigin()}/tarife`;
 
 const POSTAL_CODE_MISMATCH_GENERAL_MESSAGE =
   "Die eingegebene PLZ stimmt nicht mit der gefundenen Adresse überein. Bitte prüfen Sie die PLZ.";
@@ -650,27 +646,6 @@ export default function SpeicherCalculatePage({
             }
             errorBoxRef={errorBoxRef}
             fieldInputRefs={fieldInputRefs}
-            tariffsUrl={TARIFFS_URL}
-            onBeforeLeave={persistDraft}
-            onUsePinnedAddress={(address: PinnedAddressFields) => {
-              setFormData((prev) => ({
-                ...prev,
-                street: address.street,
-                houseNumber: address.houseNumber,
-                postalCode: address.postalCode,
-                city: address.city,
-              }));
-              setNotice(null);
-              setErrors([]);
-              setFieldErrors((prev) => {
-                const next = { ...prev };
-                delete next.street;
-                delete next.houseNumber;
-                delete next.postalCode;
-                delete next.city;
-                return next;
-              });
-            }}
           />
         }
         main={main}

@@ -60,7 +60,7 @@ export function immediateUpgradeDialogCopy(args: {
     title: `Zu ${next.label} wechseln`,
     currentLine: planLine(current),
     nextLine: planLine(next),
-    dueLine: `Jetzt zu zahlen: ${next.priceLabel}`,
+    dueLine: `Jetzt zu zahlen: ${next.priceLabel} inkl. 19 % MwSt.`,
     paragraphs: UPGRADE_TERMS,
     confirmLabel: `Jetzt für ${next.priceLabel} zu ${next.label} wechseln`,
   };

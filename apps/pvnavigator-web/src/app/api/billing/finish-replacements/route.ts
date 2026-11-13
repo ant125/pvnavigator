@@ -1,4 +1,5 @@
 import { runBillingCron } from "@/lib/billing/cronCheckoutRecovery";
+import { paidBillingPaused } from "@/lib/billing/publicBilling";
 import { cronRequestAuthorized } from "@/lib/billing/cronAuth";
 import { finishFailedRenewals } from "@/lib/billing/finishFailedRenewals";
 import { finishUpgradeReplacements } from "@/lib/billing/finishUpgradeReplacements";
@@ -20,6 +21,7 @@ export async function GET(request: Request): Promise<Response> {
   if (!cronRequestAuthorized(request.headers.get("authorization"), process.env.CRON_SECRET)) {
     return new Response("Unauthorized", { status: 401 });
   }
+  if (paidBillingPaused()) return Response.json({ paused: true });
 
   const stripe = getStripe();
   const admin = createServiceRoleClient();

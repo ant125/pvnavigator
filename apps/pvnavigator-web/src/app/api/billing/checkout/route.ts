@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { PAID_PLANS, paidPlanById } from "@pv-access/core";
 import { getHubOrigin } from "@pv-auth/session";
-import { billingFormAllowed, redirectLoginForTariff, redirectTarife } from "@/lib/billing/billingHttp";
+import { billingFormAllowed, redirectFreeProduct, redirectLoginForTariff, redirectTarife } from "@/lib/billing/billingHttp";
+import { paidBillingPaused } from "@/lib/billing/publicBilling";
 import { isStripeRedirectUrl } from "@/lib/billing/stripeEvents";
 import {
   existingStripeCustomerInvoiceParams,
@@ -35,6 +36,7 @@ type Reserve =
  * from the server. An already active subscriber is not sold a second subscription.
  */
 export async function POST(request: NextRequest): Promise<Response> {
+  if (paidBillingPaused()) return redirectFreeProduct();
   if (!billingFormAllowed(request)) return redirectTarife();
 
   let plan = null as ReturnType<typeof paidPlanById>;

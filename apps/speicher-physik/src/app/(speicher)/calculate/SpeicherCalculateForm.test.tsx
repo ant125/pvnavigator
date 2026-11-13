@@ -37,7 +37,6 @@ function renderForm({
   azimuthInputStrings,
   tiltInputStrings,
   formOverrides = {},
-  tariffsUrl,
 }: {
   surfaces?: PvSurfaceInput[];
   locked?: boolean;
@@ -47,7 +46,6 @@ function renderForm({
   azimuthInputStrings?: string[];
   tiltInputStrings?: string[];
   formOverrides?: Partial<SpeicherInput>;
-  tariffsUrl?: string;
 } = {}) {
   const formData: Partial<SpeicherInput> = {
     pvSurfaces: surfaces,
@@ -84,8 +82,6 @@ function renderForm({
       onSubmit={() => {}}
       errorBoxRef={createRef<HTMLDivElement>() as RefObject<HTMLDivElement | null>}
       fieldInputRefs={emptyRefs()}
-      tariffsUrl={tariffsUrl}
-      onUsePinnedAddress={() => {}}
     />
   );
 }
@@ -530,12 +526,12 @@ describe("SpeicherCalculateForm server notices", () => {
     expect(html).not.toContain("Bitte korrigieren Sie folgende Fehler");
   });
 
-  it("replaces a free-address mismatch with the compact tariff card", () => {
-    const html = renderForm({
+  it("does not offer a tariff when an old quota code is still present", () => {
+    const mismatch = renderForm({
       notice: {
         kind: "access",
         code: "free_address_mismatch",
-        message: "Der kostenlose Zugang gilt für eine Adresse pro Konto.",
+        message: "Diese Adresse kann berechnet werden.",
         freeAddress: {
           label: "Hauptstraße 1, 80331 München",
           street: "Hauptstraße",
@@ -544,40 +540,25 @@ describe("SpeicherCalculateForm server notices", () => {
           city: "München",
         },
       },
-      tariffsUrl: "http://localhost:3000/tarife",
     });
-    expect(html).toContain('data-testid="free-address-limit-card"');
-    expect(html).toContain("Kostenlose Adresse bereits verwendet");
-    expect(html).toContain("eine Adresse pro Konto");
-    expect(html).toContain("Hauptstraße 1, 80331 München");
-    expect(html).toContain("unterschiedlichen Einstellungen erneut berechnen");
-    expect(html).toContain("STARTER, ABO oder PRO");
-    expect(html).toContain("Tarife ansehen");
-    expect(html).toContain('href="http://localhost:3000/tarife"');
-    expect(html).toContain("Kostenlose Adresse verwenden");
-    expect(html).not.toContain("Hinweis zum Zugang");
-    expect(html).not.toContain("address-quota-card");
-  });
+    expect(mismatch).toContain('data-testid="calculation-notice-access"');
+    expect(mismatch).toContain("Diese Adresse kann berechnet werden.");
+    expect(mismatch).not.toContain("/tarife");
+    expect(mismatch).not.toContain("Tarife ansehen");
+    expect(mismatch).not.toContain("free-address-limit-card");
 
-  it("shows an exhausted paid quota with the tariff name and a hub link", () => {
-    const html = renderForm({
+    const quota = renderForm({
       notice: {
         kind: "access",
         code: "subscription_limit_reached",
-        message: "Ihre kostenlose Adresse bleibt weiterhin berechenbar.",
+        message: "Diese Adresse kann berechnet werden.",
         addressLimit: 10,
       },
-      tariffsUrl: "http://localhost:3000/tarife",
     });
-    expect(html).toContain('data-testid="address-quota-card"');
-    expect(html).toContain("Ihr Adresskontingent ist ausgeschöpft");
-    expect(html).toContain("alle 10 Adressen Ihres STARTER-Tarifs");
-    expect(html).toContain("zu ABO oder PRO wechseln");
-    expect(html).toContain("Tarife und Upgrades ansehen");
-    expect(html).toContain('href="http://localhost:3000/tarife"');
-    expect(html).not.toContain("kostenlose Adresse");
-    expect(html).not.toContain("free-address-limit-card");
-    expect(html).not.toContain("Hinweis zum Zugang");
+    expect(quota).toContain('data-testid="calculation-notice-access"');
+    expect(quota).not.toContain("address-quota-card");
+    expect(quota).not.toContain("STARTER");
+    expect(quota).not.toContain("/tarife");
   });
 
   it("lets input errors take precedence over a stale notice", () => {

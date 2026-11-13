@@ -8,17 +8,6 @@ import { InvoiceHistoryCard } from "@/components/account/InvoiceHistoryCard";
 import { CalculationsEmptyState, CalculationsHistory } from "@/components/account/CalculationsHistory";
 import { AuthEnvMissing } from "@/components/auth/AuthEnvMissing";
 import { INVOICE_HISTORY_HINTS } from "@/lib/billing/invoicePortal";
-import { recoverAccountCheckouts } from "@/lib/billing/paymentRecoveryServer";
-import {
-  FREE_ADDRESS_SELECT,
-  STRIPE_SUBSCRIPTION_SELECT,
-  SUBSCRIPTION_PERIOD_SELECT,
-  pickStripeSubscription,
-  summarizeAccess,
-  type FreeAddressRow,
-  type StripeSubscriptionRow,
-  type SubscriptionPeriodRow,
-} from "@/lib/accessSummary";
 import { CALCULATION_LIST_SELECT, type CalculationListRow } from "@/lib/calculationsList";
 import { getServerUser } from "@/lib/auth";
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
@@ -69,47 +58,16 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
   const calculateUrl = getSpeicherGrenzeCalculateUrl();
   const supabase = await createServerSupabaseClient();
   const admin = createServiceRoleClient();
-  const calculationsPromise = supabase
-    .from("calculations")
-    .select(CALCULATION_LIST_SELECT)
-    .order("updated_at", { ascending: false });
-  if (admin) {
-    try {
-      await recoverAccountCheckouts(user.id);
-    } catch (error) {
-      console.error("account checkout recovery failed", error instanceof Error ? error.name : "error");
-    }
-  }
-  const [calculationsResult, periodsResult, usageResult, freeAddressResult, billingResult, customerResult, invoiceResult] =
-    await Promise.all([
-      calculationsPromise,
-      supabase
-        .from("subscription_periods")
-        .select(SUBSCRIPTION_PERIOD_SELECT)
-        .order("period_end", { ascending: false }),
-      supabase.from("subscription_period_addresses").select("period_id"),
-      supabase.from("free_addresses").select(FREE_ADDRESS_SELECT).maybeSingle(),
-      supabase.from("stripe_subscriptions").select(STRIPE_SUBSCRIPTION_SELECT),
-      supabase.from("stripe_customers").select("user_id").maybeSingle(),
-      admin
-        ? admin.from("stripe_invoices").select("stripe_invoice_id").eq("user_id", user.id).limit(1)
-        : Promise.resolve({ data: [] as { stripe_invoice_id: string }[], error: null }),
-    ]);
+  const [calculationsResult, customerResult, invoiceResult] = await Promise.all([
+    supabase.from("calculations").select(CALCULATION_LIST_SELECT).order("updated_at", { ascending: false }),
+    supabase.from("stripe_customers").select("user_id").maybeSingle(),
+    admin
+      ? admin.from("stripe_invoices").select("stripe_invoice_id").eq("user_id", user.id).limit(1)
+      : Promise.resolve({ data: [] as { stripe_invoice_id: string }[], error: null }),
+  ]);
 
   if (calculationsResult.error) {
     console.error("Failed to load calculations", calculationsResult.error);
-  }
-  if (periodsResult.error) {
-    console.error("Failed to load subscription periods", periodsResult.error);
-  }
-  if (usageResult.error) {
-    console.error("Failed to load subscription usage", usageResult.error);
-  }
-  if (freeAddressResult.error) {
-    console.error("Failed to load free address", freeAddressResult.error);
-  }
-  if (billingResult.error) {
-    console.error("Failed to load subscription status", billingResult.error);
   }
   if (customerResult.error) {
     console.error("Failed to load billing customer", customerResult.error);
@@ -124,20 +82,6 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
     (invoiceResult.data?.length ?? 0) > 0;
 
   const calculations = (calculationsResult.data ?? []) as CalculationListRow[];
-  const usedAddressesByPeriod: Record<string, number> = {};
-  for (const row of (usageResult.data ?? []) as { period_id: string }[]) {
-    usedAddressesByPeriod[row.period_id] = (usedAddressesByPeriod[row.period_id] ?? 0) + 1;
-  }
-  const accessSummary = summarizeAccess({
-    now: new Date(),
-    periods: (periodsResult.data ?? []) as SubscriptionPeriodRow[],
-    usedAddressesByPeriod,
-    freeAddress: (freeAddressResult.data as FreeAddressRow | null) ?? null,
-    billing: billingResult.error
-      ? null
-      : pickStripeSubscription((billingResult.data ?? []) as StripeSubscriptionRow[]),
-    canManagePortal: !customerResult.error && Boolean(customerResult.data),
-  });
 
   return (
     <div className="px-4 py-8 md:py-10">
@@ -171,7 +115,7 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
             Zugang
           </h2>
           <div className="mt-3">
-            <AccessCard summary={accessSummary} />
+            <AccessCard />
           </div>
         </section>
 

@@ -100,7 +100,8 @@ export async function inspectStripeAccess(stripe: Stripe, livemode: boolean): Pr
         price.livemode === livemode &&
         price.active &&
         price.currency === entry.currency &&
-        price.unit_amount === entry.amount &&
+        price.unit_amount === (entry.unitAmount ?? entry.amount) &&
+        (entry.taxable !== true || price.tax_behavior === "exclusive") &&
         recurring?.interval === "month" &&
         (recurring.interval_count ?? 1) === 1 &&
         productNameOk;

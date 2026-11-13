@@ -14,7 +14,7 @@ export function InvoiceHistoryCard() {
         Rechnungen
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#334155]">
-        Ihre bisherigen Rechnungen bleiben nach Kündigung oder Ablauf des Abonnements verfügbar.
+        Ihre bisherigen Rechnungen bleiben verfügbar.
       </p>
       <div className="mt-4 w-full max-w-[22.5rem]">
         <BillingPostButton

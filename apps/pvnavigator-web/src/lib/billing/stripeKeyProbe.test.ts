@@ -51,7 +51,8 @@ describe("stripe read probe", () => {
           livemode: true,
           active: true,
           currency: "eur",
-          unit_amount: id.includes("starter") ? 900 : id.includes("abo") ? 2900 : 5900,
+          unit_amount: id.includes("starter") ? 800 : id.includes("abo") ? 2500 : 5000,
+          tax_behavior: "exclusive",
           recurring: { interval: "month", interval_count: 1 },
           product: { name: "PVNAVIGATOR_ Tarif" },
         }),
@@ -80,9 +81,9 @@ describe("stripe read probe", () => {
     const encoded = JSON.stringify(report);
     expect(report.account).toEqual({ ok: true, livemode: true, error: null });
     expect(report.prices.map((price) => [price.planKey, price.amount, price.matchesCatalog])).toEqual([
-      ["pvnavigator_abo", 2900, true],
-      ["pvnavigator_pro", 5900, true],
-      ["pvnavigator_starter", 900, true],
+      ["pvnavigator_abo", 2500, true],
+      ["pvnavigator_pro", 5000, true],
+      ["pvnavigator_starter", 800, true],
     ]);
     expect(report.reads.customers).toBe("403:invalid_request_error:more_permissions_required");
     expect(report.reads.checkoutSessions).toBe("ok");

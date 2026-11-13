@@ -74,7 +74,7 @@ describe("immediate PRO upgrade offer", () => {
     expect(abo.nextLine).toBe(
       `${PAID_PLANS.abo.label} — ${PAID_PLANS.abo.priceLabel}/Monat, ${PAID_PLANS.abo.addressLimit} Adressen`,
     );
-    expect(abo.dueLine).toBe(`Jetzt zu zahlen: ${PAID_PLANS.abo.priceLabel}`);
+    expect(abo.dueLine).toBe(`Jetzt zu zahlen: ${PAID_PLANS.abo.priceLabel} inkl. 19 % MwSt.`);
     expect(abo.confirmLabel).toBe(`Jetzt für ${PAID_PLANS.abo.priceLabel} zu ABO wechseln`);
     expect(abo.paragraphs).toEqual(terms);
 
@@ -83,7 +83,7 @@ describe("immediate PRO upgrade offer", () => {
     expect(pro.nextLine).toBe(
       `${PAID_PLANS.pro.label} — ${PAID_PLANS.pro.priceLabel}/Monat, ${PAID_PLANS.pro.addressLimit} Adressen`,
     );
-    expect(pro.dueLine).toBe(`Jetzt zu zahlen: ${PAID_PLANS.pro.priceLabel}`);
+    expect(pro.dueLine).toBe(`Jetzt zu zahlen: ${PAID_PLANS.pro.priceLabel} inkl. 19 % MwSt.`);
     expect(pro.confirmLabel).toBe(`Jetzt für ${PAID_PLANS.pro.priceLabel} zu PRO wechseln`);
     expect(pro.paragraphs).toEqual(terms);
 

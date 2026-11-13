@@ -14,6 +14,7 @@ import {
 } from "@/lib/billing/stripeEvents";
 import { readScheduledPlan } from "@/lib/billing/stripePlanChange";
 import { reportLiveBillingConfig } from "@/lib/billing/liveBillingReport";
+import { paidBillingPaused } from "@/lib/billing/publicBilling";
 import {
   loadPriceCatalog,
   getStripe,
@@ -109,6 +110,9 @@ export async function POST(request: Request): Promise<Response> {
       command,
     });
     if (!applied.ok) return new Response("Retry", { status: 500 });
+    // Recording the event does not charge anyone. Cancelling a replaced
+    // subscription or voiding a renewal stays off while the product is free.
+    if (paidBillingPaused()) return Response.json({ received: true });
     // A duplicate event still retries ending the ABO subscription and closing
     // a failed monthly renewal. A period is granted only inside
     // applyBillingEvent, from invoice.paid.

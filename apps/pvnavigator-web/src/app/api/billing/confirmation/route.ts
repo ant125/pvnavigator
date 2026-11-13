@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getServerUser } from "@/lib/auth";
+import { paidBillingPaused } from "@/lib/billing/publicBilling";
 import { recoverPaidCheckoutSession } from "@/lib/billing/paymentRecoveryServer";
 import type { RecoveryResult } from "@/lib/billing/paymentRecovery";
 import { getStripe } from "@/lib/billing/stripeServer";
@@ -78,6 +79,7 @@ function active(row: PeriodRow): Response {
  * shown afterwards is the plan key stored on that period.
  */
 export async function GET(request: Request): Promise<Response> {
+  if (paidBillingPaused()) return Response.json({ state: "closed" });
   const user = await getServerUser();
   if (!user) return Response.json({ state: "unauthenticated" }, { status: 401 });
 

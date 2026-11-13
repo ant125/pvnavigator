@@ -1,4 +1,5 @@
 import {
+  PAID_PLANS,
   SUBSCRIPTION_ADDRESS_LIMIT,
   SUBSCRIPTION_PLAN_KEY,
   formatDateDe,
@@ -358,10 +359,8 @@ export function billingPortalButtonLabel(grantedPeriod: boolean, billingStatus: 
   return "Abo verwalten";
 }
 
-/** Short badge for a saved calculation in the history list. */
-export function calculationAccessBadge(accessTier: string | null | undefined): string | null {
-  if (accessTier === "free") return "Privat";
-  if (accessTier === "paid") return "Abo";
+/** Saved calculations are no longer labeled by a former free or paid tier. */
+export function calculationAccessBadge(_accessTier: string | null | undefined): string | null {
   return null;
 }
 
@@ -423,9 +422,9 @@ export const TARIFF_HINTS: Record<string, string> = {
   "bereits-aktiv": "Für dieses Konto läuft bereits ein Abo. Ein zweites Abo wird nicht gestartet.",
   "portal-fehlt": "Die Verwaltung des Abos ist für dieses Konto noch nicht verfügbar.",
   preis:
-    "Der hinterlegte Preis passt nicht zum gewählten Tarif. STARTER ist 9 €, ABO ist 29 €, PRO ist 59 € im Monat. Es wurde nichts freigeschaltet.",
+    `Der hinterlegte Preis passt nicht zum gewählten Tarif. STARTER ist ${PAID_PLANS.starter.priceLabel}, ABO ist ${PAID_PLANS.abo.priceLabel}, PRO ist ${PAID_PLANS.pro.priceLabel} im Monat. Es wurde nichts freigeschaltet.`,
   "pro-preis":
-    "Der Preis für PRO fehlt oder passt nicht zu 59 € im Monat. Es wurde nichts freigeschaltet.",
+    `Der Preis für PRO fehlt oder passt nicht zu ${PAID_PLANS.pro.priceLabel} im Monat. Es wurde nichts freigeschaltet.`,
   "kein-abo": "Ein Tarifwechsel ist nur für ein laufendes Abo möglich.",
   gekuendigt: "Das Abo endet mit dem bezahlten Zeitraum. Ein Wechsel ist dafür nicht vorgemerkt.",
   wechsel:

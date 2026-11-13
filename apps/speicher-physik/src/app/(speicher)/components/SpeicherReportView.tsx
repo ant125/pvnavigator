@@ -42,7 +42,7 @@ import {
   wwOverviewSentence,
 } from "@/lib/robustnessReportCopy";
 import { PdfDownloadButton } from "./PdfDownloadButton";
-import { PRIVATE_USE_LABEL, type ReportAccessKind } from "@pv-access/core";
+import { type ReportAccessKind } from "@pv-access/core";
 import type { FrozenSpeicherPresentation } from "@/lib/persistCompletedCalculation";
 import { SpeicherBenefitComparison } from "./SpeicherBenefitComparison";
 
@@ -227,8 +227,8 @@ export type SpeicherReportViewProps = {
   batteryModelVersion?: string | null;
   pdfCalculationId?: string | null;
   /**
-   * Access tier decided on the server when the report was saved. Free
-   * reports get a short note that the PDF carries the private-use marking.
+   * Stored when the report was saved. It no longer changes the report:
+   * every PDF is free for private and commercial use.
    */
   accessKind?: ReportAccessKind | null;
   /**
@@ -264,7 +264,6 @@ export function SpeicherReportView({
   savedAt = null,
   batteryModelVersion = null,
   pdfCalculationId = null,
-  accessKind = null,
   bodyClassName,
   bodyHidden = false,
   mastheadRef,
@@ -1357,11 +1356,9 @@ export function SpeicherReportView({
             </div>
             <div className="mt-8 flex min-w-0 flex-col gap-2">
               <PdfDownloadButton calculationId={pdfCalculationId} />
-              {accessKind === "free" ? (
-                <p className="min-w-0 text-xs leading-relaxed text-ink-muted">
-                  Kostenloser Bericht · {PRIVATE_USE_LABEL}
-                </p>
-              ) : null}
+              <p className="min-w-0 text-xs leading-relaxed text-ink-muted">
+                Kostenloser Bericht. Auch für die gewerbliche Nutzung.
+              </p>
             </div>
           </div>
           {mode === "historical" ? (

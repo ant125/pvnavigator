@@ -20,7 +20,7 @@ Testkonten:
 ### 01_free_tariffs.png
 
 1440 × 900. Tarifseite direkt nach der Registrierung, vor dem ABO-Kauf.
-Kostenlos ist der aktuelle Tarif. ABO kostet 29 € / Monat, PRO 59 € / Monat.
+Kostenlos ist der aktuelle Tarif. ABO kostet 29,75 € / Monat inkl. 19 % MwSt., PRO 59,50 € / Monat inkl. 19 % MwSt.
 Beide Abschluss-Buttons sind sichtbar.
 
 Ergebnis: Seite zeigt alle drei Tarife und Preise. Die E-Mail in der Kopfzeile wird mit Auslassung abgeschnitten.

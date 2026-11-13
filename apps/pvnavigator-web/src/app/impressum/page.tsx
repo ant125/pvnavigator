@@ -47,7 +47,11 @@ export default function ImpressumPage() {
 
           <section>
             <h2 className="text-sm font-semibold text-[#0F172A] mb-2">Umsatzsteuer</h2>
-            <p className="leading-relaxed">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</p>
+            <p className="leading-relaxed">
+              Auf die Kleinunternehmerregelung wurde verzichtet. Die Umsatzsteuer wird anhand der Rechnungsadresse
+              berechnet und auf der Rechnung ausgewiesen. Bei grenzüberschreitenden Leistungen an Unternehmen mit
+              gültiger USt-IdNr. kann die Steuerschuldnerschaft beim Leistungsempfänger liegen.
+            </p>
           </section>
 
           <section>

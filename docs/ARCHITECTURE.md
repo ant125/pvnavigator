@@ -185,72 +185,62 @@ Schema SQL: `supabase/migrations/`.
 
 ## Access rules (PVNAVIGATOR_)
 
-One account, two kinds of access. The decision is taken **in the database**
-(`SECURITY DEFINER` functions, per-user advisory lock), never in the browser.
-The vocabulary (address key, tiers, German copy) lives in `packages/pv-access`
-(`@pv-access/core`).
+The published product is free. Every registered account may calculate any
+number of different addresses, download the PDF and use the result
+commercially. RENDITEGUIDE and PVShadow stay unpublished. The decision is
+taken **in the database** (`private.decide_calculation_access`, called by the
+`SECURITY DEFINER` RPCs under a per-user advisory lock), never in the browser.
+The vocabulary lives in `packages/pv-access` (`@pv-access/core`).
 
 | Relation | Role |
 |---|---|
-| `public.free_addresses` | The single pinned free address per account |
-| `public.subscription_periods` | One row per paid period (`period_start <= now() < period_end`), `address_limit` = 50 |
-| `public.subscription_period_addresses` | Unique addresses that consumed a slot of a paid period |
-| `public.calculations.access_tier` | `free` \| `paid` decided when the row was recorded; `null` = legacy |
+| `public.free_addresses` | Historical pins. New calculations do not insert or change one |
+| `public.subscription_periods` | Historical paid periods. They neither grant nor limit access |
+| `public.subscription_period_addresses` | Addresses formerly counted against a paid period. New calculations do not consume a slot |
+| `public.calculations` | Usage record. New rows store `access_tier = free` and reason `open_access`; older rows keep `free`, `paid` or `null` |
 
-**Free access.** After registration a user may pin one address for
-SpeicherGrenze. It is pinned by the **first successful** calculation (a failed
-run — geocoding, physics, validation — never pins). For that address any
-parameters may be recalculated. Another address requires a subscription. No
-monthly reset.
+**Open access.** A signed-in user with a non-empty address key is allowed.
+There is no monthly address quota and no paywall. A missing session and a
+blank address key are still refused. `public.calculation_runs` still limits
+automated bursts: one concurrent run and at most 12 starts per 10 minutes.
 
 **Address identity.** `buildAddressKey()` normalises the *entered* fields
 (case, whitespace, umlauts, `Str.` → `strasse`), so spelling variants do not
 create a new object while different house numbers (`12`, `12a`, `12b`) stay
-distinct. The geocoder's formatted address is used for display only, so a
-later change in its formatting cannot silently turn a pinned address into a
-new one.
-
-**Subscription.** One paid period = 50 unique addresses across SpeicherGrenze
-and the future RENDITEGUIDE. Re-calculating a known address inside the period
-does not consume a slot; a new paid period counts an address once again.
-Viewing and downloading saved reports never touches the quota. When the quota
-is exhausted or the period is over, the free rules apply; saved reports stay
-readable and their tier does not change.
+distinct. The geocoder's formatted address is used for display only. The key
+is stored with the calculation so new addresses, repeat runs and PDF exports
+remain countable.
 
 **Flow.** `POST /api/calculate`: session → validation →
-`check_calculation_access(address_key)` (read only, 403 with a German
-explanation if refused) → physics → `record_completed_calculation(...)`
-(atomic: re-check under lock, insert with tier, pin / count). Only the record
-step pins or counts, so parallel requests and failed runs cannot over-consume.
-If the check or the record step is technically unavailable (503 / stream
-`code: "service_unavailable"`), the result is withheld — never shown without
-accounting. The form shows such refusals (and access refusals, 403 /
-`code: <reason>`) in a separate notice box, not as input errors.
-Clients have **no** `INSERT` on `calculations` after the lockdown migration
-(step 1 already excludes `access_tier` / `address_key` from the column grant)
-and no write access to the access tables; `access_tier` is not in the
-`UPDATE` column grant. The lockdown SQL lives in `supabase/post-deploy/`, not
-in `supabase/migrations/`, so `supabase db push` cannot apply it before the
-deployment it depends on. Rollout order: `supabase/README.md › Production
-rollout order`.
+`check_calculation_access(address_key)` → physics →
+`record_completed_calculation(...)`. The record step inserts the calculation.
+It pins a free address only for the historical reason `free_claim_pending`
+and counts a subscription address only for `subscription_new_address`.
+`open_access` does neither. Viewing or downloading a saved report does not
+write a calculation. If the check or the record step is technically
+unavailable (503 / stream `code: "service_unavailable"`), the result is
+withheld. Clients have no `INSERT` on `calculations`; rows are created only
+by `record_completed_calculation()`.
 
-**Reports.** The tier is stored with the calculation and read from there for
-the PDF: free reports carry the marking "Nur zur privaten Nutzung" (one pale
-diagonal outline beneath the content plus a footer caption on every page);
-paid reports never do, also after the subscription ended; a free report does
-not become paid because of a later subscription.
+**Reports.** PDFs do not carry a private-use restriction. The stored tier of
+an existing row is left as it is.
 
-**Legacy rows** (`access_tier is null`, created before these rules) are shown
-and exported unchanged, never re-marked, and never pin an address. Existing
-users pin their free address with their next successful calculation.
+**Billing.** Stripe products, prices, customers, invoices and the billing
+code stay in the repository for a possible later monetization.
+`PUBLIC_PAID_BILLING_ENABLED` is `false`. Checkout, upgrades, plan changes
+and the subscription portal return to the hub before Stripe is called, including
+direct API requests. The webhook still stores signed events and, while
+billing is paused, does not cancel a subscription or void an invoice. Invoice
+history stays available. Setting the constant back to `true` is a deliberate
+product decision; it does not by itself restore an address quota.
 
-Billing is connected in test mode only. The hub creates a Stripe Checkout
-Session and a Customer Portal Session on the server; access is granted only
-when the signed webhook records a paid invoice as one `subscription_periods`
-row (`source = 'stripe'`, `external_ref` = invoice id, bounds from the invoice
-line). The browser cannot insert a period. Live keys are refused. Rollout of
-the additive Stripe migration stays in `migrations/` and does not move the
-access lockdown out of `post-deploy/`.
+The free decision is `supabase/migrations/20261113203647_free_open_access.sql`.
+It replaces only `private.decide_calculation_access`. Two earlier VAT
+migrations are recorded in production under different versions than the files
+in this repository (`20261106181748` / `20261106202138` remotely,
+`20261106181518` / `20261106202013` locally). Do not run a general
+`supabase db push` until that history is reconciled; it would treat the local
+VAT files as pending and replace `apply_stripe_billing_event` again.
 
 ---
 

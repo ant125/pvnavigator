@@ -1,0 +1,7 @@
+research
+node_modules
+.next
+.vercel
+.env*
+coverage
+.pydeps

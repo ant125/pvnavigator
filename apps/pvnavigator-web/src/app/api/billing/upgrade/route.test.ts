@@ -35,22 +35,24 @@ describe("POST /api/billing/upgrade", () => {
     user.current = null;
   });
 
-  it("sends a signed-out upgrade to the login page", async () => {
+  it("does not start an upgrade for a signed-out visitor", async () => {
     const response = await POST(upgradeRequest("pro"));
     const location = new URL(response.headers.get("location") ?? "");
-    expect(location.pathname).toBe("/anmelden");
-    expect(location.searchParams.get("next")).toBe("/tarife?auswahl=pro");
+    expect(response.status).toBe(303);
+    expect(location.pathname).toBe("/");
+    expect(location.search).toBe("");
   });
 
-  it("offers ABO and PRO upgrades to every signed-in account", async () => {
+  it("does not start an upgrade for any signed-in account", async () => {
     for (const account of [ACCOUNT_A, ACCOUNT_B]) {
       for (const plan of ["abo", "pro"]) {
         user.current = { id: account, email: `${account}@example.com` };
         const response = await POST(upgradeRequest(plan));
         const location = new URL(response.headers.get("location") ?? "");
-        expect(location.pathname).toBe("/tarife");
-        expect(location.searchParams.get("hinweis")).toBe("nicht-konfiguriert");
-        expect(location.href).not.toContain("live-gesperrt");
+        expect(response.status).toBe(303);
+        expect(location.pathname).toBe("/");
+        expect(location.search).toBe("");
+        expect(location.href).not.toContain("checkout.stripe.com");
       }
     }
   });

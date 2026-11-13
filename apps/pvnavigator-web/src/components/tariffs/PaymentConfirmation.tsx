@@ -103,7 +103,8 @@ export function PaymentConfirmationView({
       {copy.tariff ? (
         <ul className="mt-5 space-y-1.5 border-t border-[#E2E8F0] pt-5 text-sm leading-relaxed text-[#0F172A]">
           <li className="font-semibold">
-            {copy.tariff.label} — {copy.tariff.priceLabel} / Monat
+            {copy.tariff.label} — {copy.tariff.priceLabel} / Monat für Verbraucher, inkl. 19 % MwSt. Die Rechnung weist
+            die berechnete Umsatzsteuer aus.
           </li>
           <li>{copy.tariff.addressLimit} Adressen pro Abrechnungszeitraum</li>
           <li>SPEICHERGRENZE inklusive</li>

@@ -73,35 +73,29 @@ describe("GET /api/billing/finish-replacements", () => {
     expect(calls).toEqual([]);
   });
 
-  it("does not scan customers when Stripe or the service role is missing", async () => {
+  it("does not scan customers when paid billing is paused", async () => {
     stripe.mockReturnValue(null);
-    expect((await GET(request("Bearer top-secret"))).status).toBe(503);
-    admin.mockReturnValue(null);
-    stripe.mockReturnValue({});
-    expect((await GET(request("Bearer top-secret"))).status).toBe(503);
+    const missingStripe = await GET(request("Bearer top-secret"));
+    expect(missingStripe.status).toBe(200);
+    await expect(missingStripe.json()).resolves.toEqual({ paused: true });
     expect(calls).toEqual([]);
   });
 
-  it("recovers checkouts, then finishes replacements and failed renewals", async () => {
+  it("does not recover checkouts or change subscriptions", async () => {
     const response = await GET(request("Bearer top-secret"));
     expect(response.status).toBe(200);
-    expect(calls).toEqual(["recover", "replacements", "renewals"]);
-    await expect(response.json()).resolves.toMatchObject({
-      ok: true,
-      unresolved: 0,
-      replacementsFinished: 1,
-      recovery: { customers: 1, sessions: 1, recovered: 1 },
-    });
+    expect(calls).toEqual([]);
+    await expect(response.json()).resolves.toEqual({ paused: true });
   });
 
-  it("keeps the other finishers when one customer still needs a retry", async () => {
+  it("still does no billing work when a recovery would have needed a retry", async () => {
     recoverBatch.mockImplementation(async () => {
       calls.push("recover");
       return { ...emptyCronSweep(), customers: 3, retry: 1, recovered: 2 };
     });
     const response = await GET(request("Bearer top-secret"));
     expect(response.status).toBe(200);
-    expect(calls).toEqual(["recover", "replacements", "renewals"]);
+    expect(calls).toEqual([]);
   });
 
   afterAll(() => {

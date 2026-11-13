@@ -31,18 +31,18 @@ describe("return from Stripe", () => {
     expect(starter.detail).toBe(
       "Ihre Zahlung war erfolgreich. Ihr Zugang zu PVNAVIGATOR_ ist freigeschaltet.",
     );
-    expect(starter.tariff).toEqual({ label: "STARTER", priceLabel: "9 €", addressLimit: 10 });
+    expect(starter.tariff).toEqual({ label: "STARTER", priceLabel: "9,52 €", addressLimit: 10 });
 
     const abo = paymentStatusCopy("active", "pvnavigator_abo");
     expect(abo.title).toBe("ABO ist aktiv");
-    expect(abo.tariff).toEqual({ label: "ABO", priceLabel: "29 €", addressLimit: 50 });
+    expect(abo.tariff).toEqual({ label: "ABO", priceLabel: "29,75 €", addressLimit: 50 });
 
     const legacy = paymentStatusCopy("active", "pvnavigator_monthly");
     expect(legacy.tariff).toEqual(abo.tariff);
 
     const pro = paymentStatusCopy("active", "pvnavigator_pro");
     expect(pro.title).toBe("PRO ist aktiv");
-    expect(pro.tariff).toEqual({ label: "PRO", priceLabel: "59 €", addressLimit: 200 });
+    expect(pro.tariff).toEqual({ label: "PRO", priceLabel: "59,50 €", addressLimit: 200 });
   });
 
   it("does not invent a catalog tariff for an unknown paid key", () => {
@@ -89,7 +89,7 @@ describe("return from Stripe", () => {
     const html = confirmed("pvnavigator_starter");
     expect(html).toContain("STARTER ist aktiv");
     expect(html).toContain("Ihre Zahlung war erfolgreich. Ihr Zugang zu PVNAVIGATOR_ ist freigeschaltet.");
-    expect(html).toContain("STARTER — 9 € / Monat");
+    expect(html).toContain("STARTER — 9,52 € / Monat für Verbraucher, inkl. 19 % MwSt.");
     expect(html).toContain("10 Adressen pro Abrechnungszeitraum");
     expect(html).toContain("SPEICHERGRENZE inklusive");
     expect(html).toContain("RENDITEGUIDE nach Veröffentlichung inklusive");
@@ -100,9 +100,9 @@ describe("return from Stripe", () => {
     expect(html).not.toContain("Zu den Tarifen");
     expect(html).not.toContain("nicht selbst vergeben");
 
-    expect(confirmed("pvnavigator_abo")).toContain("ABO — 29 € / Monat");
+    expect(confirmed("pvnavigator_abo")).toContain("ABO — 29,75 € / Monat für Verbraucher, inkl. 19 % MwSt.");
     expect(confirmed("pvnavigator_abo")).toContain("50 Adressen pro Abrechnungszeitraum");
-    expect(confirmed("pvnavigator_pro")).toContain("PRO — 59 € / Monat");
+    expect(confirmed("pvnavigator_pro")).toContain("PRO — 59,50 € / Monat für Verbraucher, inkl. 19 % MwSt.");
     expect(confirmed("pvnavigator_pro")).toContain("200 Adressen pro Abrechnungszeitraum");
   });
 

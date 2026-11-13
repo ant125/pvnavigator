@@ -7,7 +7,7 @@ import {
   SUBSCRIPTION_ADDRESS_LIMIT,
   SUBSCRIPTION_PRICE_CENTS,
   SUBSCRIPTION_PRICE_CURRENCY,
-  VAT_EXEMPTION_LABEL,
+  VAT_INCLUDED_LABEL,
   accessDeniedMessage,
   paidPlanIdFromKey,
   paidPlanLabel,
@@ -18,8 +18,8 @@ import {
 } from "./accessModel";
 
 describe("report access kind", () => {
-  it("marks only free reports; paid and legacy stay unmarked", () => {
-    expect(reportRequiresPrivateUseMarking("free")).toBe(true);
+  it("does not restrict any stored report to private use", () => {
+    expect(reportRequiresPrivateUseMarking("free")).toBe(false);
     expect(reportRequiresPrivateUseMarking("paid")).toBe(false);
     expect(reportRequiresPrivateUseMarking(null)).toBe(false);
     expect(reportRequiresPrivateUseMarking(undefined)).toBe(false);
@@ -27,14 +27,23 @@ describe("report access kind", () => {
     expect(reportAccessKind(null)).toBe("legacy");
     expect(PRIVATE_USE_LABEL).toBe("Nur zur privaten Nutzung");
     expect(SUBSCRIPTION_ADDRESS_LIMIT).toBe(50);
-    expect(SUBSCRIPTION_PRICE_CENTS).toBe(2900);
+    expect(SUBSCRIPTION_PRICE_CENTS).toBe(2975);
     expect(SUBSCRIPTION_PRICE_CURRENCY).toBe("eur");
     expect(PAID_PLANS.abo.addressLimit).toBe(50);
-    expect(PAID_PLANS.abo.priceCents).toBe(2900);
+    expect(PAID_PLANS.abo.netCents).toBe(2500);
+    expect(PAID_PLANS.abo.vatCents).toBe(475);
+    expect(PAID_PLANS.abo.grossCents).toBe(2975);
+    expect(PAID_PLANS.abo.priceLabel).toBe("29,75 €");
     expect(PAID_PLANS.pro.addressLimit).toBe(200);
-    expect(PAID_PLANS.pro.priceCents).toBe(5900);
+    expect(PAID_PLANS.pro.netCents).toBe(5000);
+    expect(PAID_PLANS.pro.grossCents).toBe(5950);
+    expect(PAID_PLANS.pro.priceLabel).toBe("59,50 €");
     expect(PAID_PLANS.starter.addressLimit).toBe(10);
-    expect(PAID_PLANS.starter.priceCents).toBe(900);
+    expect(PAID_PLANS.starter.netCents).toBe(800);
+    expect(PAID_PLANS.starter.vatCents).toBe(152);
+    expect(PAID_PLANS.starter.grossCents).toBe(952);
+    expect(PAID_PLANS.starter.priceLabel).toBe("9,52 €");
+    expect(PAID_PLANS.starter.netLabel).toBe("8,00 €");
     expect(PAID_PLANS.starter.planKey).toBe("pvnavigator_starter");
     expect(PAID_PLANS.starter.priceEnvVar).toBe("STRIPE_PRICE_STARTER_ID");
     expect(paidPlanLabel("pvnavigator_monthly")).toBe("ABO");
@@ -51,8 +60,8 @@ describe("report access kind", () => {
     expect(paidPlanById("abo")).toBe("abo");
     expect(paidPlanById("pro")).toBe("pro");
     expect(paidPlanById("pvnavigator_starter")).toBeNull();
-    expect(VAT_EXEMPTION_LABEL).toBe("Umsatzsteuerbefreit gemäß § 19 UStG.");
-    expect(VAT_EXEMPTION_LABEL).not.toMatch(/0\s*%/);
+    expect(VAT_INCLUDED_LABEL).toBe("inkl. 19 % MwSt.");
+    expect(VAT_INCLUDED_LABEL).not.toMatch(/§\s*19/);
   });
 });
 

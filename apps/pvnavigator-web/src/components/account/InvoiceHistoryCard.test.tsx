@@ -9,7 +9,8 @@ describe("InvoiceHistoryCard", () => {
     expect(html).toContain("Rechnungen");
     expect(html).toContain("Rechnungen ansehen");
     expect(html).toContain('action="/api/billing/invoices"');
-    expect(html).toContain("nach Kündigung oder Ablauf");
+    expect(html).toContain("Ihre bisherigen Rechnungen bleiben verfügbar.");
+    expect(html).not.toContain("Kündigung");
     expect(html).not.toContain("/api/billing/portal");
     expect(html).not.toContain("/api/billing/checkout");
     expect(html).not.toContain("Abo verwalten");

@@ -35,6 +35,10 @@ export default function HomePage() {
             Technisch fundierte Analysen für Speicher, Wirtschaftlichkeit und PV-Planung.
             Transparent erklärt. Unabhängig entwickelt.
           </p>
+          <p className="mx-auto mt-4 max-w-2xl text-base font-medium leading-relaxed text-[#0F172A]">
+            SPEICHERGRENZE ist kostenlos. Mit einem Konto können Sie beliebig viele Adressen
+            berechnen und den PDF-Bericht herunterladen, auch für die gewerbliche Nutzung.
+          </p>
 
           <p className="mx-auto mt-5 max-w-lg text-xs leading-relaxed text-[#64748B] sm:text-[13px]">
             Entwickelt unabhängig · Keine Herstellerbindung · Transparent erklärt
@@ -190,7 +194,7 @@ export default function HomePage() {
               {
                 step: "01",
                 title: "Eingaben machen",
-                text: "Verbrauch, PV-Daten oder später Ihre Adresse.",
+                text: "Adresse, Verbrauch und PV-Daten.",
               },
               {
                 step: "02",

@@ -32,10 +32,7 @@ import {
   NOTICE_HEADINGS,
   UNAVAILABLE_NOTICE_DETAIL,
   type CalculationNotice,
-  type PinnedAddressFields,
 } from "./calculationNotice";
-import { AddressQuotaCard } from "./AddressQuotaCard";
-import { FreeAddressLimitCard } from "./FreeAddressLimitCard";
 import {
   BTN_PRIMARY,
   BTN_SECONDARY,
@@ -164,11 +161,6 @@ export type SpeicherCalculateFormProps = {
   unrecordedGapIds?: readonly string[];
   errorBoxRef: RefObject<HTMLDivElement | null>;
   fieldInputRefs: CalculateFormFieldRefs;
-  /** Hub tariffs page. Used only by the free-address limit card. */
-  tariffsUrl?: string;
-  onUsePinnedAddress?: (address: PinnedAddressFields) => void;
-  /** Persist the draft before leaving for the hub. */
-  onBeforeLeave?: () => void;
 };
 
 export function SpeicherCalculateForm({
@@ -194,9 +186,6 @@ export function SpeicherCalculateForm({
   unrecordedGapIds = [],
   errorBoxRef,
   fieldInputRefs,
-  tariffsUrl,
-  onUsePinnedAddress,
-  onBeforeLeave,
 }: SpeicherCalculateFormProps) {
   const surfaces = surfacesOrDefault(formData);
   const [exactAnglesOpen, setExactAnglesOpen] = useState<boolean[]>(() =>
@@ -278,24 +267,7 @@ export function SpeicherCalculateForm({
       className="sg-calculate-form space-y-6"
       noValidate
     >
-      {notice && errors.length === 0 && notice.code === "free_address_mismatch" && notice.freeAddress ? (
-        <div ref={errorBoxRef}>
-          <FreeAddressLimitCard
-            address={notice.freeAddress}
-            tariffsUrl={tariffsUrl ?? "/tarife"}
-            onUsePinnedAddress={onUsePinnedAddress}
-            onBeforeLeave={onBeforeLeave}
-          />
-        </div>
-      ) : notice && errors.length === 0 && notice.code === "subscription_limit_reached" ? (
-        <div ref={errorBoxRef}>
-          <AddressQuotaCard
-            addressLimit={notice.addressLimit ?? null}
-            tariffsUrl={tariffsUrl ?? "/tarife"}
-            onBeforeLeave={onBeforeLeave}
-          />
-        </div>
-      ) : notice && errors.length === 0 ? (
+      {notice && errors.length === 0 ? (
         <div
           ref={errorBoxRef}
           role="status"

@@ -8,7 +8,9 @@ Convention:
 - Do not create production tables only in the Dashboard
 - Do not use Prisma
 
-Apply migrations with the Supabase CLI (`supabase db push`) or the equivalent project migration API. The Data API must keep using the anon / publishable key in clients; never the service role.
+Apply a reviewed migration with the Supabase CLI or the project migration API. The Data API must keep using the anon / publishable key in clients; never the service role.
+
+Do not run a general `supabase db push` against production while the VAT history differs. Production already applied `accept_german_vat_gross_amounts` as `20261106181748` and `accept_eu_vat_on_paid_invoices` as `20261106202138`. The files in this repository use `20261106181518` and `20261106202013`. A push would run those files again. `20261113203647_free_open_access.sql` is the open-access decision and is applied on its own. See `docs/ARCHITECTURE.md › Access rules`.
 
 Layout:
 
@@ -115,8 +117,8 @@ NEXT_PUBLIC_SPEICHER_GRENZE_URL=http://localhost:3001
 
 | E-Mail             | Passwort           | Zugang                                               |
 | ------------------ | ------------------ | ---------------------------------------------------- |
-| `test@example.com` | `TestNutzer-2026!` | kostenlos, noch keine Adresse festgelegt             |
-| `abo@example.com`  | `TestNutzer-2026!` | aktiver Testzeitraum, `address_limit = 2` (absichtlich klein) |
+| `test@example.com` | `TestNutzer-2026!` | kostenlos, beliebig viele Adressen                    |
+| `abo@example.com`  | `TestNutzer-2026!` | ebenfalls kostenlos; der Testzeitraum schränkt den Zugang nicht ein |
 
 E-mail confirmation is off locally, so additional users can also be created through
 `/konto-erstellen`. Mail goes to Mailpit, never to a real inbox.
@@ -146,4 +148,5 @@ select id, created_at, access_tier, address_key, summary_address
 ```
 
 Deleting a test period does not touch saved calculations; their `access_tier`
-is frozen at creation.
+is frozen at creation. A period inserted here no longer changes who may
+calculate an address. Open access ignores it.

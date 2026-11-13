@@ -1,4 +1,3 @@
-import { VAT_EXEMPTION_LABEL } from "@pv-access/core";
 import type Stripe from "stripe";
 
 /**
@@ -10,7 +9,10 @@ import type Stripe from "stripe";
  * to the person's name. `customer_update` writes that name and the billing
  * address onto the existing Customer so the next subscription invoice can use
  * them. Already finalized invoices keep the snapshot taken when they were
- * issued. Tax is not calculated: the Price is the final amount.
+ * issued. Automatic tax uses the billing address, an optional VAT ID and the
+ * Stripe Tax registrations. The same setting stays on the subscription, so
+ * monthly renewals are calculated again. Stripe does not finalize a renewal
+ * when the address is not sufficient to calculate tax.
  */
 export function checkoutInvoiceCollection(): Pick<
   Stripe.Checkout.SessionCreateParams,
@@ -23,7 +25,7 @@ export function checkoutInvoiceCollection(): Pick<
 > {
   return {
     locale: "de",
-    automatic_tax: { enabled: false },
+    automatic_tax: { enabled: true },
     billing_address_collection: "required",
     name_collection: {
       individual: { enabled: true, optional: false },
@@ -44,8 +46,8 @@ export function checkoutInvoiceCollection(): Pick<
  * A Customer created for the first Checkout.
  * `preferred_locales` selects German for later invoice emails and hosted
  * invoice pages. It does not rewrite an invoice that Stripe has already issued.
- * The §19 notice lives only in this footer, which replaces an account-level
- * default footer instead of being appended to it.
+ * An empty footer removes a previously stored Kleinunternehmer notice.
+ * Stripe prints the calculated VAT on the invoice itself.
  */
 export function newStripeCustomerParams(args: {
   userId: string;
@@ -55,19 +57,19 @@ export function newStripeCustomerParams(args: {
     email: args.email ?? undefined,
     metadata: { user_id: args.userId },
     preferred_locales: ["de"],
-    invoice_settings: { footer: VAT_EXEMPTION_LABEL },
+    invoice_settings: { footer: "" },
   };
 }
 
 /**
- * Locale and the single §19 footer for a Customer that already exists.
+ * Locale for a Customer that already exists, and a cleared invoice footer.
  * Name, address and tax IDs are left untouched here. Checkout prefills them
  * and saves any correction through `customer_update`.
  */
 export function existingStripeCustomerInvoiceParams(): Stripe.CustomerUpdateParams {
   return {
     preferred_locales: ["de"],
-    invoice_settings: { footer: VAT_EXEMPTION_LABEL },
+    invoice_settings: { footer: "" },
   };
 }
 

@@ -29,13 +29,14 @@ function setEnv(values: Partial<Record<(typeof NAMES)[number], string | undefine
   }
 }
 
-function price(livemode: boolean, amount = 900) {
+function price(livemode: boolean, amount = 800) {
   return {
     id: "price_starter",
     livemode,
     active: true,
     currency: "eur",
     unit_amount: amount,
+    tax_behavior: "exclusive",
     recurring: { interval: "month", interval_count: 1 },
     product: { name: "PVNAVIGATOR_ STARTER" },
   };
@@ -95,7 +96,7 @@ describe("stripe mode", () => {
       },
     };
     await expect(assertPlanPrice(stripe as never, "starter")).resolves.toMatchObject({
-      amount: 900,
+      amount: 952,
       planKey: "pvnavigator_starter",
     });
 

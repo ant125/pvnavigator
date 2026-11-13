@@ -118,7 +118,7 @@ describe("upgradeCheckoutSession", () => {
     expect(session.metadata?.replaces_subscription_id).toBe("sub_starter");
     expect(session.subscription_data?.description).toBe("PVNAVIGATOR_ ABO");
     expect(session).toMatchObject(checkoutInvoiceCollection());
-    expect(session.automatic_tax).toEqual({ enabled: false });
+    expect(session.automatic_tax).toEqual({ enabled: true });
     expect(session.idempotencyKey).toContain("-abo");
     expect(session.idempotencyKey).not.toBe(
       upgradeCheckoutSession({

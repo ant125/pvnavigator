@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getHubOrigin } from "@pv-auth/session";
 
-import { billingFormAllowed, redirectLoginForTariff, redirectTarife } from "@/lib/billing/billingHttp";
+import { billingFormAllowed, redirectFreeProduct, redirectLoginForTariff, redirectTarife } from "@/lib/billing/billingHttp";
+import { paidBillingPaused } from "@/lib/billing/publicBilling";
 import { isStripeRedirectUrl } from "@/lib/billing/stripeEvents";
 import { getStripe } from "@/lib/billing/stripeServer";
 import {
@@ -25,6 +26,7 @@ export const dynamic = "force-dynamic";
  * not open the portal; the same rule as the account card must allow it.
  */
 export async function POST(request: NextRequest): Promise<Response> {
+  if (paidBillingPaused()) return redirectFreeProduct();
   if (!billingFormAllowed(request)) return redirectTarife();
   const user = await getServerUser();
   if (!user) return redirectLoginForTariff();

@@ -587,9 +587,9 @@ describe("checkout error hints", () => {
     expect(TARIFF_HINTS["upgrade-ausstehend"]).not.toMatch(/ist aktiv/);
     expect(TARIFF_HINTS["zahlung-fehler"]).not.toMatch(/PRO ist aktiv|freigeschaltet/);
     expect(TARIFF_HINTS).not.toHaveProperty("live-gesperrt");
-    expect(TARIFF_HINTS.preis).toContain("STARTER ist 9 €");
-    expect(TARIFF_HINTS.preis).toContain("ABO ist 29 €");
-    expect(TARIFF_HINTS.preis).toContain("PRO ist 59 €");
+    expect(TARIFF_HINTS.preis).toContain("STARTER ist 9,52 €");
+    expect(TARIFF_HINTS.preis).toContain("ABO ist 29,75 €");
+    expect(TARIFF_HINTS.preis).toContain("PRO ist 59,50 €");
   });
 });
 
@@ -725,8 +725,8 @@ describe("open subscription copy", () => {
 
 describe("calculationAccessBadge", () => {
   it("labels free and paid rows and keeps legacy rows unlabelled", () => {
-    expect(calculationAccessBadge("free")).toBe("Privat");
-    expect(calculationAccessBadge("paid")).toBe("Abo");
+    expect(calculationAccessBadge("free")).toBeNull();
+    expect(calculationAccessBadge("paid")).toBeNull();
     expect(calculationAccessBadge(null)).toBeNull();
     expect(calculationAccessBadge(undefined)).toBeNull();
   });

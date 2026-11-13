@@ -151,6 +151,59 @@ describe("normalizePaidInvoice", () => {
     });
   });
 
+  it("grants a paid taxable invoice for a German rate, another EU rate, and reverse charge", () => {
+    const taxable: AllowedPrice = {
+      priceId: "price_abo_net",
+      amount: 2975,
+      unitAmount: 2500,
+      taxable: true,
+      vatCents: 475,
+      currency: "eur",
+      planKey: "pvnavigator_abo",
+      addressLimit: 50,
+    };
+    const invoice = paidInvoice({
+      amount_paid: 2975,
+      customer_address: { country: "DE", postal_code: "86154" },
+      total_taxes: [{ amount: 475, tax_behavior: "exclusive", taxable_amount: 2500 }],
+      lines: {
+        data: [
+          {
+            period: PERIOD,
+            pricing: { price_details: { price: "price_abo_net" } },
+            parent: { subscription_item_details: { proration: false } },
+          },
+        ],
+      },
+    });
+    const granted = normalizePaidInvoice(invoice, [taxable], USER);
+    if (granted.status !== "command" || granted.command.action !== "invoice_paid") {
+      throw new Error("expected invoice");
+    }
+    expect(granted.command.priceId).toBe("price_abo_net");
+
+    const abroad = normalizePaidInvoice(
+      {
+        ...invoice,
+        amount_paid: 3000,
+        customer_address: { country: "FR", postal_code: "75001" },
+        total_taxes: [{ amount: 500, tax_behavior: "exclusive", taxable_amount: 2500 }],
+      },
+      [taxable],
+      USER,
+    );
+    const netOnly = normalizePaidInvoice(
+      { ...invoice, amount_paid: 2500, total_taxes: [{ amount: 0 }] },
+      [taxable],
+      USER,
+    );
+    if (abroad.status !== "command" || abroad.command.action !== "invoice_paid") throw new Error("expected invoice");
+    if (netOnly.status !== "command" || netOnly.command.action !== "invoice_paid") throw new Error("expected invoice");
+    expect(abroad.command.priceId).toBe("price_abo_net");
+    expect(netOnly.command.priceId).toBe("price_abo_net");
+    expect(netOnly.command.amountPaid).toBe(2500);
+  });
+
   it("selects the PRO price without treating 59 € on the ABO price as that plan", () => {
     const pro = normalizePaidInvoice(
       paidInvoice({

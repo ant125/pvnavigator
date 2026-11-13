@@ -27,9 +27,9 @@ describe("TariffGrid", () => {
     expect(html).toContain("/anmelden?next=%2Ftarife%3Fauswahl%3Dabo");
     expect(html).toContain("/anmelden?next=%2Ftarife%3Fauswahl%3Dpro");
     expect(html).toContain("0 €");
-    expect(html).toContain("9 €");
-    expect(html).toContain("29 €");
-    expect(html).toContain("59 €");
+    expect(html).toContain("9,52 €");
+    expect(html).toContain("29,75 €");
+    expect(html).toContain("59,50 €");
     expect(html).toContain("1 feste Adresse");
     expect(html).toContain("10 Adressen pro Monat");
     expect(html).toContain("50 Adressen pro Monat");
@@ -47,7 +47,12 @@ describe("TariffGrid", () => {
     expect(html).toContain("Ihr Abrechnungsmonat");
     expect(html).toContain("Gespeicherte Berichte");
     expect(html).not.toContain("fehlgeschlagene Zahlung");
-    expect(html).toContain("Umsatzsteuerbefreit gemäß § 19 UStG.");
+    expect(html).toContain("Der angezeigte Preis gilt für Verbraucher in Deutschland einschließlich 19 % Umsatzsteuer.");
+    expect(html).toContain("Geschäftskunden können eine USt-IdNr. angeben.");
+    expect(html).toContain("inkl. 19 % MwSt. (8,00 € netto)");
+    expect(html).toContain("inkl. 19 % MwSt. (25,00 € netto)");
+    expect(html).toContain("inkl. 19 % MwSt. (50,00 € netto)");
+    expect(html).not.toContain("§ 19");
     expect(html).not.toMatch(/0\s*%\s*MwSt/i);
     expect(html).not.toContain("API");
     expect(html).not.toMatch(/Priorität|Teamzugang|Support/i);
@@ -88,10 +93,10 @@ describe("TariffGrid", () => {
     expect(html).toContain("Zu PRO wechseln");
     expect(html).toContain('data-testid="immediate-pro-upgrade"');
     expect(html).toContain('action="/api/billing/upgrade"');
-    expect(html).toContain("ABO — 29 €/Monat, 50 Adressen");
-    expect(html).toContain("PRO — 59 €/Monat, 200 Adressen");
-    expect(html).toContain("Jetzt zu zahlen: 59 €");
-    expect(html).toContain("Jetzt für 59 € zu PRO wechseln");
+    expect(html).toContain("ABO — 29,75 €/Monat, 50 Adressen");
+    expect(html).toContain("PRO — 59,50 €/Monat, 200 Adressen");
+    expect(html).toContain("Jetzt zu zahlen: 59,50 € inkl. 19 % MwSt.");
+    expect(html).toContain("Jetzt für 59,50 € zu PRO wechseln");
     expect(html).toContain("Der neue Abrechnungszeitraum beginnt nach erfolgreicher Zahlung.");
     expect(html).toContain("Es erfolgt keine anteilige Verrechnung oder Rückerstattung.");
     expect(html).not.toContain("Vollständige Zahlung");
@@ -127,7 +132,7 @@ describe("TariffGrid", () => {
     );
     expect(starterCard).toContain("STARTER");
     expect(starterCard).toContain("10 Adressen pro Monat");
-    expect(starterCard).toContain("9 €");
+    expect(starterCard).toContain("9,52 €");
     expect(starterCard).toContain("Aktueller Tarif");
     expect(starterCard).toContain('action="/api/billing/portal"');
     expect(starterCard).toContain("Abo verwalten");
@@ -141,24 +146,24 @@ describe("TariffGrid", () => {
     expect(aboCard).toContain("Zu ABO wechseln");
     expect(aboCard).toContain('data-testid="immediate-starter-abo-upgrade"');
     expect(aboCard).toContain('name="plan" value="abo"');
-    expect(aboCard).toContain("STARTER — 9 €/Monat, 10 Adressen");
-    expect(aboCard).toContain("ABO — 29 €/Monat, 50 Adressen");
-    expect(aboCard).toContain("Jetzt zu zahlen: 29 €");
+    expect(aboCard).toContain("STARTER — 9,52 €/Monat, 10 Adressen");
+    expect(aboCard).toContain("ABO — 29,75 €/Monat, 50 Adressen");
+    expect(aboCard).toContain("Jetzt zu zahlen: 29,75 € inkl. 19 % MwSt.");
     expect(aboCard).toContain("Der neue Abrechnungszeitraum beginnt nach erfolgreicher Zahlung.");
     expect(aboCard).toContain("Verbleibende Tage und ungenutzte Adressen Ihres bisherigen Tarifs werden nicht übertragen.");
     expect(aboCard).toContain("Es erfolgt keine anteilige Verrechnung oder Rückerstattung.");
     expect(aboCard).not.toContain("Vollständige Zahlung");
-    expect(aboCard).toContain("Jetzt für 29 € zu ABO wechseln");
+    expect(aboCard).toContain("Jetzt für 29,75 € zu ABO wechseln");
     const proCard = html.slice(html.indexOf('data-testid="tariff-pro"'));
     expect(proCard).toContain("Zu PRO wechseln");
     expect(proCard).toContain('data-testid="immediate-starter-pro-upgrade"');
     expect(proCard).toContain('name="plan" value="pro"');
-    expect(proCard).toContain("PRO — 59 €/Monat, 200 Adressen");
-    expect(proCard).toContain("Jetzt zu zahlen: 59 €");
+    expect(proCard).toContain("PRO — 59,50 €/Monat, 200 Adressen");
+    expect(proCard).toContain("Jetzt zu zahlen: 59,50 € inkl. 19 % MwSt.");
     expect(proCard).toContain("Es erfolgt keine anteilige Verrechnung oder Rückerstattung.");
     expect(proCard).toContain("Verbleibende Tage und ungenutzte Adressen Ihres bisherigen Tarifs werden nicht übertragen.");
     expect(proCard).not.toContain("verfallen beim erfolgreichen Wechsel");
-    expect(proCard).toContain("Jetzt für 59 € zu PRO wechseln");
+    expect(proCard).toContain("Jetzt für 59,50 € zu PRO wechseln");
     expect(proCard).not.toContain('name="plan" value="abo"');
   });
 
@@ -296,7 +301,7 @@ describe("TariffGrid", () => {
         resumePlan={null}
       />,
     );
-    expect(html).toContain("Jetzt zu zahlen: 59 €");
+    expect(html).toContain("Jetzt zu zahlen: 59,50 € inkl. 19 % MwSt.");
     expect(html).toContain("Es erfolgt keine anteilige Verrechnung oder Rückerstattung.");
     expect(html).not.toContain("Sie haben noch");
     expect(html).not.toContain("zunächst verwenden");

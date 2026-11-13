@@ -1,4 +1,4 @@
-import { PAID_PLANS, VAT_EXEMPTION_LABEL, formatDateDe, type PaidPlanId } from "@pv-access/core";
+import { PAID_PLANS, VAT_INCLUDED_LABEL, formatDateDe, type PaidPlanId } from "@pv-access/core";
 
 import {
   billingPortalButtonLabel,
@@ -59,7 +59,7 @@ function Feature({ children }: { children: string }) {
   return <li className="text-sm leading-snug text-[#334155]">{children}</li>;
 }
 
-function Price({ amount, period }: { amount: string; period: boolean }) {
+function Price({ amount, note, period }: { amount: string; note: string | null; period: boolean }) {
   return (
     <div>
       <p className="mt-3 text-3xl font-semibold tracking-tight text-[#0F172A]">
@@ -68,13 +68,13 @@ function Price({ amount, period }: { amount: string; period: boolean }) {
       </p>
       <p
         className={
-          period
+          note
             ? "mt-1 text-xs leading-snug text-[#64748B]"
             : "invisible mt-0 max-h-0 overflow-hidden text-xs leading-snug text-[#64748B] min-[1100px]:mt-1 min-[1100px]:max-h-none"
         }
-        aria-hidden={period ? undefined : true}
+        aria-hidden={note ? undefined : true}
       >
-        {VAT_EXEMPTION_LABEL}
+        {note ?? VAT_INCLUDED_LABEL}
       </p>
     </div>
   );
@@ -122,6 +122,10 @@ export function TariffGrid({
 
       <p className={`${alignWithCards} mt-6 text-sm leading-relaxed text-[#334155]`}>
         STARTER, ABO und PRO enthalten nach Veröffentlichung auch RENDITEGUIDE.
+      </p>
+      <p className={`${alignWithCards} mt-2 text-sm leading-relaxed text-[#334155]`}>
+        Der angezeigte Preis gilt für Verbraucher in Deutschland einschließlich 19 % Umsatzsteuer. Im Checkout wird
+        die Umsatzsteuer anhand der Rechnungsadresse berechnet. Geschäftskunden können eine USt-IdNr. angeben.
       </p>
 
       {paid?.scheduledPlan && paid.scheduledAt ? (
@@ -182,7 +186,7 @@ function FreeCard({ viewer }: { viewer: TariffViewer }) {
   return (
     <article className={card} data-testid="tariff-free">
       <h2 className="text-lg font-semibold text-[#0F172A]">Kostenlos</h2>
-      <Price amount="0 €" period={false} />
+      <Price amount="0 €" note={null} period={false} />
       <p className="mt-3 text-base font-semibold leading-snug text-[#0F172A]">1 feste Adresse</p>
       <FeatureList items={FREE_FEATURES} />
       <div className="mt-auto pt-5">
@@ -225,7 +229,7 @@ function PaidCard({
   return (
     <article className={card} data-testid={`tariff-${plan}`}>
       <h2 className="text-lg font-semibold text-[#0F172A]">{spec.label}</h2>
-      <Price amount={spec.priceLabel} period />
+      <Price amount={spec.priceLabel} note={`${VAT_INCLUDED_LABEL} (${spec.netLabel} netto)`} period />
       <p className="mt-3 text-base font-semibold leading-snug text-[#0F172A]">{addressLine}</p>
       <FeatureList items={PAID_FEATURES} />
       <div className="mt-auto pt-5">

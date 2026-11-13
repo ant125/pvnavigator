@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { VAT_EXEMPTION_LABEL } from "@pv-access/core";
+import { VAT_INCLUDED_LABEL } from "@pv-access/core";
 
 import {
   checkoutInvoiceCollection,
@@ -10,7 +10,7 @@ import {
 } from "./checkoutInvoice";
 
 const USER = "11111111-1111-4111-8111-111111111111";
-const LABEL = VAT_EXEMPTION_LABEL;
+const LABEL = VAT_INCLUDED_LABEL;
 
 function countLabel(value: unknown): number {
   return JSON.stringify(value).split(LABEL).length - 1;
@@ -21,7 +21,7 @@ describe("checkout invoice collection", () => {
     const collection = checkoutInvoiceCollection();
 
     expect(collection.locale).toBe("de");
-    expect(collection.automatic_tax).toEqual({ enabled: false });
+    expect(collection.automatic_tax).toEqual({ enabled: true });
     expect(collection.billing_address_collection).toBe("required");
     expect(collection.name_collection).toEqual({
       individual: { enabled: true, optional: false },
@@ -32,16 +32,16 @@ describe("checkout invoice collection", () => {
     expect(collection.tax_id_collection).toEqual({ enabled: true, required: "never" });
   });
 
-  it("stores German invoice preferences and the §19 footer once on a new customer", () => {
+  it("stores German invoice preferences and clears any Kleinunternehmer footer", () => {
     const params = newStripeCustomerParams({ userId: USER, email: "person@example.com" });
 
     expect(params).toEqual({
       email: "person@example.com",
       metadata: { user_id: USER },
       preferred_locales: ["de"],
-      invoice_settings: { footer: LABEL },
+      invoice_settings: { footer: "" },
     });
-    expect(countLabel(params)).toBe(1);
+    expect(countLabel(params)).toBe(0);
     expect(params).not.toHaveProperty("address");
     expect(params).not.toHaveProperty("name");
   });
@@ -51,7 +51,7 @@ describe("checkout invoice collection", () => {
 
     expect(params).toEqual({
       preferred_locales: ["de"],
-      invoice_settings: { footer: LABEL },
+      invoice_settings: { footer: "" },
     });
     expect(params).not.toHaveProperty("name");
     expect(params).not.toHaveProperty("individual_name");
@@ -59,15 +59,15 @@ describe("checkout invoice collection", () => {
     expect(params).not.toHaveProperty("address");
     expect(params).not.toHaveProperty("tax");
     expect(params.invoice_settings).not.toHaveProperty("custom_fields");
-    expect(countLabel(params)).toBe(1);
+    expect(countLabel(params)).toBe(0);
   });
 });
 
 describe("initial checkout session", () => {
   const plans = [
-    { planKey: "pvnavigator_starter", label: "STARTER", priceId: "price_starter", priceLabel: "9 €" },
-    { planKey: "pvnavigator_abo", label: "ABO", priceId: "price_abo", priceLabel: "29 €" },
-    { planKey: "pvnavigator_pro", label: "PRO", priceId: "price_pro", priceLabel: "59 €" },
+    { planKey: "pvnavigator_starter", label: "STARTER", priceId: "price_starter", priceLabel: "9,52 €" },
+    { planKey: "pvnavigator_abo", label: "ABO", priceId: "price_abo", priceLabel: "29,75 €" },
+    { planKey: "pvnavigator_pro", label: "PRO", priceId: "price_pro", priceLabel: "59,50 €" },
   ] as const;
 
   it.each(plans)("sells $label at the server price and collects invoice details", (plan) => {
@@ -78,7 +78,7 @@ describe("initial checkout session", () => {
       planKey: plan.planKey,
       label: plan.label,
       origin: "https://pvnavigator.de",
-      submitMessage: `${LABEL} ${plan.priceLabel} pro Monat ist der Endpreis.`,
+      submitMessage: `${plan.priceLabel} pro Monat für Verbraucher, ${LABEL}. Die Umsatzsteuer wird anhand der Rechnungsadresse berechnet.`,
     });
 
     expect(session.mode).toBe("subscription");
@@ -92,9 +92,10 @@ describe("initial checkout session", () => {
     expect(session).not.toHaveProperty("shipping_address_collection");
     expect(session.subscription_data).not.toHaveProperty("invoice_settings");
     expect(countLabel(session)).toBe(1);
+    expect(JSON.stringify(session)).not.toContain("§ 19");
     const submit = session.custom_text?.submit;
     expect(submit && typeof submit === "object" ? submit.message : null).toBe(
-      `${LABEL} ${plan.priceLabel} pro Monat ist der Endpreis.`,
+      `${plan.priceLabel} pro Monat für Verbraucher, ${LABEL}. Die Umsatzsteuer wird anhand der Rechnungsadresse berechnet.`,
     );
   });
 });

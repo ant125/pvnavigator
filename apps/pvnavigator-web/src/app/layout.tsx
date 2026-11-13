@@ -52,9 +52,6 @@ export default async function RootLayout({
                   © {new Date().getFullYear()} PVNAVIGATOR_
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-[#64748B] sm:justify-end">
-                  <Link href="/tarife" className="transition-colors hover:text-[#0F172A]">
-                    Tarife
-                  </Link>
                   <Link href="/impressum" className="transition-colors hover:text-[#0F172A]">
                     Impressum
                   </Link>
