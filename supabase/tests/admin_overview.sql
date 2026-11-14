@@ -14,6 +14,11 @@ declare
   v_new uuid := gen_random_uuid();
   v_score uuid := gen_random_uuid();
   v_wild uuid := gen_random_uuid();
+  v_calc_now uuid := gen_random_uuid();
+  v_calc_today uuid := gen_random_uuid();
+  v_calc_boundary uuid := gen_random_uuid();
+  v_calc_old uuid := gen_random_uuid();
+  v_calc_other uuid := gen_random_uuid();
   v_role text;
   v_fn text;
   v_today date;
@@ -38,7 +43,8 @@ begin
       'public.admin_list_users(text, text, text, text, integer, integer)',
       'public.admin_user_card(uuid, integer, integer)',
       'private.assert_admin()',
-      'private.admin_json_number(jsonb)'
+      'private.admin_json_number(jsonb)',
+      'private.admin_json_boolean(jsonb)'
     ] loop
       if v_role <> 'authenticated'
          and has_function_privilege(v_role, v_fn, 'EXECUTE') then
@@ -123,51 +129,67 @@ begin
   v_week_start := v_today - (extract(isodow from v_today)::integer - 1);
 
   insert into public.calculations (
-    user_id, product_key, name, input, result_snapshot,
-    input_schema_version, result_schema_version,
+    id, user_id, product_key, name, input, result_snapshot,
+    input_schema_version, result_schema_version, battery_model_version,
     summary_address, summary_pv_kwp, summary_consumption_kwh, created_at
   ) values
     (
-      v_subject, 'speicher_grenze', 'Jetzt', '{}'::jsonb,
+      v_calc_now, v_subject, 'speicher_grenze', 'Jetzt',
+      jsonb_build_object(
+        'heatPumpEnabled', true,
+        'ev', jsonb_build_object('enabled', false)
+      ),
       jsonb_build_object(
         'kernel', 'KERNEL_SHOULD_NOT_LEAK',
         'verifiedResult', jsonb_build_object(
           'energy', jsonb_build_object('year', jsonb_build_object('pvYieldKwhAnnual', 9500))
         ),
-        'presentation', jsonb_build_object('recommendedTechnicalSize', 7.5)
+        'presentation', jsonb_build_object(
+          'recommendedTechnicalSize', 7.5,
+          'recommendedPlanningSize', 10
+        )
       ),
-      'speicher-grenze-input/v1', 'speicher-grenze-result/v2',
+      'speicher-grenze-input/v1', 'speicher-grenze-result/v2', '1.1.0',
       'Bühne 1, 10115 Berlin', 9.5, 4200, v_now
     ),
     (
-      v_subject, 'speicher_grenze', 'Tagesbeginn',
-      jsonb_build_object('pvSystemKwP', 4, 'annualConsumptionKWh', 3000),
+      v_calc_today, v_subject, 'speicher_grenze', 'Tagesbeginn',
+      jsonb_build_object(
+        'pvSystemKwP', 4,
+        'annualConsumptionKWh', 3000,
+        'heatPumpEnabled', 'ja',
+        'ev', jsonb_build_object('enabled', 1)
+      ),
       jsonb_build_object(
         'verifiedResult', jsonb_build_object(
           'energy', jsonb_build_object('year', jsonb_build_object('pvYieldKwhAnnual', 'nope'))
         )
       ),
-      'speicher-grenze-input/v1', 'speicher-grenze-result/v1',
+      'speicher-grenze-input/v1', 'speicher-grenze-result/v1', null,
       null, null, null, v_today_start
     ),
     (
-      v_subject, 'speicher_grenze', 'Gerade noch gestern', '{}'::jsonb,
+      v_calc_boundary, v_subject, 'speicher_grenze', 'Gerade noch gestern',
+      jsonb_build_object(
+        'heatPumpEnabled', false,
+        'ev', jsonb_build_object('enabled', true)
+      ),
       jsonb_build_object(
         'verifiedResult', jsonb_build_object(
           'energy', jsonb_build_object('year', jsonb_build_object('pvYieldKwhAnnual', -5))
         )
       ),
-      'speicher-grenze-input/v1', 'speicher-grenze-result/v2',
+      'speicher-grenze-input/v1', 'speicher-grenze-result/v2', '1.0.0',
       null, null, null, v_today_start - interval '1 second'
     ),
     (
-      v_subject, 'speicher_grenze', 'Alt', '{}'::jsonb, '{}'::jsonb,
-      'speicher-grenze-input/v1', 'speicher-grenze-result/v2',
+      v_calc_old, v_subject, 'speicher_grenze', 'Alt', '{}'::jsonb, '{}'::jsonb,
+      'speicher-grenze-input/v1', 'speicher-grenze-result/v2', null,
       null, null, null, v_old_at
     ),
     (
-      v_new, 'speicher_grenze', 'Neu', '{}'::jsonb, '{}'::jsonb,
-      'speicher-grenze-input/v1', 'speicher-grenze-result/v2',
+      v_calc_other, v_new, 'speicher_grenze', 'Neu', '{}'::jsonb, '{}'::jsonb,
+      'speicher-grenze-input/v1', 'speicher-grenze-result/v2', null,
       null, null, null, v_now
     );
 
@@ -209,6 +231,12 @@ begin
   end if;
   if (v_after->>'month')::integer <> (v_before->>'month')::integer + v_month_delta then
     raise exception 'month does not follow the Berlin calendar month';
+  end if;
+  if (v_after->>'trustpilot_shown') is distinct from (v_before->>'trustpilot_shown')
+     or (v_after->>'trustpilot_clicked') is distinct from (v_before->>'trustpilot_clicked')
+     or (v_after->>'users') is distinct from (v_before->>'users')
+     or (v_after->>'unternehmen') is distinct from (v_before->>'unternehmen') then
+    raise exception 'the calculation card changed the administrator totals';
   end if;
   if jsonb_array_length(v_after->'series') <> 30 then
     raise exception 'the chart does not cover 30 days';
@@ -291,26 +319,45 @@ begin
      or jsonb_array_length(v_card->'calculations') <> 2 then
     raise exception 'the card page is not the two newest calculations: %', v_card;
   end if;
-  if v_card->'calculations'->0->>'address' <> 'Bühne 1, 10115 Berlin'
+  if (v_card->'calculations'->0->>'id')::uuid <> v_calc_now
+     or v_card->'calculations'->0->>'address' <> 'Bühne 1, 10115 Berlin'
      or (v_card->'calculations'->0->>'pv_kwp')::numeric <> 9.5
      or (v_card->'calculations'->0->>'consumption_kwh')::numeric <> 4200
      or (v_card->'calculations'->0->>'pv_yield_kwh')::numeric <> 9500
-     or (v_card->'calculations'->0->>'speichergrenze_kwh')::numeric <> 7.5 then
+     or (v_card->'calculations'->0->>'speichergrenze_kwh')::numeric <> 7.5
+     or (v_card->'calculations'->0->>'planning_kwh')::numeric <> 10
+     or (v_card->'calculations'->0->>'heat_pump')::boolean is not true
+     or (v_card->'calculations'->0->>'ev')::boolean is not false
+     or v_card->'calculations'->0->>'battery_model_version' <> '1.1.0' then
     raise exception 'stored calculation figures were not returned: %', v_card->'calculations'->0;
   end if;
-  if (v_card->'calculations'->1->>'pv_kwp')::numeric <> 4
+  if (v_card->'calculations'->1->>'id')::uuid <> v_calc_today
+     or (v_card->'calculations'->1->>'pv_kwp')::numeric <> 4
      or (v_card->'calculations'->1->>'consumption_kwh')::numeric <> 3000
      or v_card->'calculations'->1->>'pv_yield_kwh' is not null
-     or v_card->'calculations'->1->>'speichergrenze_kwh' is not null then
+     or v_card->'calculations'->1->>'speichergrenze_kwh' is not null
+     or v_card->'calculations'->1->>'planning_kwh' is not null
+     or v_card->'calculations'->1->>'heat_pump' is not null
+     or v_card->'calculations'->1->>'ev' is not null
+     or v_card->'calculations'->1->>'battery_model_version' is not null then
     raise exception 'missing stored figures were invented: %', v_card->'calculations'->1;
   end if;
-  if v_card::text ~* 'KERNEL_SHOULD_NOT_LEAK|result_snapshot|encrypted_password|pvSystemKwP' then
+  if v_card::text ~* 'KERNEL_SHOULD_NOT_LEAK|result_snapshot|encrypted_password|pvSystemKwP|heatPumpEnabled|recommendedPlanningSize'
+     or position(v_calc_other::text in v_card::text) > 0 then
     raise exception 'the card contains data the page does not show';
   end if;
   v_card := public.admin_user_card(v_subject, 2, 2);
-  if (v_card->'calculations'->0->>'pv_yield_kwh') is not null
-     or (v_card->'calculations'->1->>'pv_yield_kwh') is not null then
-    raise exception 'a negative or text yield was returned as a number';
+  if (v_card->'calculations'->0->>'id')::uuid <> v_calc_boundary
+     or (v_card->'calculations'->0->>'pv_yield_kwh') is not null
+     or (v_card->'calculations'->1->>'id')::uuid <> v_calc_old
+     or (v_card->'calculations'->1->>'pv_yield_kwh') is not null
+     or (v_card->'calculations'->0->>'heat_pump')::boolean is not false
+     or (v_card->'calculations'->0->>'ev')::boolean is not true
+     or v_card->'calculations'->0->>'battery_model_version' <> '1.0.0'
+     or v_card->'calculations'->0->>'speichergrenze_kwh' is not null
+     or v_card->'calculations'->1->>'heat_pump' is not null
+     or v_card->'calculations'->1->>'ev' is not null then
+    raise exception 'a negative or text yield was returned as a number: %', v_card->'calculations';
   end if;
   execute 'reset role';
   select count(*) into v_count

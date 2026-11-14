@@ -4,6 +4,7 @@ import {
   formatAdminDateTime,
   formatAdminDay,
   formatAdminRate,
+  formatAdminYesNo,
   parseAdminDashboard,
   parseAdminUserCard,
   parseUserListQuery,
@@ -72,12 +73,17 @@ describe("administrator overview", () => {
       page: 1,
       page_size: 10,
       calculations: [{
+        id: "00000000-0000-4000-8000-0000000000bb",
         created_at: "2026-11-14T23:30:00.000Z",
         address: "Bühne 1",
         pv_kwp: 9.5,
         consumption_kwh: 4200,
         pv_yield_kwh: null,
         speichergrenze_kwh: 7.5,
+        planning_kwh: 10,
+        heat_pump: true,
+        ev: false,
+        battery_model_version: "1.1.0",
         result_snapshot: { kernel: "secret" },
       }],
     });
@@ -97,14 +103,83 @@ describe("administrator overview", () => {
     });
     expect(withoutActivity?.user.lastCalculationAt).toBeNull();
     expect(card?.calculations[0]).toEqual({
+      id: "00000000-0000-4000-8000-0000000000bb",
       createdAt: "2026-11-14T23:30:00.000Z",
       address: "Bühne 1",
       pvKwp: 9.5,
       consumptionKwh: 4200,
       pvYieldKwh: null,
       speichergrenzeKwh: 7.5,
+      planningKwh: 10,
+      heatPump: true,
+      ev: false,
+      batteryModelVersion: "1.1.0",
     });
     expect(JSON.stringify(card)).not.toContain("secret");
+    expect(formatAdminYesNo(true)).toBe("Ja");
+    expect(formatAdminYesNo(false)).toBe("Nein");
+    expect(formatAdminYesNo(null)).toBe("Nicht verfügbar");
+  });
+
+  it("keeps a report without presentation or flags unavailable", () => {
+    const legacy = parseAdminUserCard({
+      user: {
+        id: "00000000-0000-4000-8000-0000000000aa",
+        display_name: null,
+        email: "person@example.com",
+        account_kind: "nicht_angegeben",
+        registered_at: "2026-11-14T23:30:00.000Z",
+        calculation_count: 1,
+        last_calculation_at: null,
+      },
+      page: 1,
+      page_size: 10,
+      calculations: [{
+        id: "00000000-0000-4000-8000-0000000000cc",
+        created_at: "2026-11-14T23:30:00.000Z",
+        address: null,
+        pv_kwp: 4,
+        consumption_kwh: 3000,
+        pv_yield_kwh: null,
+        speichergrenze_kwh: null,
+        planning_kwh: null,
+        heat_pump: null,
+        ev: null,
+        battery_model_version: null,
+      }],
+    });
+    expect(legacy?.calculations[0]).toMatchObject({
+      speichergrenzeKwh: null,
+      planningKwh: null,
+      heatPump: null,
+      ev: null,
+      batteryModelVersion: null,
+    });
+    expect(parseAdminUserCard({
+      user: {
+        id: "00000000-0000-4000-8000-0000000000aa",
+        display_name: null,
+        email: "person@example.com",
+        account_kind: "nicht_angegeben",
+        registered_at: "2026-11-14T23:30:00.000Z",
+        calculation_count: 1,
+      },
+      page: 1,
+      page_size: 10,
+      calculations: [{
+        id: "00000000-0000-4000-8000-0000000000cc",
+        created_at: "2026-11-14T23:30:00.000Z",
+        address: null,
+        pv_kwp: 4,
+        consumption_kwh: 3000,
+        pv_yield_kwh: null,
+        speichergrenze_kwh: null,
+        planning_kwh: null,
+        heat_pump: "ja",
+        ev: false,
+        battery_model_version: null,
+      }],
+    })).toBeNull();
   });
 
   it("formats instants in Europe/Berlin", () => {

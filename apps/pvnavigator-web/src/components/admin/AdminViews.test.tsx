@@ -44,12 +44,35 @@ const card: AdminUserCard = {
   page: 1,
   pageSize: 10,
   calculations: [{
+    id: "00000000-0000-4000-8000-0000000000bb",
     createdAt: "2026-11-01T10:00:00.000Z",
     address: null,
     pvKwp: null,
     consumptionKwh: 4000,
     pvYieldKwh: null,
     speichergrenzeKwh: null,
+    planningKwh: null,
+    heatPump: null,
+    ev: null,
+    batteryModelVersion: null,
+  }],
+};
+
+const storedCard: AdminUserCard = {
+  ...card,
+  user: { ...card.user, calculationCount: 1 },
+  calculations: [{
+    id: "00000000-0000-4000-8000-0000000000cc",
+    createdAt: "2026-11-01T10:00:00.000Z",
+    address: "Bühne 1, 10115 Berlin",
+    pvKwp: 9.5,
+    consumptionKwh: 4200,
+    pvYieldKwh: 9500,
+    speichergrenzeKwh: 7.5,
+    planningKwh: 10,
+    heatPump: true,
+    ev: false,
+    batteryModelVersion: "1.1.0",
   }],
 };
 
@@ -83,10 +106,40 @@ describe("administrator views", () => {
   it("shows a calculation without a report or PDF link", () => {
     const html = renderToStaticMarkup(<AdminUserCardView data={card} />);
     expect(html).toContain("Nicht angegeben");
-    expect(html).toContain("Nicht gespeichert");
+    expect(html).toContain("Nicht verfügbar");
     expect(html).toContain("4.000 kWh/a");
+    expect(html).toContain("Jahresstromverbrauch");
     expect(html).toContain("Technische Speichergrenze");
+    expect(html).toContain("Planerische Anfangskapazität");
+    expect(html).toContain("Wärmepumpe");
+    expect(html).toContain("Elektroauto");
+    expect(html).toContain("Batteriemodell-Version");
+    expect(html).toContain('data-calculation-id="00000000-0000-4000-8000-0000000000bb"');
+    expect(html).not.toContain("Bericht ansehen");
     expect(html).not.toContain("/result/");
     expect(html).not.toContain(".pdf");
+    expect(html).not.toContain(">Nein<");
+  });
+
+  it("shows stored v2 figures without mixing the two storage sizes", () => {
+    const html = renderToStaticMarkup(<AdminUserCardView data={storedCard} />);
+    expect(html).toContain("Anlage");
+    expect(html).toContain("Verbrauch");
+    expect(html).toContain("Speicher");
+    expect(html).toContain("Technische Angaben");
+    expect(html).toContain("9,5 kWp");
+    expect(html).toContain("9.500 kWh/a");
+    expect(html).toContain("4.200 kWh/a");
+    expect(html).toContain("7,5 kWh");
+    expect(html).toContain("10 kWh");
+    expect(html).toContain(">Ja<");
+    expect(html).toContain(">Nein<");
+    expect(html).toContain("1.1.0");
+    expect(html).toContain("Bühne 1, 10115 Berlin");
+    const technical = html.indexOf("Technische Speichergrenze");
+    const planning = html.indexOf("Planerische Anfangskapazität");
+    expect(html.indexOf("7,5 kWh")).toBeGreaterThan(technical);
+    expect(html.indexOf("7,5 kWh")).toBeLessThan(planning);
+    expect(html.indexOf("10 kWh")).toBeGreaterThan(planning);
   });
 });

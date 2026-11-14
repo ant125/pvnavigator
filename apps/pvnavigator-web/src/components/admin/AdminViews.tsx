@@ -8,6 +8,7 @@ import {
   formatAdminDay,
   formatAdminKwh,
   formatAdminRate,
+  formatAdminYesNo,
   pageCount,
   userListHref,
   type AdminDashboard,
@@ -16,7 +17,7 @@ import {
   type UserListQuery,
 } from "@/lib/adminOverview";
 
-const EMPTY = "Nicht gespeichert";
+const MISSING = "Nicht verfügbar";
 
 export function AdminLoadError() {
   return (
@@ -253,16 +254,42 @@ export function AdminUserCardView({ data }: { data: AdminUserCard }) {
           </div>
         ) : (
           <ol className="admin-calculations">
-            {data.calculations.map((calculation, index) => (
-              <li key={`${data.page}-${index}`}>
+            {data.calculations.map((calculation) => (
+              <li key={calculation.id} data-calculation-id={calculation.id}>
                 <h3>{formatAdminDateTime(calculation.createdAt)}</h3>
-                <dl>
-                  <div><dt>Adresse</dt><dd>{calculation.address ?? EMPTY}</dd></div>
-                  <div><dt>PV-Leistung</dt><dd>{formatListingKwP(calculation.pvKwp) ?? EMPTY}</dd></div>
-                  <div><dt>Jahresverbrauch</dt><dd>{formatListingKwh(calculation.consumptionKwh) ?? EMPTY}</dd></div>
-                  <div><dt>PV-Jahreserzeugung</dt><dd>{formatListingKwh(calculation.pvYieldKwh) ?? EMPTY}</dd></div>
-                  <div><dt>Technische Speichergrenze</dt><dd>{formatAdminKwh(calculation.speichergrenzeKwh) ?? EMPTY}</dd></div>
+                <dl className="admin-calc-address">
+                  <div><dt>Adresse</dt><dd>{calculation.address ?? MISSING}</dd></div>
                 </dl>
+                <div className="admin-calc-groups">
+                  <section aria-labelledby={`anlage-${calculation.id}`}>
+                    <h4 id={`anlage-${calculation.id}`}>Anlage</h4>
+                    <dl>
+                      <div><dt>PV-Leistung</dt><dd>{formatListingKwP(calculation.pvKwp) ?? MISSING}</dd></div>
+                      <div><dt>PV-Jahreserzeugung</dt><dd>{formatListingKwh(calculation.pvYieldKwh) ?? MISSING}</dd></div>
+                    </dl>
+                  </section>
+                  <section aria-labelledby={`verbrauch-${calculation.id}`}>
+                    <h4 id={`verbrauch-${calculation.id}`}>Verbrauch</h4>
+                    <dl>
+                      <div><dt>Jahresstromverbrauch</dt><dd>{formatListingKwh(calculation.consumptionKwh) ?? MISSING}</dd></div>
+                      <div><dt>Wärmepumpe</dt><dd>{formatAdminYesNo(calculation.heatPump)}</dd></div>
+                      <div><dt>Elektroauto</dt><dd>{formatAdminYesNo(calculation.ev)}</dd></div>
+                    </dl>
+                  </section>
+                  <section aria-labelledby={`speicher-${calculation.id}`}>
+                    <h4 id={`speicher-${calculation.id}`}>Speicher</h4>
+                    <dl>
+                      <div><dt>Technische Speichergrenze</dt><dd>{formatAdminKwh(calculation.speichergrenzeKwh) ?? MISSING}</dd></div>
+                      <div><dt>Planerische Anfangskapazität</dt><dd>{formatAdminKwh(calculation.planningKwh) ?? MISSING}</dd></div>
+                    </dl>
+                  </section>
+                  <section aria-labelledby={`technik-${calculation.id}`}>
+                    <h4 id={`technik-${calculation.id}`}>Technische Angaben</h4>
+                    <dl>
+                      <div><dt>Batteriemodell-Version</dt><dd>{calculation.batteryModelVersion ?? MISSING}</dd></div>
+                    </dl>
+                  </section>
+                </div>
               </li>
             ))}
           </ol>

@@ -53,12 +53,17 @@ export type AdminUserList = {
 };
 
 export type AdminCalculation = {
+  id: string;
   createdAt: string;
   address: string | null;
   pvKwp: number | null;
   consumptionKwh: number | null;
   pvYieldKwh: number | null;
   speichergrenzeKwh: number | null;
+  planningKwh: number | null;
+  heatPump: boolean | null;
+  ev: boolean | null;
+  batteryModelVersion: string | null;
 };
 
 export type AdminUserCard = {
@@ -100,6 +105,12 @@ function text(value: unknown): string | null {
 function instant(value: unknown): string | null {
   if (typeof value !== "string" || Number.isNaN(Date.parse(value))) return null;
   return value;
+}
+
+function flag(value: unknown): boolean | null {
+  if (value === null) return null;
+  if (value === true || value === false) return value;
+  return null;
 }
 
 function accountKind(value: unknown): AccountKind | null {
@@ -190,6 +201,11 @@ export function formatAdminKwh(value: number | null): string | null {
   return `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(value)} kWh`;
 }
 
+export function formatAdminYesNo(value: boolean | null): string {
+  if (value === null) return "Nicht verfügbar";
+  return value ? "Ja" : "Nein";
+}
+
 function parseUser(value: unknown): AdminUser | null {
   if (!isRecord(value) || typeof value.id !== "string" || !isAdminUserId(value.id)) return null;
   const kind = accountKind(value.account_kind);
@@ -267,29 +283,41 @@ export function parseAdminUserList(value: unknown): AdminUserList | null {
 }
 
 function parseCalculation(value: unknown): AdminCalculation | null {
-  if (!isRecord(value)) return null;
+  if (!isRecord(value) || typeof value.id !== "string" || !isAdminUserId(value.id)) return null;
   const createdAt = instant(value.created_at);
   if (!createdAt) return null;
   if (value.address !== null && typeof value.address !== "string") return null;
+  if (value.battery_model_version !== null && typeof value.battery_model_version !== "string") return null;
   const pvKwp = quantity(value.pv_kwp);
   const consumptionKwh = quantity(value.consumption_kwh);
   const pvYieldKwh = quantity(value.pv_yield_kwh);
   const speichergrenzeKwh = quantity(value.speichergrenze_kwh);
+  const planningKwh = quantity(value.planning_kwh);
+  const heatPump = flag(value.heat_pump);
+  const ev = flag(value.ev);
   if (
     (value.pv_kwp !== null && pvKwp === null)
     || (value.consumption_kwh !== null && consumptionKwh === null)
     || (value.pv_yield_kwh !== null && pvYieldKwh === null)
     || (value.speichergrenze_kwh !== null && speichergrenzeKwh === null)
+    || (value.planning_kwh !== null && planningKwh === null)
+    || (value.heat_pump !== null && heatPump === null)
+    || (value.ev !== null && ev === null)
   ) {
     return null;
   }
   return {
+    id: value.id,
     createdAt,
     address: text(value.address),
     pvKwp,
     consumptionKwh,
     pvYieldKwh,
     speichergrenzeKwh,
+    planningKwh,
+    heatPump,
+    ev,
+    batteryModelVersion: text(value.battery_model_version),
   };
 }
 
