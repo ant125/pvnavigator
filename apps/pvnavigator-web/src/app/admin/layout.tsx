@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { AdminNav } from "@/components/admin/AdminNav";
 import { getAdminUser, requireAdmin } from "@/lib/admin";
 
 // Next.js emits metadata even when the layout answers 404, so the title is
@@ -14,5 +15,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   await requireAdmin();
-  return children;
+  return (
+    <div className="hub-workspace">
+      <AdminNav />
+      {children}
+    </div>
+  );
 }

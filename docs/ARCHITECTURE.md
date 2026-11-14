@@ -190,8 +190,11 @@ from the e-mail address, from JWT metadata or from anything the browser sends.
 | Relation / function | Role |
 |---|---|
 | `private.admin_users` | Who is an administrator. Written only with SQL by the database owner |
-| `private.admin_audit_log` | Trail of role grants and revocations, later of administrative reads |
+| `private.admin_audit_log` | Trail of role grants, revocations and `admin_user_viewed` card reads |
 | `public.is_admin()` | `true` when the calling `auth.uid()` has a row. No argument, read only |
+| `public.admin_dashboard()` | Totals and 30 Europe/Berlin days, including days without a calculation |
+| `public.admin_list_users(...)` | One page of accounts. Search matches name and e-mail only |
+| `public.admin_user_card(...)` | One page of stored calculation fields, and an audit entry |
 
 **Two checks.** The hub verifies the session with Supabase Auth and then asks
 the database (`requireAdmin()` in `apps/pvnavigator-web/src/lib/admin.ts`).
@@ -209,8 +212,18 @@ the pinned-address lookup and `/result/<id>` rely on RLS returning own rows only
 
 The private schema is not exposed through the Data API; both tables additionally
 have RLS without policies and no grants for `anon`, `authenticated` or
-`service_role`. Migration: `supabase/migrations/20261114114503_admin_roles.sql`,
-check: `supabase/tests/admin_access.sql`, rollout: `supabase/README.md`.
+`service_role`. The overview functions are `SECURITY DEFINER`, granted only to
+`authenticated`, and return before reading when `is_admin()` is false. They do
+not widen the own-row policies. Account type is not stored yet, so every
+account is `nicht_angegeben` and the Unternehmen total is zero; the type is
+never taken from the e-mail address. Days, weeks and months use
+`Europe/Berlin`, and the week starts on Monday. A card read writes
+`admin_user_viewed` with the page number and no calculation contents.
+
+Migrations: `supabase/migrations/20261114114503_admin_roles.sql`,
+`supabase/migrations/20261114164100_admin_overview.sql`.
+Checks: `supabase/tests/admin_access.sql`, `supabase/tests/admin_overview.sql`.
+Rollout: `supabase/README.md`.
 
 ---
 
