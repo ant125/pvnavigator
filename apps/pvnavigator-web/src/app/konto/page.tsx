@@ -48,8 +48,20 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
   const calculateUrl = getSpeicherGrenzeCalculateUrl();
   const supabase = await createServerSupabaseClient();
   const admin = createServiceRoleClient();
+  // Fetch compact metadata in pages so large accounts are not silently truncated.
+  const loadCalculations = async () => {
+    const rows: CalculationListRow[] = [];
+    for (let offset = 0; ; offset += 500) {
+      const result = await supabase.from("calculations").select(CALCULATION_LIST_SELECT)
+        .eq("user_id", user.id).order("updated_at", { ascending: false })
+        .order("id", { ascending: true }).range(offset, offset + 499);
+      if (result.error) return {data: null, error: result.error};
+      rows.push(...(result.data as unknown as CalculationListRow[]));
+      if (result.data.length < 500) return {data: rows, error: null};
+    }
+  };
   const [calculationsResult, customerResult, invoiceResult] = await Promise.all([
-    supabase.from("calculations").select(CALCULATION_LIST_SELECT).order("updated_at", { ascending: false }),
+    loadCalculations(),
     supabase.from("stripe_customers").select("user_id").maybeSingle(),
     admin
       ? admin.from("stripe_invoices").select("stripe_invoice_id").eq("user_id", user.id).limit(1)

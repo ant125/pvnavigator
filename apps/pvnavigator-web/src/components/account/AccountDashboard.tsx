@@ -21,7 +21,7 @@ export function AccountDashboard({email, calculations, hasInvoices, invoiceHint,
    </div>
      <div className="hub-account-details" aria-label="Konto und Zugang">
        <section aria-label="Zugang"><AccessCard/></section>
-       <section className="hub-panel hub-account" aria-labelledby="account-heading"><h2 id="account-heading" className="hub-kicker">Kontoinformationen</h2><p className="hub-email">{email}</p><p>Angemeldetes PVNAVIGATOR_-Konto</p><Link href="/" className="hub-text-link">Zur Plattformübersicht →</Link></section>
+       <section className="hub-panel hub-account" aria-labelledby="account-heading"><h2 id="account-heading" className="hub-kicker">Kontoinformationen</h2><p className="hub-email">{email}</p><p>Angemeldetes PVNAVIGATOR_ Konto</p><Link href="/" className="hub-text-link">Zur Plattformübersicht →</Link></section>
        {hasInvoices && <section aria-labelledby="invoices-heading"><InvoiceHistoryCard/></section>}
      </div>
  </div>;
