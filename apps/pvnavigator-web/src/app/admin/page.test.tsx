@@ -11,6 +11,7 @@ const { session, getUser, rpc, createClient } = vi.hoisted(() => {
     dashboard: { data: null, error: { message: "missing" } } as RpcAnswer,
     list: { data: null, error: { message: "missing" } } as RpcAnswer,
     card: { data: null, error: { message: "missing" } } as RpcAnswer,
+    unread: { data: 0, error: null } as RpcAnswer,
   };
   const getUser = vi.fn(async () => ({ data: { user: session.user } }));
   const rpc = vi.fn(async (fn: string) => {
@@ -18,6 +19,7 @@ const { session, getUser, rpc, createClient } = vi.hoisted(() => {
     if (fn === "admin_dashboard") return session.dashboard;
     if (fn === "admin_list_users") return session.list;
     if (fn === "admin_user_card") return session.card;
+    if (fn === "admin_feedback_unread_count") return session.unread;
     return { data: null, error: { message: `unexpected ${fn}` } };
   });
   const createClient = vi.fn(async () => ({ auth: { getUser }, rpc }));
@@ -53,6 +55,7 @@ beforeEach(() => {
   session.dashboard = { data: null, error: { message: "missing" } };
   session.list = { data: null, error: { message: "missing" } };
   session.card = { data: null, error: { message: "missing" } };
+  session.unread = { data: 0, error: null };
   getUser.mockClear();
   rpc.mockClear();
   createClient.mockClear();
@@ -131,7 +134,15 @@ describe("/admin", () => {
       title: "Administration | PVNAVIGATOR_",
       robots: { index: false, follow: false },
     });
-    expect(renderToStaticMarkup(await layout())).toContain("inner");
+    const shell = renderToStaticMarkup(await layout());
+    expect(shell).toContain("inner");
+    expect(shell).toContain('href="/admin/feedback"');
+    expect(shell).not.toContain("admin-tab-count");
+    session.unread = { data: 3, error: null };
+    const counted = renderToStaticMarkup(await layout());
+    expect(counted).toContain("admin-tab-count");
+    expect(counted).toContain("3 ungelesene Nachrichten");
+    expect(counted).toContain(">3<");
     session.dashboard = {
       data: {
         users: 4,

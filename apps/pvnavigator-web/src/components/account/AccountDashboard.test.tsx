@@ -12,6 +12,9 @@ describe("account dashboard",()=>{
  it("shows empty state and preserves analysis destination",()=>{
   const html=renderToStaticMarkup(<AccountDashboard {...props}/>);
   expect(html).toContain("Noch keine Berechnungen");
+  expect(html).toContain("Feedback &amp; Support");
+  expect(html).toContain("Sie haben noch keine Anfragen.");
+  expect(html).toContain('href="/feedback"');
   expect(html).toContain(props.calculateUrl);
   expect(html).not.toContain('/api/billing/invoices');
  });

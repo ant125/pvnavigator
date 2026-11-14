@@ -109,9 +109,11 @@ describe("SpeicherShell overflow chain", () => {
     expect(footerHtml).toContain("duration-150");
     expect(footerHtml).toContain("hover:no-underline");
     expect(footerHtml).not.toContain('href="/"');
+    expect(footerHtml).toContain("Feedback geben");
     expect(footerHtml).toContain("Kontakt");
     expect(footerHtml).toContain("Impressum");
     expect(footerHtml).toContain("Datenschutz");
+    expect(footerHtml).toContain(`href="${hubOrigin}/feedback"`);
     expect(footerHtml).toContain(`href="${hubOrigin}/kontakt"`);
     expect(footerHtml).toContain(`href="${hubOrigin}/impressum"`);
     expect(footerHtml).toContain(`href="${hubOrigin}/datenschutz"`);
@@ -173,6 +175,8 @@ describe("SpeicherShell overflow chain", () => {
     expect(html).toContain("Neue Berechnung");
     expect(html).toContain('href="/calculate"');
     const footerHtml = html.slice(html.indexOf("<footer"));
+    expect(footerHtml).toContain("Feedback geben");
+    expect(footerHtml).toContain(`href="${getHubOrigin()}/feedback"`);
     expect(footerHtml).toContain("Kontakt");
     expect(footerHtml).not.toContain("15-Minuten-Zeitschritte");
     expect(footerHtml).not.toContain("Unterlagen");
@@ -193,15 +197,29 @@ describe("SpeicherShell overflow chain", () => {
     expect(headerHtml).toContain(">SPEICHERGRENZE</a>");
     expect(headerHtml).toContain("user@example.de");
     expect(headerHtml).toContain("Abmelden");
-    expect(headerHtml).toContain("Speicher berechnen");
-    expect(headerHtml).toContain("max-md:hidden");
+    expect(headerHtml).not.toContain("Speicher berechnen");
     expect(headerHtml).not.toContain("min-h-sg-calculate-header");
     expect(headerHtml).not.toContain("Methodik");
     expect(html).not.toContain("border border-line-strong");
     expect(footerHtml).toContain("SPEICHERGRENZE");
+    expect(footerHtml).toContain("Feedback geben");
+    expect(footerHtml).toContain(`href="${getHubOrigin()}/feedback"`);
     expect(footerHtml).toContain("Unterlagen");
     expect(footerHtml).toContain('href="/methodik"');
     expect(footerHtml).toContain("Methodik");
     expect(footerHtml).toContain("Referenz");
+  });
+
+  it("links the documents footer to Hub feedback", () => {
+    usePathname.mockReturnValue("/methodik");
+    const html = renderShell();
+    const headerHtml = html.slice(html.indexOf("<header"), html.indexOf("</header>"));
+    const footerHtml = html.slice(html.indexOf("<footer"));
+    expect(headerHtml).toContain("Speicher berechnen");
+    expect(headerHtml).toContain("max-md:hidden");
+    expect(footerHtml).toContain("Unterlagen");
+    expect(footerHtml).toContain("Feedback geben");
+    expect(footerHtml).toContain(`href="${getHubOrigin()}/feedback"`);
+    expect(footerHtml).not.toContain("Kontakt");
   });
 });

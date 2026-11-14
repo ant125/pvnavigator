@@ -173,6 +173,9 @@ function ShellFrame({
         aria-label="Rechtliches"
         className="flex flex-wrap items-center gap-x-5 gap-y-1"
       >
+        <a href={`${hubOrigin}/feedback`} className={footerLink}>
+          Feedback geben
+        </a>
         <a href={`${hubOrigin}/kontakt`} className={footerLink}>
           Kontakt
         </a>
@@ -195,6 +198,7 @@ function ShellFrame({
       <nav aria-label="Unterlagen und Rechtliches" className="flex flex-wrap items-center gap-x-5 gap-y-1">
         <Link href="/methodik" className={footerLink}>Methodik</Link>
         <Link href="/methodik/referenz" className={footerLink}>Referenz</Link>
+        <a href={`${hubOrigin}/feedback`} className={footerLink}>Feedback geben</a>
         <a href={`${hubOrigin}/kontakt`} className={footerLink}>Kontakt</a>
         <a href={`${hubOrigin}/impressum`} className={footerLink}>Impressum</a>
         <a href={`${hubOrigin}/datenschutz`} className={footerLink}>Datenschutz</a>
@@ -247,6 +251,11 @@ function ShellFrame({
             >
               Referenz
             </Link>
+          </li>
+          <li>
+            <a href={`${hubOrigin}/feedback`} className={footerLink}>
+              Feedback geben
+            </a>
           </li>
         </ul>
       </nav>

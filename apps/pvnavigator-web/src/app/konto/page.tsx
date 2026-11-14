@@ -9,6 +9,7 @@ import { isAdminSession } from "@/lib/admin";
 import { INVOICE_HISTORY_HINTS } from "@/lib/billing/invoicePortal";
 import { CALCULATION_LIST_SELECT, type CalculationListRow } from "@/lib/calculationsList";
 import { getServerUser } from "@/lib/auth";
+import { loadOwnFeedback } from "@/lib/feedbackServer";
 import { readOwnTrustpilotInvitation } from "@/lib/trustpilotInvitationServer";
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
@@ -65,7 +66,7 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
       if (result.data.length < 500) return {data: rows, error: null};
     }
   };
-  const [calculationsResult, profileResult, customerResult, invoiceResult, isAdmin, trustpilot] = await Promise.all([
+  const [calculationsResult, profileResult, customerResult, invoiceResult, isAdmin, trustpilot, feedback] = await Promise.all([
     loadCalculations(),
     supabase.from("profiles").select("account_kind, given_name, family_name, company_name").eq("id", user.id).maybeSingle(),
     supabase.from("stripe_customers").select("user_id").maybeSingle(),
@@ -74,6 +75,7 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
       : Promise.resolve({ data: [] as { stripe_invoice_id: string }[], error: null }),
     isAdminSession(supabase),
     readOwnTrustpilotInvitation(),
+    loadOwnFeedback(),
   ]);
 
   if (calculationsResult.error) {
@@ -98,5 +100,5 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
 
   const profile = profileResult.error ? emptyAccountProfile() : accountProfileFromRow(profileResult.data);
 
-  return <AccountDashboard email={user.email} calculations={calculations} hasInvoices={hasInvoices} invoiceHint={invoiceHint} calculateUrl={calculateUrl} speicherOrigin={speicherOrigin} loadError={Boolean(calculationsResult.error)} isAdmin={isAdmin} profile={profile} profileStatus={profileStatus} trustpilotShow={trustpilot.show} trustpilotRecordShown={trustpilot.recordShown} />;
+  return <AccountDashboard email={user.email} calculations={calculations} hasInvoices={hasInvoices} invoiceHint={invoiceHint} calculateUrl={calculateUrl} speicherOrigin={speicherOrigin} loadError={Boolean(calculationsResult.error)} isAdmin={isAdmin} profile={profile} profileStatus={profileStatus} trustpilotShow={trustpilot.show} trustpilotRecordShown={trustpilot.recordShown} feedbackThreads={feedback.status === "ok" ? feedback.data.threads : []} feedbackUnread={feedback.status === "ok" ? feedback.data.unread : 0} feedbackError={feedback.status !== "ok"} />;
 }

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { FeedbackAccountSection } from "@/components/feedback/FeedbackAccountSection";
+import type { FeedbackThreadSummary } from "@/lib/feedback";
 import { AccessCard } from "./AccessCard";
 import { InvoiceHistoryCard } from "./InvoiceHistoryCard";
 import { ProfileForm } from "./ProfileForm";
@@ -20,8 +22,11 @@ type Props = {
   profileStatus?: "saved" | "invalid" | null;
   trustpilotShow?: boolean;
   trustpilotRecordShown?: boolean;
+  feedbackThreads?: FeedbackThreadSummary[];
+  feedbackUnread?: number;
+  feedbackError?: boolean;
 };
-export function AccountDashboard({email, calculations, hasInvoices, invoiceHint, calculateUrl, loadError, isAdmin, profile, profileStatus, trustpilotShow = false, trustpilotRecordShown = false}: Props) {
+export function AccountDashboard({email, calculations, hasInvoices, invoiceHint, calculateUrl, loadError, isAdmin, profile, profileStatus, trustpilotShow = false, trustpilotRecordShown = false, feedbackThreads = [], feedbackUnread = 0, feedbackError = false}: Props) {
  return <div className="hub-workspace">
    <header className="hub-intro">
      <div><p className="hub-kicker">PVNAVIGATOR_ / Arbeitsbereich</p><h1>Mein Konto</h1><p className="hub-subtitle">Ihre gespeicherten Berechnungen und Berichte.</p></div>
@@ -40,6 +45,7 @@ export function AccountDashboard({email, calculations, hasInvoices, invoiceHint,
        <section aria-label="Zugang"><AccessCard/></section>
        <section className="hub-panel hub-account" aria-labelledby="account-heading"><h2 id="account-heading" className="hub-kicker">Kontoinformationen</h2><p className="hub-email">{email}</p><p>Angemeldetes PVNAVIGATOR_ Konto</p><Link href="/" className="hub-text-link">Zur Plattformübersicht →</Link></section>
        {profile ? <section className="hub-panel hub-account" aria-labelledby="profile-heading"><h2 id="profile-heading" className="hub-kicker">Profil</h2><ProfileForm profile={profile} status={profileStatus} /></section> : null}
+       <FeedbackAccountSection threads={feedbackThreads} unread={feedbackUnread} error={feedbackError} />
        {hasInvoices && <section aria-labelledby="invoices-heading"><InvoiceHistoryCard/></section>}
        {/* Convenience only: /admin checks the role itself on every request. */}
        {isAdmin && <section className="hub-panel hub-account" aria-labelledby="administration-heading"><h2 id="administration-heading" className="hub-kicker">Administration</h2><p className="mt-2.5">Geschützter Bereich für die Verwaltung von PVNAVIGATOR_.</p><Link href="/admin" className="hub-text-link">Administration öffnen →</Link></section>}
