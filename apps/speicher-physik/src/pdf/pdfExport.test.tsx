@@ -27,6 +27,7 @@ import {
   privateUseTiles,
 } from "./privateUseMarking";
 import { renderSpeicherPdf } from "./renderSpeicherPdf";
+import { coverLines } from "./reportDocument";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const OTHER_USER_ID = "33333333-3333-4333-8333-333333333333";
@@ -471,6 +472,63 @@ describe("renderSpeicherPdf", () => {
 
     expect((await PDFDocument.load(heatPumpPdf)).getPageCount()).toBe(6);
     expect((await PDFDocument.load(complexPdf)).getPageCount()).toBe(6);
+    expect(complexModel.attribution).toBeNull();
+
+    const companyComplex = historyRow();
+    companyComplex.input = {
+      ...(complexRow.input as Record<string, unknown>),
+      reportAttribution: {
+        companyName: "Analytical Engines GmbH",
+        clientGivenName: "Grace",
+        clientFamilyName: "Hopper",
+      },
+    };
+    companyComplex.result_snapshot = complexRow.result_snapshot;
+    const companyComplexModel = buildSpeicherPdfModel(companyComplex);
+    expect(coverLines(companyComplexModel)).toContain("Erstellt von: Analytical Engines GmbH");
+    expect(coverLines(companyComplexModel)).toContain("Erstellt für: Grace Hopper");
+    const companyComplexPdf = await renderSpeicherPdf(companyComplexModel);
+    expect((await PDFDocument.load(companyComplexPdf)).getPageCount()).toBe(6);
+  }, 30000);
+
+  it("prints the frozen company lines on a six-page report and omits them otherwise", async () => {
+    const plain = buildSpeicherPdfModel(historyRow());
+    expect(plain.attribution).toBeNull();
+    expect(coverLines(plain)).toEqual([
+      "Ihre Speicher-Analyse",
+      plain.address,
+      `Gespeichert am ${plain.savedAt}`,
+    ]);
+    const plainPdf = await renderSpeicherPdf(plain);
+
+    const companyRow = historyRow();
+    const stored = companyRow.input as Record<string, unknown>;
+    companyRow.input = {
+      ...stored,
+      reportAttribution: {
+        companyName: "Bombe Ltd",
+        clientGivenName: "Grace",
+        clientFamilyName: "Hopper",
+      },
+    };
+    const company = buildSpeicherPdfModel(companyRow);
+    expect(company.attribution).toEqual({
+      companyName: "Bombe Ltd",
+      clientName: "Grace Hopper",
+    });
+    expect(coverLines(company)).toEqual([
+      "Ihre Speicher-Analyse",
+      company.address,
+      "Erstellt von: Bombe Ltd",
+      "Erstellt für: Grace Hopper",
+      `Gespeichert am ${company.savedAt}`,
+    ]);
+    const companyPdf = await renderSpeicherPdf(company);
+    expect((await PDFDocument.load(companyPdf)).getPageCount()).toBe(
+      (await PDFDocument.load(plainPdf)).getPageCount(),
+    );
+    expect(inflatePdfStreams(companyPdf)).toContain("speicher.pvnavigator.de");
+    expect(inflatePdfStreams(plainPdf)).not.toContain("Erstellt von:");
   }, 30000);
 });
 

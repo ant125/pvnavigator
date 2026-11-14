@@ -15,6 +15,11 @@ import {
   parseCalculationSlot,
 } from "@/lib/calculationGuard";
 import { persistCompletedCalculation } from "@/lib/persistCompletedCalculation";
+import {
+  freezeReportAttribution,
+  parseReportClient,
+  type FrozenReportAttribution,
+} from "@/lib/reportAttribution";
 import { withValidatedAnnualConsumption } from "@/app/(speicher)/utils/annualConsumption";
 
 import { getServerUser } from "@/lib/auth";
@@ -26,6 +31,23 @@ export const runtime = "nodejs";
 
 const UNAUTHENTICATED_MESSAGE =
   "Bitte melden Sie sich an, um die Berechnung zu starten.";
+const CLIENT_NAME_MESSAGE =
+  "Bitte geben Sie Vorname und Nachname des Kunden ein.";
+const COMPANY_PROFILE_MESSAGE =
+  "Bitte ergänzen Sie den Firmennamen in Ihrem PVNAVIGATOR_-Profil.";
+
+function withoutReportClient(params: unknown): {
+  calculation: unknown;
+  client: ReturnType<typeof parseReportClient>;
+} {
+  if (!params || typeof params !== "object" || Array.isArray(params)) {
+    return { calculation: params, client: null };
+  }
+  const record = { ...(params as Record<string, unknown>) };
+  const client = parseReportClient(record.reportClient);
+  delete record.reportClient;
+  return { calculation: record, client };
+}
 
 type StreamMessage =
   | { type: "progress"; event: CalculationProgressEvent }
@@ -65,11 +87,12 @@ export async function POST(request: Request): Promise<Response> {
       { status: 400 }
     );
   }
+  const { calculation, client } = withoutReportClient(params);
 
   let input: Parameters<typeof runHouseholdCalculation>[0];
   try {
     input = withValidatedAnnualConsumption(
-      params as Parameters<typeof runHouseholdCalculation>[0]
+      calculation as Parameters<typeof runHouseholdCalculation>[0]
     );
   } catch (error) {
     return Response.json(
@@ -85,6 +108,32 @@ export async function POST(request: Request): Promise<Response> {
   // address fails here, before any physics run; nothing is pinned or counted.
   const address = calculationAddress(input);
   const supabase = await createServerSupabaseClient();
+  const profile = await supabase
+    .from("profiles")
+    .select("account_kind, company_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile.error) {
+    console.error("Failed to load profile for the report");
+    return Response.json(
+      { message: ACCESS_UNAVAILABLE_MESSAGE, code: SERVICE_UNAVAILABLE_CODE },
+      { status: 503 }
+    );
+  }
+  const reportAttribution: FrozenReportAttribution | null = freezeReportAttribution({
+    accountKind: profile.data?.account_kind,
+    companyName: profile.data?.company_name,
+    client,
+  });
+  if (profile.data?.account_kind === "unternehmen" && !reportAttribution) {
+    const company = typeof profile.data.company_name === "string"
+      ? profile.data.company_name.trim()
+      : "";
+    return Response.json(
+      { message: company ? CLIENT_NAME_MESSAGE : COMPANY_PROFILE_MESSAGE },
+      { status: 400 }
+    );
+  }
   const access = await checkCalculationAccess(supabase, address);
   if (access.status === "unavailable") {
     return Response.json(
@@ -183,6 +232,7 @@ export async function POST(request: Request): Promise<Response> {
             input,
             payload,
             address,
+            reportAttribution,
           });
           if (recorded.status === "denied") {
             // A parallel request settled the decision first (e.g. pinned a

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { BatteryMedium } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { BatteryMedium } from "lucide-react";
+import { AccountKindProvider, type StoredAccountKind } from "../accountKind";
 import type { ReactNode } from "react";
 import { getHubOrigin } from "@pv-auth/session";
 
@@ -112,6 +113,7 @@ function HeaderCta() {
 type ShellFrameProps = Omit<HeaderAccountProps, "compact"> & {
   children: ReactNode;
   profileIncomplete?: boolean;
+  accountKind?: StoredAccountKind;
 };
 
 function ShellFrame({
@@ -339,20 +341,23 @@ export function SpeicherShell({
   accountHref,
   signOutHref,
   profileIncomplete,
+  accountKind = null,
 }: ShellFrameProps) {
   return (
-    <HeaderCtaProvider>
-      <ShellFrame
-        authenticated={authenticated}
-        userEmail={userEmail}
-        loginHref={loginHref}
-        signupHref={signupHref}
-        accountHref={accountHref}
-        signOutHref={signOutHref}
-        profileIncomplete={profileIncomplete}
-      >
-        {children}
-      </ShellFrame>
-    </HeaderCtaProvider>
+    <AccountKindProvider kind={accountKind}>
+      <HeaderCtaProvider>
+        <ShellFrame
+          authenticated={authenticated}
+          userEmail={userEmail}
+          loginHref={loginHref}
+          signupHref={signupHref}
+          accountHref={accountHref}
+          signOutHref={signOutHref}
+          profileIncomplete={profileIncomplete}
+        >
+          {children}
+        </ShellFrame>
+      </HeaderCtaProvider>
+    </AccountKindProvider>
   );
 }

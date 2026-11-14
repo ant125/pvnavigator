@@ -53,6 +53,13 @@ export interface SpeicherInput {
 
   /** City / municipality */
   city: string;
+
+  /**
+   * Client named on a company PDF. Collected in the form and stored with the
+   * calculation. Not used by the physics model.
+   */
+  clientGivenName?: string;
+  clientFamilyName?: string;
   
   /** Roof azimuth in whole degrees clockwise from North, 0–359 (0° = N, 90° = E, 180° = S, 270° = W). */
   azimuth: number;

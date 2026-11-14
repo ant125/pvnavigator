@@ -50,6 +50,8 @@ describe("hydrateSavedCalculationInput", () => {
     expect(hydrated.formData.houseNumber).toBe("1");
     expect(hydrated.formData.postalCode).toBe("80331");
     expect(hydrated.formData.city).toBe("München");
+    expect(hydrated.formData.clientGivenName).toBeUndefined();
+    expect(hydrated.missing.some((gap) => gap.id.startsWith("client"))).toBe(false);
     expect(hydrated.formData.annualConsumptionKwh).toBe(4500);
     expect(hydrated.formData.pvSurfaces).toEqual(completeForm.pvSurfaces);
     expect(hydrated.kwpInputStrings).toEqual(["8", "2.5"]);
@@ -62,6 +64,22 @@ describe("hydrateSavedCalculationInput", () => {
     expect(hydrated.formData.backupReserveKwh).toBe(2);
     expect(hydrated.totalKwPConfigured).toBe(10.5);
     expect(mapEvFormToCalculationInput(hydrated.formData)).toEqual(stored.ev);
+  });
+
+  it("restores a frozen client name without treating older calculations as incomplete", () => {
+    const stored = {
+      ...buildHouseholdCalculationInput(completeForm),
+      reportAttribution: {
+        companyName: "Bombe Ltd",
+        clientGivenName: "Grace",
+        clientFamilyName: "Hopper",
+      },
+    };
+    const hydrated = hydrateSavedCalculationInput(stored);
+    expect(hydrated.missing).toEqual([]);
+    expect(hydrated.formData.clientGivenName).toBe("Grace");
+    expect(hydrated.formData.clientFamilyName).toBe("Hopper");
+    expect(buildHouseholdCalculationInput(hydrated.formData)).not.toHaveProperty("reportAttribution");
   });
 
   it("keeps an explicit disabled heat pump, EV, and reserve", () => {

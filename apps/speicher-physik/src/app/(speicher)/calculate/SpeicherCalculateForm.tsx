@@ -117,6 +117,8 @@ export const FOCUS_FIELD_ORDER = [
   "city",
   "street",
   "houseNumber",
+  "clientGivenName",
+  "clientFamilyName",
   "annualConsumptionKwh",
 ] as const;
 
@@ -161,6 +163,8 @@ export type SpeicherCalculateFormProps = {
   unrecordedGapIds?: readonly string[];
   errorBoxRef: RefObject<HTMLDivElement | null>;
   fieldInputRefs: CalculateFormFieldRefs;
+  /** Vorname and Nachname of the client, only for an Unternehmen account. */
+  collectClientName?: boolean;
 };
 
 export function SpeicherCalculateForm({
@@ -186,6 +190,7 @@ export function SpeicherCalculateForm({
   unrecordedGapIds = [],
   errorBoxRef,
   fieldInputRefs,
+  collectClientName = false,
 }: SpeicherCalculateFormProps) {
   const surfaces = surfacesOrDefault(formData);
   const [exactAnglesOpen, setExactAnglesOpen] = useState<boolean[]>(() =>
@@ -456,6 +461,64 @@ export function SpeicherCalculateForm({
               )}
             </div>
           </div>
+          {collectClientName ? (
+            <div className="grid min-w-0 grid-cols-1 gap-x-2 gap-y-3 @min-[16rem]:grid-cols-2">
+              <div className={`${FORM_FIELD} min-w-0`}>
+                <label className={FORM_LABEL} htmlFor="clientGivenName">
+                  Kunde, Vorname *
+                </label>
+                <input
+                  ref={fieldInputRefs.clientGivenName}
+                  id="clientGivenName"
+                  type="text"
+                  autoComplete="off"
+                  maxLength={80}
+                  value={formData.clientGivenName ?? ""}
+                  onChange={(e) => {
+                    clearFieldError("clientGivenName");
+                    setFormData((prev) => ({ ...prev, clientGivenName: e.target.value }));
+                  }}
+                  aria-invalid={fieldErrors.clientGivenName ? true : undefined}
+                  aria-describedby={
+                    fieldErrors.clientGivenName ? "clientGivenName-error" : undefined
+                  }
+                  className={fieldInputClassName(!!fieldErrors.clientGivenName)}
+                />
+                {fieldErrors.clientGivenName ? (
+                  <p id="clientGivenName-error" className="text-xs text-danger">
+                    {fieldErrors.clientGivenName}
+                  </p>
+                ) : null}
+              </div>
+              <div className={`${FORM_FIELD} min-w-0`}>
+                <label className={FORM_LABEL} htmlFor="clientFamilyName">
+                  Kunde, Nachname *
+                </label>
+                <input
+                  ref={fieldInputRefs.clientFamilyName}
+                  id="clientFamilyName"
+                  type="text"
+                  autoComplete="off"
+                  maxLength={80}
+                  value={formData.clientFamilyName ?? ""}
+                  onChange={(e) => {
+                    clearFieldError("clientFamilyName");
+                    setFormData((prev) => ({ ...prev, clientFamilyName: e.target.value }));
+                  }}
+                  aria-invalid={fieldErrors.clientFamilyName ? true : undefined}
+                  aria-describedby={
+                    fieldErrors.clientFamilyName ? "clientFamilyName-error" : undefined
+                  }
+                  className={fieldInputClassName(!!fieldErrors.clientFamilyName)}
+                />
+                {fieldErrors.clientFamilyName ? (
+                  <p id="clientFamilyName-error" className="text-xs text-danger">
+                    {fieldErrors.clientFamilyName}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
           </div>
         </FormSection>
 

@@ -45,6 +45,11 @@ import { buildSpeicherBenefitComparison } from "@/lib/speicherBenefitComparison"
 import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
 
 import { buildFactChips, buildInputRows, buildSceneConfig, type InputFacts } from "./inputFacts";
+import {
+  reportAttributionFromStoredInput,
+  reportClientLabel,
+} from "@/lib/reportAttribution";
+
 import { PDF_HOUSE_IMAGE } from "./pdfAssets";
 import type { PdfModel } from "./reportDocument";
 
@@ -488,11 +493,18 @@ export function buildSpeicherPdfModel(row: CalculationHistoryRow): PdfModel {
   );
   const sceneConfig = buildSceneConfig(inputFacts);
 
+  const attribution = reportAttributionFromStoredInput(input);
   return {
     savedAt: savedAtLabel(row.created_at),
     batteryModelVersion: row.battery_model_version,
     privateUse: reportRequiresPrivateUseMarking(row.access_tier ?? null),
     address: displayAddress || PLACEHOLDER,
+    attribution: attribution
+      ? {
+          companyName: attribution.companyName,
+          clientName: reportClientLabel(attribution),
+        }
+      : null,
     technical: {
       value: formatQuantityDe(recommendedTechnicalSize),
       unit: "kWh",

@@ -166,4 +166,28 @@ describe("mapCompletedCalculation", () => {
     expect(presentation.recommendedTechnicalSize).toBeGreaterThanOrEqual(0);
     expect(presentation.recommendedPlanningSize).toBeGreaterThanOrEqual(0);
   });
+
+  it("freezes a company attribution without changing the physics input", () => {
+    const plain = mapCompletedCalculation({ userId: USER_ID, input, payload });
+    const attributed = mapCompletedCalculation({
+      userId: USER_ID,
+      input,
+      payload,
+      reportAttribution: {
+        companyName: "Bombe Ltd",
+        clientGivenName: "Grace",
+        clientFamilyName: "Hopper",
+      },
+    });
+    expect(plain.input).not.toHaveProperty("reportAttribution");
+    expect(attributed.input.reportAttribution).toEqual({
+      companyName: "Bombe Ltd",
+      clientGivenName: "Grace",
+      clientFamilyName: "Hopper",
+    });
+    const physics = { ...attributed.input };
+    delete physics.reportAttribution;
+    expect(physics).toEqual(plain.input);
+    expect(attributed.result_snapshot).toEqual(plain.result_snapshot);
+  });
 });

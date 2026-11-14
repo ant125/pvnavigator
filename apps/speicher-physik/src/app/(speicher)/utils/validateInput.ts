@@ -26,6 +26,8 @@ export const SPEICHER_FIELD_INLINE_MESSAGES = {
   city: "Bitte geben Sie einen Ort ein.",
   street: "Bitte geben Sie eine Straße ein.",
   houseNumber: "Bitte geben Sie eine Hausnummer ein.",
+  clientGivenName: "Bitte geben Sie den Vornamen des Kunden ein.",
+  clientFamilyName: "Bitte geben Sie den Nachnamen des Kunden ein.",
   annualConsumptionKwh: ANNUAL_CONSUMPTION_RANGE_MESSAGE,
   heatPumpTechnology: "Bitte wählen Sie den Typ der Wärmepumpe.",
   heatPumpDhwService:
@@ -241,6 +243,44 @@ export function validateAddressFields(input: {
     fieldErrors.houseNumber = SPEICHER_FIELD_INLINE_MESSAGES.houseNumber;
   }
 
+  return { errors, fieldErrors };
+}
+
+const CLIENT_NAME_LIMIT = 80;
+const CLIENT_NAME_CONTROL = /[\u0000-\u001F\u007F]/;
+
+function clientNameError(value: string | undefined, emptyMessage: string): string | null {
+  const name = (value ?? "").trim().replace(/\s+/g, " ");
+  if (!name) return emptyMessage;
+  if (name.length > CLIENT_NAME_LIMIT || CLIENT_NAME_CONTROL.test(name)) {
+    return `Bitte kürzen Sie den Namen auf höchstens ${CLIENT_NAME_LIMIT} Zeichen.`;
+  }
+  return null;
+}
+
+/** Required only for an Unternehmen account. Private calculations skip it. */
+export function validateClientNameFields(input: Partial<SpeicherInput>): {
+  errors: string[];
+  fieldErrors: SpeicherFieldErrors;
+} {
+  const errors: string[] = [];
+  const fieldErrors: SpeicherFieldErrors = {};
+  const given = clientNameError(
+    input.clientGivenName,
+    SPEICHER_FIELD_INLINE_MESSAGES.clientGivenName,
+  );
+  const family = clientNameError(
+    input.clientFamilyName,
+    SPEICHER_FIELD_INLINE_MESSAGES.clientFamilyName,
+  );
+  if (given) {
+    errors.push(given);
+    fieldErrors.clientGivenName = given;
+  }
+  if (family) {
+    errors.push(family);
+    fieldErrors.clientFamilyName = family;
+  }
   return { errors, fieldErrors };
 }
 

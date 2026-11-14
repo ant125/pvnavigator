@@ -9,6 +9,7 @@ import {
 } from "@pv-auth/session";
 
 import { SpeicherShell } from "./(speicher)/components/SpeicherShell";
+import type { StoredAccountKind } from "./(speicher)/accountKind";
 import { getServerUser } from "@/lib/auth";
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
@@ -53,10 +54,13 @@ export default async function RootLayout({
 }>) {
   const user = await getServerUser();
   let profileIncomplete = false;
+  let accountKind: StoredAccountKind = null;
   if (user && isSupabaseConfigured()) {
     const supabase = await createServerSupabaseClient();
     const profile = await supabase.from("profiles").select("account_kind").eq("id", user.id).maybeSingle();
-    profileIncomplete = !profile.error && profile.data?.account_kind !== "privat" && profile.data?.account_kind !== "unternehmen";
+    const kind = profile.data?.account_kind;
+    accountKind = !profile.error && (kind === "privat" || kind === "unternehmen") ? kind : null;
+    profileIncomplete = !profile.error && accountKind === null;
   }
 
   return (
@@ -73,6 +77,7 @@ export default async function RootLayout({
           accountHref={getHubKontoUrl()}
           signOutHref={getHubSignOutUrl({ returnTo: AUTH_RETURN_SPEICHER })}
           profileIncomplete={profileIncomplete}
+          accountKind={accountKind}
         >
           {children}
         </SpeicherShell>

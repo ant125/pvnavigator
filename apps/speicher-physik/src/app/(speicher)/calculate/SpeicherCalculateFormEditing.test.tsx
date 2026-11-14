@@ -35,6 +35,8 @@ function emptyRefs(): CalculateFormFieldRefs {
     city: createRef<HTMLInputElement>(),
     street: createRef<HTMLInputElement>(),
     houseNumber: createRef<HTMLInputElement>(),
+    clientGivenName: createRef<HTMLInputElement>(),
+    clientFamilyName: createRef<HTMLInputElement>(),
     annualConsumptionKwh: createRef<HTMLInputElement>(),
   };
 }

@@ -6,6 +6,7 @@ import {
   type RecordOutcome,
 } from "@/lib/calculationAccess";
 import { deriveSpeicherBusinessMetrics } from "@/lib/deriveSpeicherBusinessMetrics";
+import type { FrozenReportAttribution } from "@/lib/reportAttribution";
 
 export const SPEICHER_GRENZE_PRODUCT_KEY = "speicher_grenze";
 export const SPEICHER_GRENZE_INPUT_SCHEMA_VERSION = "speicher-grenze-input/v1";
@@ -74,8 +75,9 @@ export function mapCompletedCalculation(args: {
   userId: string;
   input: HouseholdCalculationInput;
   payload: HouseholdCalculationPayload;
+  reportAttribution?: FrozenReportAttribution | null;
 }): CompletedCalculationInsert {
-  const { userId, input, payload } = args;
+  const { userId, input, payload, reportAttribution = null } = args;
   const summaryAddress = payload.displayAddress.trim() || null;
   const presentation = freezeSpeicherPresentation({ input, payload });
 
@@ -100,6 +102,7 @@ export function mapCompletedCalculation(args: {
       ev: input.ev,
       backupReserveKwh: input.backupReserveKwh,
       displayAddress: payload.displayAddress,
+      ...(reportAttribution ? { reportAttribution } : {}),
     }),
     result_snapshot: jsonClone({
       verifiedResult: payload.verifiedResult,
@@ -132,6 +135,7 @@ export async function persistCompletedCalculation(args: {
   input: HouseholdCalculationInput;
   payload: HouseholdCalculationPayload;
   address: CalculationAddress;
+  reportAttribution?: FrozenReportAttribution | null;
 }): Promise<RecordOutcome> {
   try {
     const { createServerSupabaseClient } = await import("@/lib/supabase/server");

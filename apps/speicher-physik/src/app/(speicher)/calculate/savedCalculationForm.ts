@@ -362,6 +362,11 @@ export function hydrateSavedCalculationInput(
   else formData.postalCode = postalCode;
   if (city === undefined) missing.push(gap("city", "Ort"));
   else formData.city = city;
+  const attribution = isRecord(source.reportAttribution) ? source.reportAttribution : null;
+  const clientGivenName = attribution ? asStoredString(attribution.clientGivenName) : undefined;
+  const clientFamilyName = attribution ? asStoredString(attribution.clientFamilyName) : undefined;
+  if (clientGivenName) formData.clientGivenName = clientGivenName;
+  if (clientFamilyName) formData.clientFamilyName = clientFamilyName;
 
   if ("annualConsumptionKWh" in source || "annualConsumptionKwh" in source) {
     formData.annualConsumptionKwh = requireFinite(

@@ -221,10 +221,10 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontFamily: "Inter",
-    fontSize: 22,
+    fontSize: 15,
     fontWeight: 700,
-    letterSpacing: -0.3,
-    lineHeight: 1.12,
+    letterSpacing: -0.2,
+    lineHeight: 1.15,
     color: ink,
   },
   heroScene: {
@@ -721,6 +721,8 @@ export type PdfModel = {
    */
   privateUse: boolean;
   address: string;
+  /** Frozen at save time. Absent for private accounts and older calculations. */
+  attribution: { companyName: string; clientName: string } | null;
   technical: { value: string; unit: string; caption: string };
   planning: { value: string; unit: string; caption: string };
   robustnessOverviewTitle: string;
@@ -1522,6 +1524,16 @@ function PrivateUseMarking() {
 // Report
 // ---------------------------------------------------------------------------
 
+export function coverLines(model: PdfModel): string[] {
+  const lines = ["Ihre Speicher-Analyse", model.address];
+  if (model.attribution) {
+    lines.push(`Erstellt von: ${model.attribution.companyName}`);
+    lines.push(`Erstellt für: ${model.attribution.clientName}`);
+  }
+  lines.push(`Gespeichert am ${model.savedAt}`);
+  return lines;
+}
+
 export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
   const balanceRows = [...model.balance.rowsLeft, ...model.balance.rowsRight];
   const chips = paginateChips(model.chips);
@@ -1557,9 +1569,27 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
         <View wrap={false}>
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
-              <Text style={styles.heroTitle}>Ihr Haus.{"\n"}Ihr Verbrauch.{"\n"}Ihre Speichergröße.</Text>
-              <Text style={[styles.address, { marginTop: 10 }]}>{model.address}</Text>
-              <Text style={[styles.meta, { marginTop: 3 }]}>Gespeichert am {model.savedAt}</Text>
+              {coverLines(model).map((line, index) => {
+                const kind = index === 0
+                  ? "title"
+                  : index === 1
+                    ? "address"
+                    : line.startsWith("Erstellt von:")
+                      ? "company"
+                      : line.startsWith("Erstellt für:")
+                        ? "client"
+                        : "date";
+                const style = kind === "title"
+                  ? styles.heroTitle
+                  : kind === "address"
+                    ? [styles.address, { marginTop: 8 }]
+                    : [styles.meta, { marginTop: kind === "company" ? 4 : kind === "date" ? 3 : 1 }];
+                return (
+                  <Text key={`${kind}-${index}`} style={style}>
+                    {line}
+                  </Text>
+                );
+              })}
             </View>
             <View style={styles.heroScene}>
               <Scene scene={model.scene} width={CONTENT_W * 0.42} />

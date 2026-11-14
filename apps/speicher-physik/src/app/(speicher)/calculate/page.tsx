@@ -14,6 +14,7 @@ import type { ReportAccessKind } from "@pv-access/core";
 import { SpeicherInput } from "../types/speicher";
 import {
   validateInput,
+  validateClientNameFields,
   type SpeicherFieldErrors,
   type SpeicherFieldErrorKey,
 } from "../utils/validateInput";
@@ -73,6 +74,7 @@ import {
   savedInputGapIsOpen,
   type SavedCalculationView,
 } from "./savedCalculationForm";
+import { useStoredAccountKind } from "../accountKind";
 import type { FrozenSpeicherPresentation } from "@/lib/persistCompletedCalculation";
 
 type Step = "input" | "calculating" | "results";
@@ -87,6 +89,7 @@ export default function SpeicherCalculatePage({
   saved?: SavedCalculationView | null;
 }) {
   const router = useRouter();
+  const collectClientName = useStoredAccountKind() === "unternehmen";
   const savedForm = saved?.hydrated.formData;
   const [step, setStep] = useState<Step>(saved ? "results" : "input");
   const [editing, setEditing] = useState(false);
@@ -178,6 +181,8 @@ export default function SpeicherCalculatePage({
   const cityInputRef = useRef<HTMLInputElement | null>(null);
   const streetInputRef = useRef<HTMLInputElement | null>(null);
   const houseNumberInputRef = useRef<HTMLInputElement | null>(null);
+  const clientGivenNameInputRef = useRef<HTMLInputElement | null>(null);
+  const clientFamilyNameInputRef = useRef<HTMLInputElement | null>(null);
   const annualConsumptionInputRef = useRef<HTMLInputElement | null>(null);
 
   const fieldInputRefs: Record<
@@ -188,6 +193,8 @@ export default function SpeicherCalculatePage({
     city: cityInputRef,
     street: streetInputRef,
     houseNumber: houseNumberInputRef,
+    clientGivenName: clientGivenNameInputRef,
+    clientFamilyName: clientFamilyNameInputRef,
     annualConsumptionKwh: annualConsumptionInputRef,
   };
 
@@ -312,10 +319,13 @@ export default function SpeicherCalculatePage({
     if (step === "calculating" || submitInFlightRef.current) return;
 
     const validation = validateInput(formData);
-    if (!validation.isValid) {
+    const clientValidation = collectClientName
+      ? validateClientNameFields(formData)
+      : { errors: [], fieldErrors: {} };
+    if (!validation.isValid || clientValidation.errors.length > 0) {
       pendingScrollToRunRef.current = false;
-      setErrors(validation.errors);
-      setFieldErrors(validation.fieldErrors);
+      setErrors([...validation.errors, ...clientValidation.errors]);
+      setFieldErrors({ ...validation.fieldErrors, ...clientValidation.fieldErrors });
       return;
     }
 
@@ -344,7 +354,15 @@ export default function SpeicherCalculatePage({
       const calculationInput = buildHouseholdCalculationInput(formData);
 
       const response = await runHouseholdCalculationStream(
-        calculationInput,
+        collectClientName
+          ? {
+              ...calculationInput,
+              reportClient: {
+                givenName: formData.clientGivenName ?? "",
+                familyName: formData.clientFamilyName ?? "",
+              },
+            }
+          : calculationInput,
         (event) => {
           setCalculationProgress((prev) => applyCalculationProgress(prev, event));
         }
@@ -646,6 +664,7 @@ export default function SpeicherCalculatePage({
             }
             errorBoxRef={errorBoxRef}
             fieldInputRefs={fieldInputRefs}
+            collectClientName={collectClientName}
           />
         }
         main={main}

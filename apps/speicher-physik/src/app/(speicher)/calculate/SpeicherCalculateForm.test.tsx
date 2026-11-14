@@ -24,6 +24,8 @@ function emptyRefs(): CalculateFormFieldRefs {
     city: createRef<HTMLInputElement>(),
     street: createRef<HTMLInputElement>(),
     houseNumber: createRef<HTMLInputElement>(),
+    clientGivenName: createRef<HTMLInputElement>(),
+    clientFamilyName: createRef<HTMLInputElement>(),
     annualConsumptionKwh: createRef<HTMLInputElement>(),
   };
 }
@@ -37,6 +39,7 @@ function renderForm({
   azimuthInputStrings,
   tiltInputStrings,
   formOverrides = {},
+  collectClientName = false,
 }: {
   surfaces?: PvSurfaceInput[];
   locked?: boolean;
@@ -46,6 +49,7 @@ function renderForm({
   azimuthInputStrings?: string[];
   tiltInputStrings?: string[];
   formOverrides?: Partial<SpeicherInput>;
+  collectClientName?: boolean;
 } = {}) {
   const formData: Partial<SpeicherInput> = {
     pvSurfaces: surfaces,
@@ -82,6 +86,7 @@ function renderForm({
       onSubmit={() => {}}
       errorBoxRef={createRef<HTMLDivElement>() as RefObject<HTMLDivElement | null>}
       fieldInputRefs={emptyRefs()}
+      collectClientName={collectClientName}
     />
   );
 }
@@ -126,7 +131,17 @@ describe("SpeicherCalculateForm C1+C2", () => {
     const html = renderForm();
     expect(html.indexOf("Standort")).toBeGreaterThan(-1);
     expect(html.indexOf("Standort")).toBeLessThan(html.indexOf("PV-Anlage"));
+    expect(html).not.toContain("Kunde, Vorname");
     expect(html.indexOf("PV-Anlage")).toBeLessThan(html.indexOf("Hausverbrauch"));
+  });
+
+  it("asks a company for the client name directly under the address", () => {
+    const html = renderForm({ collectClientName: true });
+    expect(html.indexOf("Standort")).toBeLessThan(html.indexOf("Kunde, Vorname"));
+    expect(html.indexOf("Kunde, Vorname")).toBeLessThan(html.indexOf("Kunde, Nachname"));
+    expect(html.indexOf("Kunde, Nachname")).toBeLessThan(html.indexOf("PV-Anlage"));
+    expect(html).toContain('id="clientGivenName"');
+    expect(html).toContain('id="clientFamilyName"');
   });
 
   it("keeps the existing address focus order", () => {
@@ -135,6 +150,8 @@ describe("SpeicherCalculateForm C1+C2", () => {
       "city",
       "street",
       "houseNumber",
+      "clientGivenName",
+      "clientFamilyName",
       "annualConsumptionKwh",
     ]);
   });
