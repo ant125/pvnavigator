@@ -156,6 +156,10 @@ RLS is unchanged; authenticated accounts receive `UPDATE` on these two columns
 only. `public.admin_dashboard()` keeps its existing keys and adds
 `trustpilot_shown` and `trustpilot_clicked`. Deleted accounts are excluded.
 
+Mein Konto shows the invitation after one saved calculation for a Privatperson
+and after three for an Unternehmen. The count is the account's saved
+calculations. The SPEICHERGRENZE report does not show it. Existing stamps stay.
+
 ```bash
 docker exec -i supabase_db_pvnavigator-local psql -U postgres -d postgres \
   -v ON_ERROR_STOP=1 < supabase/tests/trustpilot_invitation.sql

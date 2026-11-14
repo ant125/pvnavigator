@@ -3,6 +3,7 @@ import { AccessCard } from "./AccessCard";
 import { InvoiceHistoryCard } from "./InvoiceHistoryCard";
 import { ProfileForm } from "./ProfileForm";
 import { CalculationsEmptyState, CalculationsHistory } from "./CalculationsHistory";
+import { TrustpilotInvitation } from "./TrustpilotInvitation";
 import type { AccountProfileView } from "@/lib/accountProfile";
 import type { CalculationListRow } from "@/lib/calculationsList";
 
@@ -17,8 +18,10 @@ type Props = {
   isAdmin?: boolean;
   profile?: AccountProfileView;
   profileStatus?: "saved" | "invalid" | null;
+  trustpilotShow?: boolean;
+  trustpilotRecordShown?: boolean;
 };
-export function AccountDashboard({email, calculations, hasInvoices, invoiceHint, calculateUrl, loadError, isAdmin, profile, profileStatus}: Props) {
+export function AccountDashboard({email, calculations, hasInvoices, invoiceHint, calculateUrl, loadError, isAdmin, profile, profileStatus, trustpilotShow = false, trustpilotRecordShown = false}: Props) {
  return <div className="hub-workspace">
    <header className="hub-intro">
      <div><p className="hub-kicker">PVNAVIGATOR_ / Arbeitsbereich</p><h1>Mein Konto</h1><p className="hub-subtitle">Ihre gespeicherten Berechnungen und Berichte.</p></div>
@@ -30,6 +33,7 @@ export function AccountDashboard({email, calculations, hasInvoices, invoiceHint,
        <div className="hub-panel-heading"><h2 id="calculations-heading">Meine Berechnungen</h2><span className="hub-count">{loadError ? '—' : calculations.length}</span></div>
        <p className="hub-section-note">Gespeicherte Analysen öffnen und Ergebnisse nachvollziehen.</p>
        {loadError ? <p role="alert" className="hub-notice">Die Berechnungen konnten nicht geladen werden. Bitte laden Sie die Seite erneut.</p> : calculations.length ? <CalculationsHistory rows={calculations}/> : <CalculationsEmptyState calculateUrl={calculateUrl}/>}
+       <TrustpilotInvitation show={trustpilotShow && !loadError} recordShown={trustpilotRecordShown} />
      </section>
    </div>
      <div className="hub-account-details" aria-label="Konto und Zugang">

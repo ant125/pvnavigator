@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BatteryMedium } from "lucide-react";
 import { AccountKindProvider, type StoredAccountKind } from "../accountKind";
-import { TrustpilotInvitationProvider } from "../trustpilotInvitation";
 import type { ReactNode } from "react";
 import { getHubOrigin } from "@pv-auth/session";
 
@@ -115,8 +114,6 @@ type ShellFrameProps = Omit<HeaderAccountProps, "compact"> & {
   children: ReactNode;
   profileIncomplete?: boolean;
   accountKind?: StoredAccountKind;
-  trustpilotShow?: boolean;
-  trustpilotRecordShown?: boolean;
 };
 
 function ShellFrame({
@@ -345,26 +342,22 @@ export function SpeicherShell({
   signOutHref,
   profileIncomplete,
   accountKind = null,
-  trustpilotShow = false,
-  trustpilotRecordShown = false,
 }: ShellFrameProps) {
   return (
     <AccountKindProvider kind={accountKind}>
-      <TrustpilotInvitationProvider show={trustpilotShow} recordShown={trustpilotRecordShown}>
-        <HeaderCtaProvider>
-          <ShellFrame
-            authenticated={authenticated}
-            userEmail={userEmail}
-            loginHref={loginHref}
-            signupHref={signupHref}
-            accountHref={accountHref}
-            signOutHref={signOutHref}
-            profileIncomplete={profileIncomplete}
-          >
-            {children}
-          </ShellFrame>
-        </HeaderCtaProvider>
-      </TrustpilotInvitationProvider>
+      <HeaderCtaProvider>
+        <ShellFrame
+          authenticated={authenticated}
+          userEmail={userEmail}
+          loginHref={loginHref}
+          signupHref={signupHref}
+          accountHref={accountHref}
+          signOutHref={signOutHref}
+          profileIncomplete={profileIncomplete}
+        >
+          {children}
+        </ShellFrame>
+      </HeaderCtaProvider>
     </AccountKindProvider>
   );
 }
