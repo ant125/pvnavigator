@@ -11,7 +11,7 @@ import {
   pdfFailureResponse,
   type CalculationPdfRow,
 } from "@/pdf/pdfAccess";
-import { PDF_DOWNLOAD_FILENAME } from "@/pdf/pdfDownload";
+import { pdfContentDisposition, pdfDownloadFilename } from "@/pdf/pdfDownload";
 import { renderSpeicherPdf } from "@/pdf/renderSpeicherPdf";
 
 export const runtime = "nodejs";
@@ -64,11 +64,12 @@ export async function GET(
   try {
     const model = buildSpeicherPdfModel(decision.row);
     const pdf = await renderSpeicherPdf(model);
+    const filename = pdfDownloadFilename(decision.row.input);
     return new Response(new Uint8Array(pdf), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${PDF_DOWNLOAD_FILENAME}"`,
+        "Content-Disposition": pdfContentDisposition(filename),
         "Cache-Control": "private, no-store",
       },
     });

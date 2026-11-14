@@ -5,13 +5,10 @@ import * as fontkit from "fontkit";
 import { PDFDocument, rgb } from "pdf-lib";
 
 import { pdfAsset } from "./pdfAssets";
-import { PDF_DOWNLOAD_FILENAME } from "./pdfDownload";
 import {
   SpeicherGrenzePdfDocument,
   type PdfModel,
 } from "./reportDocument";
-
-export { PDF_DOWNLOAD_FILENAME };
 
 const MM = 72 / 25.4;
 const PAGE_NUMBER_SIZE = 8;

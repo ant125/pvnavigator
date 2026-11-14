@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { BTN_SECONDARY } from "@/app/(speicher)/calculate/formStyles";
-import { PDF_DOWNLOAD_FILENAME } from "@/pdf/pdfDownload";
+import { filenameFromContentDisposition } from "@/pdf/pdfDownload";
 
 type Phase = "idle" | "loading" | "error";
 
@@ -51,7 +51,9 @@ export function PdfDownloadButton({
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = PDF_DOWNLOAD_FILENAME;
+      anchor.download =
+        filenameFromContentDisposition(response.headers.get("Content-Disposition")) ??
+        "SPEICHERGRENZE.pdf";
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();

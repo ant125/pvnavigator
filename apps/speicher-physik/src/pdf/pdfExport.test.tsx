@@ -20,7 +20,7 @@ import {
   pdfFailureResponse,
   type CalculationPdfRow,
 } from "./pdfAccess";
-import { PDF_DOWNLOAD_FILENAME } from "./pdfDownload";
+import { filenameFromContentDisposition, pdfContentDisposition, pdfDownloadFilename } from "./pdfDownload";
 import {
   PRIVATE_USE_MARK,
   privateUseOutline,
@@ -382,7 +382,17 @@ describe("PdfDownloadButton", () => {
     );
     expect(html).toContain("PDF herunterladen");
     expect(html).not.toContain("disabled");
-    expect(PDF_DOWNLOAD_FILENAME).toBe("SpeicherGrenze-Bericht.pdf");
+    const stored = {
+      street: "Branderstraße",
+      houseNumber: "44",
+      reportAttribution: {
+        companyName: "Sonnenwerk GmbH",
+        clientGivenName: "Andrey",
+        clientFamilyName: "Nachname",
+      },
+    };
+    const filename = pdfDownloadFilename(stored);
+    expect(filenameFromContentDisposition(pdfContentDisposition(filename))).toBe(filename);
   });
 });
 
