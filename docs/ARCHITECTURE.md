@@ -181,6 +181,37 @@ Hub `/konto` links SpeicherGrenze rows there. Live calculation remains
 Shared cookie/redirect helpers: `packages/auth-session` (`@pv-auth/session`).
 Schema SQL: `supabase/migrations/`.
 
+### Administrator role
+
+An administrator is an ordinary account with one extra row in
+`private.admin_users` (`user_id` = `auth.users.id`). The role is never derived
+from the e-mail address, from JWT metadata or from anything the browser sends.
+
+| Relation / function | Role |
+|---|---|
+| `private.admin_users` | Who is an administrator. Written only with SQL by the database owner |
+| `private.admin_audit_log` | Trail of role grants and revocations, later of administrative reads |
+| `public.is_admin()` | `true` when the calling `auth.uid()` has a row. No argument, read only |
+
+**Two checks.** The hub verifies the session with Supabase Auth and then asks
+the database (`requireAdmin()` in `apps/pvnavigator-web/src/lib/admin.ts`).
+Everything under `/admin` calls it on the server; visitors, ordinary accounts
+and failed checks get a 404. The "Administration" entry in `/konto` is shown
+from the same check and is a convenience, not the protection.
+
+**No RLS bypass.** The existing own-row policies are unchanged and contain no
+administrator exception: through the tables an administrator reads and writes
+exactly the own rows, like every account, and keeps calculating, saving and
+opening the own reports. Administrative reads of other accounts' data must go
+through separate `SECURITY DEFINER` functions that call `is_admin()` themselves
+and write to the audit log. Do not add `or is_admin()` to a policy: `/konto`,
+the pinned-address lookup and `/result/<id>` rely on RLS returning own rows only.
+
+The private schema is not exposed through the Data API; both tables additionally
+have RLS without policies and no grants for `anon`, `authenticated` or
+`service_role`. Migration: `supabase/migrations/20261114114503_admin_roles.sql`,
+check: `supabase/tests/admin_access.sql`, rollout: `supabase/README.md`.
+
 ---
 
 ## Access rules (PVNAVIGATOR_)

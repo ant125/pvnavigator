@@ -10,7 +10,9 @@ Convention:
 
 Apply a reviewed migration with the Supabase CLI or the project migration API. The Data API must keep using the anon / publishable key in clients; never the service role.
 
-The VAT migration filenames were aligned with production history on 2026-11-14 after comparing their stored SQL. All local and remote migration versions now match, including `20261113203647_free_open_access.sql`. No migration needs applying for the current UI release. See the history alignment note below and `docs/ARCHITECTURE.md › Access rules`.
+The VAT migration filenames were aligned with production history on 2026-11-14 after comparing their stored SQL. All local and remote migration versions up to and including `20261113203647_free_open_access.sql` match. See the history alignment note below and `docs/ARCHITECTURE.md › Access rules`.
+
+**Pending in production:** `20261114114503_admin_roles.sql` (administrator role). It is applied on the local stack only and waits for an explicit approval; see [Administrator role](#administrator-role-migrations20261114114503_admin_rolessql). Until then a `supabase db push` against production would apply it.
 
 Layout:
 
@@ -63,6 +65,65 @@ The lockdown is already applied in production as
 `20261102202308_access_rules_lockdown.sql`. Keep that file in `migrations/`.
 Do not move the older post-deploy file into `migrations/` or record its old
 version in `schema_migrations`.
+
+## Administrator role (`migrations/20261114114503_admin_roles.sql`)
+
+See `docs/ARCHITECTURE.md › Administrator role`. The migration only adds objects:
+
+- `private.admin_users` – one row per administrator, keyed by `auth.users.id`
+- `private.admin_audit_log` – every grant, change and revocation of the role
+- `public.is_admin()` – `true` when the calling `auth.uid()` has a row; the only
+  role check used by the app
+
+It creates no administrator and changes no existing table, policy, grant or function.
+Both tables are closed to `anon`, `authenticated` and `service_role`; the role is
+granted and revoked with SQL as the database owner, never from the app.
+
+```bash
+# local check, always rolled back
+docker exec -i supabase_db_pvnavigator-local psql -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 < supabase/tests/admin_access.sql
+```
+
+### Production rollout order
+
+Each step needs its own approval. Steps 1 and 2 give nobody access: without a row in
+`private.admin_users`, `/admin` answers 404 for every account.
+
+1. **Schema.** Check where the CLI points first (`cat supabase/.temp/project-ref`).
+   `supabase db push --dry-run` must list exactly `20261114114503_admin_roles.sql`,
+   then `supabase db push`. Safe while the old code is live.
+2. **Deploy** the hub (`apps/pvnavigator-web`). SpeicherGrenze is unchanged.
+3. **Grant the role** to one existing account. Look the account up once, then grant by
+   id; the statement refuses to run if id and e-mail do not belong together:
+
+   ```sql
+   -- a) read only: exactly one confirmed account is expected
+   select id, email_confirmed_at is not null as confirmed, created_at
+     from auth.users where lower(email) = lower('<e-mail>');
+
+   -- b) grant by id
+   do $$
+   declare v_rows integer;
+   begin
+     insert into private.admin_users (user_id, note)
+     select id, '<who approved, when>'
+       from auth.users
+      where id = '<id from a>'
+        and lower(email) = lower('<e-mail>')
+        and email_confirmed_at is not null;
+     get diagnostics v_rows = row_count;
+     if v_rows <> 1 then
+       raise exception 'no administrator granted: id and e-mail do not match one confirmed account';
+     end if;
+   end $$;
+
+   -- c) verify
+   select user_id, granted_at, note from private.admin_users;
+   select occurred_at, action, target_user_id, db_role from private.admin_audit_log order by id;
+   ```
+
+Revoke (takes effect on the next request): `delete from private.admin_users where user_id = '<id>';`
 
 ## Local development: local Supabase stack
 
@@ -119,6 +180,7 @@ NEXT_PUBLIC_SPEICHER_GRENZE_URL=http://localhost:3001
 | ------------------ | ------------------ | ---------------------------------------------------- |
 | `test@example.com` | `TestNutzer-2026!` | kostenlos, beliebig viele Adressen                    |
 | `abo@example.com`  | `TestNutzer-2026!` | ebenfalls kostenlos; der Testzeitraum schränkt den Zugang nicht ein |
+| `admin@example.com` | `TestNutzer-2026!` | wie oben, zusätzlich Administrator (`/admin`)         |
 
 E-mail confirmation is off locally, so additional users can also be created through
 `/konto-erstellen`. Mail goes to Mailpit, never to a real inbox.

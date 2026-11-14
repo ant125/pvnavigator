@@ -4,6 +4,7 @@ import { getSpeicherGrenzeCalculateUrl, getSpeicherGrenzeOrigin } from "@pv-auth
 
 import { AccountDashboard } from "@/components/account/AccountDashboard";
 import { AuthEnvMissing } from "@/components/auth/AuthEnvMissing";
+import { isAdminSession } from "@/lib/admin";
 import { INVOICE_HISTORY_HINTS } from "@/lib/billing/invoicePortal";
 import { CALCULATION_LIST_SELECT, type CalculationListRow } from "@/lib/calculationsList";
 import { getServerUser } from "@/lib/auth";
@@ -60,12 +61,13 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
       if (result.data.length < 500) return {data: rows, error: null};
     }
   };
-  const [calculationsResult, customerResult, invoiceResult] = await Promise.all([
+  const [calculationsResult, customerResult, invoiceResult, isAdmin] = await Promise.all([
     loadCalculations(),
     supabase.from("stripe_customers").select("user_id").maybeSingle(),
     admin
       ? admin.from("stripe_invoices").select("stripe_invoice_id").eq("user_id", user.id).limit(1)
       : Promise.resolve({ data: [] as { stripe_invoice_id: string }[], error: null }),
+    isAdminSession(supabase),
   ]);
 
   if (calculationsResult.error) {
@@ -85,5 +87,5 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
 
   const calculations = (calculationsResult.data ?? []) as CalculationListRow[];
 
-  return <AccountDashboard email={user.email} calculations={calculations} hasInvoices={hasInvoices} invoiceHint={invoiceHint} calculateUrl={calculateUrl} speicherOrigin={speicherOrigin} loadError={Boolean(calculationsResult.error)} />;
+  return <AccountDashboard email={user.email} calculations={calculations} hasInvoices={hasInvoices} invoiceHint={invoiceHint} calculateUrl={calculateUrl} speicherOrigin={speicherOrigin} loadError={Boolean(calculationsResult.error)} isAdmin={isAdmin} />;
 }

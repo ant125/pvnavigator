@@ -20,4 +20,15 @@ describe("account dashboard",()=>{
   expect(html).toContain("Beispiel");
   expect(html).toContain('/api/billing/invoices');
  });
+ it("shows the Administration entry only to an administrator",()=>{
+  for (const html of [renderToStaticMarkup(<AccountDashboard {...props}/>), renderToStaticMarkup(<AccountDashboard {...props} isAdmin={false}/>)]) {
+   expect(html).not.toContain("Administration");
+   expect(html).not.toContain("/admin");
+  }
+  const html=renderToStaticMarkup(<AccountDashboard {...props} isAdmin/>);
+  expect(html).toContain("Administration");
+  expect(html).toContain('href="/admin"');
+  expect(html).toContain("Meine Berechnungen");
+  expect(html).toContain(props.calculateUrl);
+ });
 });

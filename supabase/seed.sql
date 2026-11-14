@@ -1,10 +1,11 @@
 -- Local test data. Loaded by `supabase db reset` / `supabase start` on the LOCAL
 -- stack only (config.toml › [db.seed]). Never run against a hosted project.
 --
--- Users (password for both: TestNutzer-2026!)
+-- Users (password for all: TestNutzer-2026!)
 --   test@example.com  – free access, no address pinned yet
 --   abo@example.com   – active PVNAVIGATOR_ test period, address_limit 2
 --                       (small on purpose so the limit can be reached quickly)
+--   admin@example.com – ordinary account with the administrator role
 
 create or replace function pg_temp.seed_user(p_email text, p_password text)
 returns uuid
@@ -38,9 +39,13 @@ do $$
 declare
   v_free uuid;
   v_abo uuid;
+  v_admin uuid;
 begin
   v_free := pg_temp.seed_user('test@example.com', 'TestNutzer-2026!');
   v_abo := pg_temp.seed_user('abo@example.com', 'TestNutzer-2026!');
+  v_admin := pg_temp.seed_user('admin@example.com', 'TestNutzer-2026!');
+
+  insert into private.admin_users (user_id, note) values (v_admin, 'local seed');
 
   insert into public.subscription_periods
     (user_id, period_start, period_end, address_limit, source, external_ref)
