@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { AuthFormErrorAlert } from "@/components/auth/AuthFormErrorAlert";
+import type { AccountKindChoice } from "@/lib/accountProfile";
 
 const passwordMismatchGerman = "Die Passwörter stimmen nicht überein.";
 
@@ -18,6 +19,7 @@ export function SignUpForm({
 }) {
   const [pending, setPending] = useState(false);
   const [passwordMismatch, setPasswordMismatch] = useState(false);
+  const [kind, setKind] = useState<AccountKindChoice>("privat");
 
   if (needsConfirmation) {
     return (
@@ -68,6 +70,35 @@ export function SignUpForm({
       }}
     >
       <input type="hidden" name="next" value={nextPath} readOnly />
+      <fieldset className="space-y-2">
+        <legend className="block text-sm font-medium text-[#0F172A]">Art des Kontos</legend>
+        <label className="flex min-h-11 items-center gap-2 text-sm">
+          <input type="radio" name="account_kind" value="privat" checked={kind === "privat"} onChange={() => setKind("privat")} required />
+          Privatperson
+        </label>
+        <label className="flex min-h-11 items-center gap-2 text-sm">
+          <input type="radio" name="account_kind" value="unternehmen" checked={kind === "unternehmen"} onChange={() => setKind("unternehmen")} />
+          Unternehmen
+        </label>
+      </fieldset>
+      {kind === "unternehmen" ? (
+        <div>
+          <label htmlFor="signup-company" className="block text-sm font-medium text-[#0F172A]">Firmenname</label>
+          <input id="signup-company" name="company_name" required maxLength={160} autoComplete="organization" className="hub-input" />
+        </div>
+      ) : null}
+      <div>
+        <label htmlFor="signup-given" className="block text-sm font-medium text-[#0F172A]">
+          {kind === "unternehmen" ? "Ansprechpartner (Vorname)" : "Vorname"}
+        </label>
+        <input id="signup-given" name="given_name" required maxLength={80} autoComplete="given-name" className="hub-input" />
+      </div>
+      <div>
+        <label htmlFor="signup-family" className="block text-sm font-medium text-[#0F172A]">
+          {kind === "unternehmen" ? "Ansprechpartner (Nachname)" : "Nachname"}
+        </label>
+        <input id="signup-family" name="family_name" required maxLength={80} autoComplete="family-name" className="hub-input" />
+      </div>
       <div>
         <label htmlFor="signup-email" className="block text-sm font-medium text-[#0F172A]">
           E-Mail

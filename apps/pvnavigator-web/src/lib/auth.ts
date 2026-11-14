@@ -83,6 +83,7 @@ export function hubPostLoginLocation(nextRaw: unknown): string {
 const SIGN_UP_ERROR_MESSAGES: Record<string, string> = {
   missing: "Bitte E-Mail und Passwort eingeben.",
   mismatch: "Die Passwörter stimmen nicht überein.",
+  profile: "Bitte wählen Sie Privatperson oder Unternehmen und füllen Sie die Pflichtfelder aus.",
   disabled: "Neue Registrierungen sind derzeit deaktiviert.",
   rate: "Zu viele Bestätigungs-E-Mails. Bitte versuchen Sie es in ein paar Minuten erneut.",
   existing: "Für diese E-Mail-Adresse existiert bereits ein Konto. Bitte melden Sie sich an.",
@@ -125,6 +126,7 @@ export function mapSupabaseAuthErrorToSignUpCode(
   if (message.includes("password should be at least") || code === "weak_password") {
     return "weak";
   }
+  if (message.includes("profile_invalid")) return "profile";
   return "generic";
 }
 

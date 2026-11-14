@@ -214,15 +214,18 @@ The private schema is not exposed through the Data API; both tables additionally
 have RLS without policies and no grants for `anon`, `authenticated` or
 `service_role`. The overview functions are `SECURITY DEFINER`, granted only to
 `authenticated`, and return before reading when `is_admin()` is false. They do
-not widen the own-row policies. Account type is not stored yet, so every
-account is `nicht_angegeben` and the Unternehmen total is zero; the type is
-never taken from the e-mail address. Days, weeks and months use
+not widen the own-row policies. A profile stores `privat` or `unternehmen`
+with the required names. An empty profile stays `nicht_angegeben`; the type is
+never taken from the e-mail address or from signup metadata other than the
+four profile keys. Days, weeks and months use
 `Europe/Berlin`, and the week starts on Monday. A card read writes
 `admin_user_viewed` with the page number and no calculation contents.
 
 Migrations: `supabase/migrations/20261114114503_admin_roles.sql`,
-`supabase/migrations/20261114164100_admin_overview.sql`.
-Checks: `supabase/tests/admin_access.sql`, `supabase/tests/admin_overview.sql`.
+`supabase/migrations/20261114164100_admin_overview.sql`,
+`supabase/migrations/20261114184500_account_profiles.sql`.
+Checks: `supabase/tests/admin_access.sql`, `supabase/tests/admin_overview.sql`,
+`supabase/tests/account_profiles.sql`.
 Rollout: `supabase/README.md`.
 
 ---

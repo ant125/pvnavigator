@@ -10,7 +10,7 @@ Convention:
 
 Apply a reviewed migration with the Supabase CLI or the project migration API. The Data API must keep using the anon / publishable key in clients; never the service role.
 
-The VAT migration filenames were aligned with production history on 2026-11-14 after comparing their stored SQL. Remote history matches the local versions up to and including `20261114164100_admin_overview.sql`. See the history alignment note below, `docs/ARCHITECTURE.md › Access rules`, [Administrator role](#administrator-role-migrations20261114114503_admin_rolessql) and [Administrator overview](#administrator-overview-migrations20261114164100_admin_overviewsql).
+The VAT migration filenames were aligned with production history on 2026-11-14 after comparing their stored SQL. Remote history matches the local versions up to and including `20261114184500_account_profiles.sql`. See the history alignment note below, `docs/ARCHITECTURE.md › Access rules`, [Administrator role](#administrator-role-migrations20261114114503_admin_rolessql) and [Administrator overview](#administrator-overview-migrations20261114164100_admin_overviewsql).
 
 Layout:
 
@@ -125,7 +125,16 @@ Revoke (takes effect on the next request): `delete from private.admin_users wher
 
 Applied in production on 2026-11-14. It adds the read functions and two indexes. It does not change existing tables, rows, grants or RLS policies. See `docs/ARCHITECTURE.md › Administrator role`.
 
-`public.admin_dashboard()`, `public.admin_list_users(...)` and `public.admin_user_card(...)` answer only when `public.is_admin()` is true. They are the only path to another account's name, e-mail and saved calculation fields. Opening a card writes `admin_user_viewed` to `private.admin_audit_log`. The account type is not stored yet: the functions report every account as `nicht_angegeben` and zero Unternehmen, and they do not look at the e-mail address.
+`public.admin_dashboard()`, `public.admin_list_users(...)` and `public.admin_user_card(...)` answer only when `public.is_admin()` is true. They are the only path to another account's name, e-mail and saved calculation fields. Opening a card writes `admin_user_viewed` to `private.admin_audit_log`. Unternehmen counts profiles stored as `unternehmen`. A private name or Firmenname is shown only when that profile is saved. An empty profile stays `nicht_angegeben`, and the type is never taken from the e-mail address.
+
+## Account profiles (`migrations/20261114184500_account_profiles.sql`)
+
+Applied in production on 2026-11-14. It adds nullable profile columns and replaces the signup trigger and the administrator read functions. Existing profile and calculation rows are not rewritten. Own-row profile policies stay as they are; calculation policies are not changed.
+
+```bash
+docker exec -i supabase_db_pvnavigator-local psql -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 < supabase/tests/account_profiles.sql
+```
 
 ```bash
 docker exec -i supabase_db_pvnavigator-local psql -U postgres -d postgres \

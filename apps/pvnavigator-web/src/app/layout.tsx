@@ -3,7 +3,9 @@ import Link from "next/link";
 import { IBM_Plex_Mono, Inter } from "next/font/google";
 
 import { SiteHeader } from "@/components/SiteHeader";
+import { accountProfileFromRow, profileNeedsCompletion } from "@/lib/accountProfile";
 import { getServerUser } from "@/lib/auth";
+import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 import "./globals.css";
 
@@ -35,13 +37,29 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getServerUser();
+  let profilePrompt = false;
+  if (user && isSupabaseConfigured()) {
+    const supabase = await createServerSupabaseClient();
+    const profile = await supabase.from("profiles").select("account_kind, given_name, family_name, company_name").eq("id", user.id).maybeSingle();
+    profilePrompt = !profile.error && profileNeedsCompletion(accountProfileFromRow(profile.data));
+  }
 
   return (
     <html lang="de">
       <body className={`${inter.variable} ${hubMono.variable} antialiased bg-[#FAFBFC] text-[#0F172A]`}>
         <div className="flex min-h-screen flex-col">
           <SiteHeader userEmail={user?.email ?? null} />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1">
+            {profilePrompt ? (
+              <div className="mx-auto w-full max-w-[1120px] px-4 pt-4">
+                <p role="status" className="hub-notice">
+                  Bitte ergänzen Sie Ihr Profil. Ihre Berechnungen bleiben verfügbar.{" "}
+                  <Link href="/konto#profil" className="font-semibold text-[#36533c] underline">Profil ausfüllen</Link>
+                </p>
+              </div>
+            ) : null}
+            {children}
+          </main>
           <footer className="border-t border-[#E2E8F0] bg-white">
             <div className="mx-auto max-w-[1120px] px-4 py-5">
               <p className="text-center text-[13px] text-[#64748B] sm:text-left">

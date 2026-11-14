@@ -4,6 +4,7 @@ import { getSpeicherGrenzeCalculateUrl, getSpeicherGrenzeOrigin } from "@pv-auth
 
 import { AccountDashboard } from "@/components/account/AccountDashboard";
 import { AuthEnvMissing } from "@/components/auth/AuthEnvMissing";
+import { accountProfileFromRow, emptyAccountProfile } from "@/lib/accountProfile";
 import { isAdminSession } from "@/lib/admin";
 import { INVOICE_HISTORY_HINTS } from "@/lib/billing/invoicePortal";
 import { CALCULATION_LIST_SELECT, type CalculationListRow } from "@/lib/calculationsList";
@@ -18,11 +19,13 @@ export const metadata: Metadata = {
 
 const card = "hub-panel";
 
-type SearchParams = Promise<{ hinweis?: string | string[] }>;
+type SearchParams = Promise<{ hinweis?: string | string[]; profil?: string | string[] }>;
 
 export default async function KontoPage({ searchParams }: { searchParams: SearchParams }) {
   const hintParam = await searchParams;
   const hintKey = Array.isArray(hintParam.hinweis) ? hintParam.hinweis[0] : hintParam.hinweis;
+  const profileKey = Array.isArray(hintParam.profil) ? hintParam.profil[0] : hintParam.profil;
+  const profileStatus = profileKey === "gespeichert" ? "saved" : profileKey === "ungueltig" ? "invalid" : null;
   const invoiceHint = hintKey ? INVOICE_HISTORY_HINTS[hintKey] : undefined;
 
   if (!isSupabaseConfigured()) {
@@ -61,8 +64,9 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
       if (result.data.length < 500) return {data: rows, error: null};
     }
   };
-  const [calculationsResult, customerResult, invoiceResult, isAdmin] = await Promise.all([
+  const [calculationsResult, profileResult, customerResult, invoiceResult, isAdmin] = await Promise.all([
     loadCalculations(),
+    supabase.from("profiles").select("account_kind, given_name, family_name, company_name").eq("id", user.id).maybeSingle(),
     supabase.from("stripe_customers").select("user_id").maybeSingle(),
     admin
       ? admin.from("stripe_invoices").select("stripe_invoice_id").eq("user_id", user.id).limit(1)
@@ -79,6 +83,9 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
   if (invoiceResult.error) {
     console.error("Failed to load invoice history", invoiceResult.error);
   }
+  if (profileResult.error) {
+    console.error("Failed to load profile");
+  }
   const hasInvoices =
     !customerResult.error &&
     Boolean(customerResult.data) &&
@@ -87,5 +94,7 @@ export default async function KontoPage({ searchParams }: { searchParams: Search
 
   const calculations = (calculationsResult.data ?? []) as CalculationListRow[];
 
-  return <AccountDashboard email={user.email} calculations={calculations} hasInvoices={hasInvoices} invoiceHint={invoiceHint} calculateUrl={calculateUrl} speicherOrigin={speicherOrigin} loadError={Boolean(calculationsResult.error)} isAdmin={isAdmin} />;
+  const profile = profileResult.error ? emptyAccountProfile() : accountProfileFromRow(profileResult.data);
+
+  return <AccountDashboard email={user.email} calculations={calculations} hasInvoices={hasInvoices} invoiceHint={invoiceHint} calculateUrl={calculateUrl} speicherOrigin={speicherOrigin} loadError={Boolean(calculationsResult.error)} isAdmin={isAdmin} profile={profile} profileStatus={profileStatus} />;
 }

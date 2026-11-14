@@ -40,6 +40,7 @@ export type AdminUser = {
   registeredAt: string;
   calculationCount: number;
   lastCalculationAt: string | null;
+  contactName: string | null;
 };
 
 export type AdminUserList = {
@@ -190,6 +191,7 @@ function parseUser(value: unknown): AdminUser | null {
   if (value.last_calculation_at != null && lastCalculationAt === null) return null;
   if (value.display_name != null && typeof value.display_name !== "string") return null;
   if (value.email != null && typeof value.email !== "string") return null;
+  if (value.contact_name != null && typeof value.contact_name !== "string") return null;
   return {
     id: value.id,
     displayName: text(value.display_name),
@@ -198,6 +200,7 @@ function parseUser(value: unknown): AdminUser | null {
     registeredAt,
     calculationCount,
     lastCalculationAt,
+    contactName: text(value.contact_name),
   };
 }
 

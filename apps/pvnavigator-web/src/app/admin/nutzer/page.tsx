@@ -20,7 +20,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
     <>
       <AdminIntro
         title="Nutzer"
-        text="Registrierte Konten von PVNAVIGATOR_. Der Kontotyp ist noch nicht gespeichert."
+        text="Registrierte Konten von PVNAVIGATOR_. Der Name ist der Personenname oder der Firmenname."
       />
       {result.status === "ok" ? <AdminUserListView query={query} data={result.data} /> : <AdminLoadError />}
     </>

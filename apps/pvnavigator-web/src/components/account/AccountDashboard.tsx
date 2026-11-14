@@ -1,11 +1,24 @@
 import Link from "next/link";
 import { AccessCard } from "./AccessCard";
 import { InvoiceHistoryCard } from "./InvoiceHistoryCard";
+import { ProfileForm } from "./ProfileForm";
 import { CalculationsEmptyState, CalculationsHistory } from "./CalculationsHistory";
+import type { AccountProfileView } from "@/lib/accountProfile";
 import type { CalculationListRow } from "@/lib/calculationsList";
 
-type Props = { email: string; calculations: CalculationListRow[]; hasInvoices: boolean; invoiceHint?: string; calculateUrl: string; speicherOrigin: string; loadError?: boolean; isAdmin?: boolean };
-export function AccountDashboard({email, calculations, hasInvoices, invoiceHint, calculateUrl, loadError, isAdmin}: Props) {
+type Props = {
+  email: string;
+  calculations: CalculationListRow[];
+  hasInvoices: boolean;
+  invoiceHint?: string;
+  calculateUrl: string;
+  speicherOrigin: string;
+  loadError?: boolean;
+  isAdmin?: boolean;
+  profile?: AccountProfileView;
+  profileStatus?: "saved" | "invalid" | null;
+};
+export function AccountDashboard({email, calculations, hasInvoices, invoiceHint, calculateUrl, loadError, isAdmin, profile, profileStatus}: Props) {
  return <div className="hub-workspace">
    <header className="hub-intro">
      <div><p className="hub-kicker">PVNAVIGATOR_ / Arbeitsbereich</p><h1>Mein Konto</h1><p className="hub-subtitle">Ihre gespeicherten Berechnungen und Berichte.</p></div>
@@ -22,6 +35,7 @@ export function AccountDashboard({email, calculations, hasInvoices, invoiceHint,
      <div className="hub-account-details" aria-label="Konto und Zugang">
        <section aria-label="Zugang"><AccessCard/></section>
        <section className="hub-panel hub-account" aria-labelledby="account-heading"><h2 id="account-heading" className="hub-kicker">Kontoinformationen</h2><p className="hub-email">{email}</p><p>Angemeldetes PVNAVIGATOR_ Konto</p><Link href="/" className="hub-text-link">Zur Plattformübersicht →</Link></section>
+       {profile ? <section className="hub-panel hub-account" aria-labelledby="profile-heading"><h2 id="profile-heading" className="hub-kicker">Profil</h2><ProfileForm profile={profile} status={profileStatus} /></section> : null}
        {hasInvoices && <section aria-labelledby="invoices-heading"><InvoiceHistoryCard/></section>}
        {/* Convenience only: /admin checks the role itself on every request. */}
        {isAdmin && <section className="hub-panel hub-account" aria-labelledby="administration-heading"><h2 id="administration-heading" className="hub-kicker">Administration</h2><p className="mt-2.5">Geschützter Bereich für die Verwaltung von PVNAVIGATOR_.</p><Link href="/admin" className="hub-text-link">Administration öffnen →</Link></section>}

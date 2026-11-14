@@ -111,6 +111,7 @@ function HeaderCta() {
 
 type ShellFrameProps = Omit<HeaderAccountProps, "compact"> & {
   children: ReactNode;
+  profileIncomplete?: boolean;
 };
 
 function ShellFrame({
@@ -121,6 +122,7 @@ function ShellFrame({
   signupHref,
   accountHref,
   signOutHref,
+  profileIncomplete = false,
 }: ShellFrameProps) {
   const pathname = usePathname();
   const isCalculateRoute = pathname === "/calculate";
@@ -282,6 +284,13 @@ function ShellFrame({
         </div>
       </header>
 
+      {profileIncomplete ? (
+        <p role="status" className="border-b border-line bg-surface px-4 py-3 text-sm text-ink-secondary">
+          Bitte ergänzen Sie Ihr PVNAVIGATOR_-Profil. Ihre Berechnungen bleiben verfügbar.{" "}
+          <a href={`${accountHref}#profil`} className="font-semibold text-ink underline">Profil ausfüllen</a>
+        </p>
+      ) : null}
+
       <main className="min-w-0 flex-1">{children}</main>
 
       <footer
@@ -329,6 +338,7 @@ export function SpeicherShell({
   signupHref,
   accountHref,
   signOutHref,
+  profileIncomplete,
 }: ShellFrameProps) {
   return (
     <HeaderCtaProvider>
@@ -339,6 +349,7 @@ export function SpeicherShell({
         signupHref={signupHref}
         accountHref={accountHref}
         signOutHref={signOutHref}
+        profileIncomplete={profileIncomplete}
       >
         {children}
       </ShellFrame>

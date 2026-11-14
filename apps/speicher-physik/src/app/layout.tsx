@@ -10,6 +10,7 @@ import {
 
 import { SpeicherShell } from "./(speicher)/components/SpeicherShell";
 import { getServerUser } from "@/lib/auth";
+import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 import "./globals.css";
 
@@ -51,6 +52,12 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getServerUser();
+  let profileIncomplete = false;
+  if (user && isSupabaseConfigured()) {
+    const supabase = await createServerSupabaseClient();
+    const profile = await supabase.from("profiles").select("account_kind").eq("id", user.id).maybeSingle();
+    profileIncomplete = !profile.error && profile.data?.account_kind !== "privat" && profile.data?.account_kind !== "unternehmen";
+  }
 
   return (
     <html
@@ -65,6 +72,7 @@ export default async function RootLayout({
           signupHref={getHubSignupUrl()}
           accountHref={getHubKontoUrl()}
           signOutHref={getHubSignOutUrl({ returnTo: AUTH_RETURN_SPEICHER })}
+          profileIncomplete={profileIncomplete}
         >
           {children}
         </SpeicherShell>

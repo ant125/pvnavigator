@@ -37,6 +37,7 @@ const card: AdminUserCard = {
     registeredAt: "2026-05-15T08:00:00.000Z",
     calculationCount: 1,
     lastCalculationAt: "2026-11-01T10:00:00.000Z",
+    contactName: null,
   },
   page: 1,
   pageSize: 10,

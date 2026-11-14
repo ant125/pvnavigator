@@ -151,6 +151,18 @@ describe("SpeicherShell overflow chain", () => {
     expect(headerHtml).not.toContain("flex-wrap");
   });
 
+  it("shows a profile prompt without removing the calculation", () => {
+    usePathname.mockReturnValue("/calculate");
+    const html = renderToStaticMarkup(
+      <SpeicherShell {...shellProps} profileIncomplete>
+        <div>Berechnung</div>
+      </SpeicherShell>,
+    );
+    expect(html).toContain("Bitte ergänzen Sie Ihr PVNAVIGATOR_-Profil");
+    expect(html).toContain("https://pvnavigator.de/konto#profil");
+    expect(html).toContain("Berechnung");
+  });
+
   it("uses the calculate frame for a saved report", () => {
     usePathname.mockReturnValue(
       "/result/22222222-2222-4222-8222-222222222222"

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getHubOrigin, isAllowedHubFormOrigin } from "@pv-auth/session";
 
+import { parseAccountProfileFields } from "@/lib/accountProfile";
 import {
   getEmailConfirmationRedirectUrl,
   hubPostLoginLocation,
@@ -50,6 +51,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(hubSignUpErrorUrl("mismatch", next), 303);
   }
 
+  const profile = parseAccountProfileFields({
+    accountKind: formData.get("account_kind"),
+    givenName: formData.get("given_name"),
+    familyName: formData.get("family_name"),
+    companyName: formData.get("company_name"),
+  });
+  if (!profile) {
+    return NextResponse.redirect(hubSignUpErrorUrl("profile", next), 303);
+  }
+
   const setCookies: string[] = [];
   const { supabase } = createRouteHandlerSupabase(request, setCookies);
   const { data, error } = await supabase.auth.signUp({
@@ -57,6 +68,12 @@ export async function POST(request: NextRequest) {
     password,
     options: {
       emailRedirectTo: getEmailConfirmationRedirectUrl(),
+      data: {
+        account_kind: profile.accountKind,
+        given_name: profile.givenName,
+        family_name: profile.familyName,
+        ...(profile.companyName ? { company_name: profile.companyName } : {}),
+      },
     },
   });
 

@@ -28,7 +28,7 @@ export default async function KontoErstellenPage({
   return (
     <AuthShell
       title="Konto erstellen"
-      subtitle="Erstellen Sie ein PVNAVIGATOR_-Konto mit E-Mail und Passwort."
+      subtitle="Erstellen Sie ein PVNAVIGATOR_-Konto als Privatperson oder Unternehmen."
     >
       {!configured ? (
         <AuthEnvMissing />

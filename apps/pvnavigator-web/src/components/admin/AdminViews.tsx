@@ -211,6 +211,7 @@ export function AdminUserCardView({ data }: { data: AdminUserCard }) {
         <h2 id="admin-user-heading">{data.user.displayName ?? "Nicht angegeben"}</h2>
         <p className="hub-email">{data.user.email ?? "Nicht angegeben"}</p>
         <dl className="admin-user-meta">
+          {data.user.contactName ? <div><dt>Ansprechpartner</dt><dd>{data.user.contactName}</dd></div> : null}
           <div><dt>Kontotyp</dt><dd>{accountKindLabel(data.user.accountKind)}</dd></div>
           <div><dt>Registrierung</dt><dd>{formatAdminDateTime(data.user.registeredAt)}</dd></div>
           <div><dt>Berechnungen</dt><dd>{formatAdminCount(data.user.calculationCount)}</dd></div>

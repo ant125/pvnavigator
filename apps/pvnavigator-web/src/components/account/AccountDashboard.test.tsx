@@ -20,6 +20,19 @@ describe("account dashboard",()=>{
   expect(html).toContain("Beispiel");
   expect(html).toContain('/api/billing/invoices');
  });
+ it("asks an incomplete profile to be filled without hiding calculations",()=>{
+  const html=renderToStaticMarkup(<AccountDashboard {...props} profile={{accountKind:null,givenName:"",familyName:"",companyName:""}}/>);
+  expect(html).toContain("Bitte ergänzen Sie Ihr Profil");
+  expect(html).toContain(props.calculateUrl);
+  expect(html).toContain("Meine Berechnungen");
+ });
+ it("keeps a saved profile editable and hides the completion notice",()=>{
+  const html=renderToStaticMarkup(<AccountDashboard {...props} profile={{accountKind:"unternehmen",givenName:"Grace",familyName:"Hopper",companyName:"Analytical Engines GmbH"}} profileStatus="saved"/>);
+  expect(html).toContain("Analytical Engines GmbH");
+  expect(html).toContain("Profil gespeichert.");
+  expect(html).not.toContain("Bitte ergänzen Sie Ihr Profil");
+  expect(html).toContain(props.calculateUrl);
+ });
  it("shows the Administration entry only to an administrator",()=>{
   for (const html of [renderToStaticMarkup(<AccountDashboard {...props}/>), renderToStaticMarkup(<AccountDashboard {...props} isAdmin={false}/>)]) {
    expect(html).not.toContain("Administration");

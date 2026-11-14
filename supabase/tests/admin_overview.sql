@@ -98,7 +98,10 @@ begin
   ) as users(id, email, created_at);
 
   update public.profiles
-     set display_name = 'Stage2 Firmenname GmbH'
+     set account_kind = 'unternehmen',
+         given_name = 'Stage',
+         family_name = 'Kontakt',
+         company_name = 'Stage2 Firmenname GmbH'
    where id = v_subject;
 
   insert into private.admin_users (user_id, note) values (v_admin, 'overview test');
@@ -192,8 +195,8 @@ begin
   if (v_after->>'users')::integer <> (v_before->>'users')::integer then
     raise exception 'user total changed while inserting calculations';
   end if;
-  if (v_after->>'unternehmen')::integer <> 0 or (v_before->>'unternehmen')::integer <> 0 then
-    raise exception 'Unternehmen was inferred without a stored account type';
+  if (v_after->>'unternehmen')::integer <> (v_before->>'unternehmen')::integer then
+    raise exception 'calculation inserts changed the Unternehmen count';
   end if;
   if (v_after->>'calculations')::integer <> (v_before->>'calculations')::integer + 5 then
     raise exception 'calculation total missed inserted rows: %', v_after;
@@ -257,6 +260,7 @@ begin
   v_list := public.admin_list_users('Stage2 Firmenname', 'alle', 'registrierung', 'desc', 1, 10);
   if (v_list->>'total')::integer <> 1
      or v_list->'users'->0->>'display_name' <> 'Stage2 Firmenname GmbH'
+     or v_list->'users'->0->>'account_kind' <> 'unternehmen'
      or v_list->'users'->0->>'email' <> 'stage2-firma@example.com'
      or (v_list->'users'->0->>'calculation_count')::integer <> 4 then
     raise exception 'name search missed the stored name: %', v_list;
@@ -281,6 +285,9 @@ begin
 
   v_card := public.admin_user_card(v_subject, 1, 2);
   if (v_card->'user'->>'calculation_count')::integer <> 4
+     or v_card->'user'->>'display_name' <> 'Stage2 Firmenname GmbH'
+     or v_card->'user'->>'contact_name' <> 'Stage Kontakt'
+     or v_card->'user'->>'account_kind' <> 'unternehmen'
      or jsonb_array_length(v_card->'calculations') <> 2 then
     raise exception 'the card page is not the two newest calculations: %', v_card;
   end if;
