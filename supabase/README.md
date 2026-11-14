@@ -10,9 +10,7 @@ Convention:
 
 Apply a reviewed migration with the Supabase CLI or the project migration API. The Data API must keep using the anon / publishable key in clients; never the service role.
 
-The VAT migration filenames were aligned with production history on 2026-11-14 after comparing their stored SQL. All local and remote migration versions up to and including `20261113203647_free_open_access.sql` match. See the history alignment note below and `docs/ARCHITECTURE.md › Access rules`.
-
-**Pending in production:** `20261114114503_admin_roles.sql` (administrator role). It is applied on the local stack only and waits for an explicit approval; see [Administrator role](#administrator-role-migrations20261114114503_admin_rolessql). Until then a `supabase db push` against production would apply it.
+The VAT migration filenames were aligned with production history on 2026-11-14 after comparing their stored SQL. All local and remote migration versions match, including `20261113203647_free_open_access.sql` and `20261114114503_admin_roles.sql`. See the history alignment note below, `docs/ARCHITECTURE.md › Access rules` and [Administrator role](#administrator-role-migrations20261114114503_admin_rolessql).
 
 Layout:
 
@@ -85,17 +83,15 @@ docker exec -i supabase_db_pvnavigator-local psql -U postgres -d postgres \
   -v ON_ERROR_STOP=1 < supabase/tests/admin_access.sql
 ```
 
-### Production rollout order
+### Production rollout
 
-Each step needs its own approval. Steps 1 and 2 give nobody access: without a row in
-`private.admin_users`, `/admin` answers 404 for every account.
+Applied in production on 2026-11-14: schema, then the hub, then the role for one
+existing confirmed account. `20261114114503_admin_roles.sql` is already recorded in
+`schema_migrations`. Do not apply it again. SPEICHERGRENZE was not part of this
+rollout.
 
-1. **Schema.** Check where the CLI points first (`cat supabase/.temp/project-ref`).
-   `supabase db push --dry-run` must list exactly `20261114114503_admin_roles.sql`,
-   then `supabase db push`. Safe while the old code is live.
-2. **Deploy** the hub (`apps/pvnavigator-web`). SpeicherGrenze is unchanged.
-3. **Grant the role** to one existing account. Look the account up once, then grant by
-   id; the statement refuses to run if id and e-mail do not belong together:
+A later grant reuses the statement below. It refuses to run if id and e-mail do not
+belong to one confirmed account:
 
    ```sql
    -- a) read only: exactly one confirmed account is expected
