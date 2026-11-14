@@ -9,29 +9,22 @@ import {
   type CalculationListRow,
 } from "@/lib/calculationsList";
 
-const card =
-  "rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_2px_8px_-2px_rgba(15,23,42,0.06)]";
-
-const badge =
-  "inline-flex w-fit rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ring-1 bg-emerald-50 text-emerald-800 ring-emerald-100/90";
-
-const accessBadge =
-  "inline-flex w-fit rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ring-1 bg-slate-50 text-slate-600 ring-slate-200/90";
-
-const primaryBtn =
-  "inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-[1.03] active:brightness-[0.98]";
+const card = "hub-history-row";
+const badge = "hub-status";
+const accessBadge = "hub-history-badge";
+const primaryBtn = "hub-text-link";
 
 export function CalculationsEmptyState({ calculateUrl }: { calculateUrl: string }) {
   return (
-    <div className={`mt-4 px-5 py-8 sm:px-8 sm:py-10 ${card}`}>
+    <div className={`hub-empty ${card}`}>
       <p className="text-sm font-medium text-[#0F172A]">
         Noch keine Berechnungen vorhanden.
       </p>
       <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#64748B]">
-        Ihre abgeschlossenen PVNAVIGATOR_-Analysen werden künftig hier gespeichert.
+        Starten Sie Ihre erste Speicheranalyse. Abgeschlossene Berechnungen finden Sie anschließend hier.
       </p>
       <a href={calculateUrl} className={`${primaryBtn} mt-6`}>
-        Neue Berechnung
+        Erste Berechnung starten →
       </a>
     </div>
   );
@@ -39,7 +32,7 @@ export function CalculationsEmptyState({ calculateUrl }: { calculateUrl: string 
 
 export function CalculationsHistory({ rows }: { rows: CalculationListRow[] }) {
   return (
-    <ul className="mt-4 grid gap-3">
+    <ul className="hub-history">
       {rows.map((row) => {
         const kwp = formatListingKwP(row.summary_pv_kwp);
         const kwh = formatListingKwh(row.summary_consumption_kwh);
@@ -74,7 +67,7 @@ export function CalculationsHistory({ rows }: { rows: CalculationListRow[] }) {
             </>
         );
         return (
-          <li key={row.id} className={`px-5 py-5 sm:px-6 ${card}`}>
+          <li key={row.id} className={`px-5 py-4 ${card}`}>
             {href ? (
               <a
                 href={href}

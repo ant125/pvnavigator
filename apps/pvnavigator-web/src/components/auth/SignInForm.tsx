@@ -31,7 +31,7 @@ export function SignInForm({
           type="email"
           autoComplete="email"
           required
-          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2"
+          className="hub-input"
         />
       </div>
       <div>
@@ -44,14 +44,14 @@ export function SignInForm({
           type="password"
           autoComplete="current-password"
           required
-          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2"
+          className="hub-input"
         />
       </div>
       {error ? <AuthFormErrorAlert message={error} /> : null}
       <button
         type="submit"
         aria-busy={pending}
-        className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-[1.03] active:brightness-[0.98]"
+        className="hub-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? "Wird angemeldet…" : "Anmelden"}
       </button>
@@ -63,7 +63,7 @@ export function SignInForm({
               ? `/konto-erstellen?next=${encodeURIComponent(nextPath)}`
               : "/konto-erstellen"
           }
-          className="font-semibold text-[#b45309] hover:underline"
+          className="font-semibold text-[#36533c] hover:underline"
         >
           Konto erstellen
         </Link>

@@ -64,8 +64,8 @@ describe("CalculationsHistory", () => {
       <CalculationsEmptyState calculateUrl="https://speicher.pvnavigator.de/calculate" />,
     );
     expect(html).toContain("Noch keine Berechnungen vorhanden.");
-    expect(html).toContain("Neue Berechnung");
-    expect(html).not.toContain("Abgeschlossen");
+    expect(html).toContain("Erste Berechnung starten");
+    expect(html).not.toContain(">Abgeschlossen</span>");
   });
   it("renders one SpeicherGrenze row as completed history", () => {
     const html = renderToStaticMarkup(

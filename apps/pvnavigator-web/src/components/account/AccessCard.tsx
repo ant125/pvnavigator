@@ -1,8 +1,8 @@
 const card =
-  "rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_2px_8px_-2px_rgba(15,23,42,0.06)]";
+  "hub-panel hub-access";
 
 const badge =
-  "inline-flex w-fit rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-800 ring-1 ring-emerald-100/90";
+  "hub-status";
 
 /**
  * Account access while PVNAVIGATOR_ is free. Former subscriptions do not

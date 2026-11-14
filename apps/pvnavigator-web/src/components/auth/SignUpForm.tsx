@@ -24,10 +24,10 @@ export function SignUpForm({
       <div className="space-y-4">
         <div
           role="status"
-          className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
+          className="hub-notice text-sm"
         >
           <p className="font-medium">Konto erstellt</p>
-          <p className="mt-2 leading-relaxed text-emerald-900/90">
+          <p className="mt-2 leading-relaxed text-[#526057]">
             Bitte bestätigen Sie Ihre E-Mail-Adresse.
           </p>
         </div>
@@ -35,7 +35,7 @@ export function SignUpForm({
           Danach können Sie sich{" "}
           <Link
             href={nextPath && nextPath !== "/konto" ? `/anmelden?next=${encodeURIComponent(nextPath)}` : "/anmelden"}
-            className="font-semibold text-[#b45309] hover:underline"
+            className="font-semibold text-[#36533c] hover:underline"
           >
             anmelden
           </Link>
@@ -78,7 +78,7 @@ export function SignUpForm({
           type="email"
           autoComplete="email"
           required
-          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2"
+          className="hub-input"
         />
       </div>
       <div>
@@ -92,10 +92,10 @@ export function SignUpForm({
           autoComplete="new-password"
           required
           minLength={6}
-          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2"
+          className="hub-input"
           onChange={() => setPasswordMismatch(false)}
         />
-        <p className="mt-1.5 text-xs text-[#94a3b8]">Mindestens 6 Zeichen.</p>
+        <p className="mt-1.5 text-xs text-[#627067]">Mindestens 6 Zeichen.</p>
       </div>
       <div>
         <label htmlFor="signup-password-confirm" className="block text-sm font-medium text-[#0F172A]">
@@ -109,7 +109,7 @@ export function SignUpForm({
           required
           minLength={6}
           aria-invalid={passwordMismatch ? true : undefined}
-          className="mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm text-[#0F172A] shadow-sm outline-none ring-[#F59E0B]/30 focus:border-[#F59E0B]/45 focus:ring-2"
+          className="hub-input"
           onChange={() => setPasswordMismatch(false)}
         />
       </div>
@@ -118,7 +118,7 @@ export function SignUpForm({
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-[1.03] active:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+        className="hub-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? "Wird erstellt…" : "Konto erstellen"}
       </button>
@@ -126,7 +126,7 @@ export function SignUpForm({
         Bereits registriert?{" "}
         <Link
           href={nextPath && nextPath !== "/konto" ? `/anmelden?next=${encodeURIComponent(nextPath)}` : "/anmelden"}
-          className="font-semibold text-[#b45309] hover:underline"
+          className="font-semibold text-[#36533c] hover:underline"
         >
           Anmelden
         </Link>

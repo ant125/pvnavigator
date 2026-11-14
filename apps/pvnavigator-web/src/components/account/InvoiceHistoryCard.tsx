@@ -1,7 +1,7 @@
 import { BillingPostButton } from "@/components/tariffs/BillingPostButton";
 
 const card =
-  "rounded-2xl border border-[#E2E8F0] bg-white px-5 py-4 shadow-[0_2px_8px_-2px_rgba(15,23,42,0.06)] sm:px-6";
+  "hub-panel px-5 py-4";
 
 /**
  * Opens the invoice-history portal. Rendered only when this account has invoices.

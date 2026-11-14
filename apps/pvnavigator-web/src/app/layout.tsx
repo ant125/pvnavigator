@@ -43,7 +43,7 @@ export default async function RootLayout({
           <SiteHeader userEmail={user?.email ?? null} />
           <main className="flex-1">{children}</main>
           <footer className="border-t border-[#E2E8F0] bg-white">
-            <div className="mx-auto max-w-6xl px-4 py-5">
+            <div className="mx-auto max-w-[1120px] px-4 py-5">
               <p className="text-center text-[13px] text-[#64748B] sm:text-left">
                 Ein unabhängiges PV-Projekt.
               </p>

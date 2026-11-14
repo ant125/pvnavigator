@@ -9,10 +9,10 @@ import { PVNavigatorLogo } from "@/components/branding/PVNavigatorLogo";
 const navItems: ReadonlyArray<{ href: string; label: string }> = [];
 
 const primaryBtn =
-  "inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-[#F59E0B] to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-[1.03] active:brightness-[0.98]";
+  "hub-primary";
 
 const ghostBtn =
-  "inline-flex items-center justify-center rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-medium text-[#0F172A] shadow-sm transition hover:bg-[#FAFBFC]";
+  "hub-secondary";
 
 const navMuted = "text-sm font-medium text-[#64748B] transition-colors hover:text-[#0F172A]";
 
@@ -26,8 +26,8 @@ export function SiteHeader({ userEmail }: SiteHeaderProps) {
   const hasSectionNav = navItems.length > 0;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E2E8F0] bg-white/90 shadow-sm backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
+    <header className="sticky top-0 z-50 border-b border-[#d9dedb] bg-[#f5f6f3]">
+      <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-3 px-4 py-4">
         <Link href="/" className="flex shrink-0 items-center gap-2" onClick={() => setMenuOpen(false)}>
           <PVNavigatorLogo />
         </Link>
@@ -47,7 +47,7 @@ export function SiteHeader({ userEmail }: SiteHeaderProps) {
         <div className="hidden shrink-0 items-center gap-3 md:flex">
           {authenticated ? (
             <>
-              <Link href="/konto" className="text-sm font-semibold text-[#0F172A] transition-colors hover:text-[#b45309]">
+              <Link href="/konto" className="text-sm font-semibold text-[#0F172A] transition-colors hover:text-[#2f4a3c]">
                 Mein Konto
               </Link>
               {userEmail ? (
