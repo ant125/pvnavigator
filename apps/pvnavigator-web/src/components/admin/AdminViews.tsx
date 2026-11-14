@@ -7,6 +7,7 @@ import {
   formatAdminDateTime,
   formatAdminDay,
   formatAdminKwh,
+  formatAdminRate,
   pageCount,
   userListHref,
   type AdminDashboard,
@@ -59,6 +60,29 @@ export function AdminDashboardView({ data }: { data: AdminDashboard }) {
           <Metric label="Nutzer" value={data.users} href="/admin/nutzer" />
           <Metric label="Unternehmen" value={data.unternehmen} href="/admin/nutzer?art=unternehmen" />
           <Metric label="Berechnungen" value={data.calculations} />
+        </dl>
+      </section>
+      <section className="hub-panel admin-block" aria-labelledby="admin-trustpilot-heading">
+        <div className="hub-panel-heading">
+          <h2 id="admin-trustpilot-heading">Trustpilot</h2>
+        </div>
+        <p className="hub-section-note">
+          Gezählt wird, wem die Einladung angezeigt wurde und wer den Link geöffnet hat.
+          Eine veröffentlichte Bewertung wird nicht erfasst.
+        </p>
+        <dl className="admin-activity">
+          <div>
+            <dt>Einladung angezeigt</dt>
+            <dd>{formatAdminCount(data.trustpilotShown)}</dd>
+          </div>
+          <div>
+            <dt>Link geöffnet</dt>
+            <dd>{formatAdminCount(data.trustpilotClicked)}</dd>
+          </div>
+          <div>
+            <dt>Klickrate</dt>
+            <dd>{formatAdminRate(data.trustpilotShown, data.trustpilotClicked)}</dd>
+          </div>
         </dl>
       </section>
       <section className="hub-panel admin-block" aria-labelledby="admin-activity-heading">

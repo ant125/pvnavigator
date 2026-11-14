@@ -17,6 +17,8 @@ const dashboard: AdminDashboard = {
   week: 1,
   month: 2,
   series,
+  trustpilotShown: 4,
+  trustpilotClicked: 1,
 };
 
 const query: UserListQuery = { q: "", art: "alle", sort: "registrierung", richtung: "ab", seite: 1 };
@@ -63,6 +65,12 @@ describe("administrator views", () => {
     }
     expect(html).toContain("01.10.2026: 0");
     expect(html).toContain("30.10.2026: 0");
+    expect(html).toContain("Einladung angezeigt");
+    expect(html).toContain("Link geöffnet");
+    expect(html).toContain("Klickrate");
+    expect(html).toContain("25 %");
+    expect(html).toContain("Eine veröffentlichte Bewertung wird nicht erfasst.");
+    expect(html).not.toContain("Bewertung abgegeben");
   });
 
   it("shows an empty selection without inventing users", () => {

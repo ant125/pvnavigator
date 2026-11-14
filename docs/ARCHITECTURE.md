@@ -192,7 +192,7 @@ from the e-mail address, from JWT metadata or from anything the browser sends.
 | `private.admin_users` | Who is an administrator. Written only with SQL by the database owner |
 | `private.admin_audit_log` | Trail of role grants, revocations and `admin_user_viewed` card reads |
 | `public.is_admin()` | `true` when the calling `auth.uid()` has a row. No argument, read only |
-| `public.admin_dashboard()` | Totals and 30 Europe/Berlin days, including days without a calculation |
+| `public.admin_dashboard()` | Totals, 30 Europe/Berlin days, and Trustpilot invitation counts (shown, link opened; not a published review) |
 | `public.admin_list_users(...)` | One page of accounts. Search matches name and e-mail only |
 | `public.admin_user_card(...)` | One page of stored calculation fields, and an audit entry |
 

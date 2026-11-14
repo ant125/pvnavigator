@@ -30,6 +30,8 @@ export type AdminDashboard = {
   week: number;
   month: number;
   series: { day: string; count: number }[];
+  trustpilotShown: number;
+  trustpilotClicked: number;
 };
 
 export type AdminUser = {
@@ -162,6 +164,13 @@ export function formatAdminCount(value: number): string {
   return new Intl.NumberFormat("de-DE").format(value);
 }
 
+/** Clicked accounts divided by accounts who were shown the invitation. */
+export function formatAdminRate(shown: number, clicked: number): string {
+  if (!Number.isFinite(shown) || shown <= 0) return "—";
+  const pct = (clicked / shown) * 100;
+  return `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(pct)} %`;
+}
+
 export function formatAdminDay(day: string): string {
   const [year, month, date] = day.split("-");
   if (!year || !month || !date) return day;
@@ -212,9 +221,12 @@ export function parseAdminDashboard(value: unknown): AdminDashboard | null {
   const today = count(value.today);
   const week = count(value.week);
   const month = count(value.month);
+  const trustpilotShown = count(value.trustpilot_shown);
+  const trustpilotClicked = count(value.trustpilot_clicked);
   if (
     users === null || unternehmen === null || calculations === null
     || today === null || week === null || month === null
+    || trustpilotShown === null || trustpilotClicked === null
   ) {
     return null;
   }
@@ -225,7 +237,17 @@ export function parseAdminDashboard(value: unknown): AdminDashboard | null {
     if (pointCount === null) return null;
     series.push({ day: point.day, count: pointCount });
   }
-  return { users, unternehmen, calculations, today, week, month, series };
+  return {
+    users,
+    unternehmen,
+    calculations,
+    today,
+    week,
+    month,
+    series,
+    trustpilotShown,
+    trustpilotClicked,
+  };
 }
 
 export function parseAdminUserList(value: unknown): AdminUserList | null {

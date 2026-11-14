@@ -140,6 +140,8 @@ describe("/admin", () => {
         today: 1,
         week: 3,
         month: 10,
+        trustpilot_shown: 4,
+        trustpilot_clicked: 1,
         series: Array.from({ length: 30 }, (_, index) => ({
           day: `2026-10-${String(index + 1).padStart(2, "0")}`,
           count: index === 4 ? 0 : 1,
@@ -154,6 +156,9 @@ describe("/admin", () => {
     expect(html.indexOf(">Heute<")).toBeLessThan(html.indexOf(">Diese Woche<"));
     expect(html.indexOf(">Diese Woche<")).toBeLessThan(html.indexOf(">Dieser Monat<"));
     expect(html).toContain("Berechnungsaktivität");
+    expect(html).toContain("Einladung angezeigt");
+    expect(html).toContain("25 %");
+    expect(html).not.toContain("Bewertung abgegeben");
     expect(html).toContain("PVNAVIGATOR_");
     expect(html).toContain('href="/konto"');
     expect(html).toContain("05.10.2026: 0");

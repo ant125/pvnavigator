@@ -22,7 +22,13 @@ vi.mock("@/components/SpeicherChart", () => ({
   default: () => <div>speicher-chart</div>,
 }));
 
+vi.mock("@/app/actions/trustpilot", () => ({
+  recordTrustpilotShown: vi.fn(async () => {}),
+  recordTrustpilotClick: vi.fn(async () => "saved"),
+}));
+
 import { SpeicherReportView } from "./SpeicherReportView";
+import { TrustpilotInvitationProvider } from "../trustpilotInvitation";
 import { RESULT_SECTION_IDS } from "../calculate/resultNav";
 import type { SpeicherGrenzPayload } from "@/lib/calculateSpeicherResult";
 import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
@@ -357,5 +363,44 @@ describe("SpeicherReportView balance helper", () => {
 
     expect(withoutHeatPump).not.toContain("einschließlich Wärmepumpe");
     expect(withHeatPump).toContain("einschließlich Wärmepumpe");
+  });
+});
+
+describe("SpeicherReportView Trustpilot invitation", () => {
+  it("stays hidden until the account has not opened the link", () => {
+    const html = renderToStaticMarkup(
+      <SpeicherReportView mode="historical" variant="page" {...sharedProps} />,
+    );
+    expect(html).toContain("PDF herunterladen");
+    expect(html).not.toContain("Ihre Meinung ist uns wichtig!");
+    expect(html).not.toContain("widget.trustpilot.com");
+  });
+
+  it("places the same invitation under the PDF area on a new and a saved report", () => {
+    for (const mode of ["live", "historical"] as const) {
+      const html = renderToStaticMarkup(
+        <TrustpilotInvitationProvider show recordShown={false}>
+          <SpeicherReportView
+            mode={mode}
+            variant={mode === "live" ? "workspace" : "page"}
+            {...sharedProps}
+          />
+        </TrustpilotInvitationProvider>,
+      );
+      expect(indexOf(html, "Kostenloser Bericht")).toBeLessThan(
+        indexOf(html, "Ihre Meinung ist uns wichtig!"),
+      );
+      expect(indexOf(html, "PDF herunterladen")).toBeLessThan(
+        indexOf(html, "Auf Trustpilot bewerten"),
+      );
+      expect(html).toContain(
+        'href="https://www.trustpilot.com/review/pvnavigator.de"',
+      );
+      expect(html).not.toContain("trustpilot.com/review/pvnavigator.de?");
+      expect(html).toContain('target="_blank"');
+      expect(html).toContain('rel="noopener noreferrer"');
+      expect(html).not.toContain("widget.trustpilot.com");
+      expect(html).not.toContain("trustpilot-widget");
+    }
   });
 });

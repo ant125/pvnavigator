@@ -42,6 +42,7 @@ import {
   wwOverviewSentence,
 } from "@/lib/robustnessReportCopy";
 import { PdfDownloadButton } from "./PdfDownloadButton";
+import { TrustpilotInvitation } from "./TrustpilotInvitation";
 import { type ReportAccessKind } from "@pv-access/core";
 import type { FrozenSpeicherPresentation } from "@/lib/persistCompletedCalculation";
 import { SpeicherBenefitComparison } from "./SpeicherBenefitComparison";
@@ -1359,6 +1360,7 @@ export function SpeicherReportView({
               <p className="min-w-0 text-xs leading-relaxed text-ink-muted">
                 Kostenloser Bericht. Auch für die gewerbliche Nutzung.
               </p>
+              <TrustpilotInvitation />
             </div>
           </div>
           {mode === "historical" ? (

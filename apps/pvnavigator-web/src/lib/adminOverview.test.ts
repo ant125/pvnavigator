@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatAdminDateTime,
   formatAdminDay,
+  formatAdminRate,
   parseAdminDashboard,
   parseAdminUserCard,
   parseUserListQuery,
@@ -38,11 +39,22 @@ describe("administrator overview", () => {
 
   it("rejects a dashboard that drops an empty day", () => {
     expect(parseAdminDashboard({
-      users: 1, unternehmen: 0, calculations: 1, today: 0, week: 0, month: 0, series: series.slice(1),
+      users: 1, unternehmen: 0, calculations: 1, today: 0, week: 0, month: 0,
+      trustpilot_shown: 0, trustpilot_clicked: 0, series: series.slice(1),
     })).toBeNull();
     expect(parseAdminDashboard({
       users: 1, unternehmen: 0, calculations: 1, today: 0, week: 0, month: 0, series,
-    })?.series[0]).toEqual({ day: "2026-10-01", count: 0 });
+    })).toBeNull();
+    const dashboard = parseAdminDashboard({
+      users: 1, unternehmen: 0, calculations: 1, today: 0, week: 0, month: 0,
+      trustpilot_shown: 4, trustpilot_clicked: 1, series,
+    });
+    expect(dashboard?.series[0]).toEqual({ day: "2026-10-01", count: 0 });
+    expect(dashboard?.trustpilotShown).toBe(4);
+    expect(dashboard?.trustpilotClicked).toBe(1);
+    expect(formatAdminRate(0, 0)).toBe("—");
+    expect(formatAdminRate(4, 1)).toBe("25 %");
+    expect(formatAdminRate(3, 1)).toBe("33,3 %");
   });
 
   it("keeps only the calculation fields the card shows", () => {

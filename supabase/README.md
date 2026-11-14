@@ -10,7 +10,7 @@ Convention:
 
 Apply a reviewed migration with the Supabase CLI or the project migration API. The Data API must keep using the anon / publishable key in clients; never the service role.
 
-The VAT migration filenames were aligned with production history on 2026-11-14 after comparing their stored SQL. Remote history matches the local versions up to and including `20261114184500_account_profiles.sql`. See the history alignment note below, `docs/ARCHITECTURE.md › Access rules`, [Administrator role](#administrator-role-migrations20261114114503_admin_rolessql) and [Administrator overview](#administrator-overview-migrations20261114164100_admin_overviewsql).
+The VAT migration filenames were aligned with production history on 2026-11-14 after comparing their stored SQL. Remote history matches the local versions up to and including `20261114200000_trustpilot_invitation.sql`. See the history alignment note below, `docs/ARCHITECTURE.md › Access rules`, [Administrator role](#administrator-role-migrations20261114114503_admin_rolessql) and [Administrator overview](#administrator-overview-migrations20261114164100_admin_overviewsql).
 
 Layout:
 
@@ -139,6 +139,26 @@ docker exec -i supabase_db_pvnavigator-local psql -U postgres -d postgres \
 ```bash
 docker exec -i supabase_db_pvnavigator-local psql -U postgres -d postgres \
   -v ON_ERROR_STOP=1 < supabase/tests/admin_overview.sql
+```
+
+## Trustpilot invitation (`migrations/20261114200000_trustpilot_invitation.sql`)
+
+Applied in production on 2026-11-14, before the SPEICHERGRENZE and hub code that
+reads the new columns.
+Existing profile and calculation rows are not rewritten. Two nullable timestamps
+are added on `public.profiles`:
+
+- `trustpilot_shown_at` — the invitation was shown once for this account
+- `trustpilot_clicked_at` — the account opened the Trustpilot link
+
+The first value of each stamp stays. A click is not a published review. Own-row
+RLS is unchanged; authenticated accounts receive `UPDATE` on these two columns
+only. `public.admin_dashboard()` keeps its existing keys and adds
+`trustpilot_shown` and `trustpilot_clicked`. Deleted accounts are excluded.
+
+```bash
+docker exec -i supabase_db_pvnavigator-local psql -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 < supabase/tests/trustpilot_invitation.sql
 ```
 
 ## Local development: local Supabase stack

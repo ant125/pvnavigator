@@ -11,6 +11,7 @@ import {
 import { SpeicherShell } from "./(speicher)/components/SpeicherShell";
 import type { StoredAccountKind } from "./(speicher)/accountKind";
 import { getServerUser } from "@/lib/auth";
+import { trustpilotInvitationFromRow } from "@/lib/trustpilotInvitation";
 import { createServerSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 import "./globals.css";
@@ -55,12 +56,27 @@ export default async function RootLayout({
   const user = await getServerUser();
   let profileIncomplete = false;
   let accountKind: StoredAccountKind = null;
+  let trustpilotShow = false;
+  let trustpilotRecordShown = false;
   if (user && isSupabaseConfigured()) {
     const supabase = await createServerSupabaseClient();
-    const profile = await supabase.from("profiles").select("account_kind").eq("id", user.id).maybeSingle();
+    const [profile, stamps] = await Promise.all([
+      supabase.from("profiles").select("account_kind").eq("id", user.id).maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("trustpilot_clicked_at, trustpilot_shown_at")
+        .eq("id", user.id)
+        .maybeSingle(),
+    ]);
     const kind = profile.data?.account_kind;
     accountKind = !profile.error && (kind === "privat" || kind === "unternehmen") ? kind : null;
     profileIncomplete = !profile.error && accountKind === null;
+    if (stamps.error) {
+      console.error("Failed to read the Trustpilot invitation", stamps.error.message);
+    }
+    const invitation = trustpilotInvitationFromRow(stamps.data, Boolean(stamps.error));
+    trustpilotShow = invitation.show;
+    trustpilotRecordShown = invitation.recordShown;
   }
 
   return (
@@ -78,6 +94,8 @@ export default async function RootLayout({
           signOutHref={getHubSignOutUrl({ returnTo: AUTH_RETURN_SPEICHER })}
           profileIncomplete={profileIncomplete}
           accountKind={accountKind}
+          trustpilotShow={trustpilotShow}
+          trustpilotRecordShown={trustpilotRecordShown}
         >
           {children}
         </SpeicherShell>
