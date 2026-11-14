@@ -1,3 +1,4 @@
+import { InfoBackButton } from "@/components/info/InfoBackButton";
 import { InfoPageHeader } from "@/components/info/InfoPageHeader";
 
 export default function DatenschutzPage() {
@@ -88,6 +89,7 @@ export default function DatenschutzPage() {
           </section>
         </div>
       </article>
+      <InfoBackButton />
     </div>
   );
 }

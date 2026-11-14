@@ -90,7 +90,7 @@ body {
 @media(max-width:850px) {.hub-variant-data {grid-template-columns:1fr 1fr;}.hub-report-action {grid-column:1/-1;}}
 @media(max-width:560px) {.hub-address summary {flex-wrap:wrap;gap:8px;padding:16px;}.hub-address summary strong {flex:1;}.hub-address-count {width:100%;margin-left:28px;}.hub-variants {padding:0 12px 12px;}.hub-variant {padding:12px;}.hub-variant-heading {flex-wrap:wrap;}.hub-variant-data {gap:12px;}.hub-search {padding:16px;}}
 
-.hub-back {display:inline-flex;align-items:center;gap:6px;min-height:44px;margin:0 0 2px;padding:0;border:0;background:none;font:inherit;font-size:13px;line-height:1.2;cursor:pointer;}
+.hub-back {display:inline-flex;align-items:center;gap:6px;min-height:44px;margin:28px 0 0;padding:0;border:0;background:none;font:inherit;font-size:13px;line-height:1.2;cursor:pointer;}
 .hub-quiet-link {color:#36533c;font-weight:600;text-decoration:underline;text-underline-offset:4px;}
 .hub-quiet-link:hover {color:#2f4a3c;}
 .hub-crumb {display:flex;flex-wrap:wrap;align-items:center;gap:0 6px;color:#67746b;font-size:13px;line-height:1.4;}

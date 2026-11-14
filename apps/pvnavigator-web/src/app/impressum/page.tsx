@@ -1,3 +1,4 @@
+import { InfoBackButton } from "@/components/info/InfoBackButton";
 import { InfoPageHeader } from "@/components/info/InfoPageHeader";
 
 export default function ImpressumPage() {
@@ -73,6 +74,7 @@ export default function ImpressumPage() {
           </section>
         </div>
       </article>
+      <InfoBackButton />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { InfoBackButton } from "@/components/info/InfoBackButton";
 import { InfoPageHeader } from "@/components/info/InfoPageHeader";
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ export default function KontaktPage() {
           <p className="hub-subtitle">In der Regel innerhalb von 1–2 Werktagen.</p>
         </section>
       </div>
+      <InfoBackButton />
     </div>
   );
 }

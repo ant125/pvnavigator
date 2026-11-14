@@ -1,12 +1,9 @@
 import Link from "next/link";
 
-import { InfoBackButton } from "./InfoBackButton";
-
 export function InfoPageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <header className="hub-intro">
       <div>
-        <InfoBackButton />
         <nav className="hub-crumb" aria-label="Brotkrumenpfad">
           <Link href="/" className="hub-quiet-link">
             Startseite
