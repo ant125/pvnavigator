@@ -89,3 +89,21 @@ body {
 .hub-variants {padding:0 20px 18px 52px;}.hub-variant {padding:16px;background:#fafbf8;border:1px solid #d9dedb;border-radius:3px;}.hub-variant+ .hub-variant {margin-top:10px;}.hub-variant-heading {display:flex;justify-content:space-between;align-items:start;gap:12px;}.hub-variant-heading strong {font-size:13px;}.hub-report-ref {display:block;font-size:10px;color:#627067;margin-top:4px;}.hub-variant-data {display:grid;grid-template-columns:1fr 1fr 1.2fr 1.2fr auto;gap:16px;margin-top:16px;align-items:center;}.hub-variant-data dt {font-size:11px;color:#627067;margin-bottom:4px;}.hub-variant-data dd {font-size:12px;font-weight:500;}.hub-report-action {font-size:11px;color:#627067;}.hub-more {margin:20px;}
 @media(max-width:850px) {.hub-variant-data {grid-template-columns:1fr 1fr;}.hub-report-action {grid-column:1/-1;}}
 @media(max-width:560px) {.hub-address summary {flex-wrap:wrap;gap:8px;padding:16px;}.hub-address summary strong {flex:1;}.hub-address-count {width:100%;margin-left:28px;}.hub-variants {padding:0 12px 12px;}.hub-variant {padding:12px;}.hub-variant-heading {flex-wrap:wrap;}.hub-variant-data {gap:12px;}.hub-search {padding:16px;}}
+
+.hub-back {display:inline-flex;align-items:center;gap:6px;min-height:44px;margin:0 0 2px;padding:0;border:0;background:none;font:inherit;font-size:13px;line-height:1.2;cursor:pointer;}
+.hub-quiet-link {color:#36533c;font-weight:600;text-decoration:underline;text-underline-offset:4px;}
+.hub-quiet-link:hover {color:#2f4a3c;}
+.hub-crumb {display:flex;flex-wrap:wrap;align-items:center;gap:0 6px;color:#67746b;font-size:13px;line-height:1.4;}
+.hub-crumb [aria-current="page"] {color:#526057;}
+.hub-document {padding:20px;}
+.hub-document section+section {margin-top:28px;}
+.hub-document h2 {font-size:14px;font-weight:650;margin:0 0 8px;}
+.hub-document :is(p,li,address) {color:#627067;font-size:13px;line-height:1.65;}
+.hub-document :is(p,address,ul) {max-width:710px;}
+.hub-document p+ul {margin-top:12px;}
+.hub-document ul {margin:0;padding-left:1.25rem;list-style:disc;}
+.hub-document li+li {margin-top:4px;}
+.hub-document address {font-style:normal;}
+.hub-document a {color:#36533c;font-weight:600;text-decoration:underline;text-underline-offset:4px;}
+.hub-document a:hover {color:#2f4a3c;}
+.hub-document strong {font-weight:600;color:#29332e;}
