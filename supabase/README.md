@@ -10,7 +10,7 @@ Convention:
 
 Apply a reviewed migration with the Supabase CLI or the project migration API. The Data API must keep using the anon / publishable key in clients; never the service role.
 
-Do not run a general `supabase db push` against production while the VAT history differs. Production already applied `accept_german_vat_gross_amounts` as `20261106181748` and `accept_eu_vat_on_paid_invoices` as `20261106202138`. The files in this repository use `20261106181518` and `20261106202013`. A push would run those files again. `20261113203647_free_open_access.sql` is the open-access decision and is applied on its own. See `docs/ARCHITECTURE.md › Access rules`.
+The VAT migration filenames were aligned with production history on 2026-11-14 after comparing their stored SQL. All local and remote migration versions now match, including `20261113203647_free_open_access.sql`. No migration needs applying for the current UI release. See the history alignment note below and `docs/ARCHITECTURE.md › Access rules`.
 
 Layout:
 
@@ -150,3 +150,18 @@ select id, created_at, access_tier, address_key, summary_address
 Deleting a test period does not touch saved calculations; their `access_tier`
 is frozen at creation. A period inserted here no longer changes who may
 calculate an address. Open access ignores it.
+
+## Migration history alignment (2026-11-14)
+
+The two VAT migrations were already applied to production with timestamps different
+from their original local filenames. Their SQL was compared with the statements
+stored in `supabase_migrations.schema_migrations` and matches after ignoring
+comments and whitespace. Local filenames now use the recorded production versions:
+
+- `20261106181518` → `20261106181748_accept_german_vat_gross_amounts.sql`
+- `20261106202013` → `20261106202138_accept_eu_vat_on_paid_invoices.sql`
+
+Only filenames were aligned; no production SQL or history rows were changed. Keep
+these migrations as historical records, even while the platform is free. Do not
+reapply them or create duplicate versions. `20261113203647_free_open_access.sql`
+is also already recorded in production.

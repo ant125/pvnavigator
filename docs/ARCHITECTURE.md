@@ -235,12 +235,13 @@ history stays available. Setting the constant back to `true` is a deliberate
 product decision; it does not by itself restore an address quota.
 
 The free decision is `supabase/migrations/20261113203647_free_open_access.sql`.
-It replaces only `private.decide_calculation_access`. Two earlier VAT
-migrations are recorded in production under different versions than the files
-in this repository (`20261106181748` / `20261106202138` remotely,
-`20261106181518` / `20261106202013` locally). Do not run a general
-`supabase db push` until that history is reconciled; it would treat the local
-VAT files as pending and replace `apply_stripe_billing_event` again.
+It replaces only `private.decide_calculation_access` and is already recorded in
+production. On 2026-11-14 the two VAT migration filenames were aligned with their
+existing production versions (`20261106181748` / `20261106202138`) after verifying
+that the stored SQL matches. All local and remote migration versions now match.
+This reconciliation changed filenames only; no SQL was reapplied and no production
+history rows were altered. See `supabase/README.md` for the old-to-new mapping.
+
 
 ---
 
