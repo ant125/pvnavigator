@@ -963,7 +963,9 @@ function BenefitColumn({
   const barGap = tight ? 3 : compact ? 5 : 8;
   const calloutPad = tight ? 4 : compact ? 5 : undefined;
   return (
-    <View style={[styles.col, styles.textBlock, rowGap != null ? { gap: rowGap } : null]}>
+    <View
+      style={[styles.col, styles.textBlock, ...(rowGap != null ? [{ gap: rowGap }] : [])]}
+    >
       <Text style={styles.h3}>{title}</Text>
       <Text style={styles.body}>{intro}</Text>
       <View wrap={false}>
@@ -1916,7 +1918,7 @@ function StorageStepTable({
           wrap={false}
           style={[
             styles.factRow,
-            row.boundary ? { backgroundColor: accentSoft } : null,
+            ...(row.boundary ? [{ backgroundColor: accentSoft }] : []),
           ]}
         >
           {value(row.sizeLabel, columns.size, row.boundary)}
