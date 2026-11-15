@@ -23,6 +23,7 @@ import {
 } from "@/lib/speicherChartCaption";
 
 import { pdfAsset } from "./pdfAssets";
+import type { PlantFact } from "./inputFacts";
 import {
   PRIVATE_USE_LABEL,
   PRIVATE_USE_MARK,
@@ -149,6 +150,16 @@ const styles = StyleSheet.create({
     color: accent,
     textDecoration: "underline",
   },
+  footerBrand: {
+    position: "absolute",
+    left: MARGIN_LEFT,
+    right: MARGIN_RIGHT,
+    bottom: 3.5 * MM,
+    fontFamily: "Inter",
+    fontSize: 7.5,
+    lineHeight: 1.2,
+    color: secondary,
+  },
   // Free reports: compact caption centred between footer link and page number.
   footerPrivateUse: {
     position: "absolute",
@@ -221,7 +232,7 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontFamily: "Inter",
-    fontSize: 15,
+    fontSize: 22,
     fontWeight: 700,
     letterSpacing: -0.2,
     lineHeight: 1.15,
@@ -255,24 +266,53 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     textAlign: "right",
   },
-  chipWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
+  plantHeading: {
+    fontFamily: "Plex",
+    fontSize: 8,
+    fontWeight: 600,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: accent,
+    marginBottom: 6,
   },
-  chip: {
-    maxWidth: "100%",
-    borderWidth: 0.6,
-    borderColor: line,
-    backgroundColor: "#fbfaf7",
-    borderRadius: 2,
-    paddingVertical: 3,
-    paddingHorizontal: 7,
-  },
-  chipText: {
-    fontSize: 9.5,
-    lineHeight: 1.3,
+  aboutBody: {
+    fontSize: 10.5,
+    lineHeight: 1.45,
     color: ink,
+  },
+  roofCaption: {
+    marginTop: 12,
+    marginBottom: 4,
+    fontSize: 9,
+    lineHeight: 1.2,
+    fontWeight: 600,
+    color: ink,
+  },
+  factTable: {
+    borderTopWidth: 0.6,
+    borderTopColor: line,
+  },
+  factRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 0.4,
+    borderBottomColor: lineSoft,
+  },
+  roofTable: {
+    borderTopWidth: 0.6,
+    borderTopColor: line,
+  },
+  roofHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 0.6,
+    borderBottomColor: line,
+  },
+  roofRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 0.4,
+    borderBottomColor: lineSoft,
   },
   kpiPair: {
     flexDirection: "row",
@@ -752,7 +792,15 @@ export type PdfModel = {
     backup: boolean;
   };
   layoutTest: { banner: string } | null;
-  chips: { text: string }[];
+  /** Label/value rows for the cover Anlagendaten table. Roofs are separate. */
+  plantFacts: PlantFact[];
+  /** One row per stored roof. Empty when the calculation has no surface. */
+  roofTable: {
+    label: string;
+    kwp: string;
+    azimuth: string;
+    tilt: string;
+  }[];
   inputs: InputRow[];
   chart: {
     points: { size: number; eigenverbrauch: number; label: string }[];
@@ -818,6 +866,19 @@ export type PdfModel = {
     headers: string[];
     rows: { profil: string; size: string; eigenverbrauch: string; autarkie: string }[];
   };
+  /**
+   * One row per stored battery size on the Eigenverbrauch chart.
+   * `additional` is null for the smallest size, which has no predecessor.
+   */
+  storageSteps: {
+    size: number;
+    eigenverbrauch: number;
+    additional: number | null;
+    boundary: boolean;
+    sizeLabel: string;
+    eigenverbrauchLabel: string;
+    additionalLabel: string;
+  }[];
 };
 
 function t(value: string): string {
@@ -834,11 +895,19 @@ function t(value: string): string {
 // `minPresenceAhead` points of following content on the same page.
 const KEEP_WITH_NEXT = 90;
 
-function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+function SectionHeading({
+  eyebrow,
+  title,
+  compact = false,
+}: {
+  eyebrow: string;
+  title: string;
+  compact?: boolean;
+}) {
   return (
     <View minPresenceAhead={KEEP_WITH_NEXT}>
-      <Text style={styles.eyebrow}>{eyebrow}</Text>
-      <Text style={styles.h2}>{title}</Text>
+      <Text style={compact ? [styles.eyebrow, { marginBottom: 2 }] : styles.eyebrow}>{eyebrow}</Text>
+      <Text style={compact ? [styles.h2, { marginBottom: 4 }] : styles.h2}>{title}</Text>
     </View>
   );
 }
@@ -878,6 +947,8 @@ function BenefitColumn({
   scale,
   callout,
   legend,
+  compact = false,
+  tight = false,
 }: {
   title: string;
   intro: string;
@@ -885,14 +956,19 @@ function BenefitColumn({
   scale: [string, string];
   callout: string;
   legend?: React.ReactNode;
+  compact?: boolean;
+  tight?: boolean;
 }) {
+  const rowGap = tight ? 3 : compact ? 4 : undefined;
+  const barGap = tight ? 3 : compact ? 5 : 8;
+  const calloutPad = tight ? 4 : compact ? 5 : undefined;
   return (
-    <View style={[styles.col, styles.textBlock]}>
+    <View style={[styles.col, styles.textBlock, rowGap != null ? { gap: rowGap } : null]}>
       <Text style={styles.h3}>{title}</Text>
       <Text style={styles.body}>{intro}</Text>
       <View wrap={false}>
         {rows.map((row, index) => (
-          <View key={row.label} style={index > 0 ? { marginTop: 8 } : undefined}>
+          <View key={row.label} style={index > 0 ? { marginTop: barGap } : undefined}>
             <View style={styles.barRow}>
               <Text style={styles.body}>{row.label}</Text>
               <Text style={row.accent ? styles.metricAccent : styles.metricValue}>
@@ -907,7 +983,9 @@ function BenefitColumn({
           <Text>{t(scale[1])}</Text>
         </View>
       </View>
-      <Text style={styles.callout}>{t(callout)}</Text>
+      <Text style={calloutPad != null ? [styles.callout, { paddingVertical: calloutPad }] : styles.callout}>
+        {t(callout)}
+      </Text>
       {legend ?? null}
     </View>
   );
@@ -1295,83 +1373,297 @@ function paginateInputs(rows: InputRow[]) {
   return { chunks, chartFitsBelow, estimate: { lastBlockH, firstPageAvail } };
 }
 
-const CHIP_GAP = 6;
-const CHIP_PAD_X = 14;
-const CHIP_PAD_Y = 6;
-const CHIP_FONT = 9.5;
-const CHIP_LINE = CHIP_FONT * 1.3;
-const SINGLE_LINE_CHIP_H = CHIP_LINE + CHIP_PAD_Y + 1.2;
-// Four single-line rows: one roof, heat pump, and backup still sit under the
-// cover. A fifth row no longer fits above the footer, so it continues later.
-const FIRST_PAGE_CHIP_ROWS = 4;
-const FIRST_PAGE_CHIP_H =
-  SINGLE_LINE_CHIP_H * FIRST_PAGE_CHIP_ROWS +
-  CHIP_GAP * (FIRST_PAGE_CHIP_ROWS - 1);
+/**
+ * Anlagendaten column widths at 9 pt, padding included.
+ * The left label fits „Hausverbrauch ohne Wärmepumpe“ (151 pt).
+ * The right value fits „Heizung und Warmwasser“ (112 pt).
+ * The left value fits „4 200 kWh/Jahr“ (76 pt).
+ */
+const PLANT_GAP = 10;
+const PLANT_LABEL_L = 158;
+const PLANT_LEFT_W = 240;
+const PLANT_LABEL_R = 96;
+const PLANT_RIGHT_W = CONTENT_W - PLANT_LEFT_W - PLANT_GAP;
+const PLANT_LEFT_LABELS = new Set([
+  "PV-Anlage",
+  "Hausverbrauch ohne Wärmepumpe",
+  "Notstromreserve",
+]);
 
-function chipBox(text: string): { w: number; h: number } {
-  const inner = CONTENT_W - CHIP_PAD_X - 1.2;
-  const natural = textWidth(interRegular, t(text), CHIP_FONT);
-  if (natural <= inner) {
-    return {
-      w: Math.min(CONTENT_W, natural + CHIP_PAD_X + 1.2),
-      h: CHIP_LINE + CHIP_PAD_Y + 1.2,
-    };
-  }
-  const lines = lineCount(interRegular, t(text), CHIP_FONT, inner);
-  return { w: CONTENT_W, h: lines * CHIP_LINE + CHIP_PAD_Y + 1.2 };
-}
+/**
+ * Roof columns. One block below four roofs, two equal blocks from four.
+ * Widths are fixed and include the cell padding.
+ * Fläche and Leistung are quantities: header and value share the right edge.
+ * Azimut and Neigung are labels and stay left-aligned, in both blocks.
+ * A single block is only as wide as its columns, so the tilt does not
+ * sit on the far page edge. Dual blocks fill the content width and still
+ * fit „Nordwest (315°)“, „Flachdach (0°)“ and „99.99 kWp“ at 9 pt.
+ */
+const ROOF_DUAL_FROM = 4;
+const ROOF_GAP = 6;
+const ROOF_PAD_X = 2;
+const ROOF_SINGLE_GUTTER = 14;
+const ROOF_SINGLE = { flaeche: 46, leistung: 84, azimut: 96, neigung: 90 };
+const ROOF_DUAL = { flaeche: 34, leistung: 54, neigung: 68 };
 
-/** Keeps whole chips on page 1 until the block would grow past the cover budget. */
-function paginateChips(chips: { text: string }[]) {
-  type Row = { items: { text: string }[]; h: number };
-  const rows: Row[] = [];
-  let items: { text: string }[] = [];
-  let rowW = 0;
-  let rowH = 0;
-  for (const chip of chips) {
-    const box = chipBox(chip.text);
-    const nextW = items.length === 0 ? box.w : rowW + CHIP_GAP + box.w;
-    if (items.length > 0 && nextW > CONTENT_W + 0.5) {
-      rows.push({ items, h: rowH });
-      items = [chip];
-      rowW = box.w;
-      rowH = box.h;
-    } else {
-      items.push(chip);
-      rowW = nextW;
-      rowH = Math.max(rowH, box.h);
-    }
-  }
-  if (items.length > 0) rows.push({ items, h: rowH });
+type RoofTableRow = PdfModel["roofTable"][number];
 
-  const firstRows: Row[] = [];
-  const restRows: Row[] = [];
-  let used = 0;
-  let open = true;
-  for (const row of rows) {
-    const add = (used > 0 ? CHIP_GAP : 0) + row.h;
-    if (open && used + add <= FIRST_PAGE_CHIP_H + 0.25) {
-      firstRows.push(row);
-      used += add;
-    } else {
-      open = false;
-      restRows.push(row);
-    }
+type RoofColumnKey = "flaeche" | "leistung" | "azimut" | "neigung";
+
+const ROOF_COLUMNS: {
+  key: RoofColumnKey;
+  header: string;
+  align: "left" | "right";
+  numeric: boolean;
+}[] = [
+  { key: "flaeche", header: "Fläche", align: "right", numeric: true },
+  { key: "leistung", header: "Leistung", align: "right", numeric: true },
+  { key: "azimut", header: "Azimut", align: "left", numeric: false },
+  { key: "neigung", header: "Neigung", align: "left", numeric: false },
+];
+
+function layoutRoofTable(
+  rows: RoofTableRow[],
+  pad: { dual: number; single: number },
+) {
+  const dual = rows.length >= ROOF_DUAL_FROM;
+  const groupCount = dual ? 2 : 1;
+  const gutter = dual ? 0 : ROOF_SINGLE_GUTTER;
+  const widths: Record<RoofColumnKey, number> = dual
+    ? {
+        flaeche: ROOF_DUAL.flaeche,
+        leistung: ROOF_DUAL.leistung,
+        neigung: ROOF_DUAL.neigung,
+        azimut:
+          (CONTENT_W - ROOF_GAP) / groupCount -
+          ROOF_DUAL.flaeche -
+          ROOF_DUAL.leistung -
+          ROOF_DUAL.neigung,
+      }
+    : { ...ROOF_SINGLE };
+  const groupW = dual
+    ? (CONTENT_W - ROOF_GAP) / groupCount
+    : ROOF_SINGLE.flaeche +
+      ROOF_SINGLE.leistung +
+      ROOF_SINGLE.azimut +
+      ROOF_SINGLE.neigung +
+      gutter * 3;
+  const perGroup = Math.ceil(rows.length / groupCount);
+  const groups: RoofTableRow[][] = [];
+  for (let index = 0; index < groupCount; index += 1) {
+    const slice = rows.slice(index * perGroup, (index + 1) * perGroup);
+    if (slice.length > 0) groups.push(slice);
   }
   return {
-    first: firstRows.flatMap((row) => row.items),
-    restRows,
+    groups,
+    fontSize: dual ? 9 : 9.5,
+    padY: dual ? pad.dual : pad.single,
+    gutter,
+    groupW,
+    widths,
   };
 }
 
-function FactChips({ chips }: { chips: { text: string }[] }) {
+function roofCellText(row: RoofTableRow, key: RoofColumnKey): string {
+  if (key === "flaeche") return row.label;
+  if (key === "leistung") return t(row.kwp);
+  if (key === "azimut") return row.azimuth;
+  return row.tilt;
+}
+
+function splitPlantFacts(facts: PlantFact[]) {
+  return {
+    left: facts.filter((fact) => PLANT_LEFT_LABELS.has(fact.label)),
+    right: facts.filter((fact) => !PLANT_LEFT_LABELS.has(fact.label)),
+  };
+}
+
+function PlantFactTable({
+  rows,
+  width,
+  labelWidth,
+  padY,
+}: {
+  rows: PlantFact[];
+  width: number;
+  labelWidth: number;
+  padY: number;
+}) {
+  if (rows.length === 0) return null;
   return (
-    <View style={styles.chipWrap}>
-      {chips.map((chip) => (
-        <View key={chip.text} style={styles.chip} wrap={false}>
-          <Text style={styles.chipText}>{t(chip.text)}</Text>
+    <View style={[styles.factTable, { width }]}>
+      {rows.map((row) => (
+        <View key={row.label} style={[styles.factRow, { paddingVertical: padY }]} wrap={false}>
+          <Text
+            style={{
+              width: labelWidth,
+              fontSize: 9,
+              lineHeight: 1.2,
+              color: secondary,
+              paddingHorizontal: 2,
+            }}
+          >
+            {row.label}
+          </Text>
+          <Text
+            style={{
+              width: width - labelWidth,
+              fontFamily: "Plex",
+              fontSize: 9,
+              lineHeight: 1.2,
+              color: ink,
+              textAlign: "right",
+              paddingHorizontal: 2,
+            }}
+          >
+            {t(row.value)}
+          </Text>
         </View>
       ))}
+    </View>
+  );
+}
+
+function RoofTable({
+  rows,
+  captionTop,
+  pad,
+}: {
+  rows: RoofTableRow[];
+  captionTop: number;
+  pad: { dual: number; single: number };
+}) {
+  const layout = layoutRoofTable(rows, pad);
+  const cell = (key: RoofColumnKey, header: boolean, gutterAfter: number) => {
+    const column = ROOF_COLUMNS.find((item) => item.key === key)!;
+    return {
+      width: layout.widths[key],
+      marginRight: gutterAfter,
+      textAlign: column.align,
+      fontSize: layout.fontSize,
+      lineHeight: 1.2,
+      fontWeight: header ? 600 : 400,
+      color: header ? secondary : column.numeric && key === "flaeche" ? secondary : ink,
+      fontFamily: !header && column.numeric ? "Plex" : "Inter",
+      paddingVertical: header ? 2 : layout.padY,
+      paddingHorizontal: ROOF_PAD_X,
+    };
+  };
+  return (
+    <View>
+      <Text style={[styles.roofCaption, { marginTop: captionTop }]}>Dachflächen</Text>
+      <View style={{ flexDirection: "row", gap: layout.groups.length > 1 ? ROOF_GAP : 0 }}>
+        {layout.groups.map((group) => (
+          <View key={group[0]?.label ?? "roofs"} style={[styles.roofTable, { width: layout.groupW }]}>
+            <View style={styles.roofHead} wrap={false}>
+              {ROOF_COLUMNS.map((column, index) => (
+                <Text
+                  key={column.header}
+                  style={cell(column.key, true, index < ROOF_COLUMNS.length - 1 ? layout.gutter : 0)}
+                >
+                  {column.header}
+                </Text>
+              ))}
+            </View>
+            {group.map((row) => (
+              <View key={row.label} style={styles.roofRow} wrap={false}>
+                {ROOF_COLUMNS.map((column, index) => (
+                  <Text
+                    key={column.header}
+                    style={cell(column.key, false, index < ROOF_COLUMNS.length - 1 ? layout.gutter : 0)}
+                  >
+                    {roofCellText(row, column.key)}
+                  </Text>
+                ))}
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+type CoverSpacing = {
+  sectionGap: number;
+  plantPad: number;
+  roofCaptionTop: number;
+  roofPadDual: number;
+  roofPadSingle: number;
+  aboutTop: number;
+  aboutGap: number;
+};
+
+/**
+ * 7–10 roofs together with a heat pump and an electric car are the only
+ * cover that needs the tighter rhythm. Everything else uses the open one.
+ */
+function coverSpacing(model: PdfModel): CoverSpacing {
+  const heatPump = model.plantFacts.some((fact) => fact.label === "Wärmepumpe");
+  const electricCar = model.plantFacts.some((fact) => fact.label === "Elektroauto");
+  const roofs = model.roofTable.length;
+  if (roofs >= 7 && heatPump && electricCar) {
+    return {
+      sectionGap: 26,
+      plantPad: 4.5,
+      roofCaptionTop: 18,
+      roofPadDual: 3.5,
+      roofPadSingle: 4,
+      aboutTop: 28,
+      aboutGap: 10,
+    };
+  }
+  if (roofs <= 3) {
+    return {
+      sectionGap: 48,
+      plantPad: 7,
+      roofCaptionTop: 32,
+      roofPadDual: 5,
+      roofPadSingle: 6.5,
+      aboutTop: 52,
+      aboutGap: 14,
+    };
+  }
+  return {
+    sectionGap: 36,
+    plantPad: 6,
+    roofCaptionTop: 24,
+    roofPadDual: 4.5,
+    roofPadSingle: 5.5,
+    aboutTop: 40,
+    aboutGap: 12,
+  };
+}
+
+function CoverFacts({ model, spacing }: { model: PdfModel; spacing: CoverSpacing }) {
+  const { left, right } = splitPlantFacts(model.plantFacts);
+  const sideBySide = right.length > 0;
+  return (
+    <View>
+      <Text style={styles.plantHeading}>Ihre Anlagendaten</Text>
+      <View style={{ flexDirection: "row", gap: sideBySide ? PLANT_GAP : 0 }}>
+        <PlantFactTable
+          rows={left}
+          width={sideBySide ? PLANT_LEFT_W : CONTENT_W}
+          labelWidth={PLANT_LABEL_L}
+          padY={spacing.plantPad}
+        />
+        {sideBySide ? (
+          <PlantFactTable
+            rows={right}
+            width={PLANT_RIGHT_W}
+            labelWidth={PLANT_LABEL_R}
+            padY={spacing.plantPad}
+          />
+        ) : null}
+      </View>
+      {model.roofTable.length > 0 ? (
+        <RoofTable
+          rows={model.roofTable}
+          captionTop={spacing.roofCaptionTop}
+          pad={{ dual: spacing.roofPadDual, single: spacing.roofPadSingle }}
+        />
+      ) : null}
     </View>
   );
 }
@@ -1524,6 +1816,18 @@ function PrivateUseMarking() {
 // Report
 // ---------------------------------------------------------------------------
 
+/**
+ * Cover explanation. PVGIS stays hourly: the series is spread onto the
+ * 15-minute steps without inventing finer weather data. BDEW H25 is the
+ * main household profile. The 27 measured profiles are only the robustness
+ * check.
+ */
+export const ANALYSIS_INTRO = [
+  "SPEICHERGRENZE ist ein Analysewerkzeug von PVNAVIGATOR_ zur technischen Bewertung von Batteriespeichern für Photovoltaikanlagen.",
+  "Die Berechnung vergleicht PV-Erzeugung und Stromverbrauch in 15-Minuten-Schritten über ein Jahr. PVGIS liefert dafür stündliche Erzeugungswerte; sie werden energieerhaltend auf Viertelstunden verteilt. Ausgewertet werden 15 Wetterjahre. Der Haushaltsverbrauch folgt dem Standardlastprofil BDEW H25 und wird auf den angegebenen Jahresverbrauch skaliert. Die Simulation untersucht verschiedene Speichergrößen. Die technische Speichergrenze liegt dort, wo der zusätzliche Eigenverbrauch nur noch langsam zunimmt.",
+  "Ergänzend prüft der Bericht, wie stabil dieses Ergebnis bleibt, wenn anstelle von BDEW H25 eines von 27 gemessenen Haushaltsprofilen verwendet wird. Die Hauptrechnung bleibt BDEW H25.",
+] as const;
+
 export function coverLines(model: PdfModel): string[] {
   const lines = ["Ihre Speicher-Analyse", model.address];
   if (model.attribution) {
@@ -1534,9 +1838,126 @@ export function coverLines(model: PdfModel): string[] {
   return lines;
 }
 
+const STORAGE_STEP_NOTE =
+  "Eigenverbrauch ist der jährlich selbst genutzte Solarstrom aus derselben gespeicherten Simulation wie das Diagramm „Eigenverbrauch vs Speichergröße“. Speicherverluste sind darin bereits so enthalten wie in der übrigen Berechnung. Zusätzlich ist der Zuwachs gegenüber der vorherigen untersuchten Speichergröße. Für die kleinste Größe gibt es keinen Vorgänger. Hervorgehoben ist die technische Speichergrenze.";
+
+const STORAGE_STEP_GAP = 12;
+
+function StorageStepTable({
+  rows,
+  width,
+  columns,
+}: {
+  rows: PdfModel["storageSteps"];
+  width: number;
+  columns: { size: number; eigen: number; extra: number };
+}) {
+  const header = (label: string, unit: string, columnWidth: number) => (
+    <View
+      style={{
+        width: columnWidth,
+        height: 32,
+        justifyContent: "flex-end",
+        paddingHorizontal: 2,
+        paddingBottom: 3,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 8,
+          lineHeight: 1.15,
+          fontWeight: 600,
+          color: secondary,
+          textAlign: "right",
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontSize: 7.5,
+          lineHeight: 1.15,
+          color: muted,
+          textAlign: "right",
+          marginTop: 1,
+        }}
+      >
+        {unit}
+      </Text>
+    </View>
+  );
+  const value = (text: string, columnWidth: number, emphasize: boolean) => (
+    <Text
+      style={{
+        width: columnWidth,
+        paddingHorizontal: 2,
+        paddingVertical: 3.5,
+        fontFamily: "Plex",
+        fontSize: 8.5,
+        lineHeight: 1.2,
+        textAlign: "right",
+        color: emphasize ? accent : ink,
+        fontWeight: emphasize ? 600 : 400,
+      }}
+    >
+      {t(text)}
+    </Text>
+  );
+  return (
+    <View style={[styles.factTable, { width }]}>
+      <View style={[styles.roofHead, { flexDirection: "row" }]} wrap={false}>
+        {header("Speichergröße", "kWh", columns.size)}
+        {header("Eigenverbrauch", "kWh/Jahr", columns.eigen)}
+        {header("Zusätzlicher\nEigenverbrauch", "kWh/Jahr", columns.extra)}
+      </View>
+      {rows.map((row) => (
+        <View
+          key={row.size}
+          wrap={false}
+          style={[
+            styles.factRow,
+            row.boundary ? { backgroundColor: accentSoft } : null,
+          ]}
+        >
+          {value(row.sizeLabel, columns.size, row.boundary)}
+          {value(row.eigenverbrauchLabel, columns.eigen, false)}
+          {value(row.additionalLabel, columns.extra, false)}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function StorageStepTables({ steps }: { steps: PdfModel["storageSteps"] }) {
+  const dual = steps.length > 13;
+  const perGroup = dual ? Math.ceil(steps.length / 2) : steps.length;
+  const groups = [steps.slice(0, perGroup), steps.slice(perGroup)].filter(
+    (group) => group.length > 0,
+  );
+  const width = dual ? (CONTENT_W - STORAGE_STEP_GAP) / 2 : CONTENT_W;
+  const columns = dual
+    ? { size: 62, eigen: 78, extra: width - 140 }
+    : { size: 110, eigen: 160, extra: width - 270 };
+  return (
+    <View>
+      <View style={{ flexDirection: "row", gap: groups.length > 1 ? STORAGE_STEP_GAP : 0 }}>
+        {groups.map((group) => (
+          <StorageStepTable
+            key={group[0]?.size ?? "steps"}
+            rows={group}
+            width={width}
+            columns={columns}
+          />
+        ))}
+      </View>
+      <Text style={[styles.body, { marginTop: 16 }]}>{STORAGE_STEP_NOTE}</Text>
+    </View>
+  );
+}
+
 export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
   const balanceRows = [...model.balance.rowsLeft, ...model.balance.rowsRight];
-  const chips = paginateChips(model.chips);
+  const spacing = coverSpacing(model);
 
   return (
     <Document
@@ -1554,6 +1975,9 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
         <Link fixed style={styles.footerLink} src="https://speicher.pvnavigator.de">
           speicher.pvnavigator.de
         </Link>
+        <Text fixed style={styles.footerBrand}>
+          PVNAVIGATOR_ · Digitale Analysewerkzeuge für Photovoltaik und Energiespeicher
+        </Text>
         {model.privateUse ? (
           <Text fixed style={styles.footerPrivateUse}>
             {PRIVATE_USE_LABEL}
@@ -1565,7 +1989,7 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
           </View>
         ) : null}
 
-        {/* 1 · Cover: title + scene, compact facts, two results, Nutzen ---- */}
+        {/* 1 · Title: address, plant data, what the analysis does. */}
         <View wrap={false}>
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
@@ -1599,11 +2023,26 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
             </View>
           </View>
 
-          <View style={{ marginTop: 12 }}>
-            <FactChips chips={chips.first} />
+          <View style={{ marginTop: spacing.sectionGap }}>
+            <CoverFacts model={model} spacing={spacing} />
           </View>
 
-          <View style={[styles.kpiPair, { marginTop: 16 }]}>
+          <View style={{ marginTop: spacing.aboutTop }} wrap={false}>
+            <Text style={styles.plantHeading}>Über diese Analyse</Text>
+            <View style={{ gap: spacing.aboutGap }}>
+              {ANALYSIS_INTRO.map((paragraph) => (
+                <Text key={paragraph.slice(0, 24)} style={styles.aboutBody}>
+                  {paragraph}
+                </Text>
+              ))}
+            </View>
+          </View>
+        </View>
+
+        {/* 2 · Result sheet. Plant data stays on the title page. */}
+        <View break wrap={false} style={styles.sectionStart}>
+          <Text style={[styles.eyebrow, { marginBottom: 12 }]}>Ergebnis</Text>
+          <View style={[styles.kpiPair, { marginTop: 4 }]}>
             <View style={styles.kpiCard}>
               <View style={styles.kpiValueRow}>
                 <Text style={styles.kpiValuePrimary}>{t(model.technical.value)}</Text>
@@ -1622,7 +2061,7 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
             </View>
           </View>
 
-          <View style={{ marginTop: 14, flexDirection: "row", gap: 10 }}>
+          <View style={{ marginTop: 18, flexDirection: "row", gap: 10 }}>
             <View style={{ width: 3, height: 40, backgroundColor: accent }} />
             <View style={{ flexGrow: 1, flexBasis: 0, gap: 3 }}>
               <Text style={[styles.bodyStrong, { color: accent }]}>Warum diese Grenze?</Text>
@@ -1632,7 +2071,7 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
             </View>
           </View>
 
-          <View style={{ marginTop: 16 }}>
+          <View style={{ marginTop: 20 }}>
             <SectionHeading eyebrow="Nutzen" title="Was bringt Ihnen der Speicher?" />
             <View style={styles.blocks}>
               <View style={styles.two}>
@@ -1695,30 +2134,25 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
           </View>
         </View>
 
-        {/* Chips that do not fit under the cover continue on the next page
-            as the same block. Speichergröße starts that page when nothing
-            remains; otherwise it follows the remaining chips, so one leftover
-            row does not occupy a page of its own. */}
-        <View
-          break
-          wrap={chips.restRows.length === 0 ? false : undefined}
-          style={chips.restRows.length === 0 ? styles.sectionStart : undefined}
-        >
-          {chips.restRows.length > 0 ? (
-            <FactChips chips={chips.restRows.flatMap((row) => row.items)} />
-          ) : null}
-          <View
-            wrap={false}
-            style={chips.restRows.length > 0 ? styles.section : undefined}
-          >
-            <SectionHeading eyebrow="Speichergröße" title="Eigenverbrauch vs Speichergröße" />
-            <View style={styles.blocks}>
-              <Chart chart={model.chart} />
-              {model.chart.afterBoundary ? (
-                <Text style={styles.body}>{t(model.chart.afterBoundary)}</Text>
-              ) : null}
-              <Text style={styles.body}>{t(model.chart.lead)}</Text>
-            </View>
+        {/* 3 · Speichergröße. The result sheet stays on page 2. */}
+        <View break wrap={false} style={styles.sectionStart}>
+          <SectionHeading eyebrow="Speichergröße" title="Eigenverbrauch vs Speichergröße" />
+          <View style={styles.blocks}>
+            <Chart chart={model.chart} />
+            {model.chart.afterBoundary ? (
+              <Text style={styles.body}>{t(model.chart.afterBoundary)}</Text>
+            ) : null}
+            <Text style={styles.body}>{t(model.chart.lead)}</Text>
+            <Text style={styles.body}>
+              {"Die genauen Eigenverbrauchswerte für alle tatsächlich simulierten Speichergrößen stehen in "}
+              <Link
+                src="#anhang-1"
+                style={[styles.body, { color: accent, textDecoration: "underline" }]}
+              >
+                Anhang 1 (Seite 7)
+              </Link>
+              .
+            </Text>
           </View>
         </View>
         {/* Planning explanation: one short block (paragraph, formula, caveat). */}
@@ -1759,13 +2193,13 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
                 <Text style={styles.body}>
                   {`Die Einzelergebnisse der ${model.robustness.appendixCount} Haushaltsprofile finden Sie in `}
                   <Link
-                    src="#anhang-1"
+                    src="#anhang-2"
                     style={[
                       styles.body,
                       { color: accent, textDecoration: "underline" },
                     ]}
                   >
-                    Anhang 1
+                    Anhang 2 (Seite 8)
                   </Link>
                   .
                 </Text>
@@ -1882,10 +2316,16 @@ export function SpeicherGrenzePdfDocument({ model }: { model: PdfModel }) {
           </View>
         </View>
 
-        {/* Anhang always starts on its own page; the header repeats if the
-            table continues, and a row is never split. */}
-        <View break id="anhang-1" style={styles.sectionStart}>
-          <SectionHeading eyebrow="Anhang 1" title={model.profiles.title} />
+        {/* Anhang 1 follows its first mention on the chart page. */}
+        <View break wrap={false} id="anhang-1" style={styles.sectionStart}>
+          <SectionHeading eyebrow="Anhang 1" title="Eigenverbrauch nach Speichergröße" />
+          <StorageStepTables steps={model.storageSteps} />
+        </View>
+
+        {/* Anhang 2 follows its first mention on the robustness page.
+            The header repeats if the profile table continues. */}
+        <View break id="anhang-2" style={styles.sectionStart}>
+          <SectionHeading eyebrow="Anhang 2" title={model.profiles.title} />
           <View>
             <ProfileHeader />
             {model.profiles.rows.map((row) => (

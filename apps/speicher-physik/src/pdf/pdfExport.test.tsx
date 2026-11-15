@@ -1,7 +1,15 @@
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { inflateSync } from "node:zlib";
 import { renderToStaticMarkup } from "react-dom/server";
-import { PDFDocument } from "pdf-lib";
+import {
+  PDFArray,
+  PDFDict,
+  PDFDocument,
+  PDFHexString,
+  PDFName,
+  PDFRef,
+  PDFString,
+} from "pdf-lib";
 import { describe, expect, it } from "vitest";
 
 import type { HouseholdCalculationInput } from "@/app/(speicher)/calculate/runHouseholdCalculation";
@@ -27,7 +35,7 @@ import {
   privateUseTiles,
 } from "./privateUseMarking";
 import { renderSpeicherPdf } from "./renderSpeicherPdf";
-import { coverLines } from "./reportDocument";
+import { ANALYSIS_INTRO, coverLines } from "./reportDocument";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const OTHER_USER_ID = "33333333-3333-4333-8333-333333333333";
@@ -239,10 +247,29 @@ describe("buildSpeicherPdfModel", () => {
     expect(model.scene.heatPump).toBeNull();
     expect(model.scene.ev).toBe(false);
     expect(model.scene.backup).toBe(false);
-    const chipTexts = model.chips.map((chip) => chip.text);
-    expect(chipTexts.some((text) => text.startsWith("Wärmepumpe"))).toBe(false);
-    expect(chipTexts.some((text) => text.startsWith("Elektroauto"))).toBe(false);
-    expect(chipTexts.some((text) => text.startsWith("Notstrom"))).toBe(false);
+    expect(model.roofTable).toEqual([
+      { label: "1", kwp: "10 kWp", azimuth: "Süd (180°)", tilt: "35°" },
+    ]);
+    expect(model.plantFacts.map((fact) => fact.label)).toEqual([
+      "PV-Anlage",
+      "Hausverbrauch ohne Wärmepumpe",
+    ]);
+    expect(model.plantFacts.map((fact) => fact.value).join("\n")).not.toContain("Wärmepumpe");
+    expect(model.plantFacts.some((fact) => fact.label === "Elektroauto")).toBe(false);
+    expect(model.plantFacts.some((fact) => fact.label === "Notstromreserve")).toBe(false);
+    expect(model.storageSteps.map((step) => step.size)).toEqual(
+      model.chart.points.map((point) => point.size),
+    );
+    expect(model.storageSteps.map((step) => step.eigenverbrauch)).toEqual(
+      model.chart.points.map((point) => point.eigenverbrauch),
+    );
+    expect(model.storageSteps[0]?.additional).toBeNull();
+    expect(model.storageSteps[0]?.additionalLabel).toBe("—");
+    expect(model.storageSteps[1]?.additional).toBe(100);
+    expect(model.storageSteps[2]?.additional).toBe(80);
+    expect(model.storageSteps.filter((step) => step.boundary).map((step) => step.size)).toEqual([
+      model.chart.markerSize,
+    ]);
   });
 
   it("keeps several roofs and the selected extra components", () => {
@@ -265,19 +292,23 @@ describe("buildSpeicherPdfModel", () => {
       "Sehr langer Straßenname mit Umlauten äöüß 12, 86154 Augsburg-Oberhausen";
 
     const model = buildSpeicherPdfModel(row);
-    const chips = model.chips.map((chip) => chip.text).join("\n");
+    const facts = model.plantFacts.map((fact) => `${fact.label} ${fact.value}`).join("\n");
     expect(model.address).toContain("äöüß");
     expect(model.address).toContain("Augsburg-Oberhausen");
-    expect(chips).toContain("Dachfläche 1");
-    expect(chips).toContain("Dachfläche 2");
-    expect(chips).toContain("Dachfläche 3");
-    expect(chips).toContain("Wärmepumpe · Luft/Wasser");
-    expect(chips).toContain("Elektroauto");
-    expect(chips).toContain("14");
-    expect(chips).toContain("Notstromreserve");
-    expect(chips).toContain("WP-Stromverbrauch");
-    expect(chips).toContain("Hausverbrauch ohne Wärmepumpe");
-    expect(chips).not.toContain("Gesamtverbrauch");
+    expect(model.roofTable).toEqual([
+      { label: "1", kwp: "8 kWp", azimuth: "Süd (180°)", tilt: "30°" },
+      { label: "2", kwp: "6.5 kWp", azimuth: "Ost (90°)", tilt: "25°" },
+      { label: "3", kwp: "4 kWp", azimuth: "West (270°)", tilt: "40°" },
+    ]);
+    expect(facts).not.toContain("Dachfläche");
+    expect(facts).toContain("PV-Anlage 18.5 kWp");
+    expect(facts).toContain("Wärmepumpe Luft/Wasser");
+    expect(facts).toContain("Elektroauto");
+    expect(facts).toContain("14");
+    expect(facts).toContain("Notstromreserve");
+    expect(facts).toContain("WP-Stromverbrauch");
+    expect(facts).toContain("Hausverbrauch ohne Wärmepumpe");
+    expect(facts).not.toContain("Gesamtverbrauch");
     expect(model.scene.heatPump).toBe("luftwasser");
     expect(model.scene.ev).toBe(true);
     expect(model.scene.backup).toBe(true);
@@ -311,6 +342,11 @@ describe("buildSpeicherPdfModel", () => {
     );
     expect(model.chart.lead).toContain("nur noch gering zu");
     expect(model.chart.lead).not.toContain("Optimum");
+    expect(model.storageSteps.map((step) => step.eigenverbrauch)).toEqual([
+      2100, 2200.4, 2230.9,
+    ]);
+    expect(model.storageSteps.map((step) => step.additionalLabel)).toEqual(["—", "100", "31"]);
+    expect(model.storageSteps.find((step) => step.boundary)?.size).toBe(6);
   });
 
   it("does not invent missing optional fields or loss components", () => {
@@ -335,13 +371,14 @@ describe("buildSpeicherPdfModel", () => {
     delete snapshot.robustness;
 
     const model = buildSpeicherPdfModel(row);
-    const chipTexts = model.chips.map((chip) => chip.text);
-    expect(chipTexts.some((text) => text.startsWith("Wärmepumpe"))).toBe(false);
-    expect(chipTexts.some((text) => text.startsWith("Elektroauto"))).toBe(false);
-    expect(chipTexts.some((text) => text.startsWith("Notstrom"))).toBe(false);
-    expect(chipTexts.some((text) => text.startsWith("Ausrichtung"))).toBe(false);
-    expect(chipTexts.some((text) => text.startsWith("Neigung"))).toBe(false);
-    expect(chipTexts.join("\n")).toContain("—");
+    const labels = model.plantFacts.map((fact) => fact.label);
+    expect(labels).not.toContain("Wärmepumpe");
+    expect(labels).not.toContain("Elektroauto");
+    expect(labels).not.toContain("Notstromreserve");
+    expect(labels).not.toContain("Ausrichtung");
+    expect(labels).not.toContain("Neigung");
+    expect(model.roofTable).toEqual([]);
+    expect(model.plantFacts.map((fact) => fact.value).join("\n")).toContain("—");
     expect(model.profiles.rows).toEqual([]);
     expect(model.robustness.appendixCount).toBeNull();
     expect(model.profiles.title).toBe("Einzelergebnisse der Haushaltsprofile");
@@ -417,6 +454,89 @@ function inflatePdfStreams(pdf: Buffer): string {
   return parts.join("\n");
 }
 
+function pdfLabel(value: unknown): string | null {
+  if (value instanceof PDFString || value instanceof PDFHexString) return value.decodeText();
+  if (value instanceof PDFName) return value.decodeText();
+  return null;
+}
+
+function pageIndexOf(document: PDFDocument, ref: PDFRef): number {
+  return document.getPages().findIndex((page) => page.ref === ref);
+}
+
+function nameTreeValue(document: PDFDocument, node: unknown, name: string): unknown {
+  const dict = node instanceof PDFRef ? document.context.lookup(node) : node;
+  if (!(dict instanceof PDFDict)) return null;
+  const kids = dict.lookup(PDFName.of("Kids"));
+  if (kids instanceof PDFArray) {
+    for (const kid of kids.asArray()) {
+      const found = nameTreeValue(document, kid, name);
+      if (found) return found;
+    }
+  }
+  const names = dict.lookup(PDFName.of("Names"));
+  if (!(names instanceof PDFArray)) return null;
+  const entries = names.asArray();
+  for (let index = 0; index < entries.length; index += 2) {
+    if (pdfLabel(document.context.lookup(entries[index])) === name) {
+      return document.context.lookup(entries[index + 1]);
+    }
+  }
+  return null;
+}
+
+function destinationPage(document: PDFDocument, dest: unknown, seen = new Set<string>()): number | null {
+  const value = dest instanceof PDFRef ? document.context.lookup(dest) : dest;
+  if (value instanceof PDFArray) {
+    const first = value.get(0);
+    if (first instanceof PDFRef) return pageIndexOf(document, first);
+    const named = pdfLabel(first instanceof PDFRef ? null : document.context.lookup(first));
+    return named ? namedDestinationPage(document, named, seen) : null;
+  }
+  if (value instanceof PDFDict) {
+    const inner = value.lookup(PDFName.of("D"));
+    return inner ? destinationPage(document, inner, seen) : null;
+  }
+  const named = pdfLabel(value);
+  return named ? namedDestinationPage(document, named, seen) : null;
+}
+
+function namedDestinationPage(document: PDFDocument, name: string, seen: Set<string>): number | null {
+  if (seen.has(name)) return null;
+  seen.add(name);
+  const direct = document.catalog.lookup(PDFName.of("Dests"));
+  if (direct instanceof PDFDict) {
+    const entry = direct.get(PDFName.of(name));
+    if (entry) return destinationPage(document, entry, seen);
+  }
+  const names = document.catalog.lookup(PDFName.of("Names"));
+  if (names instanceof PDFDict) {
+    const tree = nameTreeValue(document, names.lookup(PDFName.of("Dests")), name);
+    if (tree) return destinationPage(document, tree, seen);
+  }
+  return null;
+}
+
+function internalLinkTargets(document: PDFDocument): { page: number; target: number }[] {
+  const links: { page: number; target: number }[] = [];
+  document.getPages().forEach((page, pageIndex) => {
+    const annots = page.node.Annots();
+    if (!(annots instanceof PDFArray)) return;
+    for (const entry of annots.asArray()) {
+      const annot = document.context.lookup(entry);
+      if (!(annot instanceof PDFDict)) continue;
+      if (pdfLabel(annot.lookup(PDFName.of("Subtype"))) !== "Link") continue;
+      const action = annot.lookup(PDFName.of("A"));
+      const dest = annot.lookup(PDFName.of("Dest"))
+        ?? (action instanceof PDFDict ? action.lookup(PDFName.of("D")) : null);
+      if (!dest) continue;
+      const target = destinationPage(document, dest);
+      if (target != null) links.push({ page: pageIndex + 1, target: target + 1 });
+    }
+  });
+  return links;
+}
+
 describe("renderSpeicherPdf", () => {
   it("embeds fonts, German text, the house, links, and page numbers", async () => {
     const row = historyRow();
@@ -434,6 +554,13 @@ describe("renderSpeicherPdf", () => {
     expect(decoded).toContain("speicher.pvnavigator.de");
     expect(decoded).toContain("https://speicher.pvnavigator.de/methodik");
     expect(decoded).toMatch(/\/Subtype\s*\/Image|\/Subtype\/Image/);
+    expect(document.getPageCount()).toBe(8);
+    expect(internalLinkTargets(document)).toEqual(
+      expect.arrayContaining([
+        { page: 3, target: 7 },
+        { page: 4, target: 8 },
+      ]),
+    );
   }, 30000);
 
   it("drops the Gesamtverbrauch continuation and keeps a long continuation with its first row", async () => {
@@ -448,13 +575,11 @@ describe("renderSpeicherPdf", () => {
     const heatPumpSnapshot = heatPumpRow.result_snapshot as Record<string, unknown>;
     heatPumpSnapshot.displayAddress = "Branderstraße 44, 86154 Augsburg-Oberhausen, Germany";
     const heatPumpModel = buildSpeicherPdfModel(heatPumpRow);
-    expect(heatPumpModel.chips.some((chip) => chip.text.startsWith("Gesamtverbrauch"))).toBe(
-      false,
-    );
+    expect(heatPumpModel.plantFacts.some((fact) => fact.label === "Gesamtverbrauch")).toBe(false);
     expect(
-      heatPumpModel.chips.some((chip) => chip.text.startsWith("Hausverbrauch ohne Wärmepumpe")),
+      heatPumpModel.plantFacts.some((fact) => fact.label === "Hausverbrauch ohne Wärmepumpe"),
     ).toBe(true);
-    expect(heatPumpModel.chips.some((chip) => chip.text.startsWith("WP-Stromverbrauch"))).toBe(
+    expect(heatPumpModel.plantFacts.some((fact) => fact.label === "WP-Stromverbrauch")).toBe(
       true,
     );
     const heatPumpPdf = await renderSpeicherPdf(heatPumpModel);
@@ -480,8 +605,8 @@ describe("renderSpeicherPdf", () => {
     const complexModel = buildSpeicherPdfModel(complexRow);
     const complexPdf = await renderSpeicherPdf(complexModel);
 
-    expect((await PDFDocument.load(heatPumpPdf)).getPageCount()).toBe(6);
-    expect((await PDFDocument.load(complexPdf)).getPageCount()).toBe(6);
+    expect((await PDFDocument.load(heatPumpPdf)).getPageCount()).toBe(8);
+    expect((await PDFDocument.load(complexPdf)).getPageCount()).toBe(8);
     expect(complexModel.attribution).toBeNull();
 
     const companyComplex = historyRow();
@@ -498,10 +623,10 @@ describe("renderSpeicherPdf", () => {
     expect(coverLines(companyComplexModel)).toContain("Erstellt von: Analytical Engines GmbH");
     expect(coverLines(companyComplexModel)).toContain("Erstellt für: Grace Hopper");
     const companyComplexPdf = await renderSpeicherPdf(companyComplexModel);
-    expect((await PDFDocument.load(companyComplexPdf)).getPageCount()).toBe(6);
+    expect((await PDFDocument.load(companyComplexPdf)).getPageCount()).toBe(8);
   }, 30000);
 
-  it("prints the frozen company lines on a six-page report and omits them otherwise", async () => {
+  it("prints the frozen company lines on an eight-page report and omits them otherwise", async () => {
     const plain = buildSpeicherPdfModel(historyRow());
     expect(plain.attribution).toBeNull();
     expect(coverLines(plain)).toEqual([
@@ -540,6 +665,184 @@ describe("renderSpeicherPdf", () => {
     expect(inflatePdfStreams(companyPdf)).toContain("speicher.pvnavigator.de");
     expect(inflatePdfStreams(plainPdf)).not.toContain("Erstellt von:");
   }, 30000);
+});
+
+const REVIEW_DIR = new URL("../../.pdf-sample/roof-layout/", import.meta.url);
+
+function surfacesForCount(count: number) {
+  const azimuths = [180, 90, 270, 135, 225, 45, 315, 0, 150, 71];
+  const tilts = [30, 25, 40, 35, 15, 45, 60, 0, 22, 35];
+  return Array.from({ length: count }, (_, index) => ({
+    systemSizeKwP: Math.round((1.4 + index * 0.35) * 1000) / 1000,
+    tiltDeg: tilts[index] ?? 30,
+    azimuthDeg: azimuths[index] ?? 180,
+  }));
+}
+
+function rowWithRoofs(
+  count: number,
+  extras: { heatPump?: boolean; ev?: boolean; backup?: boolean },
+) {
+  const row = historyRow();
+  const stored = row.input as Record<string, unknown>;
+  const surfaces = surfacesForCount(count);
+  const total = surfaces.reduce((sum, surface) => sum + surface.systemSizeKwP, 0);
+  stored.pvSystemKwP = total;
+  stored.pvSurfaces = surfaces;
+  stored.annualConsumptionKWh = 4200;
+  const heatPump = extras.heatPump !== false;
+  stored.heatPumpEnabled = heatPump;
+  stored.heatPumpTechnology = heatPump ? "luftwasser" : undefined;
+  stored.heatPumpDhwService = heatPump ? "space_heat_and_dhw" : undefined;
+  stored.heatPumpConsumptionKWh = heatPump ? 3200 : undefined;
+  stored.backupReserveKwh = extras.backup ? 2 : 0;
+  stored.ev = extras.ev ? { enabled: true, annualKm: 14000 } : { enabled: false };
+  stored.reportAttribution = {
+    companyName: "Analytical Engines GmbH",
+    clientGivenName: "Grace",
+    clientFamilyName: "Hopper",
+  };
+  const snapshot = row.result_snapshot as Record<string, unknown>;
+  snapshot.displayAddress =
+    "Sehr langer Straßenname mit Umlauten äöüß, Hausnummer 128a, 86154 Augsburg-Oberhausen";
+  return row;
+}
+
+describe("cover roof layout", () => {
+  it("puts every roof in the table and keeps plant facts out of it", () => {
+    const one = buildSpeicherPdfModel(rowWithRoofs(1, { ev: true }));
+    expect(one.roofTable).toEqual([
+      { label: "1", kwp: "1.4 kWp", azimuth: "Süd (180°)", tilt: "30°" },
+    ]);
+    const oneLabels = one.plantFacts.map((fact) => fact.label);
+    expect(oneLabels).not.toContain("Ausrichtung");
+    expect(oneLabels).not.toContain("Neigung");
+    expect(oneLabels).not.toContain("Dachfläche");
+
+    const two = buildSpeicherPdfModel(rowWithRoofs(2, { ev: true }));
+    expect(two.roofTable).toEqual([
+      { label: "1", kwp: "1.4 kWp", azimuth: "Süd (180°)", tilt: "30°" },
+      { label: "2", kwp: "1.75 kWp", azimuth: "Ost (90°)", tilt: "25°" },
+    ]);
+    expect(two.plantFacts.map((fact) => fact.label).join("\n")).not.toContain("Dachfläche");
+
+    const plain = buildSpeicherPdfModel(rowWithRoofs(4, { heatPump: false }));
+    expect(plain.plantFacts.map((fact) => fact.label)).toEqual([
+      "PV-Anlage",
+      "Hausverbrauch ohne Wärmepumpe",
+    ]);
+    expect(plain.roofTable).toHaveLength(4);
+
+    for (const count of [1, 2, 4, 6, 7, 10]) {
+      const model = buildSpeicherPdfModel(
+        rowWithRoofs(count, { ev: true, backup: true }),
+      );
+      expect(model.roofTable).toHaveLength(count);
+      expect(model.plantFacts.map((fact) => fact.label)).toEqual([
+        "PV-Anlage",
+        "Hausverbrauch ohne Wärmepumpe",
+        "Notstromreserve",
+        "Wärmepumpe",
+        "Verwendung",
+        "WP-Stromverbrauch",
+        "Elektroauto",
+      ]);
+      expect(model.plantFacts.find((fact) => fact.label === "Wärmepumpe")?.value).toBe(
+        "Luft/Wasser",
+      );
+      expect(model.plantFacts.find((fact) => fact.label === "Verwendung")?.value).toBe(
+        "Heizung und Warmwasser",
+      );
+      expect(model.roofTable[0]).toMatchObject({
+        label: "1",
+        azimuth: "Süd (180°)",
+        tilt: "30°",
+      });
+      expect(model.roofTable[count - 1]?.label).toBe(String(count));
+    }
+
+    const six = buildSpeicherPdfModel(rowWithRoofs(6, { ev: true }));
+    expect(six.roofTable.map((row) => row.kwp)).toEqual([
+      "1.4 kWp",
+      "1.75 kWp",
+      "2.1 kWp",
+      "2.45 kWp",
+      "2.8 kWp",
+      "3.15 kWp",
+    ]);
+    expect(six.roofTable[4]?.tilt).toBe("15°");
+    expect(six.roofTable[5]?.azimuth).toBe("Nordost (45°)");
+  });
+
+  it("states the PVGIS, BDEW H25 and profile roles without treating PVGIS as 15-minute data", () => {
+    const text = ANALYSIS_INTRO.join("\n");
+    expect(text).toContain("PVNAVIGATOR_");
+    expect(text).toContain("stündliche Erzeugungswerte");
+    expect(text).toContain("BDEW H25");
+    expect(text).toContain("27 gemessenen Haushaltsprofilen");
+    expect(text).toContain("Die Hauptrechnung bleibt BDEW H25.");
+    expect(text).not.toContain("15-Minuten-Wetter");
+  });
+
+  it("keeps every cover on one page and the report at eight pages", async () => {
+    mkdirSync(REVIEW_DIR, { recursive: true });
+    const cases = [1, 2, 4, 6, 7, 10].flatMap((count) => [
+      { count, heatPump: false, ev: false, backup: false },
+      { count, heatPump: false, ev: true, backup: false },
+      { count, heatPump: true, ev: false, backup: false },
+      { count, heatPump: true, ev: true, backup: false },
+      { count, heatPump: true, ev: true, backup: true },
+    ]);
+    for (const item of cases) {
+      const model = buildSpeicherPdfModel(
+        rowWithRoofs(item.count, {
+          heatPump: item.heatPump,
+          ev: item.ev,
+          backup: item.backup,
+        }),
+      );
+      const pdf = await renderSpeicherPdf(model);
+      const name = `roofs-${item.count}${item.heatPump ? "-wp" : ""}${item.ev ? "-ev" : ""}${item.backup ? "-backup" : ""}.pdf`;
+      writeFileSync(new URL(name, REVIEW_DIR), pdf);
+      expect((await PDFDocument.load(pdf)).getPageCount(), name).toBe(8);
+    }
+
+    const sweep = rowWithRoofs(1, { heatPump: false });
+    const snapshot = sweep.result_snapshot as Record<string, unknown>;
+    const speicherGrenz = {
+      ...(snapshot.speicherGrenz as Record<string, unknown>),
+    };
+    const batterySizes: number[] = [];
+    const average: Record<number, number> = {};
+    let eigenverbrauch = 2100;
+    for (let size = 5; size <= 30; size += 1) {
+      batterySizes.push(size);
+      average[size] = eigenverbrauch;
+      eigenverbrauch += size < 15 ? 80 : 20;
+    }
+    speicherGrenz.batterySizes = batterySizes;
+    speicherGrenz.average = average;
+    snapshot.speicherGrenz = speicherGrenz;
+    delete snapshot.presentation;
+    const sweepModel = buildSpeicherPdfModel(sweep);
+    expect(sweepModel.storageSteps).toHaveLength(26);
+    expect(sweepModel.storageSteps.map((step) => step.size)).toEqual(
+      sweepModel.chart.points.map((point) => point.size),
+    );
+    expect(sweepModel.storageSteps.map((step) => step.eigenverbrauch)).toEqual(
+      sweepModel.chart.points.map((point) => point.eigenverbrauch),
+    );
+    expect(sweepModel.storageSteps[0]?.additional).toBeNull();
+    expect(sweepModel.chart.markerSize).toBe(15);
+    expect(sweepModel.storageSteps.filter((step) => step.boundary).map((step) => step.size)).toEqual([
+      15,
+    ]);
+    expect(sweepModel.storageSteps[10]?.additional).toBe(80);
+    expect(sweepModel.storageSteps[11]?.additional).toBe(20);
+    const sweepPdf = await renderSpeicherPdf(sweepModel);
+    writeFileSync(new URL("sizes-5-30.pdf", REVIEW_DIR), sweepPdf);
+    expect((await PDFDocument.load(sweepPdf)).getPageCount()).toBe(8);
+  }, 180000);
 });
 
 describe("private-use marking", () => {

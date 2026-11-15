@@ -158,74 +158,90 @@ export function buildInputRows(facts: InputFacts): InputRow[] {
   return rows;
 }
 
-export type FactChip = { text: string };
+export type PlantFact = { label: string; value: string };
+
+export type RoofTableRow = {
+  label: string;
+  kwp: string;
+  azimuth: string;
+  tilt: string;
+};
+
+function kwpLabel(n: number): string {
+  return Number.isFinite(n) ? `${formatKwpDisplay(n)} kWp` : PLACEHOLDER;
+}
 
 /**
- * Compact cover facts. One roof keeps orientation and tilt as their own chips.
- * Several roofs never share one orientation: each plane names its own power,
- * azimuth and tilt. Extra components appear only when they are part of the
- * calculation.
+ * One row per stored roof, including a single roof. Power, azimuth and tilt
+ * use the same labels as the rest of the report. An empty list means the
+ * calculation has no stored surface.
  */
-export function buildFactChips(facts: InputFacts): FactChip[] {
-  const chips: FactChip[] = [];
-  const surfaces = facts.surfaces;
-  const kwp = (n: number) =>
-    Number.isFinite(n) ? `${formatKwpDisplay(n)} kWp` : PLACEHOLDER;
+export function buildRoofTable(facts: InputFacts): RoofTableRow[] {
+  return facts.surfaces.map((surface, index) => ({
+    label: String(index + 1),
+    kwp: kwpLabel(surface.systemSizeKwP),
+    azimuth: formatAzimuthLabel(surface.azimuthDeg),
+    tilt: formatTiltLabel(surface.tiltDeg),
+  }));
+}
 
-  chips.push({
-    text: `PV-Anlage · ${
+/**
+ * Cover facts for the Anlagendaten table. Roofs are not repeated here; they
+ * are `buildRoofTable`. Extra components appear only when they are part of
+ * the calculation.
+ */
+export function buildPlantFacts(facts: InputFacts): PlantFact[] {
+  const rows: PlantFact[] = [];
+
+  rows.push({
+    label: "PV-Anlage",
+    value:
       typeof facts.totalKwP === "number" && Number.isFinite(facts.totalKwP)
-        ? kwp(facts.totalKwP)
-        : PLACEHOLDER
-    }`,
+        ? kwpLabel(facts.totalKwP)
+        : PLACEHOLDER,
   });
-  chips.push({
-    text: `Hausverbrauch ohne Wärmepumpe · ${kwhPerYear(facts.annualConsumptionKWh)}`,
+  rows.push({
+    label: "Hausverbrauch ohne Wärmepumpe",
+    value: kwhPerYear(facts.annualConsumptionKWh),
   });
-
-  if (surfaces.length <= 1 && surfaces[0]) {
-    chips.push({ text: `Ausrichtung · ${formatAzimuthLabel(surfaces[0].azimuthDeg)}` });
-    chips.push({ text: `Neigung · ${formatTiltLabel(surfaces[0].tiltDeg)}` });
-  } else {
-    surfaces.forEach((surface, index) => {
-      chips.push({
-        text: `Dachfläche ${index + 1} · ${kwp(surface.systemSizeKwP)} · ${formatAzimuthLabel(surface.azimuthDeg)} · ${formatTiltLabel(surface.tiltDeg)}`,
-      });
-    });
-  }
 
   if (typeof facts.backupReserveKwh === "number" && facts.backupReserveKwh > 0) {
-    chips.push({
-      text: `Notstromreserve · ${formatQuantityWithUnit(facts.backupReserveKwh, "kWh")}`,
+    rows.push({
+      label: "Notstromreserve",
+      value: formatQuantityWithUnit(facts.backupReserveKwh, "kWh"),
     });
   }
 
   if (facts.heatPumpEnabled === true) {
-    chips.push({
-      text: facts.heatPumpTechnology
-        ? `Wärmepumpe · ${HEAT_PUMP_TECHNOLOGY_LABELS[facts.heatPumpTechnology]}`
-        : "Wärmepumpe · Ja",
+    rows.push({
+      label: "Wärmepumpe",
+      value: facts.heatPumpTechnology
+        ? HEAT_PUMP_TECHNOLOGY_LABELS[facts.heatPumpTechnology]
+        : "Ja",
     });
     if (facts.heatPumpDhwService) {
-      chips.push({
-        text: `Verwendung · ${HEAT_PUMP_DHW_LABELS[facts.heatPumpDhwService]}`,
+      rows.push({
+        label: "Verwendung",
+        value: HEAT_PUMP_DHW_LABELS[facts.heatPumpDhwService],
       });
     }
-    chips.push({
-      text: `WP-Stromverbrauch · ${kwhPerYear(facts.heatPumpConsumptionKWh)}`,
+    rows.push({
+      label: "WP-Stromverbrauch",
+      value: kwhPerYear(facts.heatPumpConsumptionKWh),
     });
   }
 
   if (facts.evEnabled === true) {
-    chips.push({
-      text:
+    rows.push({
+      label: "Elektroauto",
+      value:
         typeof facts.evAnnualKm === "number"
-          ? `Elektroauto · ${formatQuantityWithUnit(facts.evAnnualKm, "km/Jahr")}`
-          : "Elektroauto · Ja",
+          ? formatQuantityWithUnit(facts.evAnnualKm, "km/Jahr")
+          : "Ja",
     });
   }
 
-  return chips;
+  return rows;
 }
 
 export function buildSceneConfig(facts: InputFacts): SceneConfig {

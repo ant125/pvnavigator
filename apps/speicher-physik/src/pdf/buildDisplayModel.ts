@@ -44,7 +44,13 @@ import { PLANNING_REMAINING_CAPACITY_FRACTION } from "@/lib/speicherRecommendati
 import { buildSpeicherBenefitComparison } from "@/lib/speicherBenefitComparison";
 import type { WpuqRobustnessPayload } from "@/lib/wpuqRobustnessStats";
 
-import { buildFactChips, buildInputRows, buildSceneConfig, type InputFacts } from "./inputFacts";
+import {
+  buildInputRows,
+  buildPlantFacts,
+  buildRoofTable,
+  buildSceneConfig,
+  type InputFacts,
+} from "./inputFacts";
 import {
   reportAttributionFromStoredInput,
   reportClientLabel,
@@ -438,6 +444,22 @@ export function buildSpeicherPdfModel(row: CalculationHistoryRow): PdfModel {
   });
 
   const visible = metrics.chart.data.filter((point) => point.size > 0);
+  const storageSteps = visible.map((point, index) => {
+    const previous = index > 0 ? visible[index - 1] : null;
+    const additional = previous
+      ? point.eigenverbrauch - previous.eigenverbrauch
+      : null;
+    return {
+      size: point.size,
+      eigenverbrauch: point.eigenverbrauch,
+      additional,
+      boundary: point.size === recommendedTechnicalSize,
+      sizeLabel: formatQuantityDe(point.size, 0),
+      eigenverbrauchLabel: formatQuantityDe(point.eigenverbrauch, 0),
+      additionalLabel:
+        additional === null ? "—" : formatQuantityDe(additional, 0),
+    };
+  });
   const yScale = buildYAxisScale(visible.map((point) => point.eigenverbrauch));
   const markerIndex = visible.findIndex(
     (point) => point.size === recommendedTechnicalSize,
@@ -554,7 +576,8 @@ export function buildSpeicherPdfModel(row: CalculationHistoryRow): PdfModel {
       ...sceneConfig,
     },
     layoutTest: null,
-    chips: buildFactChips(inputFacts),
+    plantFacts: buildPlantFacts(inputFacts),
+    roofTable: buildRoofTable(inputFacts),
     inputs: buildInputRows(inputFacts),
     chart: {
       points: visible.map((point) => ({
@@ -717,5 +740,6 @@ export function buildSpeicherPdfModel(row: CalculationHistoryRow): PdfModel {
       headers: ["Profil", "Speichergröße", "Eigenverbrauch", "Autarkie"],
       rows: robustness.profileRows,
     },
+    storageSteps,
   };
 }
