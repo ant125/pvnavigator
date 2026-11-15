@@ -75,3 +75,12 @@ export function accountProfileFromRow(row: {
 export function profileNeedsCompletion(profile: AccountProfileView | null): boolean {
   return profile?.accountKind !== "privat" && profile?.accountKind !== "unternehmen";
 }
+
+/** A stored profiles row is not enough: the saved type and the required names must be present. */
+export function profileIsSaved(profile: AccountProfileView | null): boolean {
+  if (!profile) return false;
+  if (profile.accountKind !== "privat" && profile.accountKind !== "unternehmen") return false;
+  if (!profile.givenName.trim() || !profile.familyName.trim()) return false;
+  if (profile.accountKind === "unternehmen" && !profile.companyName.trim()) return false;
+  return true;
+}

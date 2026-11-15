@@ -17,7 +17,7 @@ export function ProfileForm({
   const incomplete = profile.accountKind === null;
 
   return (
-    <form id="profil" action="/konto/profil" method="post" className="space-y-4">
+    <form action="/konto/profil/speichern" method="post" className="space-y-4">
       {incomplete ? (
         <p role="status" className="hub-notice">
           Bitte ergänzen Sie Ihr Profil. Ihre Berechnungen bleiben verfügbar.

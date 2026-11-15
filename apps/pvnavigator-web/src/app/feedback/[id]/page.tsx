@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { isPvNavigatorUuid } from "@pv-auth/session";
 
+import { AccountShell } from "@/components/account/AccountShell";
 import { FeedbackThreadView } from "@/components/feedback/FeedbackThreadView";
 import { feedbackHint } from "@/lib/feedback";
-import { loadOwnFeedbackThread } from "@/lib/feedbackServer";
+import { loadOwnFeedbackThread, loadOwnFeedbackUnread } from "@/lib/feedbackServer";
 import { getServerUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 
@@ -33,12 +34,17 @@ export default async function FeedbackThreadPage({ params, searchParams }: Route
   } catch (error) {
     if (error instanceof Error && error.message === "feedback_unavailable") {
       return (
-        <div className="hub-workspace">
+        <AccountShell title="Anfrage" unread={await loadOwnFeedbackUnread()}>
           <p role="alert" className="hub-notice">Die Anfrage konnte nicht geladen werden. Bitte laden Sie die Seite erneut.</p>
-        </div>
+        </AccountShell>
       );
     }
     throw error;
   }
-  return <FeedbackThreadView thread={loaded.thread} hint={feedbackHint(hintKey)} wasUnread={loaded.wasUnread} />;
+  const unread = await loadOwnFeedbackUnread();
+  return (
+    <AccountShell title={loaded.thread.subject} unread={unread}>
+      <FeedbackThreadView thread={loaded.thread} hint={feedbackHint(hintKey)} wasUnread={loaded.wasUnread} />
+    </AccountShell>
+  );
 }

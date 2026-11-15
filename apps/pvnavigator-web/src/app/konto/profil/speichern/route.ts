@@ -8,12 +8,11 @@ import { isSupabaseConfigured } from "@/lib/supabase/server";
 function profileUrl(status: "gespeichert" | "ungueltig" | "anmelden"): URL {
   if (status === "anmelden") {
     const url = new URL("/anmelden", getHubOrigin());
-    url.searchParams.set("next", "/konto");
+    url.searchParams.set("next", "/konto/profil");
     return url;
   }
-  const url = new URL("/konto", getHubOrigin());
+  const url = new URL("/konto/profil", getHubOrigin());
   url.searchParams.set("profil", status);
-  url.hash = "profil";
   return url;
 }
 

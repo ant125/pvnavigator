@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseAccountProfileFields, profileNeedsCompletion, accountProfileFromRow } from "./accountProfile";
+import { parseAccountProfileFields, profileNeedsCompletion, profileIsSaved, accountProfileFromRow } from "./accountProfile";
 
 describe("account profile", () => {
   it("accepts a private person and drops a company name", () => {
@@ -61,5 +61,33 @@ describe("account profile", () => {
       family_name: "Hopper",
       company_name: "Analytical Engines GmbH",
     }))).toBe(false);
+  });
+
+  it("does not treat a profiles row as saved until the type and names are stored", () => {
+    expect(profileIsSaved(accountProfileFromRow(null))).toBe(false);
+    expect(profileIsSaved(accountProfileFromRow({
+      account_kind: null,
+      given_name: "Ada",
+      family_name: "Lovelace",
+      company_name: null,
+    }))).toBe(false);
+    expect(profileIsSaved(accountProfileFromRow({
+      account_kind: "privat",
+      given_name: " ",
+      family_name: "Lovelace",
+      company_name: null,
+    }))).toBe(false);
+    expect(profileIsSaved(accountProfileFromRow({
+      account_kind: "unternehmen",
+      given_name: "Grace",
+      family_name: "Hopper",
+      company_name: " ",
+    }))).toBe(false);
+    expect(profileIsSaved(accountProfileFromRow({
+      account_kind: "privat",
+      given_name: "Ada",
+      family_name: "Lovelace",
+      company_name: null,
+    }))).toBe(true);
   });
 });

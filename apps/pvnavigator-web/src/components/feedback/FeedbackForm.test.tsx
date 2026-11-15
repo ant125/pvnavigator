@@ -69,6 +69,11 @@ describe("administrator feedback", () => {
     inputSchemaVersion: "1",
     resultSchemaVersion: "1",
     messages: [{
+      id: "00000000-0000-4000-8000-000000000021",
+      body: "Die Anzeige springt.",
+      authorRole: "user",
+      createdAt: "2026-11-14T18:30:00.000Z",
+    }, {
       id: "00000000-0000-4000-8000-000000000020",
       body: "Wir prüfen das.",
       authorRole: "admin",
@@ -86,6 +91,13 @@ describe("administrator feedback", () => {
     expect(html).toContain("Profil öffnen");
     expect(html).toContain("Status speichern");
     expect(html).toContain("Erledigt");
+    expect(html).toContain("Details anzeigen");
+    expect(html).toContain("Rechenkern 1.1.0");
+    expect(html.indexOf("is-user")).toBeLessThan(html.indexOf("is-support"));
+    expect(html).toContain("Nutzer");
+    expect(html).toContain("Support");
+    expect(html).toContain("Senden");
+    expect(html).toContain('rows="3"');
     expect(html).not.toContain("/result/");
     expect(html).not.toContain(".pdf");
     expect(html).not.toContain("result_snapshot");

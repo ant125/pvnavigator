@@ -10,6 +10,7 @@ vi.mock("next/navigation", () => ({
     throw new Error(`REDIRECT:${url}`);
   },
   useRouter: () => ({ refresh: () => undefined }),
+  usePathname: () => "/feedback",
 }));
 
 vi.mock("@/lib/auth", () => ({

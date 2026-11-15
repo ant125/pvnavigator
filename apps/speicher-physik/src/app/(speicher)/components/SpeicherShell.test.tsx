@@ -161,7 +161,7 @@ describe("SpeicherShell overflow chain", () => {
       </SpeicherShell>,
     );
     expect(html).toContain("Bitte ergänzen Sie Ihr PVNAVIGATOR_-Profil");
-    expect(html).toContain("https://pvnavigator.de/konto#profil");
+    expect(html).toContain("https://pvnavigator.de/konto/profil");
     expect(html).toContain("Berechnung");
   });
 

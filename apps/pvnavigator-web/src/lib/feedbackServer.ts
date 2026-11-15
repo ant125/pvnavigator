@@ -36,6 +36,16 @@ export async function loadOwnFeedback(): Promise<
   return { status: "ok", data: { threads, unread: count } };
 }
 
+export async function loadOwnFeedbackUnread(): Promise<number | null> {
+  const supabase = await createServerSupabaseClient();
+  const unread = await supabase.rpc("feedback_unread_count");
+  if (unread.error || typeof unread.data !== "number" || !Number.isInteger(unread.data) || unread.data < 0) {
+    if (unread.error) console.error("Failed to count feedback replies", unread.error);
+    return null;
+  }
+  return unread.data;
+}
+
 export async function loadOwnFeedbackThread(id: string): Promise<{ thread: FeedbackThread; wasUnread: boolean }> {
   if (!isPvNavigatorUuid(id)) notFound();
   const supabase = await createServerSupabaseClient();

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { AccountShell, AccountUnavailable } from "@/components/account/AccountShell";
 import { FeedbackForm } from "@/components/feedback/FeedbackForm";
 import { FeedbackList } from "@/components/feedback/FeedbackList";
-import { AuthEnvMissing } from "@/components/auth/AuthEnvMissing";
 import { feedbackHint } from "@/lib/feedback";
 import { loadFeedbackCalculations, loadOwnFeedback } from "@/lib/feedbackServer";
 import { getServerUser } from "@/lib/auth";
@@ -18,14 +18,7 @@ export const metadata: Metadata = {
 type SearchParams = Promise<{ hinweis?: string | string[] }>;
 
 export default async function FeedbackPage({ searchParams }: { searchParams: SearchParams }) {
-  if (!isSupabaseConfigured()) {
-    return (
-      <div className="hub-workspace">
-        <h1>Feedback & Support</h1>
-        <AuthEnvMissing />
-      </div>
-    );
-  }
+  if (!isSupabaseConfigured()) return <AccountUnavailable />;
   const user = await getServerUser();
   if (!user) redirect("/anmelden?next=/feedback");
 
@@ -37,17 +30,12 @@ export default async function FeedbackPage({ searchParams }: { searchParams: Sea
   ]);
 
   return (
-    <div className="hub-workspace">
-      <header className="hub-intro">
-        <div>
-          <p className="hub-kicker">PVNAVIGATOR_</p>
-          <h1>Feedback & Support</h1>
-          <p className="hub-subtitle">
-            Haben Sie einen Fehler entdeckt oder eine Idee für unsere Produkte? Schreiben Sie uns! Wir freuen uns über Ihre Vorschläge und prüfen jede Rückmeldung.
-          </p>
-        </div>
-      </header>
-      <div className="hub-account-details">
+    <AccountShell
+      title="Feedback & Support"
+      subtitle="Haben Sie einen Fehler entdeckt oder eine Idee für unsere Produkte? Schreiben Sie uns! Wir freuen uns über Ihre Vorschläge und prüfen jede Rückmeldung."
+      unread={feedback.status === "ok" ? feedback.data.unread : null}
+    >
+      <div className="hub-account-details account-sections">
         <section className="hub-panel hub-account" aria-labelledby="new-feedback-heading">
           <h2 id="new-feedback-heading" className="hub-kicker">Neue Anfrage</h2>
           <div className="mt-4">
@@ -66,6 +54,6 @@ export default async function FeedbackPage({ searchParams }: { searchParams: Sea
           )}
         </section>
       </div>
-    </div>
+    </AccountShell>
   );
 }

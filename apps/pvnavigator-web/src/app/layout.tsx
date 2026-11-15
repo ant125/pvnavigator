@@ -54,7 +54,7 @@ export default async function RootLayout({
               <div className="mx-auto w-full max-w-[1120px] px-4 pt-4">
                 <p role="status" className="hub-notice">
                   Bitte ergänzen Sie Ihr Profil. Ihre Berechnungen bleiben verfügbar.{" "}
-                  <Link href="/konto#profil" className="font-semibold text-[#36533c] underline">Profil ausfüllen</Link>
+                  <Link href="/konto/profil" className="font-semibold text-[#36533c] underline">Profil ausfüllen</Link>
                 </p>
               </div>
             ) : null}

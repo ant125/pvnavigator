@@ -298,7 +298,7 @@ function ShellFrame({
       {profileIncomplete ? (
         <p role="status" className="border-b border-line bg-surface px-4 py-3 text-sm text-ink-secondary">
           Bitte ergänzen Sie Ihr PVNAVIGATOR_-Profil. Ihre Berechnungen bleiben verfügbar.{" "}
-          <a href={`${accountHref}#profil`} className="font-semibold text-ink underline">Profil ausfüllen</a>
+          <a href={`${accountHref}/profil`} className="font-semibold text-ink underline">Profil ausfüllen</a>
         </p>
       ) : null}
 

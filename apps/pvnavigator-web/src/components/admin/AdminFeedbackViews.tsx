@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { FeedbackConversation } from "@/components/feedback/FeedbackConversation";
 import { RefreshUnreadNav } from "@/components/feedback/RefreshUnreadNav";
 import {
   FEEDBACK_STATUSES,
@@ -17,14 +18,14 @@ export function AdminFeedbackListView({ data }: { data: AdminFeedbackList }) {
   const previous = data.page > 1 ? `/admin/feedback?seite=${data.page - 1}` : null;
   const next = data.page * data.pageSize < data.total ? `/admin/feedback?seite=${data.page + 1}` : null;
   return (
-    <section className="hub-panel admin-block" aria-labelledby="admin-feedback-heading">
+    <section className="hub-panel admin-block admin-feedback-list" aria-labelledby="admin-feedback-heading">
       <div className="hub-panel-heading">
         <h2 id="admin-feedback-heading">Anfragen</h2>
         <span className="hub-count">{data.total}</span>
       </div>
       {data.threads.length === 0 ? <p className="hub-section-note">Keine Anfragen.</p> : (
         <div className="admin-table-wrap">
-          <table className="admin-table">
+          <table className="admin-table admin-feedback-table">
             <thead>
               <tr>
                 <th>Thema</th>
@@ -62,6 +63,15 @@ export function AdminFeedbackListView({ data }: { data: AdminFeedbackList }) {
   );
 }
 
+function engineVersions(thread: AdminFeedbackThread): string | null {
+  const parts = [
+    thread.batteryModelVersion ? `Rechenkern ${thread.batteryModelVersion}` : null,
+    thread.inputSchemaVersion ? `Eingabe ${thread.inputSchemaVersion}` : null,
+    thread.resultSchemaVersion ? `Ergebnis ${thread.resultSchemaVersion}` : null,
+  ].filter((part): part is string => Boolean(part));
+  return parts.length ? parts.join(" · ") : null;
+}
+
 export function AdminFeedbackThreadView({
   thread,
   hint,
@@ -71,72 +81,69 @@ export function AdminFeedbackThreadView({
   hint?: string | null;
   wasUnread: boolean;
 }) {
+  const versions = engineVersions(thread);
   return (
     <>
       <RefreshUnreadNav active={wasUnread} />
-      <section className="hub-panel hub-account" aria-labelledby="admin-thread-heading">
+      <section className="hub-panel admin-thread-summary" aria-labelledby="admin-thread-heading">
         <h2 id="admin-thread-heading">{thread.subject}</h2>
-        <dl className="admin-user-meta">
+        <dl>
           <div>
             <dt>Produkt</dt>
             <dd>{feedbackProductLabel(thread.productKey)}</dd>
-          </div>
-          <div>
-            <dt>Kategorie</dt>
-            <dd>{feedbackCategoryLabel(thread.category)}</dd>
           </div>
           <div>
             <dt>Status</dt>
             <dd>{feedbackStatusLabel(thread.status)}</dd>
           </div>
           <div>
-            <dt>Autor</dt>
-            <dd>{thread.displayName ?? "Nicht angegeben"}</dd>
-          </div>
-          <div>
-            <dt>E-Mail</dt>
-            <dd>{thread.email ?? "Nicht verfügbar"}</dd>
-          </div>
-          <div>
             <dt>Datum</dt>
             <dd>{formatFeedbackDateTime(thread.createdAt)}</dd>
           </div>
-          <div>
-            <dt>Berechnung</dt>
-            <dd>{thread.calculationId ?? "Keine"}</dd>
-          </div>
-          <div>
-            <dt>Rechenkern</dt>
-            <dd>{thread.batteryModelVersion ?? "Nicht verfügbar"}</dd>
-          </div>
         </dl>
-        <Link href={`/admin/nutzer/${thread.userId}`} className="hub-text-link">Profil öffnen</Link>
+        <details className="admin-thread-details">
+          <summary>
+            <span className="when-closed">Details anzeigen</span>
+            <span className="when-open">Details ausblenden</span>
+          </summary>
+          <dl className="admin-user-meta">
+            <div>
+              <dt>Autor</dt>
+              <dd>{thread.displayName ?? "Nicht angegeben"}</dd>
+            </div>
+            <div>
+              <dt>E-Mail</dt>
+              <dd>{thread.email ?? "Nicht verfügbar"}</dd>
+            </div>
+            <div>
+              <dt>Kategorie</dt>
+              <dd>{feedbackCategoryLabel(thread.category)}</dd>
+            </div>
+            <div>
+              <dt>Berechnung</dt>
+              <dd>{thread.calculationId ?? "Keine"}</dd>
+            </div>
+            {versions ? (
+              <div>
+                <dt>Rechenkern</dt>
+                <dd>{versions}</dd>
+              </div>
+            ) : null}
+          </dl>
+          <Link href={`/admin/nutzer/${thread.userId}`} className="hub-text-link">Profil öffnen</Link>
+        </details>
       </section>
-      <ol className="hub-thread" aria-label="Nachrichten">
-        {thread.messages.map((message) => (
-          <li key={message.id} className="hub-message" data-role={message.authorRole}>
-            <header>
-              <strong>{message.authorRole === "admin" ? "Administration" : "Nutzer"}</strong>
-              <time dateTime={message.createdAt}>{formatFeedbackDateTime(message.createdAt)}</time>
-            </header>
-            <p>{message.body}</p>
-          </li>
-        ))}
-      </ol>
-      <section className="hub-panel hub-account mt-5" aria-labelledby="admin-reply-heading">
-        <h2 id="admin-reply-heading" className="hub-kicker">Antwort</h2>
-        <form action={`/admin/feedback/${thread.id}/antwort`} method="post" className="mt-4 space-y-4">
-          {hint ? <p role="alert" className="hub-notice">{hint}</p> : null}
-          <div>
-            <label htmlFor="admin-feedback-reply" className={field}>Nachricht</label>
-            <textarea id="admin-feedback-reply" name="body" required maxLength={4000} rows={6} className="hub-input" />
-          </div>
-          <button type="submit" className="hub-primary">Antwort senden</button>
-        </form>
-      </section>
-      <section className="hub-panel hub-account mt-5" aria-labelledby="admin-status-heading">
+      <FeedbackConversation
+        messages={thread.messages}
+        reply={{
+          action: `/admin/feedback/${thread.id}/antwort`,
+          fieldId: "admin-feedback-reply",
+          hint,
+        }}
+      />
+      <section className="hub-panel hub-account admin-thread-status" aria-labelledby="admin-status-heading">
         <h2 id="admin-status-heading" className="hub-kicker">Status</h2>
-        <form action={`/admin/feedback/${thread.id}/status`} method="post" className="mt-4 space-y-4">
+        <form action={`/admin/feedback/${thread.id}/status`} method="post" className="mt-3 space-y-3">
           <div>
             <label htmlFor="admin-feedback-status" className={field}>Status ändern</label>
             <select id="admin-feedback-status" name="status" className="hub-input" defaultValue={thread.status}>
