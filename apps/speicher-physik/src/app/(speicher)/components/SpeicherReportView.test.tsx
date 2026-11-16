@@ -362,6 +362,85 @@ describe("SpeicherReportView balance helper", () => {
   });
 });
 
+describe("collapsible calculation basis", () => {
+  function roofSurfaces(count: number) {
+    return Array.from({ length: count }, (_, index) => ({
+      systemSizeKwP: Math.round((1.4 + index * 0.35) * 100) / 100,
+      tiltDeg: [30, 25, 40, 35, 15, 45, 60, 0, 22, 35][index] ?? 30,
+      azimuthDeg: [180, 90, 270, 135, 225, 45, 315, 0, 150, 71][index] ?? 180,
+    }));
+  }
+
+  function basisHtml(
+    count: number,
+    input: (typeof sharedProps)["input"] = sharedProps.input,
+  ) {
+    const surfaces = roofSurfaces(count);
+    return renderToStaticMarkup(
+      <SpeicherReportView
+        mode="live"
+        variant="workspace"
+        anlageOpen
+        anlageScene={<div>scene</div>}
+        {...sharedProps}
+        surfaces={surfaces}
+        totalKwPConfigured={surfaces.reduce(
+          (sum, surface) => sum + surface.systemSizeKwP,
+          0,
+        )}
+        input={input}
+      />,
+    );
+  }
+
+  it("lays the address, roof table, and consumption out across the full width", () => {
+    for (const count of [1, 6, 10]) {
+      const html = basisHtml(count, {
+        annualConsumptionKwh: 3000,
+        heatPumpEnabled: true,
+        heatPumpConsumptionKwh: 5000,
+        heatPumpTechnology: "luftwasser",
+        heatPumpDhwService: "space_heat_and_dhw",
+        backupReserveKwh: 0,
+      });
+      const basis = html.slice(
+        html.indexOf("Grundlage der Berechnung"),
+        html.indexOf(`id="${RESULT_SECTION_IDS.overview}"`),
+      );
+      expect(basis, String(count)).toContain("Standort");
+      expect(basis).toContain("Musterstraße 1, 80331 München");
+      expect(basis).toContain("PV-Anlage");
+      expect(basis).toContain(`auf ${count} Dachfläche`);
+      expect(basis).toContain("Verbrauch &amp; Wärmepumpe");
+      expect(basis).toContain("Hausverbrauch (ohne Wärmepumpe)");
+      expect(basis).toContain("Luft/Wasser");
+      expect(basis).toContain("Heizung und Warmwasser");
+      expect(basis).toContain("Gesamtverbrauch");
+      expect(basis).not.toContain("EV-Heimladung");
+      expect(basis).not.toContain("sm:col-span-2");
+      expect(basis.match(/<th scope="row"/g)).toHaveLength(count);
+      expect(indexOf(basis, "Standort")).toBeLessThan(indexOf(basis, "PV-Anlage"));
+      expect(indexOf(basis, "PV-Anlage")).toBeLessThan(indexOf(basis, "<table"));
+      expect(indexOf(basis, "</table>")).toBeLessThan(
+        indexOf(basis, "Verbrauch &amp; Wärmepumpe"),
+      );
+    }
+  });
+
+  it("leaves the saved-report input section on the previous datasheet", () => {
+    const html = renderToStaticMarkup(
+      <SpeicherReportView mode="historical" variant="page" {...sharedProps} />,
+    );
+    const inputs = html.slice(
+      html.indexOf("03 / Ihre Eingabedaten"),
+      html.indexOf("04 / Technische Kennzahlen"),
+    );
+    expect(inputs).toContain("Adresse:");
+    expect(inputs).not.toContain("Standort");
+    expect(inputs).not.toContain("<table");
+  });
+});
+
 describe("SpeicherReportView Trustpilot invitation", () => {
   it("keeps the report free of the invitation on a new and a saved result", () => {
     for (const mode of ["live", "historical"] as const) {

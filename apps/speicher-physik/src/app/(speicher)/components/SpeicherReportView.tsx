@@ -686,6 +686,205 @@ export function SpeicherReportView({
     </>
   ) : null;
 
+  const roofCountLabel =
+    surfaces.length === 1
+      ? " auf 1 Dachfläche"
+      : surfaces.length > 1
+        ? ` auf ${surfaces.length} Dachflächen`
+        : "";
+
+  const anlageBasis = speicherGrenz ? (
+    <div className="min-w-0 space-y-6">
+      <div className={REPORT_DATA_ITEM}>
+        <p className={REPORT_DATA_LABEL}>Standort</p>
+        <p className={`${REPORT_DATA_VALUE} break-words whitespace-normal`}>
+          {displayAddress ?? PLACEHOLDER}
+        </p>
+      </div>
+
+      <div className={REPORT_DATA_ITEM}>
+        <p className={REPORT_DATA_LABEL}>PV-Anlage</p>
+        <p className={REPORT_DATA_VALUE}>
+          <span>
+            {Number.isFinite(totalKwPConfigured)
+              ? formatKwpDisplay(totalKwPConfigured)
+              : PLACEHOLDER}{" "}
+            kWp
+          </span>
+          {roofCountLabel ? (
+            <span className="font-normal text-ink-secondary">{roofCountLabel}</span>
+          ) : null}
+        </p>
+        {surfaces.length > 0 ? (
+          <div className="mt-3 min-w-0 max-w-full overflow-x-auto">
+            <table className="w-full table-fixed border-collapse text-sm">
+              <colgroup>
+                <col className="w-[25%]" />
+                <col className="w-[25%]" />
+                <col className="w-[25%]" />
+                <col className="w-[25%]" />
+              </colgroup>
+              <caption className="sr-only">Dachflächen</caption>
+              <thead>
+                <tr className="border-b border-line">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap py-2 pr-3 text-left text-xs font-normal text-ink-muted"
+                  >
+                    Dachfläche
+                  </th>
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap py-2 pr-3 text-left text-xs font-normal text-ink-muted"
+                  >
+                    Leistung
+                  </th>
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap py-2 pr-3 text-left text-xs font-normal text-ink-muted"
+                  >
+                    Azimut
+                  </th>
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap py-2 text-left text-xs font-normal text-ink-muted"
+                  >
+                    Neigung
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {surfaces.map((surface, index) => (
+                  <tr
+                    key={`${surface.azimuthDeg}-${surface.tiltDeg}-${index}`}
+                    className="border-b border-line-soft"
+                  >
+                    <th
+                      scope="row"
+                      className="whitespace-nowrap py-2 pr-3 text-left font-mono text-sm font-medium tabular-nums text-ink"
+                    >
+                      {index + 1}
+                    </th>
+                    <td className="whitespace-nowrap py-2 pr-3 text-left font-mono text-sm tabular-nums text-ink">
+                      {Number.isFinite(surface.systemSizeKwP)
+                        ? formatKwpDisplay(surface.systemSizeKwP)
+                        : PLACEHOLDER}{" "}
+                      kWp
+                    </td>
+                    <td className="whitespace-nowrap py-2 pr-3 font-mono text-sm tabular-nums text-ink">
+                      {formatStoredAngle(surface.azimuthDeg)}
+                    </td>
+                    <td className="whitespace-nowrap py-2 font-mono text-sm tabular-nums text-ink">
+                      {formatStoredAngle(surface.tiltDeg)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </div>
+
+      <div className={REPORT_DATA_ITEM}>
+        <p className={REPORT_DATA_LABEL}>
+          {input.heatPumpEnabled === true ? "Verbrauch & Wärmepumpe" : "Verbrauch"}
+        </p>
+        <dl className="mt-3 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+          {hasActiveBackupReserve ? (
+            <div>
+              <dt className={REPORT_DATA_LABEL}>Notstromreserve</dt>
+              <dd className={REPORT_DATA_VALUE}>
+                {formatQuantityWithUnit(resolvedBackupReserveKwh, "kWh")}
+              </dd>
+            </div>
+          ) : null}
+          <div>
+            <dt className={REPORT_DATA_LABEL}>
+              {ev != null
+                ? EV_REPORT_COPY.householdLoad
+                : "Hausverbrauch (ohne Wärmepumpe)"}
+            </dt>
+            <dd className={REPORT_DATA_VALUE}>
+              {typeof input.annualConsumptionKwh === "number"
+                ? formatQuantityWithUnit(input.annualConsumptionKwh, "kWh/Jahr")
+                : PLACEHOLDER}
+            </dd>
+          </div>
+          {input.heatPumpEnabled === true ? (
+            <div>
+              <dt className={REPORT_DATA_LABEL}>{EV_REPORT_COPY.heatPumpLoad}</dt>
+              <dd className={REPORT_DATA_VALUE}>
+                {typeof input.heatPumpConsumptionKwh === "number"
+                  ? formatQuantityWithUnit(
+                      input.heatPumpConsumptionKwh,
+                      "kWh/Jahr"
+                    )
+                  : PLACEHOLDER}
+              </dd>
+            </div>
+          ) : null}
+          {input.heatPumpEnabled === true &&
+          (input.heatPumpTechnology === "luftwasser" ||
+            input.heatPumpTechnology === "wasserwasser") ? (
+            <div>
+              <dt className={REPORT_DATA_LABEL}>Typ</dt>
+              <dd className={REPORT_DATA_VALUE}>
+                {HEAT_PUMP_TECHNOLOGY_LABELS[input.heatPumpTechnology]}
+              </dd>
+            </div>
+          ) : null}
+          {input.heatPumpEnabled === true && input.heatPumpDhwService ? (
+            <div>
+              <dt className={REPORT_DATA_LABEL}>Verwendung</dt>
+              <dd className={REPORT_DATA_VALUE}>
+                {HEAT_PUMP_DHW_LABELS[input.heatPumpDhwService]}
+              </dd>
+            </div>
+          ) : null}
+          {ev != null ? (
+            <div>
+              <dt className={REPORT_DATA_LABEL}>{EV_REPORT_COPY.evHomeLoad}</dt>
+              <dd className={REPORT_DATA_VALUE}>
+                {formatEvKwh(ev.averageHomeChargedKwh)}
+                /Jahr
+              </dd>
+            </div>
+          ) : null}
+          <div>
+            <dt className={REPORT_DATA_LABEL}>
+              {ev != null ? EV_REPORT_COPY.modelledLoadTotal : "Gesamtverbrauch"}
+            </dt>
+            <dd className={REPORT_DATA_VALUE}>
+              <div>
+                {ev != null &&
+                typeof speicherGrenz.averageLoadKwhAnnual === "number" &&
+                Number.isFinite(speicherGrenz.averageLoadKwhAnnual)
+                  ? `${formatEvKwh(speicherGrenz.averageLoadKwhAnnual)}/Jahr`
+                  : formatQuantityWithUnit(
+                      (input.annualConsumptionKwh ?? 0) +
+                        (input.heatPumpEnabled === true
+                          ? input.heatPumpConsumptionKwh ?? 0
+                          : 0),
+                      "kWh/Jahr"
+                    )}
+              </div>
+              {input.heatPumpEnabled === true && ev == null ? (
+                <div className={`mt-1 block ${SPEICHER_REPORT_HELPER_TEXT}`}>
+                  davon Wärmepumpe:{" "}
+                  {typeof input.heatPumpConsumptionKwh === "number"
+                    ? formatQuantityWithUnit(input.heatPumpConsumptionKwh, "kWh")
+                    : PLACEHOLDER}
+                </div>
+              ) : null}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      {ev != null ? <EvResultSection ev={ev} /> : null}
+    </div>
+  ) : null;
+
   const kennzahlenHelper = (
                       <p className="mt-2 max-w-reading text-xs leading-relaxed text-ink-muted">
                         Alle technischen Kennzahlen beziehen sich auf die
@@ -1227,13 +1426,13 @@ export function SpeicherReportView({
         Ihres Gebäudes.
       </p>
       {anlageScene}
-      {foundationInner ? (
+      {anlageBasis ? (
         <section className="sg-anlage-basis mt-5 border-t border-line pt-6">
           <p className={WORKSPACE_CHAPTER_EYEBROW}>Grundlage</p>
           <h2 className={`mt-1.5 ${WORKSPACE_CHAPTER_TITLE}`}>
             Grundlage der Berechnung
           </h2>
-          <div className="mt-6">{foundationInner}</div>
+          <div className="mt-6">{anlageBasis}</div>
         </section>
       ) : null}
     </div>
